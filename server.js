@@ -63,8 +63,7 @@ app.get('/admin', adminAuth, (req,res)=>{
   <h1>Admin – EnZenem</h1><p>Események: ${AUDIT.length}</p>
   <table><thead><tr><th>Idő</th><th>Típus</th><th>Adat</th></tr></thead><tbody>${rows}</tbody></table>`);
 });
-app.get('/healthz', (req, res) => pushLog('contact', { email:o.email||'', name:o.name||'' });
-res.json({ ok:true, message:'Köszönjük, üzeneted megérkezett!' });
+app.get('/healthz', (req, res) =>app.get('/healthz', (req, res) => res.json({ ok: true }));
 
 // ---------- Mail helpers ----------
 function buildTransport() {
