@@ -1,4 +1,11 @@
-*{box-sizing:border-box}
+/* =========================================
+   Bakelit Songs – teljes style.css (FIX)
+   - Kisebb logo (IMG opció)
+   - Sticky topbar scroll offset javítva
+   ========================================= */
+
+* { box-sizing: border-box }
+
 :root{
   --bg:#0b0c10;
   --ink:#e8e8ea;
@@ -7,55 +14,65 @@
   --accent2:#06d6a0;
   --shadow:0 10px 30px rgba(0,0,0,.35);
 }
-html,body{height:100%}
-html {
-  /* a sticky/fixed topbar miatt legyen globális görgetési „puffer” */
-html { scroll-padding-top: 84px; }   /* állítsd 72–96px között, amennyi a topbar magassága */
-section { scroll-margin-top: 84px; } /* ha szekcióra ugrasz, ne lógjon a fejléc alá */
-}
+
+html, body { height: 100%; }
+
+/* sticky topbar miatti görgetési puffer (hogy ne takarja ki a tartalom tetejét) */
+html { scroll-padding-top: 92px; }    /* ha még kicsit vág: emeld 100–108px-re */
+section { scroll-margin-top: 92px; }
+
 body{
   margin:0;
-  font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  font-family:Poppins,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
   color:var(--ink);
   background: radial-gradient(ellipse at center, #111 0%, #000 60%);
   overflow-x:hidden;
 }
+
+/* finom háttér textúra */
 .bg-vinyl{
   position:fixed; inset:0;
-  background-image: radial-gradient(circle at center, rgba(255,255,255,.06) 0 1px, transparent 1px),
-                    radial-gradient(circle at center, rgba(255,255,255,.03) 0 2px, transparent 2px);
+  background-image:
+    radial-gradient(circle at center, rgba(255,255,255,.06) 0 1px, transparent 1px),
+    radial-gradient(circle at center, rgba(255,255,255,.03) 0 2px, transparent 2px);
   background-size: 6px 6px, 12px 12px;
   opacity:.35;
   pointer-events:none;
 }
+
+/* felső sáv */
 .topbar{
   position:sticky; top:0; z-index:20;
   background:rgba(0,0,0,.6); backdrop-filter:blur(8px);
   border-bottom:1px solid rgba(255,255,255,.08);
 }
+
+/* márkasor */
 .brand{
   display:flex; align-items:center; gap:14px;
   padding:18px 22px 10px 22px;
 }
-/* --- LOGÓ MÉRET (IMG OPCIÓ) --- */
+
+/* --- LOGÓ (IMG opció) – kicsi korong --- */
 .brand .logo-img{
-  width: 30px;          /* ha még nagy: 40px; ha nagy képernyőn kicsi: 56px */
-  height: 30px;
-  display: block;
-  border-radius: 50%;
+  width:36px;
+  height:36px;
+  display:block;
+  border-radius:50%;
   box-shadow:
     0 0 0 2px rgba(255,255,255,.04),
     0 0 16px rgba(212,175,55,.35);
 }
 
-/* mobilon pici korong */
+/* mobilon még picit kisebb */
 @media (max-width: 640px){
-  .brand .logo-img{ width: 36px; height: 36px; }
+  .brand .logo-img{ width:32px; height:32px; }
 }
 
-.brand h1{margin:0;font-size:1.35rem;letter-spacing:.3px}
-.brand p{margin:2px 0 0 0;color:var(--muted);font-size:.9rem}
+.brand h1{ margin:0; font-size:1.35rem; letter-spacing:.3px }
+.brand p{ margin:2px 0 0 0; color:var(--muted); font-size:.9rem }
 
+/* körlap fülök */
 .vinyl-tabs{
   display:flex; gap:16px; padding:12px 22px 16px 22px; flex-wrap:wrap;
 }
@@ -72,16 +89,27 @@ body{
 }
 .vinyl-tabs .tab:hover{ transform: translateY(-2px) }
 .vinyl-tabs .tab span{ font-size:.78rem; line-height:1.1 }
-.vinyl-tabs .tab.active{ box-shadow: 0 10px 30px rgba(255,209,102,.5), 0 0 0 3px rgba(255,209,102,.2), inset 0 0 0 3px #000, inset 0 0 0 6px #121212 }
+.vinyl-tabs .tab.active{
+  box-shadow:
+    0 10px 30px rgba(255,209,102,.5),
+    0 0 0 3px rgba(255,209,102,.2),
+    inset 0 0 0 3px #000,
+    inset 0 0 0 6px #121212;
+}
 
-main{ max-width:1100px; margin: 18px auto; padding: 0 20px 60px }
+/* fő tartalom – hagyjunk helyet a tetején is, hogy biztosan ne vágjon */
+main{ max-width:1100px; margin: 18px auto; padding: 6px 20px 60px }
+
+/* panelek */
 .panel{ display:none; animation:fade .25s ease both }
 .panel.active{ display:block }
 @keyframes fade{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
 
+/* tipográfia */
 h2{ font-size:1.6rem; margin:18px 0 10px }
 p{ color:var(--ink); opacity:.92 }
 
+/* listák és kártyák */
 .badges{ display:grid; gap:8px; margin:14px 0; padding:0 0 0 18px }
 .cards{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:16px }
 .card{
@@ -91,14 +119,15 @@ p{ color:var(--ink); opacity:.92 }
 }
 .card h3{ margin:8px 0 6px }
 .price{ color:var(--accent2); font-weight:700 }
-
 .note{ color:var(--muted); font-size:.9rem }
 
+/* űrlapok */
 .form{ display:grid; gap:14px }
 .form label{ display:grid; gap:6px; font-weight:600; font-size:.95rem }
 .form input, .form select, .form textarea{
   width:100%; padding:12px 12px; border-radius:12px;
-  border:1px solid rgba(255,255,255,.15); background:rgba(0,0,0,.45); color:var(--ink);
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(0,0,0,.45); color:var(--ink);
   outline:none;
 }
 .form input:focus, .form select:focus, .form textarea:focus{
@@ -117,22 +146,28 @@ p{ color:var(--ink); opacity:.92 }
 }
 .form-status{ color:var(--accent); min-height:1.2em }
 
+/* beágyazások */
 .embeds{ display:grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap:16px }
 .embed{ background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:10px; box-shadow:var(--shadow) }
 .embed p{ color:var(--muted); font-size:.9rem }
 
+/* kontakt rács */
 .contact-grid{ display:grid; grid-template-columns: 1.1fr .9fr; gap:18px }
 .contacts{ list-style:none; padding:0; margin:6px 0 }
 .contacts li{ margin:6px 0; color:var(--muted) }
 
-footer{ text-align:center; padding:30px 12px; color:var(--muted); border-top:1px solid rgba(255,255,255,.08) }
+/* lábléc */
+footer{
+  text-align:center; padding:30px 12px; color:var(--muted);
+  border-top:1px solid rgba(255,255,255,.08)
+}
 
+/* reszponzív */
 @media (max-width: 720px){
   .vinyl-tabs{ justify-content:center }
   .form .grid{ grid-template-columns: 1fr }
   .contact-grid{ grid-template-columns: 1fr }
 }
-
 
 /* Overlay */
 .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:grid; place-items:center; z-index:50 }
