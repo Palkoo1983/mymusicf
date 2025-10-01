@@ -171,3 +171,57 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     });
   }
 })();
+// --- Licenc figyelmeztetés bekötése a Megrendelés gombra ---
+(function () {
+  const modal  = document.getElementById('license-warning');
+  const accept = document.getElementById('licenseAccept');
+  const cancel = document.getElementById('licenseCancel');
+
+  // tetszőleges: az elfogadás megmaradjon egy sessionben
+  let acceptedThisSession = false;
+
+  // keresd meg a Megrendelés panel gombját (állítsd, ha más a szelektor)
+  function getOrderButton() {
+    // tipikus elrendezés: a megrendelés panelen az .actions .primary a submit
+    const panel = document.getElementById('megrendeles') || document.getElementById('order');
+    if (!panel) return null;
+    return panel.querySelector('.actions .primary, button[type="submit"], input[type="submit"]');
+  }
+
+  function showModal() {
+    if (!modal) return;
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+  function hideModal() {
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  // drótozás
+  document.addEventListener('click', (e) => {
+    const btn = getOrderButton();
+    if (!btn) return;
+    if (e.target === btn || btn.contains(e.target)) {
+      // ha még nem fogadta el ebben a sessionben, állítsuk meg a gombot és kérjünk elfogadást
+      if (!acceptedThisSession) {
+        e.preventDefault();
+        showModal();
+      }
+    }
+  });
+
+  if (accept) {
+    accept.addEventListener('click', () => {
+      acceptedThisSession = true;    // csak a mostani rendelési folyamatra
+      hideModal();
+      // a tényleges rendelés folytatása: indítsuk újra a gomb kattintást
+      const btn = getOrderButton();
+      if (btn) btn.click();
+    });
+  }
+  if (cancel) {
+    cancel.addEventListener('click', () => hideModal());
+  }
+})();
