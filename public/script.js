@@ -46,6 +46,3 @@ contactForm?.addEventListener('submit', async (e)=>{
     console.error(err);
   }
 });
-
-
-document.getElementById('overlayClose')?.addEventListener('click', ()=> document.getElementById('thanksOverlay').classList.add('hidden'));
