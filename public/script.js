@@ -49,3 +49,38 @@ contactForm?.addEventListener('submit', async (e)=>{
 
 
 document.getElementById('overlayClose')?.addEventListener('click', ()=> document.getElementById('thanksOverlay').classList.add('hidden'));
+// ---- TOP OFFSET (fejléc magasság) ----
+function getTopOffset() {
+  const tb = document.querySelector('.topbar');
+  return (tb && tb.offsetHeight) ? tb.offsetHeight : 92;
+}
+
+// ---- Fülváltás után görgessünk a tetejére ----
+document.addEventListener('click', (e) => {
+  const tab = e.target.closest('.vinyl-tabs .tab');
+  if (!tab) return;
+
+  // Várunk egy event-ciklust, hogy a panel .active osztály már beálljon
+  requestAnimationFrame(() => {
+    // görgetés a lap tetejére, hogy semmi ne legyen levágva
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  });
+});
+
+// ---- Anchor linkek (#szekcio) esetén finom offsetelt görgetés ----
+function scrollWithOffset(hash) {
+  const el = document.querySelector(hash);
+  if (!el) return;
+  const y = el.getBoundingClientRect().top + window.pageYOffset - getTopOffset();
+  window.scrollTo({ top: y, behavior: 'smooth' });
+}
+
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', (e) => {
+    const hash = a.getAttribute('href');
+    if (!hash || hash === '#') return;
+    e.preventDefault();
+    scrollWithOffset(hash);
+    history.pushState(null, '', hash);
+  });
+});
