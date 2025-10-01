@@ -207,3 +207,19 @@ footer{
   .consent{ flex-direction: column; align-items: stretch; }
   .consent .primary{ width: 100%; }
 }
+/* --- Licenc figyelmeztetés (modál) --- */
+.license-modal{
+  position: fixed; inset: 0; display: none; place-items: center;
+  background: rgba(0,0,0,.65); backdrop-filter: blur(6px); z-index: 1000;
+}
+.license-modal.show{ display: grid; }
+
+.license-card{
+  max-width: 560px; margin: 0 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 16px; padding: 18px; box-shadow: var(--shadow);
+  color: var(--ink); text-align: left;
+}
+.license-card p{ margin: 0 0 12px 0 }
+.license-card .actions{ display:flex; gap:10px; justify-content:flex-end }
