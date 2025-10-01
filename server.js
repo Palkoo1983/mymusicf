@@ -53,6 +53,16 @@ function rateLimit(key, windowMs=10000, max=5){
 app.use(express.static('public'));
 
 // Health
+app.get('/admin', adminAuth, (req,res)=>{
+  const rows = AUDIT.slice().reverse()
+    .map(e=>`<tr><td>${e.ts}</td><td>${e.type}</td><td><pre style="white-space:pre-wrap;">${JSON.stringify(e.data||{},null,2)}</pre></td></tr>`).join('');
+  res.set('Content-Type','text/html; charset=utf-8');
+  res.end(`<!doctype html><meta charset="utf-8"><title>EnZenem Admin</title>
+  <style>body{background:#0b0b0c;color:#eee;font:14px system-ui;padding:16px}
+  table{width:100%;border-collapse:collapse} td,th{border:1px solid #333;padding:8px;vertical-align:top}</style>
+  <h1>Admin – EnZenem</h1><p>Események: ${AUDIT.length}</p>
+  <table><thead><tr><th>Idő</th><th>Típus</th><th>Adat</th></tr></thead><tbody>${rows}</tbody></table>`);
+});
 app.get('/healthz', (req, res) => pushLog('contact', { email:o.email||'', name:o.name||'' });
 res.json({ ok:true, message:'Köszönjük, üzeneted megérkezett!' });
 
