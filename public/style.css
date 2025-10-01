@@ -186,3 +186,24 @@ footer{
   box-shadow: 0 12px 36px rgba(255,209,102,.35), 0 0 0 2px rgba(255,209,102,.18), inset 0 0 0 3px #000, inset 0 0 0 6px #121212;
   transform: translateY(-2px);
 }
+/* --- ÁSZF/Adatkezelés elfogadó sáv --- */
+.consent{
+  position: fixed;
+  left: 18px; right: 18px; bottom: 18px;
+  display: none; /* JS kapcsolja fel */
+  align-items: center; gap: 12px;
+  padding: 12px 14px;
+  background: rgba(0,0,0,.65);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  z-index: 1000;
+}
+.consent.show{ display: flex; }
+.consent p{ margin:0; color: var(--ink); font-size:.95rem }
+.consent a{ color: var(--accent); text-decoration: underline; }
+@media (max-width: 640px){
+  .consent{ flex-direction: column; align-items: stretch; }
+  .consent .primary{ width: 100%; }
+}
