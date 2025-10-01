@@ -24,6 +24,20 @@ const ENV = {
 
 app.use(cors());
 app.use(express.json());
+// In-memory log + basic auth admin
+const AUDIT = [];
+function pushLog(type, data){ try{ AUDIT.push({ts:new Date().toISOString(), type, data}); if(AUDIT.length>200) AUDIT.shift(); }catch{} }
+
+function adminAuth(req,res,next){
+  const u=process.env.ADMIN_USER||'', p=process.env.ADMIN_PASS||'';
+  const a=req.headers.authorization||'';
+  if(!u||!p) return res.status(403).send('Admin not configured');
+  if(!a.startsWith('Basic ')){ res.set('WWW-Authenticate','Basic'); return res.status(401).end(); }
+  const [user, pass] = Buffer.from(a.split(' ')[1],'base64').toString('utf8').split(':');
+  if(user===u && pass===p) return next();
+  res.set('WWW-Authenticate','Basic'); return res.status(401).end();
+}
+
 // --- Simple rate limit (per IP) ---
 const hitMap = new Map();
 function rateLimit(key, windowMs=10000, max=5){
