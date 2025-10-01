@@ -144,7 +144,7 @@ function queueEmails(tasks) {
 // Teszt végpont
 app.get('/api/test-mail', (req, res) => {
   const to = ENV.TO_EMAIL || ENV.SMTP_USER;
-  queueEmails([{ to, subject: 'Bakelit Songs – gyors teszt', html: '<p>Gyors tesztlevél.</p>' }]);
+  queueEmails([{ to, subject: 'EnZenem – gyors teszt', html: '<p>Gyors tesztlevél.</p>' }]);
   res.json({ ok: true, message: 'Teszt e-mail ütemezve: ' + to });
 });
 
@@ -172,8 +172,8 @@ app.post('/api/order', (req, res) => {
   if (o.email) {
     jobs.push({
       to: o.email,
-      subject: 'Bakelit Songs – Megrendelés fogadva',
-      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést. Hamarosan felvesszük veled a kapcsolatot a részletekkel és a fizetéssel kapcsolatban.</p><p>Üdv,<br/>Bakelit Songs</p>`
+      subject: 'EnZenem – Megrendelés fogadva',
+      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést. Hamarosan felvesszük veled a kapcsolatot a részletekkel és a fizetéssel kapcsolatban.</p><p>Üdv,<br/>EnZenem</p>`
     });
   }
   queueEmails(jobs);
@@ -196,10 +196,10 @@ app.post('/api/contact', (req, res) => {
   `;
 
   const jobs = [
-    { to: owner, subject: 'Bakelit Songs – Üzenet', html, replyTo: c.email || undefined }
+    { to: owner, subject: 'EnZenem – Üzenet', html, replyTo: c.email || undefined }
   ];
   if (c.email) {
-    jobs.push({ to: c.email, subject: 'Bakelit Songs – Üzenet fogadva', html: '<p>Köszönjük az üzenetet, hamarosan válaszolunk.</p>' });
+    jobs.push({ to: c.email, subject: 'EnZenem – Üzenet fogadva', html: '<p>Köszönjük az üzenetet, hamarosan válaszolunk.</p>' });
   }
   queueEmails(jobs);
 
