@@ -9,7 +9,9 @@
 }
 html,body{height:100%}
 html {
-  scroll-padding-top: 60px; /* vagy amennyi a fix fejléc magassága */
+  /* a sticky/fixed topbar miatt legyen globális görgetési „puffer” */
+html { scroll-padding-top: 84px; }   /* állítsd 72–96px között, amennyi a topbar magassága */
+section { scroll-margin-top: 84px; } /* ha szekcióra ugrasz, ne lógjon a fejléc alá */
 }
 body{
   margin:0;
