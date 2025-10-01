@@ -84,3 +84,60 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     history.pushState(null, '', hash);
   });
 });
+// ---- Megrendelésre irányítás az árkártyákról ----
+(function () {
+  const cards = document.querySelectorAll('.card.package');
+  if (!cards.length) return;
+
+  function showOrderPanel() {
+    const orderPanel = document.getElementById('megrendeles') || document.getElementById('order');
+    if (!orderPanel) return;
+
+    // panelek
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    orderPanel.classList.add('active');
+
+    // tabok
+    const tabs = document.querySelectorAll('.vinyl-tabs .tab');
+    tabs.forEach(t => t.classList.remove('active'));
+    const orderTab = Array.from(tabs).find(t => /megrendel/i.test(t.textContent));
+    if (orderTab) orderTab.classList.add('active');
+
+    // tetejére
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return orderPanel;
+  }
+
+  function setFormat(orderPanel, pkg) {
+    if (!orderPanel) return;
+
+    // select alapú mező
+    const sel = orderPanel.querySelector('select[name="format"], #format');
+    if (sel) {
+      const want = pkg.toLowerCase();
+      const opt = Array.from(sel.options).find(o =>
+        o.value.toLowerCase() === want || o.text.toLowerCase() === want
+      );
+      if (opt) sel.value = opt.value;
+    }
+
+    // radio alapú mező
+    const radio =
+      orderPanel.querySelector(`input[type="radio"][name="format"][value="${pkg}"]`) ||
+      orderPanel.querySelector(`input[type="radio"][name="format"][value="${pkg.toUpperCase()}"]`) ||
+      orderPanel.querySelector(`input[type="radio"][name="format"][value="${pkg.toLowerCase()}"]`);
+    if (radio) radio.checked = true;
+
+    // hidden mező fallback
+    const hidden = orderPanel.querySelector('input[type="hidden"][name="format"]');
+    if (hidden) hidden.value = pkg;
+  }
+
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      const pkg = card.getAttribute('data-package'); // 'mp3' | 'mp4' | 'wav'
+      const panel = showOrderPanel();
+      setFormat(panel, pkg);
+    });
+  });
+})();
