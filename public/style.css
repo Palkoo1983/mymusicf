@@ -1,3 +1,11 @@
+/* Biztos rejtés minden rejtett elemre */
+.hidden{ display:none !important; }
+
+/* Ha van köszönet overlay: rejtve se méret, se katt ne legyen */
+#thanksOverlay.hidden{
+  display:none !important;
+  pointer-events:none !important;
+}
 *{box-sizing:border-box}
 :root{
   --bg:#0b0c10;
