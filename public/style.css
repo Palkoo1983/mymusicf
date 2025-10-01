@@ -180,3 +180,9 @@ footer{
 .footer-links{ display:flex; gap:14px; justify-content:center; margin-bottom:8px }
 .footer-links a{ color:var(--muted); text-decoration:none; border-bottom:1px dashed rgba(255,255,255,.2) }
 .footer-links a:hover{ color:var(--ink) }
+/* Kattintható árkártyák */
+.card.package{ cursor: pointer; }
+.card.package:hover{
+  box-shadow: 0 12px 36px rgba(255,209,102,.35), 0 0 0 2px rgba(255,209,102,.18), inset 0 0 0 3px #000, inset 0 0 0 6px #121212;
+  transform: translateY(-2px);
+}
