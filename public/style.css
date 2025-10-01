@@ -139,3 +139,8 @@ footer{ text-align:center; padding:30px 12px; color:var(--muted); border-top:1px
   .primary, .ghost{ padding: 12px 16px; font-size: 16px }
   .panel{ padding: 18px }
 }
+.cookie{ position: fixed; left:50%; transform:translateX(-50%); bottom:14px;
+  background: rgba(0,0,0,.85); color:#eee; border:1px solid rgba(255,255,255,.15);
+  border-radius:12px; padding:12px 14px; display:flex; gap:12px; align-items:center; z-index:60 }
+.cookie .row{ display:flex; gap:10px }
+.cookie.hidden{ display:none }
