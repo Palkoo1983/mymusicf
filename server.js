@@ -119,7 +119,7 @@ function queueEmails(tasks) {
 // Teszt végpont
 app.get('/api/test-mail', (req, res) => {
   const to = ENV.TO_EMAIL || ENV.SMTP_USER;
-  queueEmails([{ to, subject: 'Bakelit Songs – gyors teszt', html: '<p>Gyors tesztlevél.</p>' }]);
+  queueEmails([{ to, subject: 'EnZenem – gyors teszt', html: '<p>Gyors tesztlevél.</p>' }]);
   res.json({ ok: true, message: 'Teszt e-mail ütemezve: ' + to });
 });
 
@@ -147,8 +147,8 @@ app.post('/api/order', (req, res) => {
   if (o.email) {
     jobs.push({
       to: o.email,
-      subject: 'Bakelit Songs – Megrendelés fogadva',
-      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést. Hamarosan felvesszük veled a kapcsolatot a részletekkel és a fizetéssel kapcsolatban.</p><p>Üdv,<br/>Bakelit Songs</p>`
+      subject: 'EnZenem – Megrendelés fogadva',
+      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést. Hamarosan felvesszük veled a kapcsolatot a részletekkel és a fizetéssel kapcsolatban.</p><p>Üdv,<br/>EnZenem</p>`
     });
   }
   queueEmails(jobs);
@@ -171,10 +171,10 @@ app.post('/api/contact', (req, res) => {
   `;
 
   const jobs = [
-    { to: owner, subject: 'Bakelit Songs – Üzenet', html, replyTo: c.email || undefined }
+    { to: owner, subject: 'EnZenem – Üzenet', html, replyTo: c.email || undefined }
   ];
   if (c.email) {
-    jobs.push({ to: c.email, subject: 'Bakelit Songs – Üzenet fogadva', html: '<p>Köszönjük az üzenetet, hamarosan válaszolunk.</p>' });
+    jobs.push({ to: c.email, subject: 'EnZenem – Üzenet fogadva', html: '<p>Köszönjük az üzenetet, hamarosan válaszolunk.</p>' });
   }
   queueEmails(jobs);
 
@@ -208,7 +208,7 @@ app.post('/api/checkout', async (req, res) => {
       price_data: {
         currency: CURRENCY,
         unit_amount: Math.max(200, amount) * (CURRENCY==='huf' ? 1 : 1), // Stripe expects integer minor units
-        product_data: { name: `Bakelit Songs – ${pack} csomag` }
+        product_data: { name: `EnZenem – ${pack} csomag` }
       },
       quantity: 1
     };
@@ -273,9 +273,9 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
         <p><b>Brief:</b><br/>${(md.brief || '').replace(/\n/g,'<br/>')}</p>
         <p><i>Stripe session: ${s.id}</i></p>
       `;
-      await sendMailFast({ to: owner, subject: 'Bakelit Songs – Fizetett megrendelés', html: orderHtml, replyTo: email || undefined });
+      await sendMailFast({ to: owner, subject: 'EnZenem – Fizetett megrendelés', html: orderHtml, replyTo: email || undefined });
       if(email){
-        await sendMailFast({ to: email, subject: 'Bakelit Songs – Fizetés sikeres', html: '<p>Köszönjük a fizetést! Hamarosan jelentkezünk a részletekkel.</p>' });
+        await sendMailFast({ to: email, subject: 'EnZenem – Fizetés sikeres', html: '<p>Köszönjük a fizetést! Hamarosan jelentkezünk a részletekkel.</p>' });
       }
     }
     res.json({received: true});
