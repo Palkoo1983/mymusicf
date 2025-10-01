@@ -1,21 +1,5 @@
 <!DOCTYPE html>
 <html lang="hu">
-<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="apple-touch-icon" href="icon-180.png">
-<meta name="theme-color" content="#0b0b0c">
-
-<meta name="description" content="EnZenem: egyedi, személyre szabott zenék esküvőkre, temetésekre és különleges eseményekre. Professzionális MP3/WAV/MP4 átadás.">
-<meta property="og:title" content="EnZenem – Egyedi zenék rendezvényekre">
-<meta property="og:description" content="Személyre szabott dalok – pop, rock, opera és bármi, női vagy férfi énekkel.">
-<meta property="og:url" content="https://www.enzenem.hu">
-<meta property="og:type" content="website">
-<meta property="og:image" content="logo-512.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="EnZenem – Egyedi zenék rendezvényekre">
-<meta name="twitter:description" content="Személyre szabott dalok minden eseményre.">
-<meta name="twitter:image" content="logo-512.png">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -24,14 +8,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
-<div id="cookieBanner" class="cookie hidden">
-  <div>Kis sütit használunk az oldal működéséhez és anonim statisztikához.</div>
-  <div class="row">
-    <button id="cookieAccept" class="primary">Elfogadom</button>
-    <button id="cookieDecline" class="ghost">Elutasítom</button>
-  </div>
-</div>
-
 <body>
   <div class="bg-vinyl"></div>
   <header class="topbar">
@@ -239,23 +215,13 @@
       </div>
     </section>
   
-  <!-- rejtett overlay a body végén -->
-<div id="thanksOverlay" class="hidden" style="position:fixed; inset:0; display:grid; place-items:center; background:rgba(0,0,0,.5); z-index:60">
-  <div class="panel" style="background:#0b0b0c; border:1px solid rgba(255,255,255,.15); border-radius:12px; padding:18px 20px; max-width:90vw; width:min(520px,90vw); color:#eee; position:relative;">
-    <!-- X gomb -->
-    <button type="button" data-close aria-label="Bezárás"
-            style="position:absolute; top:8px; right:8px; background:transparent; border:0; color:#bbb; font-size:18px; cursor:pointer;">✕</button>
-
-    <!-- Logó (EnZenem) -->
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-      <img src="logo-static.svg" alt="EnZenem" style="height:36px; width:auto;">
-      <strong>EnZenem</strong>
+  <div id="thanksOverlay" class="overlay hidden">
+    <div class="overlay-card">
+      <h3>Köszönjük!</h3>
+      <p>Üzeneted elküldtük. Hamarosan válaszolunk.</p>
+      <button id="overlayClose" class="primary">Bezárás</button>
     </div>
-
-    <!-- Üzenet -->
-    <p data-thanks-msg style="margin:0">Üzenet elküldve, hamarosan jelentkezünk!</p>
   </div>
-</div>
 
   </main>
 

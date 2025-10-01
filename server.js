@@ -24,20 +24,6 @@ const ENV = {
 
 app.use(cors());
 app.use(express.json());
-// In-memory log + basic auth admin
-const AUDIT = [];
-function pushLog(type, data){ try{ AUDIT.push({ts:new Date().toISOString(), type, data}); if(AUDIT.length>200) AUDIT.shift(); }catch{} }
-
-function adminAuth(req,res,next){
-  const u=process.env.ADMIN_USER||'', p=process.env.ADMIN_PASS||'';
-  const a=req.headers.authorization||'';
-  if(!u||!p) return res.status(403).send('Admin not configured');
-  if(!a.startsWith('Basic ')){ res.set('WWW-Authenticate','Basic'); return res.status(401).end(); }
-  const [user, pass] = Buffer.from(a.split(' ')[1],'base64').toString('utf8').split(':');
-  if(user===u && pass===p) return next();
-  res.set('WWW-Authenticate','Basic'); return res.status(401).end();
-}
-
 // --- Simple rate limit (per IP) ---
 const hitMap = new Map();
 function rateLimit(key, windowMs=10000, max=5){
@@ -53,17 +39,7 @@ function rateLimit(key, windowMs=10000, max=5){
 app.use(express.static('public'));
 
 // Health
-app.get('/admin', adminAuth, (req,res)=>{
-  const rows = AUDIT.slice().reverse()
-    .map(e=>`<tr><td>${e.ts}</td><td>${e.type}</td><td><pre style="white-space:pre-wrap;">${JSON.stringify(e.data||{},null,2)}</pre></td></tr>`).join('');
-  res.set('Content-Type','text/html; charset=utf-8');
-  res.end(`<!doctype html><meta charset="utf-8"><title>EnZenem Admin</title>
-  <style>body{background:#0b0b0c;color:#eee;font:14px system-ui;padding:16px}
-  table{width:100%;border-collapse:collapse} td,th{border:1px solid #333;padding:8px;vertical-align:top}</style>
-  <h1>Admin – EnZenem</h1><p>Események: ${AUDIT.length}</p>
-  <table><thead><tr><th>Idő</th><th>Típus</th><th>Adat</th></tr></thead><tbody>${rows}</tbody></table>`);
-});
-app.get('/healthz', (req, res) => res.json({ ok: true }));
+app.get('/healthz', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
 // ---------- Mail helpers ----------
 function buildTransport() {
@@ -143,7 +119,7 @@ function queueEmails(tasks) {
 // Teszt végpont
 app.get('/api/test-mail', (req, res) => {
   const to = ENV.TO_EMAIL || ENV.SMTP_USER;
-  queueEmails([{ to, subject: 'EnZenem – gyors teszt', html: '<p>Gyors tesztlevél.</p>' }]);
+  queueEmails([{ to, subject: 'Bakelit Songs – gyors teszt', html: '<p>Gyors tesztlevél.</p>' }]);
   res.json({ ok: true, message: 'Teszt e-mail ütemezve: ' + to });
 });
 
@@ -171,8 +147,8 @@ app.post('/api/order', (req, res) => {
   if (o.email) {
     jobs.push({
       to: o.email,
-      subject: 'EnZenem – Megrendelés fogadva',
-      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést. Hamarosan felvesszük veled a kapcsolatot a részletekkel és a fizetéssel kapcsolatban.</p><p>Üdv,<br/>EnZenem</p>`
+      subject: 'Bakelit Songs – Megrendelés fogadva',
+      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést. Hamarosan felvesszük veled a kapcsolatot a részletekkel és a fizetéssel kapcsolatban.</p><p>Üdv,<br/>Bakelit Songs</p>`
     });
   }
   queueEmails(jobs);
@@ -195,10 +171,10 @@ app.post('/api/contact', (req, res) => {
   `;
 
   const jobs = [
-    { to: owner, subject: 'EnZenem – Üzenet', html, replyTo: c.email || undefined }
+    { to: owner, subject: 'Bakelit Songs – Üzenet', html, replyTo: c.email || undefined }
   ];
   if (c.email) {
-    jobs.push({ to: c.email, subject: 'EnZenem – Üzenet fogadva', html: '<p>Köszönjük az üzenetet, hamarosan válaszolunk.</p>' });
+    jobs.push({ to: c.email, subject: 'Bakelit Songs – Üzenet fogadva', html: '<p>Köszönjük az üzenetet, hamarosan válaszolunk.</p>' });
   }
   queueEmails(jobs);
 
