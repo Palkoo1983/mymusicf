@@ -53,7 +53,8 @@ function rateLimit(key, windowMs=10000, max=5){
 app.use(express.static('public'));
 
 // Health
-app.get('/healthz', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
+app.get('/healthz', (req, res) => pushLog('contact', { email:o.email||'', name:o.name||'' });
+res.json({ ok:true, message:'Köszönjük, üzeneted megérkezett!' });
 
 // ---------- Mail helpers ----------
 function buildTransport() {
