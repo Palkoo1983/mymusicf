@@ -30,20 +30,65 @@ orderForm?.addEventListener('submit', async (e)=>{
   }
 });
 
+// Kapcsolat űrlap
 const contactForm = document.getElementById('contactForm');
 const contactStatus = document.getElementById('contactStatus');
-contactForm?.addEventListener('submit', async (e)=>{
+
+contactForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   contactStatus.textContent = 'Küldés...';
   const data = Object.fromEntries(new FormData(contactForm).entries());
-  try{
+  const submitBtn = contactForm.querySelector('button[type="submit"]');
+  submitBtn?.setAttribute('disabled','disabled');
+
+  try {
     const json = await postJSON('/api/contact', data);
     contactStatus.textContent = json.message || 'Üzenet elküldve, hamarosan jelentkezünk!';
     contactForm.reset();
-    const ov = document.getElementById('thanksOverlay'); if(ov){ ov.classList.remove('hidden'); }
-  }catch(err){
+
+    // ÚJ: zárható overlay megjelenítése
+    showThanksOverlay('Üzenet elküldve, hamarosan jelentkezünk!');
+  } catch (err) {
     contactStatus.textContent = 'Nem sikerült elküldeni. Próbáld újra.';
     console.error(err);
+  } finally {
+    submitBtn?.removeAttribute('disabled');
+  }
+});
+
+function showThanksOverlay(message){
+  const ov = document.getElementById('thanksOverlay');
+  if(!ov) return;
+  // ha van üzenet hely, írd ki oda (opcionális)
+  const msgEl = ov.querySelector('[data-thanks-msg]');
+  if (msgEl) msgEl.textContent = message || 'Köszönjük a megkeresést!';
+
+  ov.classList.remove('hidden');
+
+  // Bezárás kattintásra (háttérre) vagy X gombra
+  const close = () => hideThanksOverlay();
+  ov.__close && ov.removeEventListener('click', ov.__close);
+  ov.__close = (ev)=>{
+    if (ev.target.id === 'thanksOverlay' || ev.target.closest('[data-close]')) close();
+  };
+  ov.addEventListener('click', ov.__close);
+
+  // Esc-re
+  const esc = (ev)=>{ if(ev.key === 'Escape') close(); };
+  document.addEventListener('keydown', esc, { once:true });
+
+  // Auto-hide 3.5 másodperc után
+  clearTimeout(ov.__tid);
+  ov.__tid = setTimeout(close, 3500);
+}
+function hideThanksOverlay(){
+  const ov = document.getElementById('thanksOverlay');
+  if(!ov) return;
+  ov.classList.add('hidden');
+  if (ov.__close) ov.removeEventListener('click', ov.__close);
+  clearTimeout(ov.__tid);
+}
+
   }
 });
 (function(){
