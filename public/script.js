@@ -84,60 +84,70 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     history.pushState(null, '', hash);
   });
 });
-// ---- Megrendelésre irányítás az árkártyákról ----
+// ---- Megrendelésre irányítás + formátum beállítás (stabil verzió) ----
 (function () {
   const cards = document.querySelectorAll('.card.package');
   if (!cards.length) return;
 
   function showOrderPanel() {
     const orderPanel = document.getElementById('megrendeles') || document.getElementById('order');
-    if (!orderPanel) return;
+    if (!orderPanel) return null;
 
     // panelek
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     orderPanel.classList.add('active');
 
-    // tabok
+    // tab aktív jelölés
     const tabs = document.querySelectorAll('.vinyl-tabs .tab');
     tabs.forEach(t => t.classList.remove('active'));
     const orderTab = Array.from(tabs).find(t => /megrendel/i.test(t.textContent));
     if (orderTab) orderTab.classList.add('active');
 
     // tetejére
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'auto' });
     return orderPanel;
   }
 
-  function setFormat(orderPanel, pkg) {
+  function setFormat(orderPanel, pkg /* 'mp3' | 'mp4' | 'wav' */) {
     if (!orderPanel) return;
+    const want = pkg.toLowerCase();
 
-    // select alapú mező
-    const sel = orderPanel.querySelector('select[name="format"], #format');
-    if (sel) {
-      const want = pkg.toLowerCase();
-      const opt = Array.from(sel.options).find(o =>
-        o.value.toLowerCase() === want || o.text.toLowerCase() === want
-      );
-      if (opt) sel.value = opt.value;
-    }
+    // 1) SELECT mezők — keressük név/id alapján és az opciók szövegében is
+    orderPanel.querySelectorAll('select').forEach(sel => {
+      const opt = Array.from(sel.options).find(o => {
+        const v = (o.value || '').toLowerCase();
+        const t = (o.textContent || '').toLowerCase();
+        return v === want || t.includes(want);
+      });
+      if (opt) {
+        sel.value = opt.value;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
 
-    // radio alapú mező
-    const radio =
-      orderPanel.querySelector(`input[type="radio"][name="format"][value="${pkg}"]`) ||
-      orderPanel.querySelector(`input[type="radio"][name="format"][value="${pkg.toUpperCase()}"]`) ||
-      orderPanel.querySelector(`input[type="radio"][name="format"][value="${pkg.toLowerCase()}"]`);
-    if (radio) radio.checked = true;
+    // 2) RADIO gombok — value vagy címke alapján
+    orderPanel.querySelectorAll('input[type="radio"][name]').forEach(r => {
+      const v = (r.value || '').toLowerCase();
+      const lbl = orderPanel.querySelector(`label[for="${r.id}"]`);
+      const t = (lbl?.textContent || '').toLowerCase();
+      if (v === want || t.includes(want)) {
+        r.checked = true;
+        r.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
 
-    // hidden mező fallback
-    const hidden = orderPanel.querySelector('input[type="hidden"][name="format"]');
-    if (hidden) hidden.value = pkg;
+    // 3) Hidden mező fallback (ha használtok ilyet)
+    const hidden = orderPanel.querySelector('input[type="hidden"][name*="format" i]');
+    if (hidden) hidden.value = want.toUpperCase();
   }
 
   cards.forEach(card => {
-    card.addEventListener('click', () => {
-      const pkg = card.getAttribute('data-package'); // 'mp3' | 'mp4' | 'wav'
+    card.addEventListener('click', (e) => {
+      e.preventDefault();
+      const pkg = card.dataset.package; // 'mp3' | 'mp4' | 'wav'
       const panel = showOrderPanel();
-      setFormat(panel, pkg);
+      // Várjunk egy tick-et, hogy a DOM/active állapot biztosan kész legyen
+      setTimeout(() => setFormat(panel, pkg), 0);
     });
   });
 })();
