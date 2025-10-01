@@ -35,13 +35,22 @@ body{
   display:flex; align-items:center; gap:14px;
   padding:18px 22px 10px 22px;
 }
-.logo{
-  width:30px; height:30px; border-radius:50%;
-  background:
-    radial-gradient(circle at center, #333 0 34%, transparent 34% 36%, #222 36% 100%),
-    conic-gradient(from 0deg, #2e2e2e, #1d1d1d 60%, #2e2e2e);
-  box-shadow: inset 0 0 0 4px #000, inset 0 0 0 6px #111, var(--shadow);
+/* --- LOGÓ MÉRET (IMG OPCIÓ) --- */
+.brand .logo-img{
+  width: 30px;          /* ha még nagy: 40px; ha nagy képernyőn kicsi: 56px */
+  height: 30px;
+  display: block;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,.04),
+    0 0 16px rgba(212,175,55,.35);
 }
+
+/* mobilon pici korong */
+@media (max-width: 640px){
+  .brand .logo-img{ width: 36px; height: 36px; }
+}
+
 .brand h1{margin:0;font-size:1.35rem;letter-spacing:.3px}
 .brand p{margin:2px 0 0 0;color:var(--muted);font-size:.9rem}
 
