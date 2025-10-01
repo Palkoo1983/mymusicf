@@ -1,3 +1,40 @@
+// ---- BOMBABIZTOS TAB-KEZELŐ ----
+(function(){
+  function initTabs(){
+    const tabs  = document.querySelectorAll('[data-tab]');
+    const pages = document.querySelectorAll('[data-page]');
+    if(!tabs.length || !pages.length) return;
+
+    const show = (id)=>{
+      pages.forEach(p => p.classList.toggle('hidden', p.id !== id));
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === id));
+    };
+
+    tabs.forEach(t=>{
+      t.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const id = t.dataset.tab;
+        if(document.getElementById(id)) {
+          show(id);
+          history.replaceState(null,'','#'+id);
+        }
+      });
+    });
+
+    const initial = (location.hash && document.getElementById(location.hash.slice(1)))
+      ? location.hash.slice(1)
+      : (tabs[0]?.dataset.tab || pages[0]?.id);
+    if(initial) show(initial);
+  }
+
+  // biztosan akkor fusson, amikor a DOM kész
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initTabs);
+  }else{
+    initTabs();
+  }
+})();
+
 const tabs = document.querySelectorAll('.vinyl-tabs .tab');
 const panels = document.querySelectorAll('section.panel');
 function showPanel(id){
