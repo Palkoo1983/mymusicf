@@ -1,3 +1,14 @@
+async function postJSON(url, body){
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify(body || {})
+  });
+  let data = {};
+  try { data = await r.json(); } catch(_){}
+  if(!r.ok) throw new Error(data?.message || `Hálózati hiba (${r.status})`);
+  return data;
+}
 // ---- BOMBABIZTOS TAB-KEZELŐ ----
 (function(){
   function initTabs(){
