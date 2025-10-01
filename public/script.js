@@ -46,3 +46,16 @@ contactForm?.addEventListener('submit', async (e)=>{
     console.error(err);
   }
 });
+(function(){
+  const key='cookie-consent-v1';
+  const b=document.getElementById('cookieBanner');
+  if(!b) return;
+  if(localStorage.getItem(key)){ b.classList.add('hidden'); return; }
+  b.classList.remove('hidden');
+  document.getElementById('cookieAccept')?.addEventListener('click', ()=>{
+    localStorage.setItem(key,'1'); b.classList.add('hidden');
+  });
+  document.getElementById('cookieDecline')?.addEventListener('click', ()=>{
+    localStorage.setItem(key,'0'); b.classList.add('hidden');
+  });
+})();
