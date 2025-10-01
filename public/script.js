@@ -151,3 +151,23 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     });
   });
 })();
+// --- ÁSZF/Adatkezelés elfogadás banner ---
+(function () {
+  const key = 'consentAccepted.v1';
+  const el  = document.getElementById('consent');
+  if (!el) return;
+
+  // ha már elfogadta, ne jelenjen meg
+  if (localStorage.getItem(key) === 'true') return;
+
+  // megjelenítés
+  el.classList.add('show');
+
+  const btn = document.getElementById('consentAccept');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      localStorage.setItem(key, 'true');
+      el.classList.remove('show');
+    });
+  }
+})();
