@@ -78,10 +78,10 @@
   <circle cx="260" cy="260" r="16" fill="#2b2b2b" stroke="#444" stroke-width="2"/>
 
   <!-- Platinum texts with glow -->
-  <text font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-weight="700" font-size="42" letter-spacing="2" fill="url(#platinum)" filter="url(#textGlow)">
+  <text font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-weight="700" font-size="42" letter-spacing="2" fill="#000000" filter="url(#textGlow)">
     <textPath href="#arcTop" startOffset="50%" text-anchor="middle">ENZENEM</textPath>
   </text>
-  <text font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-weight="700" font-size="42" letter-spacing="2" fill="url(#platinum)" filter="url(#textGlow)">
+  <text font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-weight="700" font-size="42" letter-spacing="2" fill="#000000" filter="url(#textGlow)">
     <textPath href="#arcBottom" startOffset="50%" text-anchor="middle">ENZENEM</textPath>
   </text>
 </svg>
