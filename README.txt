@@ -1,4 +1,4 @@
-Bakelit Songs – v1.2 (Render-ready)
+EnZenem – v1.2 (Render-ready)
 Kéréseid szerint frissítve:
 - Bemutatkozás: Ének csak női vagy férfi
 - Megrendelés űrlap: Zenei stílus szabad szöveg (datalist opcióval), Ének csak női/férfi
@@ -53,7 +53,7 @@ STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 PUBLIC_URL=https://mymusic-XXXX.onrender.com
 RESEND_API_KEY=re_...
-MAIL_FROM="Bakelit Songs <onboarding@resend.dev>"
+MAIL_FROM="Enzenem <onboarding@resend.dev>"
 NOTIFY_TO=paulsdiamond@gmail.com
 RESEND_ONLY=true
 CURRENCY=huf
