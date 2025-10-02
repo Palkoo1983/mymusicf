@@ -1,12 +1,19 @@
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
 const tabs = document.querySelectorAll('.vinyl-tabs .tab');
 const panels = document.querySelectorAll('section.panel');
-function showPanel(id){
-  panels.forEach(p=>p.classList.toggle('active', p.id===id));
-  tabs.forEach(t=>t.classList.toggle('active', t.dataset.target===id));
-  document.querySelector('main').scrollIntoView({behavior:'smooth', block:'start'});
+function showPanel(id, opts = {}){
+  const { scroll = true } = opts; // alapértelmezés: görgetünk
+  panels.forEach(p => p.classList.toggle('active', p.id === id));
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.target === id));
+  if (scroll) {
+    document.querySelector('main').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 tabs.forEach(btn=>btn.addEventListener('click', ()=> showPanel(btn.dataset.target)));
-showPanel('intro');
+// első betöltéskor: ne görgessünk
+showPanel('intro', { scroll: false });
 
 async function postJSON(url, data){
   const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
