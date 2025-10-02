@@ -302,3 +302,7 @@ footer{
   font-size: .9rem;
   color: var(--muted);
 }
+/* Oldal első betöltéskor ne csússzon lejjebb */
+html {
+  scroll-padding-top: 92px; /* állítsd a topbar tényleges magasságára (pl. 80–120px) */
+}
