@@ -73,8 +73,8 @@ body{
 }
 
 /* mobilon kisebb */
-@media (max-width: 640px){
-  .brand .logo-img{ width:40px; height:40px; }
+@media (max-width: 768px){
+  .brand .logo-img{ width:80px; height:80px; }
 }
 
 .brand h1{ margin:0; font-size:1.35rem; letter-spacing:.3px }
