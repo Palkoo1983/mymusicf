@@ -270,3 +270,35 @@ footer{
   max-width: 280px;     /* kb. fele – állítható: 260–320px */
   margin: 0 auto;       /* középre igazítás */
 }
+
+
+/* ==== Referenciák – egységes videóméret (mind 'small') ==== */
+.embeds{ display:grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap:16px }
+.embed .video{ position:relative; width:100%; padding-top:56.25%; }
+.embed .video iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+/* felezett kártyaszélesség érzet – kisebb videó */
+.embed.small .video{ max-width: 280px; margin: 0 auto; }
+
+/* ==== Árak – nyitási akció ==== */
+.promo-banner{
+  margin: 8px 0 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255,215,0,.15), rgba(255,255,255,.05));
+  border: 1px dashed var(--accent);
+  font-weight: 600;
+  text-align: center;
+}
+.old-price{
+  text-decoration: line-through;
+  opacity: .7;
+  margin-right: 8px;
+}
+.new-price{
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+.promo-note{
+  font-size: .9rem;
+  color: var(--muted);
+}
