@@ -148,7 +148,8 @@ app.post('/api/order', (req, res) => {
     jobs.push({
       to: o.email,
       subject: 'EnZenem – Megrendelés fogadva',
-      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést. Hamarosan felvesszük veled a kapcsolatot a részletekkel és a fizetéssel kapcsolatban.</p><p>Üdv,<br/>EnZenem</p>`
+      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést! A megrendelését megkaptuk, és 36 órán belül elküldjük Önnek a videó letöltési linkjét.
+Ha bármilyen kérdése merül fel, szívesen segítünk!</p><p>Üdv,<br/>EnZenem</p>`
     });
   }
   queueEmails(jobs);
