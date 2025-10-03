@@ -20,6 +20,60 @@ async function postJSON(url, data){
   if(!res.ok) throw new Error('Hiba a beküldésnél');
   return await res.json();
 }
+// === Leírás-segéd inicializálása az ORDER panelen – csak egyszer! ===
+function initBriefHelper() {
+  const orderPanel = document.getElementById('order');
+  if (!orderPanel) return;
+
+  // ha már létrejött, NE szúrjuk be még egyszer
+  if (orderPanel.querySelector('#enz-quality')) return;
+
+  const desc =
+    orderPanel.querySelector('textarea[name="brief"], textarea#brief, textarea');
+  if (!desc) return;
+
+  // infó sor
+  const info = document.createElement('div');
+  info.id = 'enz-quality'; // <<< ettől felismerjük legközelebb
+  info.style.fontSize = '12px';
+  info.style.marginTop = '6px';
+  info.style.color = '#b6b6c3';
+  info.innerHTML = '<span id="enz-count">0</span> karakter • <strong id="enz-score">Túl rövid</strong>';
+  desc.insertAdjacentElement('afterend', info);
+
+  // tipp doboz
+  const tip = document.createElement('div');
+  tip.style.display = 'none';
+  tip.style.marginTop = '6px';
+  tip.style.padding = '10px';
+  tip.style.border = '1px dashed #2b2d3a';
+  tip.style.borderRadius = '10px';
+  tip.style.background = '#12131a';
+  tip.style.color = '#b6b6c3';
+  tip.innerHTML = '💡 <strong>Tipp:</strong> írd le <em>kinek</em> készül, <em>milyen alkalomra</em>, stílus/hangulat, 3–5 kulcsszó, 1–2 konkrét emlék.';
+  info.insertAdjacentElement('afterend', tip);
+
+  const countEl = info.querySelector('#enz-count');
+  const scoreEl = info.querySelector('#enz-score');
+
+  function updateQuality() {
+    const len = (desc.value || '').trim().length;
+    countEl.textContent = String(len);
+    if (len < 120) { scoreEl.textContent = 'Túl rövid'; scoreEl.style.color = '#ef476f'; tip.style.display = 'block'; }
+    else if (len < 250) { scoreEl.textContent = 'Elfogadható'; scoreEl.style.color = ''; tip.style.display = 'none'; }
+    else if (len < 900) { scoreEl.textContent = 'Kiváló'; scoreEl.style.color = '#06d6a0'; tip.style.display = 'none'; }
+    else { scoreEl.textContent = 'Nagyon hosszú (rövidíts)'; scoreEl.style.color = '#ef476f'; tip.style.display = 'block'; }
+  }
+  desc.addEventListener('input', updateQuality);
+  updateQuality();
+}
+
+// Első betöltéskor
+document.addEventListener('DOMContentLoaded', initBriefHelper);
+
+// Tab-váltáskor a Megrendelés fülre lépve is futtassuk (kis késleltetéssel)
+document.querySelector('.tab[data-target="order"]')
+  ?.addEventListener('click', () => setTimeout(initBriefHelper, 60));
 
 const orderForm = document.getElementById('orderForm');
 const orderStatus = document.getElementById('orderStatus');
