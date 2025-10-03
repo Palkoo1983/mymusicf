@@ -1,10 +1,10 @@
 /* =========================================================
    EnZenem – main script (FULL REPLACEMENT)
-   - Tab navigation (vinyl-tabs)
+   - Tab navigation (vinyl-tabs) + scroll to top
    - Package card selection
-   - HOWTO -> ORDER focus + example chips
+   - HOWTO -> ORDER focus + example chips (scroll to top)
    - Brief helper (counter + quality, NO DUPLICATES) + examples on ORDER
-   - Order & Contact form submit (fetch JSON)
+   - Order form (ALWAYS show license modal) + Contact form
    - Thanks overlay
    - Consent bar + License modal
    ========================================================= */
@@ -19,7 +19,7 @@ async function postJSON(url, data) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return await res.json().catch(() => ({}));
 }
-const qs = (sel, root = document) => root.querySelector(sel);
+const qs  = (sel, root = document) => root.querySelector(sel);
 const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
 /* ---------- tabs ---------- */
@@ -35,23 +35,19 @@ function initTabs() {
       p.classList.toggle('active', on);
     });
     buttons.forEach(b => {
-      const on = b.dataset.target === targetId;
+      const on = (b.dataset.target === targetId);
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
       b.classList.toggle('active', on);
     });
     if (targetId === 'order') setTimeout(initBriefHelper, 50);
+    // mindig a lap tetejére gördítünk
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-function activate(targetId) {
-  if (!targetId) return;
-  // ... a meglévő kódod ...
-  if (targetId === 'order') setTimeout(initBriefHelper, 50);
 
-  // >>> ÚJ: mindig a tetejére gördítünk
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-  // initial
+  // initial state
   const activePanel = panels.find(p => p.classList.contains('active')) || panels[0];
   panels.forEach(p => (p.hidden = p !== activePanel));
+
   buttons.forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -72,6 +68,7 @@ function initPackages() {
       const pkg = card.getAttribute('data-package'); // mp3/mp4/wav
       orderTabBtn?.click();
       setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         const sel = qs('#order select[name="package"]');
         if (!sel) return;
         if (pkg === 'mp3') sel.value = 'basic';
@@ -94,31 +91,30 @@ function initHowTo() {
   }
 
   openBtn?.addEventListener('click', () => {
-  orderTabBtn?.click();
-  setTimeout(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });   // <<< ÚJ
-    focusBrief();
-  }, 80);
-});
-
-
-  // Példachipek a HOWTO panelen
- qsa('#howto .chip[data-example]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const text = btn.getAttribute('data-example') || '';
     orderTabBtn?.click();
     setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' }); // <<< ÚJ
-      const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-      if (desc) {
-        desc.value = text;
-        desc.dispatchEvent(new Event('input', { bubbles: true }));
-        desc.focus();
-      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      focusBrief();
     }, 80);
   });
-});
 
+  // Példa-chipek a HOWTO panelen
+  qsa('#howto .chip[data-example]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = btn.getAttribute('data-example') || '';
+      orderTabBtn?.click();
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+        if (desc) {
+          desc.value = text;
+          desc.dispatchEvent(new Event('input', { bubbles: true }));
+          desc.focus();
+        }
+      }, 80);
+    });
+  });
+}
 
 /* ---------- Leírás helper az ORDER panelen (no duplicates) + példák ---------- */
 function initBriefHelper() {
@@ -229,8 +225,6 @@ function initBriefHelper() {
   });
 }
 
-/* ---------- Order form submit ---------- */
-/* ---------- Order form submit (with license gate) ---------- */
 /* ---------- Order form submit (ALWAYS show license modal) ---------- */
 function initOrderForm() {
   const orderForm   = qs('#orderForm');
@@ -266,7 +260,7 @@ function initOrderForm() {
     e.preventDefault(); e.stopPropagation();
     const data = Object.fromEntries(new FormData(orderForm).entries());
 
-    // >>> MINDIG kérdezzünk rá (nincs cookie / localStorage)
+    // MINDIG kérdezzünk rá (nincs cookie / localStorage)
     showModal();
 
     const onAccept = () => {
@@ -287,52 +281,6 @@ function initOrderForm() {
   });
 }
 
-
-  // Modál megjelenítése/elrejtése
-  function showModal() {
-    if (!modal) return;
-    modal.style.display = 'block';
-    modal.setAttribute('aria-hidden', 'false');
-  }
-  function hideModal() {
-    if (!modal) return;
-    modal.style.display = 'none';
-    modal.setAttribute('aria-hidden', 'true');
-  }
-
-  // Submit-kezelő – előbb licenc elfogadás, aztán küldés
-  orderForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(orderForm).entries());
-
-    // Ha már elfogadta korábban, mehet egyből
-    if (localStorage.getItem('enz-license-ok') === '1') {
-      actuallySend(data);
-      return;
-    }
-
-    // Különben: mutassuk a modált, és várjuk a döntést
-    showModal();
-
-    // egyszeri elfogadás → mentés + küldés
-    const onAccept = () => {
-      localStorage.setItem('enz-license-ok', '1');
-      hideModal();
-      acceptBtn?.removeEventListener('click', onAccept);
-      cancelBtn?.removeEventListener('click', onCancel);
-      actuallySend(data);
-    };
-    const onCancel = () => {
-      hideModal();
-      if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
-      acceptBtn?.removeEventListener('click', onAccept);
-      cancelBtn?.removeEventListener('click', onCancel);
-    };
-
-    acceptBtn?.addEventListener('click', onAccept, { once: true });
-    cancelBtn?.addEventListener('click', onCancel, { once: true });
-  });
-}
 /* ---------- Contact form submit + thanks overlay (no redirect) ---------- */
 function initContactForm() {
   const contactForm   = qs('#contactForm');
@@ -365,21 +313,33 @@ function initContactForm() {
   overlayClose?.addEventListener('click', () => overlay?.classList.add('hidden'));
 }
 
-/* ---------- License modal (optional direct open/close wiring) ---------- */
+/* ---------- Consent bar ---------- */
+function initConsent() {
+  const bar    = qs('#consent');
+  const accept = qs('#consentAccept');
+  if (!bar || !accept) return;
+
+  if (localStorage.getItem('enz-consent') === '1') {
+    bar.style.display = 'none';
+  } else {
+    bar.style.display = '';
+  }
+  accept.addEventListener('click', () => {
+    localStorage.setItem('enz-consent', '1');
+    bar.style.display = 'none';
+  });
+}
+
+/* ---------- License modal ---------- */
 function initLicenseModal() {
   const modal  = qs('#license-warning');
   const ok     = qs('#licenseAccept');
   const cancel = qs('#licenseCancel');
   if (!modal || !ok || !cancel) return;
 
-  // Ha valahol külön gombbal akarod megnyitni a modált, teheted:
-  // qs('#openLicense')?.addEventListener('click', () => {
-  //   modal.style.display = 'block';
-  //   modal.setAttribute('aria-hidden', 'false');
-  // });
-
-  // A bezárást a submit-flow intézi; itt fallbackként is lezárható:
-  ok.addEventListener('click', () => { /* a submit flow kezeli a küldést */ });
+  // A tényleges megnyitást az Order submit flow intézi.
+  // Itt csak fallback bezárás marad:
+  ok.addEventListener('click', () => { /* submit flow kezeli */ });
   cancel.addEventListener('click', () => {
     modal.style.display = 'none';
     modal.setAttribute('aria-hidden', 'true');
