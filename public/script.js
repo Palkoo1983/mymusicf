@@ -232,3 +232,101 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     cancel.addEventListener('click', () => hideModal());
   }
 })();
+// --- 'Hogyan működik' -> Megnyitja a Megrendelés tabot és fókuszál a Leírásra
+(function () {
+  const toOrderBtn = document.getElementById('howto-open-order');
+  const orderTabBtn = document.querySelector('.tab[data-target="order"]');
+
+  function focusDesc() {
+    const desc =
+      document.querySelector('#order textarea#leiras, #order textarea[name="description"], #order textarea#description, #order textarea');
+    if (desc) desc.focus();
+  }
+
+  toOrderBtn?.addEventListener('click', () => {
+    orderTabBtn?.click();      // váltás a Megrendelés fülre
+    setTimeout(focusDesc, 80); // kis késleltetés, hogy a panel megjelenjen
+  });
+})();
+
+// --- Leírás-segéd csak a #order panelre
+(function () {
+  const orderPanel = document.getElementById('order');
+  if (!orderPanel) return;
+
+  const desc =
+    orderPanel.querySelector('textarea#leiras, textarea[name="description"], textarea#description, textarea');
+
+  if (!desc) return;
+
+  // Info sor
+  const info = document.createElement('div');
+  info.style.fontSize = '12px';
+  info.style.marginTop = '6px';
+  info.style.color = '#b6b6c3';
+  info.innerHTML = '<span id="enz-count">0</span> karakter • <strong id="enz-score">Túl rövid</strong>';
+  desc.insertAdjacentElement('afterend', info);
+
+  // Példák
+  const examples = [
+    'Születésnapra készül a dal a nővéremnek, Nóra 46 éves. Szereti a minimál techno és house zenét. Kulcsszavak: kitartás, logika, barátság, újrakezdés. Emlék: amikor együtt túráztunk a Csóványosra.',
+    'Esküvőre készül a dal, Kata és Máté számára. Stílus: romantikus pop, lassú tempó. Kulcsszavak: hűség, közös jövő, naplemente. Emlék: első közös balatoni nyaralás.',
+    'Évfordulóra szóló dal. Rock-pop stílus, közepes tempó. Kulcsszavak: humor, közös főzés, macskánk: Mázli. Emlék: első saját lakás kulcsa.'
+  ];
+  const wrap = document.createElement('div');
+  wrap.style.display = 'flex';
+  wrap.style.flexWrap = 'wrap';
+  wrap.style.gap = '8px';
+  wrap.style.marginTop = '8px';
+  examples.forEach(t => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = t.slice(0, 22) + '… példa';
+    b.className = 'chip';
+    b.style.padding = '6px 10px';
+    b.style.borderRadius = '999px';
+    b.style.border = '1px solid #2a2b3a';
+    b.style.background = '#10111a';
+    b.style.color = '#f4f4f7';
+    b.addEventListener('click', () => { desc.value = t; updateQuality(); desc.focus(); });
+    wrap.appendChild(b);
+  });
+  info.insertAdjacentElement('afterend', wrap);
+
+  // Tipp doboz
+  const tip = document.createElement('div');
+  tip.style.display = 'none';
+  tip.style.marginTop = '6px';
+  tip.style.padding = '10px';
+  tip.style.border = '1px dashed #2b2d3a';
+  tip.style.borderRadius = '10px';
+  tip.style.background = '#12131a';
+  tip.style.color = '#b6b6c3';
+  tip.innerHTML = '💡 <strong>Tipp:</strong> írd le <em>kinek</em> készül, <em>milyen alkalomra</em>, stílus/hangulat, 3–5 kulcsszó, 1–2 konkrét emlék, és ha van tiltólista.';
+  wrap.insertAdjacentElement('afterend', tip);
+
+  const countEl = info.querySelector('#enz-count');
+  const scoreEl = info.querySelector('#enz-score');
+
+  function updateQuality() {
+    const len = (desc.value || '').trim().length;
+    countEl.textContent = String(len);
+    if (len < 120) { scoreEl.textContent = 'Túl rövid'; scoreEl.style.color = '#ef476f'; tip.style.display = 'block'; }
+    else if (len < 250) { scoreEl.textContent = 'Elfogadható'; scoreEl.style.color = ''; tip.style.display = 'none'; }
+    else if (len < 900) { scoreEl.textContent = 'Kiváló'; scoreEl.style.color = '#06d6a0'; tip.style.display = 'none'; }
+    else { scoreEl.textContent = 'Nagyon hosszú (rövidíts)'; scoreEl.style.color = '#ef476f'; tip.style.display = 'block'; }
+  }
+  desc.addEventListener('input', updateQuality);
+  updateQuality();
+
+  // Ha van form a #order panelben, beküldés előtt ellenőrzünk
+  const form = desc.closest('form');
+  form?.addEventListener('submit', (e) => {
+    const len = (desc.value || '').trim().length;
+    if (len < 120) {
+      e.preventDefault();
+      alert('A Leírás túl rövid. Kérlek, adj több támpontot (kinek, alkalom, stílus, kulcsszavak, emlékek), hogy személyre szabhassuk a dalt.');
+      desc.focus();
+    }
+  });
+})();
