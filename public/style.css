@@ -306,3 +306,6 @@ footer{
 html {
   scroll-padding-top: 92px; /* állítsd a topbar tényleges magasságára (pl. 80–120px) */
 }
+.chip { padding: 6px 10px; border-radius: 999px; border: 1px solid #2a2b3a; background: #10111a; color: #f4f4f7; cursor: pointer; }
+.chip + .chip { margin-left: 8px; }
+.note { margin: 10px 0; padding: 10px 12px; border: 1px dashed #2b2d3a; background: #12131a; border-radius: 10px; color: #b6b6c3; }
