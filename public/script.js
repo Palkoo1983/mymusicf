@@ -3,7 +3,7 @@
    - Tab navigation (vinyl-tabs)
    - Package card selection
    - HOWTO -> ORDER focus + example chips
-   - Brief helper (counter + quality, NO DUPLICATES)
+   - Brief helper (counter + quality, NO DUPLICATES) + examples on ORDER
    - Order & Contact form submit (fetch JSON)
    - Thanks overlay
    - Consent bar + License modal
@@ -19,9 +19,8 @@ async function postJSON(url, data) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return await res.json().catch(() => ({}));
 }
-
-function qs(sel, root = document) { return root.querySelector(sel); }
-function qsa(sel, root = document) { return Array.from(root.querySelectorAll(sel)); }
+const qs = (sel, root = document) => root.querySelector(sel);
+const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
 /* ---------- tabs ---------- */
 function initTabs() {
@@ -29,30 +28,28 @@ function initTabs() {
   const panels  = qsa('main .panel');
 
   function activate(targetId) {
+    if (!targetId) return;
     panels.forEach(p => {
-      if (p.id === targetId) {
-        p.hidden = false;
-        p.classList.add('active');
-      } else {
-        p.hidden = true;
-        p.classList.remove('active');
-      }
+      const on = (p.id === targetId);
+      p.hidden = !on;
+      p.classList.toggle('active', on);
     });
-    // aktív állapot a gombokon
     buttons.forEach(b => {
       const on = b.dataset.target === targetId;
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
       b.classList.toggle('active', on);
     });
-    // megrendelésre lépéskor inicializáljuk a brief helper-t (guard miatt nem dupláz)
     if (targetId === 'order') setTimeout(initBriefHelper, 50);
   }
 
-  // kezdeti: hagyjuk, amit a HTML jelöl 'active'-ként; ha nincs, az első tab
+  // initial
   const activePanel = panels.find(p => p.classList.contains('active')) || panels[0];
   panels.forEach(p => (p.hidden = p !== activePanel));
   buttons.forEach(btn => {
-    btn.addEventListener('click', () => activate(btn.dataset.target));
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      activate(btn.dataset.target);
+    });
   });
 }
 
@@ -62,11 +59,9 @@ function initPackages() {
   const orderTabBtn = qs('.tab[data-target="order"]');
   cards.forEach(card => {
     card.addEventListener('click', () => {
-      // vizuálisan kijelölhető, ha szükséges
       cards.forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
 
-      // Megrendelés fülre ugrás és csomag beállítás
       const pkg = card.getAttribute('data-package'); // mp3/mp4/wav
       orderTabBtn?.click();
       setTimeout(() => {
@@ -113,13 +108,12 @@ function initHowTo() {
   });
 }
 
-/* ---------- Leírás helper az ORDER panelen (no duplicates) ---------- */
-// === Leírás-segéd az ORDER panelen (counter + minőség + példák, duplázás nélkül) ===
+/* ---------- Leírás helper az ORDER panelen (no duplicates) + példák ---------- */
 function initBriefHelper() {
   const orderPanel = qs('#order');
   if (!orderPanel) return;
 
-  // ha már létrejött, NE szúrjuk be még egyszer
+  // guard: ha már létrehoztuk, kilépünk
   if (qs('#enz-quality', orderPanel)) return;
 
   const desc = qs('textarea[name="brief"], textarea#brief, textarea', orderPanel);
@@ -134,7 +128,7 @@ function initBriefHelper() {
   info.innerHTML = '<span id="enz-count">0</span> karakter • <strong id="enz-score">Túl rövid</strong>';
   desc.insertAdjacentElement('afterend', info);
 
-  // === Minta leírások – ORDER panelre (dupla ellen védve) ===
+  // minta leírások – csak egyszer
   if (!qs('#enz-order-examples', orderPanel)) {
     const exWrap = document.createElement('div');
     exWrap.id = 'enz-order-examples';
@@ -143,31 +137,19 @@ function initBriefHelper() {
     exWrap.style.gap = '8px';
     exWrap.style.marginTop = '8px';
 
-    // >>> Itt a BŐVÍTETT példalista <<<
     const examples = [
-      // Szülinap
       'Születésnapra készül a dal a nővéremnek, Nóra 46 éves. Szereti a minimál techno és house zenét. Kulcsszavak: kitartás, logika, barátság, újrakezdés. Emlék: amikor együtt túráztunk a Csóványosra.',
-      // Esküvő
       'Esküvőre készül a dal, Kata és Máté számára. Stílus: romantikus pop, lassú tempó. Kulcsszavak: hűség, közös jövő, naplemente. Emlék: első közös balatoni nyaralás.',
-      // Évforduló
       'Évfordulónkra szeretném meglepni a páromat. Közepes tempójú rock-pop, pozitív hangulat. Kulcsszavak: humor, közös főzés, macskánk Mázli. Emlék: amikor megkaptuk az első közös lakás kulcsát.',
-      // Búcsúztató
       'Búcsúztatóra készül a dal. Méltóságteljes, nyugodt hangulat, kevés dob. Kulcsszavak: hála, fény, emlékek. Emlék: gyerekkori közös zongorázás a nappaliban.',
-      // Céges rendezvény
       'Céges évzáróra kérek dalt. Tempó: lendületes, modern pop/elektronikus. Kulcsszavak: csapatmunka, innováció, 2025 célok, humor. Emlék: a tavaszi hackathon győzelmünk.',
-      // Gyerekdal
       'Gyerekdal 6 éves kislánynak, Lilinek. Vidám, egyszerű dallam, könnyen énekelhető refrén. Kulcsszavak: unikornis, szivárvány, ovi-barátok. Emlék: közös biciklizés a parkban.',
-      // Nyugdíjba vonulás
       'Nyugdíjba vonuló kollégának. Hangulat: nosztalgikus, felemelő, akusztikus gitár+zongora. Kulcsszavak: segítőkészség, humor, 25 év, csapat. Emlék: a legendás hétfő reggeli kávék.',
-      // Jobbulást / támogatás
       'Jobbulást kívánó dal. Lassan építkező, reményt adó hangulat. Kulcsszavak: kitartás, gyógyulás, melletted állunk. Emlék: nyári tábortűz melletti beszélgetések.',
-      // Lánykérés / jegyesség
       'Lánykéréshez készülő dal. Romantikus pop ballada, meleg hangzás. Kulcsszavak: közös jövő, „igen” pillanat, összetartozás. Emlék: első csók a Margitszigeten.',
-      // Ballagás / diploma
       'Ballagásra/diplomához kérünk dalt. Tempó: közepes, motiváló. Kulcsszavak: álom, kitartás, új kezdet. Emlék: éjszakai tanulások és a záróvizsga napja.'
     ];
 
-    // (opcionális) kis cím
     const exTitle = document.createElement('div');
     exTitle.textContent = 'Minta leírások:';
     exTitle.style.marginTop = '10px';
@@ -175,7 +157,6 @@ function initBriefHelper() {
     exTitle.style.color = '#b6b6c3';
     info.insertAdjacentElement('afterend', exTitle);
 
-    // chip-ek
     examples.forEach(t => {
       const b = document.createElement('button');
       b.type = 'button';
@@ -196,7 +177,6 @@ function initBriefHelper() {
 
     exTitle.insertAdjacentElement('afterend', exWrap);
   }
-  // === /Minta leírások ===
 
   // tipp doboz
   const tip = document.createElement('div');
@@ -237,29 +217,6 @@ function initBriefHelper() {
   });
 }
 
-  function updateQuality() {
-    const len = (desc.value || '').trim().length;
-    countEl.textContent = String(len);
-    if (len < 120) { scoreEl.textContent = 'Túl rövid'; scoreEl.style.color = '#ef476f'; tip.style.display = 'block'; }
-    else if (len < 250) { scoreEl.textContent = 'Elfogadható'; scoreEl.style.color = ''; tip.style.display = 'none'; }
-    else if (len < 900) { scoreEl.textContent = 'Kiváló'; scoreEl.style.color = '#06d6a0'; tip.style.display = 'none'; }
-    else { scoreEl.textContent = 'Nagyon hosszú (rövidíts)'; scoreEl.style.color = '#ef476f'; tip.style.display = 'block'; }
-  }
-  desc.addEventListener('input', updateQuality);
-  updateQuality();
-
-  // Beküldés előtt ellenőrzés – 120 karakter alatt ne engedjük
-  const form = desc.closest('form');
-  form?.addEventListener('submit', (e) => {
-    const len = (desc.value || '').trim().length;
-    if (len < 120) {
-      e.preventDefault();
-      alert('A Leírás túl rövid. Kérlek, adj több támpontot (kinek, alkalom, stílus, kulcsszavak, emlékek), hogy személyre szabhassuk a dalt.');
-      desc.focus();
-    }
-  });
-}
-
 /* ---------- Order form submit ---------- */
 function initOrderForm() {
   const orderForm   = qs('#orderForm');
@@ -268,13 +225,13 @@ function initOrderForm() {
 
   orderForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    orderStatus.textContent = 'Küldés...';
+    if (orderStatus) orderStatus.textContent = 'Küldés...';
 
     const data = Object.fromEntries(new FormData(orderForm).entries());
 
     try {
       const json = await postJSON('/api/order', data);
-      orderStatus.textContent = json.message || 'Köszönjük! Válasz e-mailt küldtünk.';
+      if (orderStatus) orderStatus.textContent = json.message || 'Köszönjük! Válasz e-mailt küldtünk.';
       orderForm.reset();
 
       // brief helper újraszámolás (lenullázás)
@@ -283,7 +240,7 @@ function initOrderForm() {
         if (desc) desc.dispatchEvent(new Event('input', { bubbles: true }));
       }, 10);
     } catch (err) {
-      orderStatus.textContent = 'Nem sikerült elküldeni. Próbáld újra később.';
+      if (orderStatus) orderStatus.textContent = 'Nem sikerült elküldeni. Próbáld újra később.';
       console.error(err);
     }
   });
@@ -340,8 +297,6 @@ function initLicenseModal() {
   const cancel = qs('#licenseCancel');
   if (!modal || !ok || !cancel) return;
 
-  // csak példának: a Megrendelés panel megnyitásakor villanthatnánk
-  // itt most manuálisan vezérelt (gombok zárnak/nyitnak)
   ok.addEventListener('click', () => { modal.setAttribute('aria-hidden', 'true'); modal.style.display = 'none'; });
   cancel.addEventListener('click', () => { modal.setAttribute('aria-hidden', 'true'); modal.style.display = 'none'; });
 }
