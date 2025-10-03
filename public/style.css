@@ -309,3 +309,19 @@ html {
 .chip { padding: 6px 10px; border-radius: 999px; border: 1px solid #2a2b3a; background: #10111a; color: #f4f4f7; cursor: pointer; }
 .chip + .chip { margin-left: 8px; }
 .note { margin: 10px 0; padding: 10px 12px; border: 1px dashed #2b2d3a; background: #12131a; border-radius: 10px; color: #b6b6c3; }
+.license-modal {
+  position: fixed; inset: 0;
+  display: none;
+  background: rgba(0,0,0,.6);
+  z-index: 9999;
+}
+.license-modal .license-card {
+  max-width: 680px;
+  margin: 10vh auto;
+  background: #15151b;
+  border: 1px solid #242532;
+  border-radius: 16px;
+  padding: 16px;
+  color: #f4f4f7;
+  box-shadow: 0 30px 80px rgba(0,0,0,.5);
+}
