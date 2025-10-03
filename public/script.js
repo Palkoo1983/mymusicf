@@ -94,26 +94,31 @@ function initHowTo() {
   }
 
   openBtn?.addEventListener('click', () => {
-    orderTabBtn?.click();
-    setTimeout(focusBrief, 80);
-  });
+  orderTabBtn?.click();
+  setTimeout(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });   // <<< ÚJ
+    focusBrief();
+  }, 80);
+});
+
 
   // Példachipek a HOWTO panelen
-  qsa('#howto .chip[data-example]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const text = btn.getAttribute('data-example') || '';
-      orderTabBtn?.click();
-      setTimeout(() => {
-        const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-        if (desc) {
-          desc.value = text;
-          desc.dispatchEvent(new Event('input', { bubbles: true }));
-          desc.focus();
-        }
-      }, 80);
-    });
+ qsa('#howto .chip[data-example]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const text = btn.getAttribute('data-example') || '';
+    orderTabBtn?.click();
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // <<< ÚJ
+      const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+      if (desc) {
+        desc.value = text;
+        desc.dispatchEvent(new Event('input', { bubbles: true }));
+        desc.focus();
+      }
+    }, 80);
   });
-}
+});
+
 
 /* ---------- Leírás helper az ORDER panelen (no duplicates) + példák ---------- */
 function initBriefHelper() {
