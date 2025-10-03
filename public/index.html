@@ -280,20 +280,24 @@
 <button class="primary" id="consentAccept">Elfogadom</button>
 </div>
 <!-- Licenc figyelmeztetés (modál) -->
-<div aria-hidden="true" aria-label="Felhasználási feltételek" class="license-modal" id="license-warning" role="dialog">
-<div class="license-card">
-<p>
-      A megrendelt zene felhasználása kizárólag
-      <strong>családi, baráti körben</strong> és
-      <strong>kisebb, nem nyilvános rendezvényeken</strong> engedélyezett.
-      Széles körű nyilvános felhasználás (pl. TV, országos sugárzás, nagy rendezvény)
-      <strong>külön, írásos engedélyhez kötött</strong>.
+<div aria-hidden="true" aria-label="Felhasználási feltételek" class="license-modal" id="license-warning" role="dialog" style="display:none">
+  <div class="license-card" role="document">
+    <h3 style="margin-top:0">Felhasználási feltételek – fontos tudnivalók</h3>
+    <p>
+      A megrendelt zeneszám felhasználása <strong>kizárólag magáncélra</strong> engedélyezett:
+      családi, baráti körben és <strong>kisebb, nem nyilvános rendezvényeken</strong>.
     </p>
-<div class="actions">
-<button class="primary" id="licenseCancel" style="background:#2b2b2b">Mégse</button>
-<button class="primary" id="licenseAccept">Elfogadom</button>
-</div>
-</div>
+    <ul style="margin:8px 0 12px 18px; line-height:1.5">
+      <li><strong>Nem engedélyezett</strong>: országos médiasugárzás, TV/radio/stream csatornák, nagy nyilvános események, reklámkampányok.</li>
+      <li>Széles körű, üzleti vagy nyilvános felhasználás <strong>külön, írásos engedélyhez és egyedi liszenszhez</strong> kötött.</li>
+      <li>Kétség esetén kérj tőlünk visszaigazolást: <a href="mailto:info@enzenem.hu">info@enzenem.hu</a></li>
+    </ul>
+    <p>Az <a href="aszf.html" target="_blank">ÁSZF</a> és az <a href="adatkezeles.html" target="_blank">Adatkezelés</a> elfogadása mellett kérjük, hogy ezeket a feltételeket is tudomásul vedd.</p>
+    <div class="actions" style="display:flex; gap:8px; margin-top:12px">
+      <button class="primary" id="licenseCancel" style="background:#2b2b2b">Mégse</button>
+      <button class="primary" id="licenseAccept">Elfogadom</button>
+    </div>
+  </div>
 </div>
 <script src="script.js"></script>
 </body>
