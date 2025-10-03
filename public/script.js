@@ -291,6 +291,37 @@ function initOrderForm() {
     cancelBtn?.addEventListener('click', onCancel, { once: true });
   });
 }
+/* ---------- Contact form submit + thanks overlay (no redirect) ---------- */
+function initContactForm() {
+  const contactForm   = qs('#contactForm');
+  const contactStatus = qs('#contactStatus');
+  const overlay       = qs('#thanksOverlay');
+  const overlayClose  = qs('#overlayClose');
+  if (!contactForm) return;
+
+  // ne navigáljon sehova – a JS küldi fetch-csel
+  contactForm.setAttribute('action', 'javascript:void(0)');
+
+  contactForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (contactStatus) contactStatus.textContent = 'Küldés...';
+
+    const data = Object.fromEntries(new FormData(contactForm).entries());
+
+    try {
+      const json = await postJSON('/api/contact', data);
+      if (contactStatus) contactStatus.textContent = json.message || 'Köszönjük! Hamarosan válaszolunk.';
+      contactForm.reset();
+      overlay?.classList.remove('hidden'); // felugró „Köszönjük” kártya
+    } catch (err) {
+      if (contactStatus) contactStatus.textContent = 'Nem sikerült elküldeni. Próbáld újra később.';
+      console.error(err);
+    }
+  });
+
+  overlayClose?.addEventListener('click', () => overlay?.classList.add('hidden'));
+}
 
 /* ---------- License modal (optional direct open/close wiring) ---------- */
 function initLicenseModal() {
