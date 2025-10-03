@@ -231,23 +231,24 @@ function initBriefHelper() {
 
 /* ---------- Order form submit ---------- */
 /* ---------- Order form submit (with license gate) ---------- */
+/* ---------- Order form submit (ALWAYS show license modal) ---------- */
 function initOrderForm() {
   const orderForm   = qs('#orderForm');
   const orderStatus = qs('#orderStatus');
   const modal       = qs('#license-warning');
   const acceptBtn   = qs('#licenseAccept');
   const cancelBtn   = qs('#licenseCancel');
-
   if (!orderForm) return;
 
-  // Segédfüggvény: tényleges elküldés
+  // ne legyen natív navigáció – fetch küldi
+  orderForm.setAttribute('action', 'javascript:void(0)');
+
   async function actuallySend(data) {
     if (orderStatus) orderStatus.textContent = 'Küldés...';
     try {
       const json = await postJSON('/api/order', data);
       if (orderStatus) orderStatus.textContent = json.message || 'Köszönjük! Válasz e-mailt küldtünk.';
       orderForm.reset();
-      // brief helper újraszámolás (lenullázás)
       setTimeout(() => {
         const desc = qs('#order textarea[name="brief"]');
         if (desc) desc.dispatchEvent(new Event('input', { bubbles: true }));
@@ -257,6 +258,35 @@ function initOrderForm() {
       console.error(err);
     }
   }
+
+  function showModal(){ if (modal){ modal.style.display='block'; modal.setAttribute('aria-hidden','false'); } }
+  function hideModal(){ if (modal){ modal.style.display='none';  modal.setAttribute('aria-hidden','true'); } }
+
+  orderForm.addEventListener('submit', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const data = Object.fromEntries(new FormData(orderForm).entries());
+
+    // >>> MINDIG kérdezzünk rá (nincs cookie / localStorage)
+    showModal();
+
+    const onAccept = () => {
+      hideModal();
+      acceptBtn?.removeEventListener('click', onAccept);
+      cancelBtn?.removeEventListener('click', onCancel);
+      actuallySend(data);
+    };
+    const onCancel = () => {
+      hideModal();
+      if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
+      acceptBtn?.removeEventListener('click', onAccept);
+      cancelBtn?.removeEventListener('click', onCancel);
+    };
+
+    acceptBtn?.addEventListener('click', onAccept, { once:true });
+    cancelBtn?.addEventListener('click', onCancel, { once:true });
+  });
+}
+
 
   // Modál megjelenítése/elrejtése
   function showModal() {
