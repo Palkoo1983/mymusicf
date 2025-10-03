@@ -218,22 +218,23 @@ function initBriefHelper() {
 }
 
 /* ---------- Order form submit ---------- */
+/* ---------- Order form submit (with license gate) ---------- */
 function initOrderForm() {
   const orderForm   = qs('#orderForm');
   const orderStatus = qs('#orderStatus');
+  const modal       = qs('#license-warning');
+  const acceptBtn   = qs('#licenseAccept');
+  const cancelBtn   = qs('#licenseCancel');
+
   if (!orderForm) return;
 
-  orderForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  // Segédfüggvény: tényleges elküldés
+  async function actuallySend(data) {
     if (orderStatus) orderStatus.textContent = 'Küldés...';
-
-    const data = Object.fromEntries(new FormData(orderForm).entries());
-
     try {
       const json = await postJSON('/api/order', data);
       if (orderStatus) orderStatus.textContent = json.message || 'Köszönjük! Válasz e-mailt küldtünk.';
       orderForm.reset();
-
       // brief helper újraszámolás (lenullázás)
       setTimeout(() => {
         const desc = qs('#order textarea[name="brief"]');
@@ -243,62 +244,73 @@ function initOrderForm() {
       if (orderStatus) orderStatus.textContent = 'Nem sikerült elküldeni. Próbáld újra később.';
       console.error(err);
     }
+  }
+
+  // Modál megjelenítése/elrejtése
+  function showModal() {
+    if (!modal) return;
+    modal.style.display = 'block';
+    modal.setAttribute('aria-hidden', 'false');
+  }
+  function hideModal() {
+    if (!modal) return;
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  // Submit-kezelő – előbb licenc elfogadás, aztán küldés
+  orderForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(orderForm).entries());
+
+    // Ha már elfogadta korábban, mehet egyből
+    if (localStorage.getItem('enz-license-ok') === '1') {
+      actuallySend(data);
+      return;
+    }
+
+    // Különben: mutassuk a modált, és várjuk a döntést
+    showModal();
+
+    // egyszeri elfogadás → mentés + küldés
+    const onAccept = () => {
+      localStorage.setItem('enz-license-ok', '1');
+      hideModal();
+      acceptBtn?.removeEventListener('click', onAccept);
+      cancelBtn?.removeEventListener('click', onCancel);
+      actuallySend(data);
+    };
+    const onCancel = () => {
+      hideModal();
+      if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
+      acceptBtn?.removeEventListener('click', onAccept);
+      cancelBtn?.removeEventListener('click', onCancel);
+    };
+
+    acceptBtn?.addEventListener('click', onAccept, { once: true });
+    cancelBtn?.addEventListener('click', onCancel, { once: true });
   });
 }
 
-/* ---------- Contact form submit + thanks overlay ---------- */
-function initContactForm() {
-  const contactForm   = qs('#contactForm');
-  const contactStatus = qs('#contactStatus');
-  const overlay       = qs('#thanksOverlay');
-  const overlayClose  = qs('#overlayClose');
-
-  if (contactForm) {
-    contactForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (contactStatus) contactStatus.textContent = 'Küldés...';
-
-      const data = Object.fromEntries(new FormData(contactForm).entries());
-      try {
-        const json = await postJSON('/api/contact', data);
-        if (contactStatus) contactStatus.textContent = json.message || 'Köszönjük! Hamarosan válaszolunk.';
-        contactForm.reset();
-        overlay?.classList.remove('hidden');
-      } catch (err) {
-        if (contactStatus) contactStatus.textContent = 'Nem sikerült elküldeni. Próbáld újra később.';
-        console.error(err);
-      }
-    });
-  }
-  overlayClose?.addEventListener('click', () => overlay?.classList.add('hidden'));
-}
-
-/* ---------- Consent bar ---------- */
-function initConsent() {
-  const bar    = qs('#consent');
-  const accept = qs('#consentAccept');
-  if (!bar || !accept) return;
-
-  if (localStorage.getItem('enz-consent') === '1') {
-    bar.style.display = 'none';
-  } else {
-    bar.style.display = '';
-  }
-  accept.addEventListener('click', () => {
-    localStorage.setItem('enz-consent', '1');
-    bar.style.display = 'none';
-  });
-}
-
-/* ---------- License modal ---------- */
+/* ---------- License modal (optional direct open/close wiring) ---------- */
 function initLicenseModal() {
   const modal  = qs('#license-warning');
   const ok     = qs('#licenseAccept');
   const cancel = qs('#licenseCancel');
   if (!modal || !ok || !cancel) return;
 
-  ok.addEventListener('click', () => { modal.setAttribute('aria-hidden', 'true'); modal.style.display = 'none'; });
-  cancel.addEventListener('click', () => { modal.setAttribute('aria-hidden', 'true'); modal.style.display = 'none'; });
+  // Ha valahol külön gombbal akarod megnyitni a modált, teheted:
+  // qs('#openLicense')?.addEventListener('click', () => {
+  //   modal.style.display = 'block';
+  //   modal.setAttribute('aria-hidden', 'false');
+  // });
+
+  // A bezárást a submit-flow intézi; itt fallbackként is lezárható:
+  ok.addEventListener('click', () => { /* a submit flow kezeli a küldést */ });
+  cancel.addEventListener('click', () => {
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+  });
 }
 
 /* ---------- boot ---------- */
