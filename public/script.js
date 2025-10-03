@@ -330,3 +330,88 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     }
   });
 })();
+// --- 'Hogyan működik' panel logika + Leírás-segéd az ORDER panelhez
+(function () {
+  // 1) 'Hogyan működik' -> 'Megrendelés' átkapcsolás és fókusz
+  const openBtn = document.getElementById('howto-open-order');
+  const orderTabBtn = document.querySelector('.tab[data-target="order"]');
+
+  function focusDesc() {
+    const desc =
+      document.querySelector('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+    if (desc) desc.focus();
+  }
+
+  openBtn?.addEventListener('click', () => {
+    orderTabBtn?.click();          // váltás a Megrendelés fülre
+    setTimeout(focusDesc, 80);     // kis késleltetés, hogy a panel megjelenjen
+  });
+
+  // 2) Példachipek -> írják be a szöveget az ORDER panel Leírás mezőjébe
+  document.querySelectorAll('#howto .chip[data-example]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      orderTabBtn?.click();
+      setTimeout(() => {
+        const desc = document.querySelector('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+        if (desc) {
+          desc.value = btn.getAttribute('data-example') || '';
+          desc.dispatchEvent(new Event('input', { bubbles: true }));
+          desc.focus();
+        }
+      }, 80);
+    });
+  });
+
+  // 3) Leírás-segéd az ORDER panelen (számláló + minősítés + beküldés ellenőrzés)
+  const orderPanel = document.getElementById('order');
+  if (!orderPanel) return;
+
+  const desc =
+    orderPanel.querySelector('textarea[name="brief"], textarea#brief, textarea');
+  if (!desc) return;
+
+  // Info sor
+  const info = document.createElement('div');
+  info.style.fontSize = '12px';
+  info.style.marginTop = '6px';
+  info.style.color = '#b6b6c3';
+  info.innerHTML = '<span id="enz-count">0</span> karakter • <strong id="enz-score">Túl rövid</strong>';
+  desc.insertAdjacentElement('afterend', info);
+
+  // Tipp doboz
+  const tip = document.createElement('div');
+  tip.style.display = 'none';
+  tip.style.marginTop = '6px';
+  tip.style.padding = '10px';
+  tip.style.border = '1px dashed #2b2d3a';
+  tip.style.borderRadius = '10px';
+  tip.style.background = '#12131a';
+  tip.style.color = '#b6b6c3';
+  tip.innerHTML = '💡 <strong>Tipp:</strong> írd le <em>kinek</em> készül, <em>milyen alkalomra</em>, stílus/hangulat, 3–5 kulcsszó, 1–2 konkrét emlék, és ha van tiltólista.';
+  info.insertAdjacentElement('afterend', tip);
+
+  const countEl = info.querySelector('#enz-count');
+  const scoreEl = info.querySelector('#enz-score');
+
+  function updateQuality() {
+    const len = (desc.value || '').trim().length;
+    countEl.textContent = String(len);
+    if (len < 120) { scoreEl.textContent = 'Túl rövid'; scoreEl.style.color = '#ef476f'; tip.style.display = 'block'; }
+    else if (len < 250) { scoreEl.textContent = 'Elfogadható'; scoreEl.style.color = ''; tip.style.display = 'none'; }
+    else if (len < 900) { scoreEl.textContent = 'Kiváló'; scoreEl.style.color = '#06d6a0'; tip.style.display = 'none'; }
+    else { scoreEl.textContent = 'Nagyon hosszú (rövidíts)'; scoreEl.style.color = '#ef476f'; tip.style.display = 'block'; }
+  }
+  desc.addEventListener('input', updateQuality);
+  updateQuality();
+
+  // Beküldés előtt ellenőrzés
+  const form = desc.closest('form');
+  form?.addEventListener('submit', (e) => {
+    const len = (desc.value || '').trim().length;
+    if (len < 120) {
+      e.preventDefault();
+      alert('A Leírás túl rövid. Kérlek, adj több támpontot (kinek, alkalom, stílus, kulcsszavak, emlékek), hogy személyre szabhassuk a dalt.');
+      desc.focus();
+    }
+  });
+})();
