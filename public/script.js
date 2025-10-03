@@ -114,11 +114,12 @@ function initHowTo() {
 }
 
 /* ---------- Leírás helper az ORDER panelen (no duplicates) ---------- */
+// === Leírás-segéd az ORDER panelen (counter + minőség + példák, duplázás nélkül) ===
 function initBriefHelper() {
   const orderPanel = qs('#order');
   if (!orderPanel) return;
 
-  // már létrehoztuk? akkor kilépünk (guard)
+  // ha már létrejött, NE szúrjuk be még egyszer
   if (qs('#enz-quality', orderPanel)) return;
 
   const desc = qs('textarea[name="brief"], textarea#brief, textarea', orderPanel);
@@ -133,6 +134,70 @@ function initBriefHelper() {
   info.innerHTML = '<span id="enz-count">0</span> karakter • <strong id="enz-score">Túl rövid</strong>';
   desc.insertAdjacentElement('afterend', info);
 
+  // === Minta leírások – ORDER panelre (dupla ellen védve) ===
+  if (!qs('#enz-order-examples', orderPanel)) {
+    const exWrap = document.createElement('div');
+    exWrap.id = 'enz-order-examples';
+    exWrap.style.display = 'flex';
+    exWrap.style.flexWrap = 'wrap';
+    exWrap.style.gap = '8px';
+    exWrap.style.marginTop = '8px';
+
+    // >>> Itt a BŐVÍTETT példalista <<<
+    const examples = [
+      // Szülinap
+      'Születésnapra készül a dal a nővéremnek, Nóra 46 éves. Szereti a minimál techno és house zenét. Kulcsszavak: kitartás, logika, barátság, újrakezdés. Emlék: amikor együtt túráztunk a Csóványosra.',
+      // Esküvő
+      'Esküvőre készül a dal, Kata és Máté számára. Stílus: romantikus pop, lassú tempó. Kulcsszavak: hűség, közös jövő, naplemente. Emlék: első közös balatoni nyaralás.',
+      // Évforduló
+      'Évfordulónkra szeretném meglepni a páromat. Közepes tempójú rock-pop, pozitív hangulat. Kulcsszavak: humor, közös főzés, macskánk Mázli. Emlék: amikor megkaptuk az első közös lakás kulcsát.',
+      // Búcsúztató
+      'Búcsúztatóra készül a dal. Méltóságteljes, nyugodt hangulat, kevés dob. Kulcsszavak: hála, fény, emlékek. Emlék: gyerekkori közös zongorázás a nappaliban.',
+      // Céges rendezvény
+      'Céges évzáróra kérek dalt. Tempó: lendületes, modern pop/elektronikus. Kulcsszavak: csapatmunka, innováció, 2025 célok, humor. Emlék: a tavaszi hackathon győzelmünk.',
+      // Gyerekdal
+      'Gyerekdal 6 éves kislánynak, Lilinek. Vidám, egyszerű dallam, könnyen énekelhető refrén. Kulcsszavak: unikornis, szivárvány, ovi-barátok. Emlék: közös biciklizés a parkban.',
+      // Nyugdíjba vonulás
+      'Nyugdíjba vonuló kollégának. Hangulat: nosztalgikus, felemelő, akusztikus gitár+zongora. Kulcsszavak: segítőkészség, humor, 25 év, csapat. Emlék: a legendás hétfő reggeli kávék.',
+      // Jobbulást / támogatás
+      'Jobbulást kívánó dal. Lassan építkező, reményt adó hangulat. Kulcsszavak: kitartás, gyógyulás, melletted állunk. Emlék: nyári tábortűz melletti beszélgetések.',
+      // Lánykérés / jegyesség
+      'Lánykéréshez készülő dal. Romantikus pop ballada, meleg hangzás. Kulcsszavak: közös jövő, „igen” pillanat, összetartozás. Emlék: első csók a Margitszigeten.',
+      // Ballagás / diploma
+      'Ballagásra/diplomához kérünk dalt. Tempó: közepes, motiváló. Kulcsszavak: álom, kitartás, új kezdet. Emlék: éjszakai tanulások és a záróvizsga napja.'
+    ];
+
+    // (opcionális) kis cím
+    const exTitle = document.createElement('div');
+    exTitle.textContent = 'Minta leírások:';
+    exTitle.style.marginTop = '10px';
+    exTitle.style.fontSize = '13px';
+    exTitle.style.color = '#b6b6c3';
+    info.insertAdjacentElement('afterend', exTitle);
+
+    // chip-ek
+    examples.forEach(t => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = (t.slice(0, 24) + '… példa');
+      b.className = 'chip';
+      b.style.padding = '6px 10px';
+      b.style.borderRadius = '999px';
+      b.style.border = '1px solid #2a2b3a';
+      b.style.background = '#10111a';
+      b.style.color = '#f4f4f7';
+      b.addEventListener('click', () => {
+        desc.value = t;
+        desc.dispatchEvent(new Event('input', { bubbles: true }));
+        desc.focus();
+      });
+      exWrap.appendChild(b);
+    });
+
+    exTitle.insertAdjacentElement('afterend', exWrap);
+  }
+  // === /Minta leírások ===
+
   // tipp doboz
   const tip = document.createElement('div');
   tip.style.display = 'none';
@@ -143,10 +208,34 @@ function initBriefHelper() {
   tip.style.background = '#12131a';
   tip.style.color = '#b6b6c3';
   tip.innerHTML = '💡 <strong>Tipp:</strong> írd le <em>kinek</em> készül, <em>milyen alkalomra</em>, stílus/hangulat, 3–5 kulcsszó, 1–2 konkrét emlék, és ha van tiltólista.';
-  info.insertAdjacentElement('afterend', tip);
+  const anchor = qs('#enz-order-examples', orderPanel) || info;
+  anchor.insertAdjacentElement('afterend', tip);
 
+  // minőségértékelés
   const countEl = qs('#enz-count', info);
   const scoreEl = qs('#enz-score', info);
+  function updateQuality() {
+    const len = (desc.value || '').trim().length;
+    countEl.textContent = String(len);
+    if (len < 120) { scoreEl.textContent = 'Túl rövid'; scoreEl.style.color = '#ef476f'; tip.style.display = 'block'; }
+    else if (len < 250) { scoreEl.textContent = 'Elfogadható'; scoreEl.style.color = ''; tip.style.display = 'none'; }
+    else if (len < 900) { scoreEl.textContent = 'Kiváló'; scoreEl.style.color = '#06d6a0'; tip.style.display = 'none'; }
+    else { scoreEl.textContent = 'Nagyon hosszú (rövidíts)'; scoreEl.style.color = '#ef476f'; tip.style.display = 'block'; }
+  }
+  desc.addEventListener('input', updateQuality);
+  updateQuality();
+
+  // Beküldés előtt ellenőrzés – 120 karakter alatt ne engedje
+  const form = desc.closest('form');
+  form?.addEventListener('submit', (e) => {
+    const len = (desc.value || '').trim().length;
+    if (len < 120) {
+      e.preventDefault();
+      alert('A Leírás túl rövid. Kérlek, adj több támpontot (kinek, alkalom, stílus, kulcsszavak, emlékek), hogy személyre szabhassuk a dalt.');
+      desc.focus();
+    }
+  });
+}
 
   function updateQuality() {
     const len = (desc.value || '').trim().length;
