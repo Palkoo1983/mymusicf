@@ -41,7 +41,14 @@ function initTabs() {
     });
     if (targetId === 'order') setTimeout(initBriefHelper, 50);
   }
+function activate(targetId) {
+  if (!targetId) return;
+  // ... a meglévő kódod ...
+  if (targetId === 'order') setTimeout(initBriefHelper, 50);
 
+  // >>> ÚJ: mindig a tetejére gördítünk
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
   // initial
   const activePanel = panels.find(p => p.classList.contains('active')) || panels[0];
   panels.forEach(p => (p.hidden = p !== activePanel));
