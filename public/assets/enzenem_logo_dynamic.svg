@@ -4,33 +4,33 @@
      width="1024" height="1024" viewBox="0 0 1024 1024"
      role="img" aria-label="EnZenem logó (seamless)">
   <defs>
-    <!-- Tökéletes kör vágómaszk a fehér szegély ellen -->
+    <!-- Kör alakú vágómaszk (tökéletes perem) -->
     <clipPath id="discClip">
-      <circle cx="512" cy="512" r="511.5"/>
+      <circle cx="512" cy="512" r="512"/>
     </clipPath>
     <style><![CDATA[
-      /* Mozgás csökkentése (akadálymentesség) */
       @media (prefers-reduced-motion: reduce) {
-        .spin animateTransform { display:none; }
+        .spin animateTransform { display: none; }
       }
     ]]></style>
   </defs>
 
-  <!-- Forgó csoport, körre vágva -->
+  <!-- Forgó réteg, körre vágva -->
   <g class="spin" clip-path="url(#discClip)">
-    <!-- +2px „bleed”, hogy semmilyen subpixel ne villanjon ki -->
-    <image x="-1" y="-1" width="1026" height="1026"
+    <!-- +4px bleed a villanó szélek ellen -->
+    <image x="-2" y="-2" width="1028" height="1028"
            preserveAspectRatio="xMidYMid slice"
-           xlink:href="enzenem_logo.png" />
+           href="/assets/logo/enzenem_logo.png"
+           xlink:href="/assets/logo/enzenem_logo.png" />
     <animateTransform attributeName="transform"
                       type="rotate"
                       from="0 512 512"
                       to="360 512 512"
                       dur="10s"
-                      repeatCount="indefinite"/>
+                      repeatCount="indefinite" />
   </g>
 
-  <!-- Hajszálvékony körvonal (2% opacitás) a böngésző AA-hibák ellen -->
-  <circle cx="512" cy="512" r="511.75"
-          fill="none" stroke="black" stroke-opacity="0.02" stroke-width="0.5"/>
+  <!-- Finom perem a böngészők subpixel AA hibáira -->
+  <circle cx="512" cy="512" r="511.6"
+          fill="none" stroke="black" stroke-opacity="0.04" stroke-width="0.8"/>
 </svg>
