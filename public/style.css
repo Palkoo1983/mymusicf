@@ -325,3 +325,30 @@ html {
   color: #f4f4f7;
   box-shadow: 0 30px 80px rgba(0,0,0,.5);
 }
+/* Forgás animáció */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Alap: folyamatos forgás */
+.spinning-vinyl {
+  display: block;
+  width: 240px;      /* igény szerint */
+  height: 240px;     /* ha SVG, maradhat auto is */
+  transform-origin: 50% 50%;
+  animation: spin 4.5s linear infinite;
+  will-change: transform;
+}
+
+/* Hoverre megállíthatod (ha szeretnéd) */
+.spinning-vinyl:hover {
+  animation-play-state: paused;
+}
+
+/* Kisegítő lehetőség: ha a felhasználó csökkentett animációt kér */
+@media (prefers-reduced-motion: reduce) {
+  .spinning-vinyl {
+    animation: none;
+  }
+}
