@@ -352,3 +352,33 @@ html {
     animation: none;
   }
 }
+/* ---- VINYL LOGO: méret + sebesség ---- */
+:root{
+  /* asztalon kicsit kisebb a mostaninál, de nagyobb mint a menülemezek */
+  --vinyl-logo-size: clamp(140px, 16vw, 220px);
+  --vinyl-spin: 8s;     /* lassabb forgás */
+}
+
+/* mobilon még kisebb és lassabb */
+@media (max-width: 768px){
+  :root{
+    --vinyl-logo-size: 150px;
+    --vinyl-spin: 10s;
+  }
+}
+
+@keyframes spin{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+.spinning-vinyl{
+  display:block;
+  width: var(--vinyl-logo-size);
+  height: var(--vinyl-logo-size);
+  transform-origin: 50% 50%;
+  animation: spin var(--vinyl-spin) linear infinite;
+  will-change: transform;
+}
+
+/* ha valaki érzékeny az animációra, automatikus lassítás/tiltás */
+@media (prefers-reduced-motion: reduce){
+  .spinning-vinyl{ animation: none; }
+}
