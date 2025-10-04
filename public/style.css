@@ -420,3 +420,45 @@ img[src*="enzenem_logo_dynamic"] {
   border-radius: 50%;
   overflow: hidden;
 }
+/* EnZenem – LOGÓ: éles, arányos, fehér perem nélkül (NINCS nagyítás) */
+
+/* A logó konténere legyen tökéletes kör és négyzetes */
+.brand-logo {
+  --logo-size: 128px;        /* igény szerint */
+  inline-size: var(--logo-size);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+/* Maga a logó KÉP (SVG vagy PNG) */
+.brand-logo img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;          /* kitölt, de nem torzít */
+  display: block;
+
+  /* Körre vágás, hajszálnyit beljebb (0.75px), így nincs fehér perem */
+  clip-path: circle(calc(50% - 0.75px) at 50% 50%);
+
+  /* Minden korábbi nagyítást/maszkot/effektet kikapcsolunk */
+  transform: none !important;
+  -webkit-mask-image: none !important;
+          mask-image: none !important;
+  filter: none !important;
+  image-rendering: auto;
+}
+
+/* Ha nálad nincs .brand-logo wrapper:
+   célzottan a fejlécben lévő logóra (állítsd be a helyes szelektort) */
+header img[src*="enzenem_logo"] {
+  inline-size: 128px;         /* egyezzen a konténerrel */
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  overflow: hidden;
+  object-fit: cover;
+  clip-path: circle(calc(50% - 0.75px) at 50% 50%);
+  transform: none !important;
+  -webkit-mask-image: none !important;
+          mask-image: none !important;
+}
