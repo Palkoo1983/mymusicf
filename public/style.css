@@ -325,30 +325,36 @@ html {
   color: #f4f4f7;
   box-shadow: 0 30px 80px rgba(0,0,0,.5);
 }
-/* LOGÓ KERET – kerek vágás + túlfedés */
-.brand-logo {
-  --size: 128px;              /* igény szerint */
-  position: relative;
-  width: var(--size);
-  height: var(--size);
-  border-radius: 50%;
-  overflow: hidden;           /* levágja a széleket */
-  display: inline-grid;
-  place-items: center;
-  background: transparent;    /* vagy a fejléc színe */
+/* LOGÓ – körre vágás + pici túlfedés a fehér perem ellen */
+.brand-logo{
+  --size:128px;                /* igény szerint */
+  width:var(--size);
+  height:var(--size);
+  border-radius:50%;
+  overflow:hidden;             /* vágás */
+  display:inline-grid;
+  place-items:center;
+  background:transparent;
+}
+.brand-logo > img,
+.brand-logo > svg{
+  width:102%;
+  height:102%;                 /* +2% „bleed” */
+  object-fit:cover;
+  display:block;
+  transform:translateZ(0);
+  -webkit-backface-visibility:hidden;
+          backface-visibility:hidden;
+}
+/* Opcionális: hajszál perem az AA-hibák ellen */
+.brand-logo::after{
+  content:"";
+  position:absolute; inset:0;
+  border-radius:50%;
+  box-shadow:inset 0 0 0 1px #0e2233; /* igazítsd a fejléc színéhez */
+  pointer-events:none;
 }
 
-/* maga a kép (SVG vagy PNG) */
-.brand-logo > img,
-.brand-logo > svg {
-  width: 102%;
-  height: 102%;               /* +2% “bleed” – nem villan ki szélen */
-  object-fit: cover;
-  display: block;             /* inline whitespace off */
-  transform: translateZ(0);   /* AA/rezgés ellen */
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
 
 /* opcionális: 1px belső perem a fejléc színével – AA hibák ellen */
 .brand-logo::after {
