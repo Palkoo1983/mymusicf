@@ -394,3 +394,29 @@ img[src*="enzenem_logo_dynamic"] {
             mask-image: radial-gradient(circle at 50% 50%, #000 50%, transparent 50.1%);
   }
 }
+/* EnZenem – LOGÓ: éles, torzítás nélkül (maszk, skálázás NÉLKÜL) */
+img[src*="enzenem_logo"],
+img[src*="logo_dynamic"],
+img[src*="enzenem_logo_dynamic"] {
+  /* ne nagyítsuk a rasztert, ettől lesz éles */
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+
+  /* körre vágás MASZKKAL – picit beljebb vág, így nincs fehér perem */
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 50.3%, transparent 50.31%);
+          mask-image: radial-gradient(circle at 50% 50%, #000 50.3%, transparent 50.31%);
+
+  /* NE skálázd és NE mozgasd a képet, mert attól mosódik/pixelesedik */
+  transform: none !important;
+  object-fit: contain;
+  display: block;
+  image-rendering: auto;
+  background: transparent !important;
+}
+
+/* ha van külön konténer (pl. .brand-logo), segít, hogy biztosan körben vágjon */
+.brand-logo, .logo, header .logo {
+  border-radius: 50%;
+  overflow: hidden;
+}
