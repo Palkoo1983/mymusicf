@@ -388,8 +388,8 @@ html {
 :root{
   /* maradhatnak a korábbi értékeid is */
   --vinyl-logo-size: clamp(140px, 16vw, 220px);
-  --vinyl-spin: 8s;         /* folyamatos forgás sebessége */
-  --vinyl-intro: 0.9s;      /* beúszás hossza */
+  --vinyl-spin: 6s;         /* folyamatos forgás sebessége */
+  --vinyl-intro: 1.3s;      /* beúszás hossza */
   --vinyl-intro-delay: 0s;  /* ha késleltetnéd az indulást */
 }
 
