@@ -503,3 +503,19 @@ header img[src*="enzenem_logo"] {
   clip-path: circle(calc(50% - 1px) at 50% 50%);
   background: transparent;
 }
+/* LOGÓ – peremárnyék teljes eltávolítása */
+.brand-logo::after{
+  box-shadow: none !important;
+}
+
+/* Ha valahol drop-shadow/árnyék ment a képre/SVG-re */
+.brand-logo > img,
+.brand-logo > svg{
+  filter: none !important;
+}
+
+/* Ha az SVG-ben volt „hajszál” körvonal (stroke-os kör) */
+.brand-logo svg circle{
+  stroke: none !important;
+  stroke-opacity: 0 !important;
+}
