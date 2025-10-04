@@ -8,29 +8,24 @@
     <clipPath id="discClip">
       <circle cx="512" cy="512" r="512"/>
     </clipPath>
-    <style><![CDATA[
-      @media (prefers-reduced-motion: reduce) {
-        .spin animateTransform { display: none; }
-      }
-    ]]></style>
   </defs>
 
   <!-- Forgó réteg, körre vágva -->
-  <g class="spin" clip-path="url(#discClip)">
-    <!-- +4px bleed a villanó szélek ellen -->
+  <g clip-path="url(#discClip)">
+    <!-- +4px bleed, hogy ne villanjon ki fehér csík -->
     <image x="-2" y="-2" width="1028" height="1028"
            preserveAspectRatio="xMidYMid slice"
-           href="/assets/logo/enzenem_logo.png"
-           xlink:href="/assets/logo/enzenem_logo.png" />
+           href="./enzenem_logo_dynamic.png"
+           xlink:href="./enzenem_logo_dynamic.png"/>
     <animateTransform attributeName="transform"
                       type="rotate"
                       from="0 512 512"
                       to="360 512 512"
                       dur="10s"
-                      repeatCount="indefinite" />
+                      repeatCount="indefinite"/>
   </g>
 
-  <!-- Finom perem a böngészők subpixel AA hibáira -->
+  <!-- Hajszál perem, ami elfedi a böngészők subpixel AA hibáit -->
   <circle cx="512" cy="512" r="511.6"
           fill="none" stroke="black" stroke-opacity="0.04" stroke-width="0.8"/>
 </svg>
