@@ -382,3 +382,76 @@ html {
 @media (prefers-reduced-motion: reduce){
   .spinning-vinyl{ animation: none; }
 }
+/* ============================
+   EnZenem – arany beúszás + felpörgés
+   ============================ */
+:root{
+  /* maradhatnak a korábbi értékeid is */
+  --vinyl-logo-size: clamp(140px, 16vw, 220px);
+  --vinyl-spin: 8s;         /* folyamatos forgás sebessége */
+  --vinyl-intro: 0.9s;      /* beúszás hossza */
+  --vinyl-intro-delay: 0s;  /* ha késleltetnéd az indulást */
+}
+
+/* két animáció fut: 1) intro (egyszer), 2) spin (végtelen) */
+@keyframes vinyl-intro {
+  from {
+    opacity: 0;
+    transform: scale(0.92) rotate(-12deg);
+    filter: saturate(0.7) brightness(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: none;
+  }
+}
+
+@keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+.spinning-vinyl{
+  position: relative;
+  display: block;
+  width: var(--vinyl-logo-size);
+  height: var(--vinyl-logo-size);
+  transform-origin: 50% 50%;
+  /* intro egyszer lefut, a végtelen forgás picit később indul */
+  animation:
+    vinyl-intro var(--vinyl-intro) ease-out var(--vinyl-intro-delay) both,
+    spin var(--vinyl-spin) linear infinite calc(var(--vinyl-intro) + var(--vinyl-intro-delay));
+  will-change: transform, filter, opacity;
+}
+
+/* finom arany fényudvar, ami az intróval jelenik meg */
+.spinning-vinyl::after{
+  content:"";
+  position:absolute;
+  inset:-14%;
+  border-radius:50%;
+  background: radial-gradient(closest-side,
+              rgba(255,230,140,.45),
+              rgba(255,210,80,.20) 55%,
+              rgba(0,0,0,0) 70%);
+  filter: blur(10px);
+  opacity: 0;
+  pointer-events:none;
+  animation: glow 1.1s ease-out forwards var(--vinyl-intro-delay);
+}
+@keyframes glow {
+  from { opacity: 0; transform: scale(.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* mobilon kicsit kisebb és még lassabb */
+@media (max-width: 768px){
+  :root{
+    --vinyl-logo-size: 150px;
+    --vinyl-spin: 10s;
+  }
+}
+
+/* akadálymentesség: mozgás csökkentése kérésre */
+@media (prefers-reduced-motion: reduce){
+  .spinning-vinyl{ animation: none; }
+  .spinning-vinyl::after{ display:none; }
+}
