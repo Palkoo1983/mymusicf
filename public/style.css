@@ -494,3 +494,12 @@ header img[src*="enzenem_logo"] {
   box-shadow: inset 0 0 0 3px #0E2233; /* igazítsd a header sötétkékjéhez */
   pointer-events:none;
 }
+.brand-logo img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  display: block;
+  object-fit: cover;
+  clip-path: circle(calc(50% - 1px) at 50% 50%);
+  background: transparent;
+}
