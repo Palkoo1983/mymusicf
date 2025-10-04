@@ -365,3 +365,32 @@ html {
   box-shadow: inset 0 0 0 1px /* fejléc színe */ #0e2233;
   pointer-events: none;
 }
+/* EnZenem – LOGÓ fix: körre vágás + túlfedés (bleed) */
+/* bármely <img> ami az enzenem logo fájlra mutat (PNG vagy SVG) */
+img[src*="enzenem_logo"],
+img[src*="logo_dynamic"],
+img[src*="enzenem_logo_dynamic"] {
+  /* kör-maszk (független a konténertől) */
+  clip-path: circle(50% at 50% 50%);
+  /* kis túlfedés a fehér perem ellen */
+  transform: scale(1.03);          /* ha még látszik csík: 1.04–1.05 */
+  transform-origin: 50% 50%;
+  /* mindig teljes kitöltés */
+  width: 102%;
+  height: auto;
+  object-fit: cover;
+  background: transparent !important;
+  display: block;
+  -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
+}
+
+/* Biztonsági maszk (Safari/WebKit) – ha a clip-path nem elég */
+@supports (-webkit-mask-image: radial-gradient(circle, #000 50%, transparent 51%)) {
+  img[src*="enzenem_logo"],
+  img[src*="logo_dynamic"],
+  img[src*="enzenem_logo_dynamic"] {
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 50%, transparent 50.1%);
+            mask-image: radial-gradient(circle at 50% 50%, #000 50%, transparent 50.1%);
+  }
+}
