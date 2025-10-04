@@ -325,3 +325,21 @@ html {
   color: #f4f4f7;
   box-shadow: 0 30px 80px rgba(0,0,0,.5);
 }
+/* Alap logó */
+.logo-img {
+  width: 120px;      /* vagy ami jól mutat a menüben */
+  height: auto;      /* arányokat tartja */
+  display: block;
+}
+
+/* középre igazítás, ha kell */
+header .logo-img {
+  margin: 0 auto;
+}
+
+/* nagyobb kijelzőn lehet nagyítani */
+@media (min-width: 768px) {
+  .logo-img {
+    width: 150px;
+  }
+}
