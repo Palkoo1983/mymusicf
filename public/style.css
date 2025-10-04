@@ -462,3 +462,35 @@ header img[src*="enzenem_logo"] {
   -webkit-mask-image: none !important;
           mask-image: none !important;
 }
+/* 1) A logó konténere: pontos, egész pixeles méret + kör és rejtés */
+.brand-logo{
+  width:128px;              /* állítsd 128/136/144 stb. EGÉSZ számra */
+  height:128px;             /* fontos, hogy ne legyen törtszám! */
+  position:relative;
+  border-radius:50%;
+  overflow:hidden;
+  background:transparent;
+}
+
+/* 2) Maga a kép: nincs skálázás, borotvaéles vágás körrel */
+.brand-logo > img,
+.brand-logo > svg{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  image-rendering:auto;
+  transform:none !important;
+
+  /* hajszálnyit beljebb vágjuk a kört, hogy a világos perem eltűnjön */
+  clip-path: circle(calc(50% - 1px) at 50% 50%);
+}
+
+/* 3) Védőgyűrű a fejléc színével – elfedi az esetleges AA-csíkat */
+.brand-logo::after{
+  content:"";
+  position:absolute; inset:0;
+  border-radius:50%;
+  box-shadow: inset 0 0 0 2px #0E2233; /* igazítsd a header sötétkékjéhez */
+  pointer-events:none;
+}
