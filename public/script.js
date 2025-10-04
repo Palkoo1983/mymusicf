@@ -357,3 +357,14 @@ document.addEventListener('DOMContentLoaded', () => {
   initConsent();
   initLicenseModal();
 });
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a[data-jump]');
+  if (!a) return;
+  e.preventDefault();
+  const target = a.getAttribute('data-jump');
+  const btn = document.querySelector(`.vinyl-tabs .tab[data-target="${target}"]`);
+  if (btn) {
+    btn.click();      // aktiválja a panelt (a te tab-logikád szerint)
+    btn.focus();      // fókusz a hozzáférhetőségért
+  }
+});
