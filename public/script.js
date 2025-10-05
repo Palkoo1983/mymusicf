@@ -106,9 +106,9 @@ function initHowTo() {
   const orderTabBtn = qs('.tab[data-target="order"]');
 
   function focusBrief() {
-    const el = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-    if (el) el.focus();
-  }
+  const el = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+  if (el) el.focus({ preventScroll: true }); // ne görgessen fókuszkor
+}
 
   openBtn?.addEventListener('click', () => {
     orderTabBtn?.click();
@@ -119,21 +119,21 @@ function initHowTo() {
   });
 
   // Példa-chipek a HOWTO panelen
-  qsa('#howto .chip[data-example]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const text = btn.getAttribute('data-example') || '';
-      orderTabBtn?.click();
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-        if (desc) {
-          desc.value = text;
-          desc.dispatchEvent(new Event('input', { bubbles: true }));
-          desc.focus();
-        }
-      }, 80);
-    });
+ qsa('#howto .chip[data-example]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const text = btn.getAttribute('data-example') || '';
+    orderTabBtn?.click();
+    setTimeout(() => {
+      const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+      if (desc) {
+        desc.value = text;
+        desc.dispatchEvent(new Event('input', { bubbles: true }));
+        desc.focus({ preventScroll: true }); // ne görgessen le a mezőhöz
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // mindig a lap tetejére
+    }, 80);
   });
+});
 }
 
 /* ---------- Leírás helper az ORDER panelen (no duplicates) + példák ---------- */
