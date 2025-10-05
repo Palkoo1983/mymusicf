@@ -536,3 +536,29 @@ footer{
 }
 
 /* Az arany glow-hoz nem nyúlunk – a meglévő :hover/:active szabályok maradnak. */
+/* === HIBAJAVÍTÁS: Üzenetablak csak a Kapcsolat panelen === */
+#thanksOverlay{
+  display: none; /* alapértelmezetten ne jelenjen meg sehol */
+}
+#contact:target ~ #thanksOverlay,
+#contact.active ~ #thanksOverlay{
+  display: grid; /* csak akkor jelenjen meg, ha a Kapcsolat panel aktív vagy célzott */
+}
+
+/* === MOBILON is valós bakelit + nagyobb forgó logó === */
+@media (max-width: 768px) {
+  .topbar .brand > img.spinning-vinyl {
+    width: 112px !important;
+    height: 112px !important;
+    animation: spin 8s linear infinite; /* mobilon is forgás */
+  }
+
+  .vinyl-tabs .tab {
+    /* Mobilon is ugyanaz a valódi bakelit kinézet */
+    background:
+      repeating-radial-gradient(circle at 50% 50%,
+        rgba(255,255,255,.07) 0 1px, rgba(255,255,255,0) 1px 3px),
+      radial-gradient(circle at 50% 50%, #1a1a1a 0 34%, #2a2a2a 34% 36%, #0b0b0b 36% 100%);
+    /* Barázdák, peremek ugyanazok, mint desktopon */
+  }
+}
