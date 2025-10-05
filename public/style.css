@@ -613,15 +613,16 @@ footer{
     height: 80px !important;
   }
 }
-/* === ENZENEM – TOPBAR LOGÓ + MENÜ LEMEZEK + GLOW OFF (CÉLZOTT PATCH) === */
+/* ===== ENZENEM PATCH — LOGÓ MÉRET + MENÜ LEMEZEK FEKETÉK + GLOW ON ===== */
 
-/* 1) TOPBAR logó MÉRET – DESKTOP: 100×100 px */
+/* TOPBAR LOGÓ – DESKTOP: 100×100 px */
 @media (min-width: 1025px){
   .topbar .brand > img.spinning-vinyl{
     width: 100px !important;
     height: 100px !important;
     margin: 10px 22px !important;
-    /* csak transform animáció – sima mozgás */
+
+    /* sima, akadásmentes mozgás */
     animation:
       vinyl-intro var(--vinyl-intro, 1.3s) ease-out var(--vinyl-intro-delay, 0s) both,
       spin var(--vinyl-spin, 8s) linear infinite calc(var(--vinyl-intro, 1.3s) + var(--vinyl-intro-delay, 0s)) !important;
@@ -629,7 +630,9 @@ footer{
     transform: translate3d(0,0,0);
     transform-origin: 50% 50%;
     contain: paint;
-    filter: blur(0.15px); /* finom shimmer-csökkentés */
+
+    /* ha nagyon finom “zizgést” látsz, 0.12–0.18 közé állítható */
+    filter: none;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     image-rendering: auto;
@@ -638,23 +641,46 @@ footer{
   }
 }
 
-/* 2) TOPBAR logó MÉRET – MOBIL: 92×92 px (80 → +15%) */
+/* TOPBAR LOGÓ – MOBIL: 92×92 px (+15% az eddigi ~80-hoz képest) */
 @media (max-width: 768px){
   .topbar .brand > img.spinning-vinyl{
     width: 92px !important;
     height: 92px !important;
     margin: 8px 16px !important;
-    filter: none; /* mobilon nincs szükség blurre */
   }
 }
 
-/* 3) MENÜ LEMEZEK – MINDENHOL FEKETÉK, erős kontraszt (blue override OFF) */
+/* MENÜ LEMEZEK – FEKETE, BELÜL VILÁGOSABB, KÍVÜL SÖTÉTEBB FEKETE (KONTRASZTOS) */
 .vinyl-tabs .tab{
+  /* belső világosabb kör + külső sötétebb test */
   background:
-    radial-gradient(circle at center, #222 0 35%, transparent 35% 37%, #1a1a1a 37% 100%) !important,
-    conic-gradient(from 0deg, #2c2c2c, #1a1a1a 60%, #2c2c2c) !important;
-  box-shadow: var(--shadow), inset 0 0 0 3px #000, inset 0 0 0 6px #121212 !important;
+    radial-gradient(circle at center, #2a2a2a 0 35%, transparent 35% 37%, #111 37% 100%) !important,
+    conic-gradient(from 0deg, #1a1a1a, #0f0f0f 60%, #1a1a1a) !important;
+  box-shadow:
+    var(--shadow),
+    inset 0 0 0 3px #000,
+    inset 0 0 0 6px #121212 !important;
+  color: var(--ink);
 }
 
-/* 4) GLOW/KARIZMA MINDENHOL KI – nem kérted, ezért lekapcsoljuk */
-.spinning-vinyl::after{ content: none !important; }
+/* GLOW / KARIZMA MINDENHOL BEKAPCSOLVA (spinning-vinyl elemekhez) */
+.spinning-vinyl{
+  position: relative;
+  will-change: transform, filter, opacity;
+}
+.spinning-vinyl::after{
+  content:"";
+  position:absolute;
+  inset:-14%;
+  border-radius:50%;
+  background: radial-gradient(closest-side,
+              rgba(255,230,140,.45),
+              rgba(255,210,80,.20) 55%,
+              rgba(0,0,0,0) 70%);
+  filter: blur(10px);
+  opacity: 1;              /* glow ON */
+  pointer-events:none;
+  z-index: 0;
+}
+/* ha bárhol korábban ki lett lőve a glow, itt visszakapcsoljuk */
+.spinning-vinyl::after{ display:block !important; }
