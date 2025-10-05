@@ -116,30 +116,48 @@ function initHowTo() {
   if (el) el.focus({ preventScroll: true }); // ne görgessen fókuszkor
 }
 
+   // "Hogyan működik" gomb -> Megrendelés tetejére
   openBtn?.addEventListener('click', () => {
     orderTabBtn?.click();
+
+    // 1) azonnal fel
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // 2) pici késleltetéssel még egyszer, hogy a tabváltás utáni
+    //   böngésző mozgást is felülírjuk
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      focusBrief();
-    }, 80);
+      // ne húzza le a fókusz a textarea-ra
+      const el = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+      if (el && el.focus) {
+        try { el.focus({ preventScroll: true }); } catch(_) {}
+      }
+    }, 120);
   });
 
-  // Példa-chipek a HOWTO panelen
- qsa('#howto .chip[data-example]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const text = btn.getAttribute('data-example') || '';
-    orderTabBtn?.click();
-    setTimeout(() => {
-      const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-      if (desc) {
-        desc.value = text;
-        desc.dispatchEvent(new Event('input', { bubbles: true }));
-        desc.focus({ preventScroll: true }); // ne görgessen le a mezőhöz
-      }
-      window.scrollTo({ top: 0, behavior: 'smooth' }); // mindig a lap tetejére
-    }, 80);
+  // Példa-chipek a HOWTO panelen -> beír, de mindig a lap tetején maradunk
+  qsa('#howto .chip[data-example]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = btn.getAttribute('data-example') || '';
+
+      orderTabBtn?.click();
+
+      // azonnal fel
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      setTimeout(() => {
+        const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+        if (desc) {
+          desc.value = text;
+          desc.dispatchEvent(new Event('input', { bubbles: true }));
+          // fókusz görgetés nélkül
+          try { desc.focus({ preventScroll: true }); } catch(_) {}
+        }
+        // biztos, ami biztos – még egyszer a tetejére
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 120);
+    });
   });
-});
 }
 
 /* ---------- Leírás helper az ORDER panelen (no duplicates) + példák ---------- */
