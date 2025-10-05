@@ -853,3 +853,57 @@ body.gold-theme.gold-shimmer{
     auto, 400% 100%, auto;
   animation: goldSweepSoft 9s linear infinite;
 }
+/* === GOLD THEME – közepes kontraszt, olvasható felirat ==================== */
+body.gold-theme{
+  /* biztonsági alap, ha egy réteg nem rajzolódik */
+  background-color:#F3CD76;
+
+  /* rétegek: enyhe textúra + csillanás + két nagy arany átmenet */
+  background-image:
+    /* finom szemcse – alig látszik, nem sötétít */
+    repeating-linear-gradient(
+      45deg,
+      rgba(255,240,200,.06) 0 2px,
+      rgba(255,240,200,0)   2px 4px
+    ),
+    /* keskeny csillanás bal-fentről – világosít (screen) */
+    linear-gradient(125deg,
+      rgba(255,255,255,.22) 0%,
+      rgba(255,255,255,.10) 18%,
+      rgba(255,255,255,0)   40%
+    ),
+    /* fő világos→közepes arany felülről-jobbról */
+    radial-gradient(1100px 700px at 70% -10%,
+      #FFF1B8 0%,
+      #FFE08A 35%,
+      #F9C85E 60%,
+      #E8B247 85%,
+      #D79A2E 100%
+    ),
+    /* közép→mély arany alulról-balról, hogy legyen kontraszt */
+    radial-gradient(1200px 800px at -10% 110%,
+      #8F6A1A 0%,
+      #A97B1E 35%,
+      #C28D25 65%,
+      rgba(0,0,0,0) 100%
+    );
+  /* a csillanás réteg világosítson, a többi normál */
+  background-blend-mode: normal, screen, normal, normal;
+}
+
+/* enyhe vignetta a széleken – csak kicsit, hogy ne sötétítsen túl */
+body.gold-theme::after{
+  content:"";
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  background: radial-gradient(120% 120% at 50% 45%,
+              rgba(0,0,0,0) 62%,
+              rgba(0,0,0,.10) 100%);
+}
+
+/* a pont-minta aranyosítása (ha használod a .bg-vinyl-t) */
+body.gold-theme .bg-vinyl{
+  background-image:
+    radial-gradient(circle at center, rgba(255,230,160,.12) 0 1px, transparent 1px),
+    radial-gradient(circle at center, rgba(255,230,160,.06) 0 2px, transparent 2px);
+  opacity:.22;
+}
