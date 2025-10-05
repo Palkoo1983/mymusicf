@@ -597,3 +597,19 @@ footer{
 @media (max-width: 768px){
   .embed .video{ max-width: 300px !important; }
 }
+/* TOPBAR LOGÓ – legyen kb. 100px, hogy nagyobb legyen a menülemezeknél, de ne óriási */
+@media (min-width: 1025px){
+  .topbar .brand > img.spinning-vinyl{
+    width: 100px !important;
+    height: 100px !important;
+    margin: 10px 22px !important;
+  }
+}
+
+/* Mobilon marad a kisebb méret */
+@media (max-width: 768px){
+  .topbar .brand > img.spinning-vinyl{
+    width: 80px !important;
+    height: 80px !important;
+  }
+}
