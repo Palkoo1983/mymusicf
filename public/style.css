@@ -759,3 +759,38 @@ html.ua-samsung .vinyl-tabs .tab span{
   color:#eef4fb !important;
   text-shadow:0 1px 1px rgba(0,0,0,.8);
 }
+/* ==== GOLD THEME PREVIEW (non-destructive) ==== */
+/* Csak akkor él, ha a <body> kap egy .theme-gold osztályt */
+body.theme-gold{
+  /* sötétebb arany vignetta + fémes átmenetek + enyhe csillanás */
+  background:
+    radial-gradient(1200px 680px at 70% -10%, rgba(255,244,210,.10), transparent 60%),
+    radial-gradient(ellipse at center, #1f1604 0%, #2b1f06 48%, #120d04 100%),
+    /* fémes sávok – nagyon finom */
+    linear-gradient(120deg, rgba(255,220,120,.09), rgba(0,0,0,0) 35% 65%, rgba(255,220,120,.07)),
+    conic-gradient(from 220deg at 35% 30%,
+      rgba(255,230,160,.18), rgba(0,0,0,0) 40%, rgba(255,230,160,.10) 70%, rgba(0,0,0,0));
+  color: var(--ink);
+}
+
+/* finom „szemcsés” csillogás a meglévő .bg-vinyl rétegen */
+.theme-gold .bg-vinyl{
+  background-image:
+    radial-gradient(circle at center, rgba(255,255,255,.08) 0 1px, transparent 1px),
+    radial-gradient(circle at center, rgba(255,255,255,.05) 0 2px, transparent 2px),
+    repeating-linear-gradient( 45deg, rgba(255,210,100,.05) 0 2px, rgba(0,0,0,0) 2px 6px);
+  opacity:.32; /* picit erősebb, hogy „fémes” legyen */
+}
+
+/* topbar üvegezés – arany tónus */
+.theme-gold .topbar{
+  background: rgba(26,18,6,.55);
+  border-bottom: 1px solid rgba(255,210,100,.18);
+  backdrop-filter: blur(10px);
+}
+
+/* opcionális: kártyák enyhe arany pereme (ízlés kérdése) */
+.theme-gold .card{
+  border-color: rgba(255,210,100,.16);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+}
