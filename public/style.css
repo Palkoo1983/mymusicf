@@ -679,3 +679,50 @@ html {
   from { transform: translate3d(0,0,0) rotate(0deg); }
   to   { transform: translate3d(0,0,0) rotate(360deg); }
 }
+/* ==== EnZenem LOGÓ – DESKTOP shimmer/judder fix (mobil érintetlen) ==== */
+@media (min-width: 1025px){
+  .topbar .logo-wrap{
+    width: 86px;
+    height: 86px;
+    display: grid;
+    place-items: center;
+    margin: 10px 22px;
+
+    /* csak transform animáció (selymesebb), GPU kompozit */
+    animation: enzenem-spin var(--vinyl-spin, 8s) linear infinite;
+    will-change: transform;
+    transform: translate3d(0,0,0);
+    transform-origin: 50% 50%;
+    contain: paint;
+
+    /* >>> kulcs: szuperfinom blur, ami kiveszi a recés csillogást desktopon <<< */
+    filter: blur(0.2px);
+  }
+
+  .topbar .logo-img{
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 50%;
+    box-shadow: none; /* árnyék ne az animált képen legyen */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimizeQuality;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* statikus árnyék a wrapperen – nem rángatja a kompozitot */
+  .topbar .logo-wrap::after{
+    content:"";
+    position:absolute;
+    inset:-6px;
+    border-radius:50%;
+    box-shadow:0 0 16px rgba(212,175,55,.35);
+    pointer-events:none;
+  }
+}
+
+@keyframes enzenem-spin {
+  from { transform: translate3d(0,0,0) rotate(0deg); }
+  to   { transform: translate3d(0,0,0) rotate(360deg); }
+}
