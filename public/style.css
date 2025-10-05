@@ -597,3 +597,49 @@ function closeOverlay() {
 /* Overlay mindig rejtve alapból, csak .hidden lekerülésekor látszódjon */
 #thanksOverlay { display: none; }
 #thanksOverlay:not(.hidden) { display: grid; }
+/* === Köszönő overlay – dobozos megjelenés === */
+#thanksOverlay {
+  /* már rejtve alapból – ezt megtartjuk */
+  display: none;
+  /* kellemes, üveges háttér, középre igazítás */
+  background: rgba(13,27,42,.75);
+  backdrop-filter: blur(6px);
+  place-items: center;   /* grid középre */
+}
+#thanksOverlay:not(.hidden){ display: grid; }
+
+#thanksOverlay .overlay-card{
+  width: min(520px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 20px 22px;
+  border-radius: 16px;
+  border: 1px solid rgba(188,208,230,.22);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
+  box-shadow: 0 30px 80px rgba(0,0,0,.55);
+  text-align: center;
+  color: var(--ink);
+  position: relative;
+}
+
+/* arany díszcsík a doboz tetején */
+#thanksOverlay .overlay-card::before{
+  content:"";
+  position: absolute;
+  top: 0; left: 18px; right: 18px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,209,102,0), rgba(255,209,102,.8), rgba(255,209,102,0));
+}
+
+/* címsor és gombok finomítása */
+#thanksOverlay .overlay-card h3{ 
+  margin: 6px 0 8px; 
+}
+#thanksOverlay .overlay-card p{ 
+  margin: 0 0 14px; 
+  color: var(--muted);
+}
+#thanksOverlay #overlayClose{
+  margin-top: 4px;
+  min-width: 120px;
+}
