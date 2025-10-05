@@ -544,3 +544,30 @@ html {
   from { transform: translateZ(0) rotate(0deg); }
   to   { transform: translateZ(0) rotate(360deg); }
 }
+/* ==== EnZenem logó – DESKTOP TŰÉLESSÉG + SELYMES FORGÁS (mobilhoz nem nyúlunk) ==== */
+@media (min-width: 1025px){
+  .topbar .logo-wrap{
+    width: 84px;           /* 86 → 84 px – asztalon szebb raszter (egész pixelen ül) */
+    height: 84px;
+    animation: enzenem-logo-spin var(--vinyl-spin, 8s) linear infinite; /* csak transform */
+    will-change: transform;
+    transform: translate3d(0,0,0);  /* GPU-kompozit, akadás csökken */
+    contain: paint;                 /* csak a logó területét fesse újra */
+  }
+  .topbar .logo-img{
+    width: 100%;
+    height: 100%;
+    image-rendering: -webkit-optimize-contrast; /* Chrome-on élesebb SVG */
+    image-rendering: optimizeQuality;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    shape-rendering: geometricPrecision;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* stabil, tiszta rotáció – ne változtasd, ha már létezik nálad */
+@keyframes enzenem-logo-spin {
+  from { transform: translate3d(0,0,0) rotate(0deg); }
+  to   { transform: translate3d(0,0,0) rotate(360deg); }
+}
