@@ -488,3 +488,51 @@ footer{
 .vinyl-tabs .tab:hover::after,
 .vinyl-tabs .tab:focus-visible::after,
 .vinyl-tabs .tab.active::after{ opacity:1; }
+/* === PATCH: MENÜ bakelit + mobilon nagyobb, forgó logó === */
+
+/* LOGÓ – desktop 100×100, mobilon NAGYOBB és forog (a már meglévő .spinning-vinyl osztállyal) */
+@media (min-width:1025px){
+  .topbar .brand > img.spinning-vinyl{
+    width:100px !important; height:100px !important;
+  }
+}
+@media (max-width:768px){
+  .topbar .brand > img.spinning-vinyl{
+    width:112px !important; height:112px !important;  /* mobilon nagyobb */
+  }
+}
+
+/* MENÜ LEMEZEK – valódi fekete bakelit (koncentrikus barázdák), felirat látszik */
+.vinyl-tabs .tab{
+  position:relative;
+  width:86px; height:86px; border-radius:50%;
+  background-color:#0b0b0b !important; /* védőalap – sosem fehér */
+  /* bakelit test + vékony perem + barázdák + enyhe csillanás */
+  background-image:
+    /* barázdák (koncentrikus) */
+    repeating-radial-gradient(circle at 50% 50%,
+      rgba(255,255,255,.07) 0 1px,
+      rgba(255,255,255,0)   1px 3px),
+    /* enyhe csillanás a bal-felső kvadránsban */
+    radial-gradient(circle at 30% 30%,
+      rgba(255,255,255,.10) 0%,
+      rgba(255,255,255,0) 55%),
+    /* belső címke (sötét) → vékony világos perem → külső mélyfekete test */
+    radial-gradient(circle at 50% 50%,
+      #1a1a1a 0 34%,
+      #2a2a2a 34% 36%,
+      #0b0b0b 36% 100%);
+  box-shadow:
+    inset 0 0 0 3px #000,
+    inset 0 0 0 6px #121212,
+    0 6px 18px rgba(0,0,0,.35) !important;
+  display:grid; place-items:center;
+}
+
+.vinyl-tabs .tab span{
+  position:relative; z-index:2;
+  color:#eef4fb !important;
+  text-shadow:0 1px 1px rgba(0,0,0,.8);
+}
+
+/* Az arany glow-hoz nem nyúlunk – a meglévő :hover/:active szabályok maradnak. */
