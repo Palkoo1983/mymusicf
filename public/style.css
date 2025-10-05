@@ -419,3 +419,57 @@ footer{
   from { transform: translate3d(0,0,0) rotate(0deg); }
   to   { transform: translate3d(0,0,0) rotate(360deg); }
 }
+/* === EnZenem – CÉLZOTT PATCH: asztali logó kisebb + selymes forgás; menülemezek feketék === */
+
+/* 1) DESKTOP: topbar logó MÉRET ↓ nagyobbat csökkentünk, a forgás marad */
+@media (min-width: 1025px){
+  .topbar .logo-wrap{
+    width: 64px !important;   /* 86 → 64 px (kb. -25%) */
+    height: 64px !important;
+    margin: 10px 22px;
+    animation:
+      vinyl-intro var(--vinyl-intro, 1.3s) ease-out var(--vinyl-intro-delay, 0s) both,
+      enzenem-topbar-spin var(--vinyl-spin, 8s) linear infinite calc(var(--vinyl-intro, 1.3s) + var(--vinyl-intro-delay, 0s)) !important;
+    will-change: transform;
+    transform: translate3d(0,0,0);
+    transform-origin: 50% 50%;
+    contain: paint;
+    filter: blur(0.15px);      /* finom shimmer-csökkentés (nem látszik elmosásnak) */
+  }
+  .topbar .logo-img{
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    border-radius: 50%;
+    box-shadow: none;          /* árnyék ne az animált képen legyen */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    image-rendering: auto;
+    shape-rendering: geometricPrecision;
+    text-rendering: optimizeLegibility;
+  }
+  .topbar .logo-wrap::after{
+    content:"";
+    position:absolute;
+    inset:-6px;
+    border-radius:50%;
+    box-shadow:0 0 16px rgba(212,175,55,.35);
+    pointer-events:none;
+  }
+}
+
+/* 2) MOBIL: menülemezek maradjanak FEKETÉK (ne váltsanak kékre) */
+@media (max-width: 768px){
+  .vinyl-tabs .tab{
+    background:
+      radial-gradient(circle at center, #222 0 35%, transparent 35% 37%, #1a1a1a 37% 100%),
+      conic-gradient(from 0deg, #2c2c2c, #1a1a1a 60%, #2c2c2c) !important;
+    box-shadow: var(--shadow), inset 0 0 0 3px #000, inset 0 0 0 6px #121212 !important;
+  }
+}
+
+/* 3) TOPBAR logó forgás – stabil, tiszta rotáció csak a wrap-en */
+@keyframes enzenem-topbar-spin{
+  from { transform: translate3d(0,0,0) rotate(0deg); }
+  to   { transform: translate3d(0,0,0) rotate(360deg); }
+}
