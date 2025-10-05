@@ -794,3 +794,62 @@ body.theme-gold{
   border-color: rgba(255,210,100,.16);
   background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
 }
+/* === GOLD THEME – világos, pezsgős arany (Samsung-safe) =================== */
+/* használat: <body class="gold-theme"> */
+body.gold-theme{
+  /* 0) biztos alap – ha bármi nem rajzolódik, akkor se legyen sötét */
+  background-color: #FFE8A3; /* világos arany-alap */
+
+  /* 1) fémes arany rétegek – kifejezetten világos tónusokkal */
+  background-image:
+    /* nagyon enyhe szemcse (aránylag világos) */
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 245, 210, .06) 0 2px,
+      rgba(255, 245, 210, 0)   2px 4px
+    ),
+    /* keskeny csillanás-sáv bal-fentről */
+    linear-gradient(125deg,
+      rgba(255, 255, 255, .35) 0%,
+      rgba(255, 255, 255, .10) 18%,
+      rgba(255, 255, 255, 0)   38%
+    ),
+    /* fő arany átmenet – VILÁGOS tónusok, nincs sötétbarna */
+    radial-gradient(1100px 650px at 60% -10%,
+      #FFF7CF 0%,
+      #FFECA4 28%,
+      #FFE38A 50%,
+      #FFD873 70%,
+      #FFC957 100%
+    );
+  background-blend-mode: normal, screen, normal;
+}
+
+/* finom vignetta – jóval enyhébb, ne sötétítsen túl */
+body.gold-theme::after{
+  content:"";
+  position:fixed; inset:0; pointer-events:none;
+  background: radial-gradient(115% 115% at 50% 42%,
+              rgba(0,0,0,0) 60%,
+              rgba(0,0,0,.12) 100%);
+  z-index:0;
+}
+
+/* a pontozott textúra aranyosítása (ha használod .bg-vinyl-t) */
+body.gold-theme .bg-vinyl{
+  background-image:
+    radial-gradient(circle at center, rgba(255,235,170,.12) 0 1px, transparent 1px),
+    radial-gradient(circle at center, rgba(255,235,170,.07) 0 2px, transparent 2px);
+  opacity:.25;
+}
+
+/* (opcionális) nagyon finom csillanás anim – nem változtat színen */
+@keyframes goldSweepSoft {
+  from { background-position: 0 0, -200% 0, 0 0; }
+  to   { background-position: 0 0, 200% 0, 0 0; }
+}
+body.gold-theme.gold-shimmer{
+  background-size:
+    auto, 400% 100%, auto;
+  animation: goldSweepSoft 9s linear infinite;
+}
