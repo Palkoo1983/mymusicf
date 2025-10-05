@@ -571,3 +571,111 @@ html {
   from { transform: translate3d(0,0,0) rotate(0deg); }
   to   { transform: translate3d(0,0,0) rotate(360deg); }
 }
+/* ==== EnZenem LOGÓ – DESKTOP élesség + selymes forgás (mobilhoz NEM nyúlunk) ==== */
+@media (min-width: 1025px){
+  .topbar .logo-wrap{
+    position: relative;
+    width: 84px;                 /* 86 → 84 px: egész pixelre ül, eltűnik a recézés */
+    height: 84px;
+    display: grid;
+    place-items: center;
+    margin: 10px 22px;
+
+    /* csak transform animálódik → simább mozgás */
+    animation: enzenem-spin var(--vinyl-spin, 8s) linear infinite;
+    will-change: transform;
+    transform: translate3d(0,0,0);
+    transform-origin: 50% 50%;
+    perspective: 1000px;
+    transform-style: preserve-3d;
+    contain: paint;              /* kicsi újrarajzolt terület */
+  }
+
+  .topbar .logo-img{
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 50%;
+    box-shadow: none !important;              /* árnyék NE az animált képen legyen */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimizeQuality;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    shape-rendering: geometricPrecision;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* az árnyékot egy statikus pszeudo-rétegre tesszük, így nem rángatja a kompozitot */
+  .topbar .logo-wrap::after{
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    box-shadow: 0 0 16px rgba(212,175,55,.35);
+    pointer-events: none;
+  }
+}
+
+/* stabil, tiszta rotáció – csak a wrap forog */
+@keyframes enzenem-spin {
+  from { transform: translate3d(0,0,0) rotate(0deg); }
+  to   { transform: translate3d(0,0,0) rotate(360deg); }
+}
+/* ==== EnZenem LOGÓ – DESKTOP 86px, éles vonalak + selymes forgás, fade megmarad ==== */
+@media (min-width: 1025px){
+  .topbar .logo-wrap{
+    position: relative;
+    width: 86px;
+    height: 86px;
+    display: grid;
+    place-items: center;
+    margin: 10px 22px;
+
+    /* GPU-kompozit, kicsi repaint-terület */
+    will-change: transform;
+    transform: translate3d(0,0,0);
+    transform-origin: 50% 50%;
+    contain: paint;
+    perspective: 1000px;
+    transform-style: preserve-3d;
+  }
+
+  /* biztosítsuk, hogy a fade + spin ezen az elemEN fusson, 86px-en */
+  .topbar .logo-wrap.spinning-vinyl{
+    animation:
+      vinyl-intro var(--vinyl-intro, 1.3s) ease-out var(--vinyl-intro-delay, 0s) both,
+      enzenem-spin var(--vinyl-spin, 8s) linear infinite calc(var(--vinyl-intro, 1.3s) + var(--vinyl-intro-delay, 0s)) !important;
+  }
+
+  .topbar .logo-img{
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 50%;
+    /* shadow NE az animált képen legyen (aliasing/akadás csökkentése) */
+    box-shadow: none !important;
+
+    /* render tippek SVG-hez (élesebb barázdák) */
+    image-rendering: auto;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    shape-rendering: geometricPrecision;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* árnyék külön, statikus pszeudo-rétegen → nem „rángatja” a kompozitot */
+  .topbar .logo-wrap::after{
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    box-shadow: 0 0 16px rgba(212,175,55,.35);
+    pointer-events: none;
+  }
+}
+
+/* stabil, tiszta rotáció – csak a wrap forog; méret: 86×86 */
+@keyframes enzenem-spin{
+  from { transform: translate3d(0,0,0) rotate(0deg); }
+  to   { transform: translate3d(0,0,0) rotate(360deg); }
+}
