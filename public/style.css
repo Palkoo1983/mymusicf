@@ -726,3 +726,14 @@ html {
   from { transform: translate3d(0,0,0) rotate(0deg); }
   to   { transform: translate3d(0,0,0) rotate(360deg); }
 }
+/* ==== EnZenem logó – DESKTOP -10% méret (mobil változatlan) ==== */
+@media (min-width: 1025px){
+  .topbar .logo-wrap{
+    width: 77px;   /* 86px → ~-10% */
+    height: 77px;
+  }
+  .topbar .logo-img{
+    width: 100%;
+    height: 100%;
+  }
+}
