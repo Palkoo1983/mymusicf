@@ -27,22 +27,42 @@ function initTabs() {
   const buttons = qsa('.tab');
   const panels  = qsa('main .panel');
 
-  function activate(targetId) {
-    if (!targetId) return;
-    panels.forEach(p => {
-      const on = (p.id === targetId);
-      p.hidden = !on;
-      p.classList.toggle('active', on);
-    });
-    buttons.forEach(b => {
-      const on = (b.dataset.target === targetId);
-      b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      b.classList.toggle('active', on);
-    });
-    if (targetId === 'order') setTimeout(initBriefHelper, 50);
-    // mindig a lap tetejére gördítünk
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+ function activate(targetId) {
+  if (!targetId) return;
+
+  // ha épp egy másik elem (pl. YouTube gomb) van fókuszban, engedjük el
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur();
   }
+
+  panels.forEach(p => {
+    const on = (p.id === targetId);
+    p.hidden = !on;
+    p.classList.toggle('active', on);
+    // a rejtett paneleket tegyük „inert”-té, így nem kaphatnak fókuszt
+    if (on) p.removeAttribute('inert');
+    else    p.setAttribute('inert', '');
+  });
+
+  buttons.forEach(b => {
+    const on = (b.dataset.target === targetId);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.classList.toggle('active', on);
+  });
+
+  if (targetId === 'order') setTimeout(initBriefHelper, 50);
+
+  // fókuszt rakjunk az új panel címsorára a hozzáférhetőség miatt
+  const active = panels.find(p => p.id === targetId);
+  const h2 = active && active.querySelector('h2');
+  if (h2) {
+    h2.setAttribute('tabindex', '-1');
+    h2.focus();
+  }
+
+  // mindig a lap tetejére gördítünk
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
   // initial state
   const activePanel = panels.find(p => p.classList.contains('active')) || panels[0];
