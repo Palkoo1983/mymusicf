@@ -582,3 +582,15 @@ function closeOverlay() {
     /* Barázdák, peremek ugyanazok, mint desktopon */
   }
 }
+/* === Köszönő overlay vezérlés – ALAPBÓL REJTETT === */
+#thanksOverlay { display: none !important; }
+#thanksOverlay.hidden { display: none !important; }
+#thanksOverlay.show { display: grid !important; }
+
+/* biztosan a réteg fölé kerüljön és teljes képernyős legyen */
+#thanksOverlay.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  place-items: center;
+}
