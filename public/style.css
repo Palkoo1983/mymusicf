@@ -428,3 +428,63 @@ footer{
 .vinyl-tabs .tab.active::after{
   opacity: 1;
 }
+/* === MENÜ LEMEZEK – VALÓDI FEKETE BAKELIT, MINDEN NÉZETBEN === */
+.vinyl-tabs .tab{
+  position: relative;
+  width: 86px; height: 86px; border-radius: 50%;
+  color: var(--ink) !important;
+
+  /* bakelit: test + vékony perem + koncentrikus barázdák (legfelül) */
+  background:
+    /* 1) barázdák – nagyon finom körgyűrűk */
+    repeating-radial-gradient(circle at 50% 50%,
+      rgba(255,255,255,.08) 0 1px,
+      rgba(255,255,255,0)   1px 3px) !important,
+    /* 2) test: belső sötét címke → vékony világosabb perem → sötét külső */
+    radial-gradient(circle at 50% 50%,
+      #1a1a1a 0 34%,   /* belső címke – sötét grafit */
+      #2a2a2a 34% 36%, /* vékony világosabb perem */
+      #0b0b0b 36% 100% /* külső mélyfekete test */
+    ) !important;
+
+  box-shadow:
+    inset 0 0 0 3px #000,
+    inset 0 0 0 6px #121212,
+    var(--shadow) !important;
+
+  display: grid; place-items: center;
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+  background-color: #0b0b0b !important; /* védőszín, ha bármely réteg nem rajzolna */
+}
+
+/* felirat mindig olvasható a sötét bakeliten */
+.vinyl-tabs .tab span{
+  position: relative; z-index: 2;
+  color: #eef4fb !important;
+  text-shadow: 0 1px 1px rgba(0,0,0,.8);
+}
+
+/* arany glow – NEM változtatom, meghagyjuk */
+.vinyl-tabs .tab::after{
+  content:""; position:absolute; inset:-10%; border-radius:50%;
+  pointer-events:none; opacity:0; transition:opacity .2s ease;
+  background: radial-gradient(closest-side,
+              rgba(255,230,140,.50),
+              rgba(255,210,80,.22) 55%,
+              rgba(0,0,0,0) 70%);
+  filter: blur(10px);
+  z-index: 1;
+}
+.vinyl-tabs .tab:hover,
+.vinyl-tabs .tab:focus-visible,
+.vinyl-tabs .tab.active{
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 28px rgba(255,209,102,.40),
+    0 0 0 3px rgba(255,209,102,.18),
+    inset 0 0 0 3px #000,
+    inset 0 0 0 6px #121212 !important;
+}
+.vinyl-tabs .tab:hover::after,
+.vinyl-tabs .tab:focus-visible::after,
+.vinyl-tabs .tab.active::after{ opacity:1; }
