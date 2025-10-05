@@ -403,11 +403,3 @@ document.addEventListener('DOMContentLoaded', () => {
       overlay.classList.remove('show');
     });
   }
-});
-<script>
-(function(){
-  if (navigator.userAgent && /SamsungBrowser/i.test(navigator.userAgent)) {
-    document.documentElement.classList.add('ua-samsung');
-  }
-})();
-</script>
