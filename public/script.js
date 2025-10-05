@@ -403,3 +403,4 @@ document.addEventListener('DOMContentLoaded', () => {
       overlay.classList.remove('show');
     });
   }
+});
