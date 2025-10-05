@@ -552,6 +552,26 @@ footer{
     height: 112px !important;
     animation: spin 8s linear infinite; /* mobilon is forgás */
   }
+/* === Köszönő üzenet alapból rejtve === */
+#thanksOverlay {
+  display: none; /* alapértelmezésben rejtve marad */
+}
+
+/* === Csak a Kapcsolat panel elküldése után jelenik meg === */
+#contact.active ~ #thanksOverlay {
+  display: grid; /* üzenet küldése után jelenik meg */
+}
+
+/* === Bezárás gomb működése === */
+#thanksOverlay .close-btn {
+  cursor: pointer;
+}
+
+/* Bezáráskor csak az overlay tűnjön el, maradjunk a Kapcsolat fülön */
+function closeOverlay() {
+  document.getElementById('thanksOverlay').style.display = 'none';
+  document.getElementById('contact').classList.remove('active');
+}
 
   .vinyl-tabs .tab {
     /* Mobilon is ugyanaz a valódi bakelit kinézet */
