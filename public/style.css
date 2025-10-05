@@ -955,3 +955,15 @@ body.gold-theme::after{
               rgba(0,0,0,0) 62%,
               rgba(0,0,0,.10) 100%);
 }
+/* === GOLD THEME — teljesen egyszínű, sötét arany háttér === */
+body.gold-theme{
+  /* mindent lenullázunk, hogy ne maradjon régi gradient */
+  background: none !important;
+  background-image: none !important;
+  background-color: #8F6A1A !important; /* sötét arany */
+  background-blend-mode: normal !important;
+}
+
+/* arany téma alatt ne rajzoljon textúrát / vignettát */
+body.gold-theme .bg-vinyl{ display: none !important; }
+body.gold-theme::after{ content: none !important; }
