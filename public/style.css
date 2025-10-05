@@ -594,3 +594,6 @@ function closeOverlay() {
   z-index: 1000;
   place-items: center;
 }
+/* Overlay mindig rejtve alapból, csak .hidden lekerülésekor látszódjon */
+#thanksOverlay { display: none; }
+#thanksOverlay:not(.hidden) { display: grid; }
