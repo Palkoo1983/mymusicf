@@ -907,3 +907,51 @@ body.gold-theme .bg-vinyl{
     radial-gradient(circle at center, rgba(255,230,160,.06) 0 2px, transparent 2px);
   opacity:.22;
 }
+/* === GOLD THEME OVERRIDE — a régi háttér lenullázása, majd az arany témát erőből rátenni === */
+body.gold-theme{
+  /* MINDENT nullázunk, ami korábban backgroundra vonatkozott */
+  background: none !important;
+  background-color: #F3CD76 !important;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255,240,200,.06) 0 2px,
+      rgba(255,240,200,0)   2px 4px
+    ),
+    linear-gradient(125deg,
+      rgba(255,255,255,.22) 0%,
+      rgba(255,255,255,.10) 18%,
+      rgba(255,255,255,0)   40%
+    ),
+    radial-gradient(1100px 700px at 70% -10%,
+      #FFF1B8 0%,
+      #FFE08A 35%,
+      #F9C85E 60%,
+      #E8B247 85%,
+      #D79A2E 100%
+    ),
+    radial-gradient(1200px 800px at -10% 110%,
+      #8F6A1A 0%,
+      #A97B1E 35%,
+      #C28D25 65%,
+      rgba(0,0,0,0) 100%
+    ) !important;
+  background-blend-mode: normal, screen, normal, normal !important;
+}
+
+/* a textúra réteget finomítjuk, hogy ne “kékezzen” be */
+body.gold-theme .bg-vinyl{
+  background-image:
+    radial-gradient(circle at center, rgba(255,230,160,.12) 0 1px, transparent 1px),
+    radial-gradient(circle at center, rgba(255,230,160,.06) 0 2px, transparent 2px) !important;
+  opacity:.18 !important; /* ha még zavar, állítsd 0–0.18 között */
+}
+
+/* enyhe vignetta az aranyon */
+body.gold-theme::after{
+  content:"";
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  background: radial-gradient(120% 120% at 50% 45%,
+              rgba(0,0,0,0) 62%,
+              rgba(0,0,0,.10) 100%);
+}
