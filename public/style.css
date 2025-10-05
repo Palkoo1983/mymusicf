@@ -383,3 +383,39 @@ footer{
   from { transform: translate3d(0,0,0) rotate(0deg); }
   to   { transform: translate3d(0,0,0) rotate(360deg); }
 }
+/* === EnZenem LOGÓ – DESKTOP MÉRET -15% (mobil változatlan), MENÜLEMEZEK FEKETÉK === */
+@media (min-width: 1025px){
+  .topbar .logo-wrap{
+    width: 73px;   /* 86px → kb. -15% */
+    height: 73px;
+    animation: enzenem-spin var(--vinyl-spin, 8s) linear infinite;
+    will-change: transform;
+    transform: translate3d(0,0,0);
+    contain: paint;
+    filter: blur(0.18px); /* finom élsimítás */
+  }
+
+  .topbar .logo-img{
+    width: 100%;
+    height: 100%;
+    image-rendering: optimizeQuality;
+  }
+
+  /* A menülemezek visszaállítása feketére */
+  .vinyl-tabs .tab{
+    background:
+      radial-gradient(circle at center, #222 0 35%, transparent 35% 37%, #1a1a1a 37% 100%),
+      conic-gradient(from 0deg, #2c2c2c, #1a1a1a 60%, #2c2c2c);
+  }
+}
+
+/* Mobilon a logó mérete változatlan */
+@media (max-width: 768px){
+  .topbar .logo-wrap{ width: 80px; height: 80px; }
+}
+
+/* A stabil, tiszta rotáció megmarad */
+@keyframes enzenem-spin{
+  from { transform: translate3d(0,0,0) rotate(0deg); }
+  to   { transform: translate3d(0,0,0) rotate(360deg); }
+}
