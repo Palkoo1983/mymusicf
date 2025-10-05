@@ -643,3 +643,11 @@ function closeOverlay() {
   margin-top: 4px;
   min-width: 120px;
 }
+/* Ne legyen a videó 720px fölé nagyítva – így nem pixelesedik felülskálázva */
+.embed .video { width: min(100%, 720px) !important; max-width: 720px !important; }
+.embed .video iframe {
+  width: 100% !important;
+  height: 100% !important;
+  image-rendering: auto;           /* böngészőknek jelzés: normál mintavételezés */
+  -ms-interpolation-mode: bicubic; /* régi Edge/IE fallback – ártani nem árt */
+}
