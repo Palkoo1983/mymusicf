@@ -462,3 +462,12 @@ html {
   padding-bottom: 2px;
 }
 .jump-link:hover{ opacity:.85 }
+.logo-wrap{ width:220px; height:220px; display:grid; place-items:center; }
+.brand .logo-img{
+  width:220px; height:220px; display:block; border-radius:50%;
+  image-rendering:auto; transform:translateZ(0);
+  -webkit-backface-visibility:hidden; backface-visibility:hidden;
+}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.spinning-vinyl{ animation:spin 8s linear infinite; will-change:transform; }
+@media (max-width:768px){ .logo-wrap,.brand .logo-img{ width:150px; height:150px; } }
