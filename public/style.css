@@ -714,3 +714,48 @@ function closeOverlay() {
   color:#eef4fb !important;
   text-shadow:0 1px 1px rgba(0,0,0,.8);
 }
+/* Samsung Internet célzott javítás – stabil, egységes textúra + arany glow */
+html.ua-samsung .vinyl-tabs .tab{
+  background-color:#0b0b0b !important;
+  background-image:
+    /* stabil, SVG-alapú "barázda" textúra – minden Samsung verzión ugyanaz */
+    url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>\
+ <defs>\
+  <radialGradient id='g' cx='50%' cy='50%' r='50%'>\
+   <stop offset='0%'  stop-color='%231a1a1a'/>\
+   <stop offset='34%' stop-color='%231a1a1a'/>\
+   <stop offset='36%' stop-color='%232a2a2a'/>\
+   <stop offset='37%' stop-color='%230b0b0b'/>\
+   <stop offset='100%' stop-color='%230b0b0b'/>\
+  </radialGradient>\
+ </defs>\
+ <circle cx='50' cy='50' r='50' fill='url(%23g)'/>\
+ <g stroke='%23ffffff' stroke-opacity='0.08' fill='none'>\
+  <circle cx='50' cy='50' r='49'/>\
+  <circle cx='50' cy='50' r='47'/>\
+  <circle cx='50' cy='50' r='45'/>\
+  <circle cx='50' cy='50' r='43'/>\
+  <circle cx='50' cy='50' r='41'/>\
+  <circle cx='50' cy='50' r='39'/>\
+  <circle cx='50' cy='50' r='37'/>\
+  <circle cx='50' cy='50' r='35'/>\
+ </g>\
+</svg>");
+  background-repeat:no-repeat !important;
+  background-position:center !important;
+  background-size:100% 100% !important;
+}
+
+html.ua-samsung .vinyl-tabs .tab::after{
+  /* egyértelmű arany, ne legyen barnás */
+  background: radial-gradient(closest-side,
+              rgba(255,209,102,.60),
+              rgba(255,209,102,.22) 55%,
+              rgba(0,0,0,0) 70%) !important;
+}
+
+html.ua-samsung .vinyl-tabs .tab span{
+  color:#eef4fb !important;
+  text-shadow:0 1px 1px rgba(0,0,0,.8);
+}
