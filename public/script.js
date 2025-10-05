@@ -424,3 +424,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+<script>
+/* Samsung Internet fix – smoothScroll + preventScroll polyfill */
+(function() {
+  // smooth scroll fallback
+  if (!('scrollBehavior' in document.documentElement.style)) {
+    window.scrollToSmooth = (opts) => window.scrollTo(0, opts?.top || 0);
+  } else {
+    window.scrollToSmooth = (opts) => window.scrollTo(opts);
+  }
+
+  // preventScroll fix for focus()
+  const origFocus = HTMLElement.prototype.focus;
+  HTMLElement.prototype.focus = function(opts) {
+    try {
+      if (opts && opts.preventScroll) {
+        const x = window.scrollX, y = window.scrollY;
+        origFocus.call(this);
+        window.scrollTo(x, y);
+      } else {
+        origFocus.call(this, opts);
+      }
+    } catch {
+      origFocus.call(this);
+    }
+  };
+})();
+</script>
