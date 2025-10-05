@@ -643,3 +643,64 @@ function closeOverlay() {
   margin-top: 4px;
   min-width: 120px;
 }
+/* --- Samsung Internet fix: menü bakelit SVG háttér, minden más böngésző érintetlen --- */
+.ua-samsung .vinyl-tabs .tab{
+  /* Megtartjuk a méretet/árnyékot; csak a hátteret cseréljük le egy inline SVG-re */
+  background-color: #0b0b0b !important;
+  background-image: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 86 86'>\
+  <defs>\
+    <radialGradient id='disc' cx='50%' cy='50%'>\
+      <stop offset='0%' stop-color='%231a1a1a'/>\
+      <stop offset='34%' stop-color='%231a1a1a'/>\
+      <stop offset='36%' stop-color='%232a2a2a'/>\
+      <stop offset='38%' stop-color='%230b0b0b'/>\
+      <stop offset='100%' stop-color='%230b0b0b'/>\
+    </radialGradient>\
+    <radialGradient id='grooves' cx='50%' cy='50%'>\
+      <stop offset='40%' stop-color='rgba(255,255,255,0.08)'/>\
+      <stop offset='42%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='44%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='46%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='48%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='50%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='52%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='54%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='56%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='58%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='60%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='62%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='64%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='66%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='68%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='70%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='72%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='74%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='76%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='78%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='80%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='82%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='84%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='86%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='88%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='90%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='92%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='94%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='96%' stop-color='rgba(255,255,255,0.06)'/>\
+      <stop offset='98%' stop-color='rgba(255,255,255,0)'/>\
+      <stop offset='100%' stop-color='rgba(255,255,255,0)'/>\
+    </radialGradient>\
+  </defs>\
+  <circle cx='43' cy='43' r='43' fill='url(%23disc)'/>\
+  <circle cx='43' cy='43' r='43' fill='url(%23grooves)'/>\
+</svg>");
+  background-repeat: no-repeat !important;
+  background-position: center center !important;
+  background-size: cover !important;
+}
+
+/* Szöveg biztosan olvasható marad, glow változatlan */
+.ua-samsung .vinyl-tabs .tab span{
+  color:#eef4fb !important;
+  text-shadow:0 1px 1px rgba(0,0,0,.8);
+}
