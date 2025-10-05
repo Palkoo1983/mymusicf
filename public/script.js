@@ -424,7 +424,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-<script>
 /* Samsung Internet fix – smoothScroll + preventScroll polyfill */
 (function() {
   // smooth scroll fallback
@@ -450,4 +449,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 })();
-</script>
+
