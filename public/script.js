@@ -404,3 +404,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+<script>
+(function(){
+  if (navigator.userAgent && /SamsungBrowser/i.test(navigator.userAgent)) {
+    document.documentElement.classList.add('ua-samsung');
+  }
+})();
+</script>
