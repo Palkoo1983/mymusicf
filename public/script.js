@@ -1,3 +1,6 @@
+(function(){ if (/SamsungBrowser/i.test(navigator.userAgent)) {
+  document.documentElement.classList.add('ua-samsung');
+}})();
 /* Samsung Internet detektálás – csak osztályt rakunk a <html>-re */
 (function () {
   if (/SamsungBrowser/i.test(navigator.userAgent)) {
