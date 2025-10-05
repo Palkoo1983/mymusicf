@@ -495,11 +495,51 @@ html {
   .topbar .logo-wrap{ width: 80px; height: 80px; margin: 8px 16px; }
 }
 
-/* 5) Csak a topbar logó forogjon – minden más 'spinning-vinyl' globált felülírunk itt */
-.spinning-vinyl{ animation: none !important; }
-.topbar .logo-wrap.spinning-vinyl{ animation: enzenem-logo-spin 8s linear infinite !important; }
-
 /* 6) Minimalista, sima rotáció (ne legyen filter/shadow az animált elemre kötve) */
+@keyframes enzenem-logo-spin { 
+  from { transform: translateZ(0) rotate(0deg); }
+  to   { transform: translateZ(0) rotate(360deg); }
+}
+/* ==== ENZENEM LOGO – ÉLES VONALAK + FOLYAMATOS FORGÁS + INTRO FADE ==== */
+/* 1) Fix egész pixeles méret a topbarban – megszűnik a recézés */
+.topbar .logo-wrap{
+  width: 86px;
+  height: 86px;
+  display: grid;
+  place-items: center;
+  margin: 10px 22px;
+
+  /* 2) Vissza a fade-in intro + folyamatos forgás (a saját változóidat is támogatja) */
+  animation:
+    vinyl-intro var(--vinyl-intro, 1.3s) ease-out var(--vinyl-intro-delay, 0s) both,
+    enzenem-logo-spin var(--vinyl-spin, 8s) linear infinite calc(var(--vinyl-intro, 1.3s) + var(--vinyl-intro-delay, 0s));
+
+  /* 3) Sima animáció (GPU) és pici repaint-terület */
+  will-change: transform;
+  transform: translateZ(0);
+  contain: paint;
+}
+
+.topbar .logo-img{
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 50%;
+  image-rendering: auto;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+
+  /* SVG render hint – a legtöbb böngészőben segít az élsimításon */
+  shape-rendering: geometricPrecision;
+  text-rendering: optimizeLegibility;
+}
+
+/* 4) Mobilon is egész px */
+@media (max-width: 768px){
+  .topbar .logo-wrap{ width: 80px; height: 80px; margin: 8px 16px; }
+}
+
+/* 5) Stabil, tiszta rotáció */
 @keyframes enzenem-logo-spin { 
   from { transform: translateZ(0) rotate(0deg); }
   to   { transform: translateZ(0) rotate(360deg); }
