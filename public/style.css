@@ -515,3 +515,85 @@ footer{
     conic-gradient(from 0deg, #2c2c2c, #1a1a1a 60%, #2c2c2c) !important;
   box-shadow: var(--shadow), inset 0 0 0 3px #000, inset 0 0 0 6px #121212 !important;
 }
+/* === ENZENEM – CÉLZOTT PATCH (csak a szükségesek) ===================== */
+
+/* 1) TOPBAR LOGÓ – csak a header .brand-ben lévő img.spinning-vinyl-re lőjünk */
+@media (min-width: 1025px){
+  .topbar .brand > img.spinning-vinyl{
+    /* felülírjuk a HTML width="240"/height="240" attribútumot */
+    width: 73px !important;   /* 86 → ~-15% asztalin */
+    height: 73px !important;
+    margin: 10px 22px !important;
+
+    /* sima, akadásmentes mozgás csak transformmal */
+    animation:
+      vinyl-intro var(--vinyl-intro, 1.3s) ease-out var(--vinyl-intro-delay, 0s) both,
+      spin var(--vinyl-spin, 8s) linear infinite calc(var(--vinyl-intro, 1.3s) + var(--vinyl-intro-delay, 0s)) !important;
+    will-change: transform;
+    transform: translate3d(0,0,0);
+    transform-origin: 50% 50%;
+    contain: paint;
+
+    /* nagyon enyhe shimmer-csökkentés (nem látszik elmosásnak) */
+    filter: blur(0.15px);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    image-rendering: auto;
+    shape-rendering: geometricPrecision;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* mobilon NE változzon a méret (80×80 körül hagyjuk) */
+@media (max-width: 768px){
+  .topbar .brand > img.spinning-vinyl{
+    width: 80px !important;
+    height: 80px !important;
+    margin: 8px 16px !important;
+    filter: none;
+  }
+}
+
+/* 2) MENÜLEMEZEK – minden nézetben FEKETÉK maradjanak */
+.vinyl-tabs .tab{
+  background:
+    radial-gradient(circle at center, #222 0 35%, transparent 35% 37%, #1a1a1a 37% 100%) !important,
+    conic-gradient(from 0deg, #2c2c2c, #1a1a1a 60%, #2c2c2c) !important;
+  box-shadow: var(--shadow), inset 0 0 0 3px #000, inset 0 0 0 6px #121212 !important;
+}
+
+/* 3) REFERENCIÁK – a keret igazítása és a videó középre hozása, aspect-ratio-val */
+.embeds{ display:grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+
+.embed.small{
+  display:flex; flex-direction:column; align-items:center;
+  padding:10px; /* kompaktabb keret */
+}
+
+/* felülírjuk a régi padding-top hack-et; fix, középre igazított 16:9 keret */
+.embed .video{
+  position: relative !important;
+  width: 100% !important;
+  max-width: 360px !important;   /* desktop keret-szélesség */
+  aspect-ratio: 16 / 9 !important;
+  padding-top: 0 !important;     /* a régi 56.25% padding törlése */
+  margin: 0 auto !important;     /* KÖZÉPRE igazítás */
+}
+
+.embed .video iframe{
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+  display: block !important;
+  border-radius: 8px;            /* esztétikusabb, de maradhat 0 is */
+}
+
+/* referenciák címkéi középre */
+.embed.small p{ text-align: center; }
+
+/* mobilon szűkebb keret a referenciáknál */
+@media (max-width: 768px){
+  .embed .video{ max-width: 300px !important; }
+}
