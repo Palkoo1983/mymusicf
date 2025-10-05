@@ -368,3 +368,39 @@ document.addEventListener('click', (e) => {
     btn.focus();      // fókusz a hozzáférhetőségért
   }
 });
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('contactForm');
+  const statusEl = document.getElementById('contactStatus');
+  const overlay = document.getElementById('thanksOverlay');
+  const closeBtn = document.getElementById('overlayClose');
+
+  if (!overlay) return;
+
+  // 1) Ha a státusz szöveg "elküldve" állapotra vált, felugrik az overlay
+  if (statusEl) {
+    const obs = new MutationObserver(() => {
+      const t = (statusEl.textContent || '').toLowerCase();
+      if (t.includes('elküldve') || t.includes('köszönjük')) {
+        overlay.classList.remove('hidden');
+        overlay.classList.add('show');
+      }
+    });
+    obs.observe(statusEl, { childList: true, subtree: true, characterData: true });
+  }
+
+  // 2) Biztos, ami biztos: form submitre is feljegyzünk egy "várakozó" állapotot
+  if (form) {
+    form.addEventListener('submit', () => {
+      // itt NEM állítjuk meg a saját küldési logikádat;
+      // az overlay végül a státusz üzenet alapján fog megjelenni
+    });
+  }
+
+  // 3) Bezárás gomb – overlay eltűnik, az oldalon maradunk
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      overlay.classList.add('hidden');
+      overlay.classList.remove('show');
+    });
+  }
+});
