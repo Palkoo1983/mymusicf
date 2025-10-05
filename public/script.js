@@ -1,3 +1,9 @@
+/* Samsung Internet detektálás – csak osztályt rakunk a <html>-re */
+(function () {
+  if (/SamsungBrowser/i.test(navigator.userAgent)) {
+    document.documentElement.classList.add('ua-samsung');
+  }
+})();
 /* =========================================================
    EnZenem – main script (FULL REPLACEMENT)
    - Tab navigation (vinyl-tabs) + scroll to top
