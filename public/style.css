@@ -651,3 +651,17 @@ function closeOverlay() {
   image-rendering: auto;           /* böngészőknek jelzés: normál mintavételezés */
   -ms-interpolation-mode: bicubic; /* régi Edge/IE fallback – ártani nem árt */
 }
+/* Samsung Internet kompatibilitás fix */
+@supports (-webkit-touch-callout: none) {
+  body {
+    background-color: #0b0b0f;
+    color: #f5f5f7;
+  }
+  .tab.active, button, .chip {
+    -webkit-tap-highlight-color: transparent;
+  }
+  iframe {
+    border-radius: 12px;
+    overflow: hidden;
+  }
+}
