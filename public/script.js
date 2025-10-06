@@ -138,30 +138,30 @@ function initHowTo() {
     }, 120);
   });
 
-  // Példa-chipek a HOWTO panelen -> beír, de mindig a lap tetején maradunk
-  qsa('#howto .chip[data-example]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const text = btn.getAttribute('data-example') || '';
+ // Példa-chipek a HOWTO panelen -> CSAK PLACEHOLDER, NE VALUE
+qsa('#howto .chip[data-example]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const text = btn.getAttribute('data-example') || '';
+    const orderTabBtn = qs('.tab[data-target="order"]');
+    orderTabBtn?.click();
 
-      orderTabBtn?.click();
+    // azonnal felgörgetünk
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // azonnal fel
+    setTimeout(() => {
+      const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+      if (desc) {
+        desc.value = '';                 // ÜRES érték
+        desc.placeholder = text;         // CSAK mintaként
+        desc.dispatchEvent(new Event('input', { bubbles: true }));
+        try { desc.focus({ preventScroll: true }); } catch(_) {}
+      }
+      // biztos, ami biztos – fent maradunk
       window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      setTimeout(() => {
-        const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-        if (desc) {
-          desc.value = text;
-          desc.dispatchEvent(new Event('input', { bubbles: true }));
-          // fókusz görgetés nélkül
-          try { desc.focus({ preventScroll: true }); } catch(_) {}
-        }
-        // biztos, ami biztos – még egyszer a tetejére
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 120);
-    });
+    }, 120); // maradhat a 120ms késleltetés, de már placeholdert állít
   });
-}
+});
+
 
 /* ---------- Leírás helper az ORDER panelen (no duplicates) + példák ---------- */
 function initBriefHelper() {
@@ -223,12 +223,11 @@ function initBriefHelper() {
       b.style.background = '#10111a';
       b.style.color = '#f4f4f7';
       b.addEventListener('click', () => {
-        desc.value = t;
-        desc.dispatchEvent(new Event('input', { bubbles: true }));
-        desc.focus();
-      });
-      exWrap.appendChild(b);
-    });
+  desc.value = '';               // üresen hagyjuk
+  desc.placeholder = t;          // csak minta
+  desc.dispatchEvent(new Event('input', { bubbles: true }));
+  try { desc.focus({ preventScroll: true }); } catch(_) {}
+});
 
     exTitle.insertAdjacentElement('afterend', exWrap);
   }
