@@ -241,14 +241,12 @@ function initBriefHelper() {
       b.style.background = '#10111a';
       b.style.color = '#f4f4f7';
       // ÚJ
-b.addEventListener('click', () => {
-  desc.value = '';                 // üres marad
-  desc.placeholder = t;            // csak minta
+      b.addEventListener('click', () => {
+  desc.value = '';               // üresen hagyjuk
+  desc.placeholder = t;          // csak minta (placeholder)
   desc.dispatchEvent(new Event('input', { bubbles: true }));
   try { desc.focus({ preventScroll: true }); } catch(_) {}
 });
-
-
     exTitle.insertAdjacentElement('afterend', exWrap);
   }
 
