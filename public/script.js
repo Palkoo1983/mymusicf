@@ -165,7 +165,7 @@ function initBriefHelper() {
   info.style.fontSize = '12px';
   info.style.marginTop = '6px';
   info.style.color = '#b6b6c3';
-  info.innerHTML = '<span id="enz-count">0</span> karakter • <strong id="enz-score">Túl rövid</strong>';
+  info.innerHTML = '<span id="enz-count">0</span>/<span id="enz-min">120</span> karakter • <strong id="enz-score">Túl rövid</strong>';
   desc.insertAdjacentElement('afterend', info);
 
   // minta leírások – csak egyszer
