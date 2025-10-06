@@ -337,5 +337,110 @@
 <button id="soundToggle" class="sound-toggle" type="button" aria-pressed="false" aria-label="Hang bekapcsolása">
   🔇 Hang BE
 </button>
+<script>
+(function(){
+  // 1) Cél: az első referencia YouTube iframe
+  const iframe = document.querySelector('.embed .video iframe, .embeds .embed .video iframe');
+  if (!iframe) return;
+
+  // 2) Biztosítsuk, hogy a player parancsolható legyen
+  try {
+    const url = new URL(iframe.src, location.href);
+    if (url.searchParams.get('enablejsapi') !== '1') {
+      url.searchParams.set('enablejsapi', '1');
+    }
+    if (!url.searchParams.has('playsinline')) {
+      url.searchParams.set('playsinline', '1');
+    }
+    iframe.src = url.toString();
+  } catch(_) {}
+
+  // Autoplay engedélyezés (ha még nem lenne rajta)
+  const allow = iframe.getAttribute('allow') || '';
+  if (!/autoplay/.test(allow)) {
+    iframe.setAttribute('allow', (allow ? allow + '; ' : '') + 'autoplay');
+  }
+
+  // 3) Gomb létrehozása (jobb felső sarok)
+  const btn = document.createElement('button');
+  btn.id = 'audioToggle';
+  btn.type = 'button';
+  btn.setAttribute('aria-label', 'Zene indítása / megállítása');
+  btn.title = 'Zene indítása / megállítása';
+  btn.textContent = '🔇'; // induláskor még néma
+  document.body.appendChild(btn);
+
+  // 4) Player státusz és üzenetkezelés
+  let playerReady = false;
+  let wantPlay = false;   // felhasználó kérte-e a lejátszást
+  let isPlaying = false;
+
+  function post(cmd, args){
+    if (!iframe.contentWindow) return;
+    iframe.contentWindow.postMessage(JSON.stringify({
+      event: 'command',
+      func: cmd,
+      args: args || []
+    }), '*');
+  }
+
+  // Kérjük a YouTube-tól az onReady eseményt
+  function initYT(){
+    post('addEventListener', ['onReady']);
+    post('addEventListener', ['onStateChange']);
+  }
+
+  window.addEventListener('message', (e) => {
+    if (!e.data) return;
+    let data;
+    try { data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; }
+    catch { return; }
+
+    // onReady jelzés
+    if (data && data.event === 'onReady') {
+      playerReady = true;
+      if (wantPlay && !isPlaying) {
+        post('unMute');
+        post('playVideo');
+      }
+      return;
+    }
+
+    // State change (1=playing, 2=paused, 0=ended)
+    if (data && data.info && typeof data.info.playerState !== 'undefined') {
+      const st = data.info.playerState;
+      if (st === 1) { // playing
+        isPlaying = true;
+        btn.textContent = '🔊';
+      } else if (st === 2 || st === 0) { // paused/ended
+        isPlaying = false;
+        btn.textContent = '🔇';
+      }
+    }
+  });
+
+  // 5) Első kattintás: ha még nem ready a player, sorban állítjuk a kérést
+  btn.addEventListener('click', () => {
+    wantPlay = !isPlaying; // ha nem játszik, akkor indítani szeretnénk; ha játszik, akkor állítjuk
+    if (!playerReady) {
+      // első kattintásoknál gyakran még tölt – kérjük az eventeket és várunk
+      initYT();
+      if (wantPlay) btn.textContent = '🔊';
+      return;
+    }
+    if (isPlaying) {
+      post('pauseVideo');
+      btn.textContent = '🔇';
+    } else {
+      post('unMute');
+      post('playVideo');
+      btn.textContent = '🔊';
+    }
+  });
+
+  // Biztonsági: ha a script később fut be, akkor is kérjük az eventeket
+  setTimeout(initYT, 200);
+})();
+</script>
 </body>
 </html>
