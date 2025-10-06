@@ -11,10 +11,9 @@
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="alternate icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png">  
 </head>
-<body>
-<div class="bg-vinyl">
+
 <body class="gold-theme">
-</div>
+  <div class="bg-vinyl"></div>
 <header class="topbar">
   <div class="brand">
     <!-- LOGÓ -->
@@ -30,7 +29,7 @@
 
   <nav class="vinyl-tabs">
     <button class="tab" data-target="intro"><span>Bemutatkozás</span></button>
-    <button class="tab" data-target="pricing"><span>Árak / Formátumok</span></button>
+    <button class="tab" data-target="pricing"><span>Árak / Csomagok</span></button>
     <button class="tab" data-target="howto"><span>Hogyan működik</span></button>
     <button class="tab" data-target="order"><span>Megrendelés</span></button>
     <button class="tab" data-target="refs"><span>Referenciák</span></button>
@@ -63,7 +62,7 @@
 
 </section>
 <section class="panel" id="pricing">
-<h2>Árak &amp; Formátumok</h2><div class="promo-banner">Nyitási akció — 30 napig — 30% kedvezmény</div>
+<h2>Árak &amp; Csomagok</h2><div class="promo-banner">Nyitási akció — 30 napig — 30% kedvezmény</div>
 <div class="cards">
 <div class="card package" data-package="mp3">
 <h3>MP3</h3>
@@ -162,6 +161,7 @@
 </label>
 <label class="full">Leírás / miről szóljon a dal?
             <textarea name="brief" placeholder="Milyen történetet, érzést, üzenetet közvetítsen a dal? Írd le az emlékeiteket, milyen az a személy(ek) akinek a dal íródik. Esküvőre a kettőtök történetét, születésnapra a személy tulajdonságait, életkorát, stb.." rows="5"></textarea>
+<div id="char-counter">0/120 karakter</div>
 </label>
 <label class="check full">
 <input name="consent" required="" type="checkbox"/>
@@ -178,6 +178,26 @@
 <section class="panel" id="refs">
 <h2>Referenciák</h2>
 <div class="embeds">
+<div class="embed small">
+  <div class="video">
+    <iframe
+      src="https://www.youtube.com/embed/Crf1xVh4BYA?modestbranding=1&rel=0&playsinline=1"
+      title="YouTube Shorts – referencia"
+      loading="lazy"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen>
+    </iframe>
+  </div>
+  <p>Példa: Kata &amp; Máté – Esküvő</p>
+</div>
+ <div class="embed small">
+<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/f_geI2Pgvuk" title="YouTube video player"></iframe></div>
+<p>Édesapám emlékére</p>
+</div>
+<div class="embed small">
+<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/n-a7aFVrUdw" title="YouTube video player"></iframe></div>
+<p>Édesanyámnak</p>
+</div>
 <div class="embed small">
 <div class="video">
 <iframe
@@ -209,20 +229,12 @@
 <p>Testvér - Angol</p>
 </div>
 <div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/f_geI2Pgvuk" title="YouTube video player"></iframe></div>
-<p>Édesapám emlékére</p>
-</div>
-<div class="embed small">
 <div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/TGLKIQEjiQM" title="YouTube video player"></iframe></div>
 <p>Angol - Romantikus</p>
 </div>
 <div class="embed small">
 <div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/YF-Onq_-F4g" title="YouTube video player"></iframe></div>
 <p>Magyar - romantikus</p>
-</div>
-<div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/n-a7aFVrUdw" title="YouTube video player"></iframe></div>
-<p>Édesanyámnak</p>
 </div>
 <div class="embed small">
 <div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/yJkzbC4PWy4" title="YouTube video player"></iframe></div>
@@ -317,5 +329,358 @@
   </div>
 </div>
 <script src="script.js"></script>
+<!-- Háttér YouTube-audio (némítva indul, gombbal bekapcsolható) -->
+<div id="bg-audio" data-video="Crf1xVh4BYA" aria-hidden="true">
+  <div id="bg-audio-iframe"></div>
+</div>
+
+<button id="soundToggle" class="sound-toggle" type="button" aria-pressed="false" aria-label="Hang bekapcsolása">
+  🔇 Hang BE
+</button>
+<script>
+(function(){
+  const holder = document.getElementById('bg-audio');
+  const btn    = document.getElementById('soundToggle');
+  const topbar = document.querySelector('.topbar');
+  if (!holder || !btn || !topbar) return;
+
+  // Gomb átrakása a topbarba (jobb felső sarok)
+  topbar.appendChild(btn);
+<script>
+(function(){
+  const holder = document.getElementById('bg-audio');       // ez a videó konténer
+  const btn    = document.getElementById('soundToggle');     // hang gomb
+  const topbar = document.querySelector('.topbar');          // felső sáv
+
+  if (holder && topbar){
+    // rakjuk a topbarba, hogy jobb felül megjelenhessen
+    topbar.appendChild(holder);
+  }
+  if (btn && topbar){
+    // a hang gomb már a topbarban van nálad – ha nem, ide is tehetjük:
+    topbar.appendChild(btn);
+  }
+
+  /* … innen mehet tovább a már beállított YouTube IFrame API-s kódod,
+     ami a #bg-audio-iframe elembe hozza létre a playert.
+     (Semmit nem kell átírni a playerből — a CSS fogja 16:9-re méretezni.) */
+})();
+</script>
+
+  const videoId = holder.dataset.video || 'Crf1xVh4BYA';
+  const mountId = 'bg-audio-iframe';
+
+  let player = null;
+  let ready  = false;
+  let isPlaying = false;
+  let wantPlay = false;   // user már kérte-e az indítást
+
+  // YouTube IFrame API betöltése (ha még nincs)
+  function loadYT(){
+    if (window.YT && window.YT.Player){ onYouTubeIframeAPIReady(); return; }
+    if (document.getElementById('yt-iframe-api')) return;
+    const s = document.createElement('script');
+    s.src = "https://www.youtube.com/iframe_api";
+    s.id  = "yt-iframe-api";
+    document.head.appendChild(s);
+  }
+
+  // API ready → player létrehozása (láthatatlan, csak hang)
+  window.onYouTubeIframeAPIReady = function(){
+    if (player) return;
+    player = new YT.Player(mountId, {
+      height: '1',
+      width:  '1',
+      videoId,
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        modestbranding: 1,
+        rel: 0,
+        playsinline: 1
+      },
+      events: {
+        onReady: onReady,
+        onStateChange: onState
+      }
+    });
+  };
+
+  function onReady(){
+    ready = true;
+    try { player.setVolume(70); } catch(_) {}
+    try { player.cueVideoById(videoId); } catch(_) {}
+
+    // ha a user már kattintott közben, MOST azonnal indítunk
+    if (wantPlay){
+      try { player.playVideo(); } catch(_) {}
+    }
+  }
+
+  function onState(e){
+    const st = e && typeof e.data === 'number' ? e.data : -1;
+    if (st === 1){ // playing
+      isPlaying = true;
+      btn.textContent = '🔊';
+      btn.setAttribute('aria-pressed','true');
+      btn.setAttribute('aria-label','Hang kikapcsolása');
+    } else if (st === 2 || st === 0){ // paused/ended
+      isPlaying = false;
+      btn.textContent = '🔇';
+      btn.setAttribute('aria-pressed','false');
+      btn.setAttribute('aria-label','Hang bekapcsolása');
+    }
+  }
+
+  // Gomb – ELSŐ KATTINTÁS is indít: ha nem ready, sorban állítjuk és próbálunk is játszani.
+  btn.addEventListener('click', () => {
+    // jelöljük, hogy a user játszani akar
+    wantPlay = !isPlaying || !ready;
+
+    if (!ready){
+      // ha még nem állt fel a player, töltsük az API-t és próbáljunk indítani
+      loadYT();
+      // ha már létezik player, megkísérelhetjük a play-t
+      try { player && player.playVideo(); } catch(_) {}
+      // az állapot ikon azonnal jelzi a szándékot
+      btn.textContent = '🔊';
+      return;
+    }
+
+    // ready → normál toggle
+    if (isPlaying){
+      try { player.pauseVideo(); } catch(_) {}
+    } else {
+      try { player.playVideo(); } catch(_) {}
+    }
+  });
+
+  // Első felhasználói interakciónál „felébresztjük” az API-t
+  function primeOnce(){
+    document.removeEventListener('pointerdown', primeOnce, { passive:true });
+    loadYT();
+  }
+  document.addEventListener('pointerdown', primeOnce, { passive:true });
+
+  // Biztonsági init
+  loadYT();
+})();
+</script>
+<!-- REFERENCE UI (desktop + mobil) -->
+<div id="refPanel" aria-hidden="true">
+  <div class="refHead">
+    <button id="refPrev" type="button" aria-label="Előző">◀</button>
+    <select id="refSelect" aria-label="Referencia választása"></select>
+    <button id="refNext" type="button" aria-label="Következő">▶</button>
+    <button id="refPlay" type="button" aria-pressed="false" aria-label="Lejátszás">▶</button>
+  </div>
+  <div id="refVideo" class="refVideo"></div>
+</div>
+
+<!-- Mobil: kompakt sáv (audio only) -->
+<div id="refMobileBar" aria-hidden="true">
+  <div class="mobRow">
+    <label for="refSelectMobile">Referencia:</label>
+    <select id="refSelectMobile"></select>
+    <button id="refPlayMobile" type="button" aria-pressed="false">▶</button>
+  </div>
+</div>
+
 </body>
 </html>
+<script>
+(function(){
+  // ---- Segédek ----
+  const $ = (s, r=document)=>r.querySelector(s);
+  const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
+
+  // ---- Referenciák begyűjtése a meglévő markupból ----
+  function extractVideoId(src){
+    if (!src) return null;
+    try{
+      const u = new URL(src, location.href);
+      // /embed/VIDEOID
+      const m = u.pathname.match(/\/embed\/([^/?#]+)/);
+      if (m) return m[1];
+      // youtu.be/VIDEOID
+      if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
+      // v=VIDEOID
+      return u.searchParams.get('v');
+    }catch{ return null; }
+  }
+
+  const refNodes = $$('.embed .video iframe, .embeds .embed .video iframe');
+  const refs = refNodes.map(ifr => {
+    const id = extractVideoId(ifr.getAttribute('src'));
+    const titleEl = ifr.closest('.embed')?.querySelector('p');
+    const title = (titleEl?.textContent || 'Referencia').trim();
+    return id ? { id, title } : null;
+  }).filter(Boolean);
+
+  if (!refs.length) return; // nincs mit vezérelni
+
+  // ---- UI elemek ----
+  const panel     = $('#refPanel');
+  const vidHolder = $('#refVideo');
+  const selDesk   = $('#refSelect');
+  const prevBtn   = $('#refPrev');
+  const nextBtn   = $('#refNext');
+  const playBtn   = $('#refPlay');
+
+  const mobiBar   = $('#refMobileBar');
+  const selMobi   = $('#refSelectMobile');
+  const playMobi  = $('#refPlayMobile');
+
+  // Feltöltjük a selecteket
+  function fillSelect(select){
+    select.innerHTML = '';
+    refs.forEach((r, i) => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = r.title;
+      if (i === 0) opt.selected = true;
+      select.appendChild(opt);
+    });
+  }
+  fillSelect(selDesk);
+  fillSelect(selMobi);
+
+  // ---- YouTube iframe (egyet használunk mindenhez) ----
+  // Desktopon látható (panelben 16:9), mobilon rejtett (0×0), de ugyanaz a player.
+  let iframe;
+
+  function ensureIframe(){
+    if (iframe) return iframe;
+    iframe = document.createElement('iframe');
+    iframe.setAttribute('allow',
+      'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+    );
+    // Kezdésnek az első videó
+    const firstId = refs[0].id;
+    iframe.src = `https://www.youtube.com/embed/${firstId}?enablejsapi=1&rel=0&playsinline=1&mute=1`;
+    iframe.style.border = '0';
+    iframe.id = 'refPlayer';
+
+    // Desktop tartóba tesszük
+    vidHolder.appendChild(iframe);
+
+    // Mobilon „rejtett”, de nem display:none (hogy szólhasson)
+    const hiddenForAudio = window.matchMedia('(max-width: 1024px)').matches;
+    if (hiddenForAudio){
+      iframe.style.position = 'absolute';
+      iframe.style.width = '1px';
+      iframe.style.height = '1px';
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
+    }
+    return iframe;
+  }
+
+  // postMessage helper a YouTube-hoz
+  function yt(cmd, args){
+    const f = ensureIframe();
+    if (!f.contentWindow) return;
+    f.contentWindow.postMessage(JSON.stringify({
+      event: 'command',
+      func: cmd,
+      args: args || []
+    }), '*');
+  }
+
+  // Player állapot
+  let playerReady = false;
+  let isPlaying   = false;
+
+  // események bekérése
+  function askYTEvents(){
+    yt('addEventListener', ['onReady']);
+    yt('addEventListener', ['onStateChange']);
+  }
+  window.addEventListener('message', (e) => {
+    let data;
+    try { data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; }
+    catch { return; }
+
+    if (data?.event === 'onReady'){
+      playerReady = true;
+      return;
+    }
+    if (data?.info && typeof data.info.playerState !== 'undefined'){
+      const st = data.info.playerState; // 1=playing, 2=paused, 0=ended
+      if (st === 1){ isPlaying = true; updateButtons(); }
+      if (st === 2 || st === 0){ isPlaying = false; updateButtons(); }
+    }
+  });
+
+  // UI állapot ikonok
+  function updateButtons(){
+    playBtn.textContent  = isPlaying ? '⏸' : '▶';
+    playBtn.setAttribute('aria-pressed', String(isPlaying));
+    playMobi.textContent = isPlaying ? '⏸' : '▶';
+    playMobi.setAttribute('aria-pressed', String(isPlaying));
+  }
+
+  // Videó csere
+  function loadVideoById(id, autoplay){
+    const f = ensureIframe();
+    try{
+      const u = new URL(f.src, location.href);
+      // youtube „loadVideoById” postMessage a biztos:
+      yt('loadVideoById', [{ videoId: id }]);
+      if (autoplay){
+        yt('unMute');
+        yt('playVideo');
+      }else{
+        yt('pauseVideo');
+      }
+    }catch{
+      // fallback: src csere
+      f.src = `https://www.youtube.com/embed/${id}?enablejsapi=1&rel=0&playsinline=1&mute=1`;
+    }
+  }
+
+  // Select változás (desktop + mobil)
+  selDesk.addEventListener('change', () => {
+    loadVideoById(selDesk.value, isPlaying);
+    // tartsuk szinkronban a mobil selectet
+    selMobi.value = selDesk.value;
+  });
+  selMobi.addEventListener('change', () => {
+    loadVideoById(selMobi.value, isPlaying);
+    selDesk.value = selMobi.value;
+  });
+
+  // Előző/Következő
+  function step(offset){
+    const ids = refs.map(r => r.id);
+    const cur = selDesk.value || ids[0];
+    const i = Math.max(0, ids.indexOf(cur));
+    const j = (i + offset + ids.length) % ids.length;
+    selDesk.value = ids[j];
+    selMobi.value = ids[j];
+    loadVideoById(ids[j], isPlaying);
+  }
+  prevBtn.addEventListener('click', () => step(-1));
+  nextBtn.addEventListener('click', () => step(+1));
+
+  // Play/Pause (desktop + mobil)
+  function togglePlay(){
+    ensureIframe();
+    if (!playerReady) askYTEvents(); // első kattintáskor kérjük az eventeket
+    if (isPlaying){
+      yt('pauseVideo');
+    }else{
+      yt('unMute');
+      yt('playVideo');
+    }
+  }
+  playBtn.addEventListener('click', togglePlay);
+  playMobi.addEventListener('click', togglePlay);
+
+  // Indításkor építsük fel a player-t és kérjük az eseményeket
+  ensureIframe();
+  setTimeout(askYTEvents, 150);
+})();
+</script>
