@@ -1132,4 +1132,21 @@ body.gold-theme .vinyl-tabs .tab span::after{
   text-align: center;         /* szöveg középre igazítása */
   margin: 0 auto;        /* automatikus margó, hogy tényleg középen legyen */
 }
+/* ——— Bemutatkozás tab: precíz középre igazítás ——— */
+.vinyl-tabs .tab[data-target="intro"]{ 
+  position: relative; 
+}
 
+.vinyl-tabs .tab[data-target="intro"] span{
+  position: absolute;      /* a lemez teljes területére ráül */
+  inset: 0;                /* kitölti a gombot */
+  display: flex;           /* valódi középre rendezés */
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 0 !important;
+  white-space: nowrap;     /* hosszú szó se törjön, ne “csússzon” optikailag */
+  transform: none !important; /* ha bármi korábbi transzform volt, nullázzuk */
+  left: auto !important;       /* biztos ami biztos: ne tologassa semmi */
+  right: auto !important;
+}
