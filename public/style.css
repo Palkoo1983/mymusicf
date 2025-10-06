@@ -1438,3 +1438,33 @@ body.gold-theme .bg-vinyl{
     opacity:.30;
   }
 }
+/* Rejtett, de futó háttérlejátszó */
+#bg-audio {
+  position: fixed;
+  left: -9999px; top: auto;
+  width: 1px; height: 1px;
+  overflow: hidden; pointer-events: none; z-index: 0;
+}
+
+/* Lebegő hangkapcsoló gomb */
+.sound-toggle{
+  position: fixed;
+  right: 14px; bottom: 14px;
+  z-index: 50;
+  padding: 10px 12px;
+  font-size: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,210,100,.35);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  color: var(--ink, #eef4fb);
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+.sound-toggle[aria-pressed="true"]{
+  border-color: rgba(6,214,160,.6);
+}
+.sound-toggle:focus-visible{ outline: 3px solid rgba(255,255,255,.5); outline-offset: 2px; }
+@media (max-width: 480px){
+  .sound-toggle{ right: 10px; bottom: 10px; font-size: 13px; padding: 8px 10px; }
+}
