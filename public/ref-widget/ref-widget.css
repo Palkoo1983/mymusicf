@@ -1,0 +1,104 @@
+/* ref-widget.css — Desktop side video panel + Mobile audio bar */
+
+:root{
+  --rw-z: 9999;
+  --rw-gap: 14px;
+  --rw-radius: 14px;
+  --rw-shadow: 0 12px 28px rgba(0,0,0,.35);
+  --rw-bg: rgba(10,12,18,.72);
+  --rw-border: 1px solid rgba(255,255,255,.12);
+  --rw-ink: #f3f4f8;
+  --rw-muted:#c9ccda;
+  --rw-accent:#ffd166;
+}
+
+/* Desktop panel (hidden on small screens) */
+.rw-panel{
+  position: fixed;
+  top: 110px;
+  right: 22px;
+  width: 440px;
+  max-width: 46vw;
+  background: var(--rw-bg);
+  color: var(--rw-ink);
+  border: var(--rw-border);
+  border-radius: var(--rw-radius);
+  box-shadow: var(--rw-shadow);
+  z-index: var(--rw-z);
+  backdrop-filter: blur(8px);
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 10px;
+  padding: 12px;
+}
+
+/* video area 16:9 */
+.rw-video{
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.rw-video iframe{
+  position: absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border:0;
+}
+
+/* controls */
+.rw-controls{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.rw-controls button,
+.rw-controls select{
+  appearance: none;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.18);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  color:var(--rw-ink);
+  padding:10px 12px;
+  box-shadow: var(--rw-shadow);
+  cursor:pointer;
+  font-weight:600;
+}
+.rw-controls button:hover{ filter: brightness(1.05); }
+.rw-controls .rw-spacer{ flex:1 1 auto; }
+.rw-title{ font-size:.95rem; color:var(--rw-muted); margin:0 2px 2px; }
+
+/* Mobile bar (hidden on desktop) */
+.rw-mobile{
+  position: fixed;
+  left: 10px; right: 10px; top: 78px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px;
+  background: var(--rw-bg);
+  border: var(--rw-border);
+  border-radius: 12px;
+  box-shadow: var(--rw-shadow);
+  z-index: var(--rw-z);
+  backdrop-filter: blur(8px);
+}
+.rw-mobile .rw-title{ display:none; }
+.rw-hidden{ display:none !important; }
+
+/* Responsive toggles */
+@media (max-width: 1024px){
+  .rw-panel{ display:none; }
+  .rw-mobile{ display:flex; }
+}
+@media (min-width: 1025px){
+  .rw-panel{ display:grid; }
+  .rw-mobile{ display:none; }
+}
+
+/* Ensure it doesn't overlap sticky topbars that use higher z-index */
+.topbar, header.sticky, .sticky{ z-index: 20; }
