@@ -1288,14 +1288,6 @@ body.gold-theme .vinyl-tabs .tab span::after{
   }
 }
 /* LOGÓ nagyítása – desktop +15%, mobil +25% */
-/* Desktop (≥1025px): 100px → 115px */
-@media (min-width: 1025px){
-  .topbar .brand > img.spinning-vinyl{
-    width: 115px !important;
-    height: 115px !important;
-  }
-}
-
 /* Mobil (≤768px): 92px → 115px */
 @media (max-width: 768px){
   .topbar .brand > img.spinning-vinyl{
