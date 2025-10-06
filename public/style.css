@@ -1327,3 +1327,21 @@ body {
 @media (prefers-contrast: more){
   .form textarea::placeholder{ opacity: .95; }
 }
+/* === GOLD dots (matrix) — re-enable vinyl layer and draw subtle gold dots === */
+body.gold-theme .bg-vinyl{
+  display: block !important;         /* a korábbi 'display:none !important' felülírása */
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  /* két rétegű arany pötty minta (nem változtatja az alapszínt) */
+  background-image:
+    radial-gradient(circle, rgba(255, 220, 120, .28) 0 1px, transparent 1px),
+    radial-gradient(circle, rgba(255, 220, 120, .14) 0 1px, transparent 1px);
+  background-size: 12px 12px, 24px 24px;   /* “mátrix” rács */
+  background-position: 0 0, 6px 6px;       /* rétegek egymás között eltolva */
+  opacity: .22;                             /* finom, nem bántja a szöveg olvashatóságát */
+}
+
+/* biztos ami biztos: a tartalom legyen a textúra felett */
+.topbar, main, footer { position: relative; z-index: 1; }
