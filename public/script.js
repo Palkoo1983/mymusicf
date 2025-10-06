@@ -423,14 +423,15 @@ document.addEventListener('click', (e) => {
     }
   };
 })();
+// --- Karakterszámláló: csak a számot írjuk, a "/120 karakter" marad a markupban ---
 document.addEventListener('DOMContentLoaded', () => {
   const desc = document.querySelector('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-  if (!desc) return;
   const countEl = document.querySelector('#enz-quality #enz-count');
-  if (!countEl) return;
+  if (!desc || !countEl) return;
 
-  const render = () => { countEl.textContent = `${(desc.value || '').trim().length}/120`; };
+  const render = () => { countEl.textContent = String((desc.value || '').trim().length); };
   desc.addEventListener('input', render);
-  render(); // induláskor is frissít
+  render();
 });
+
 
