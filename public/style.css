@@ -1150,3 +1150,56 @@ body.gold-theme .vinyl-tabs .tab span::after{
   left: auto !important;       /* biztos ami biztos: ne tologassa semmi */
   right: auto !important;
 }
+/* ===== Vinyl tabs – nagyobb lemez + középre igazított, vastagabb felirat ===== */
+
+/* Alap méretek változókban – könnyű később igazítani */
+:root{
+  --tabSize: 132px;          /* alap lemezátmérő */
+  --tabFont: 15px;           /* alap felirat-méret */
+}
+
+/* Reszponzív finomhangolás (opcionális) */
+@media (min-width: 640px){
+  :root{ --tabSize: 140px; --tabFont: 15.5px; }
+}
+@media (min-width: 1024px){
+  :root{ --tabSize: 148px; --tabFont: 16px; }
+}
+
+/* A gomb maga: grid, hogy a tartalom valóban középre kerüljön */
+.vinyl-tabs .tab{
+  width: var(--tabSize);
+  height: var(--tabSize);
+  display: grid;
+  place-items: center;          /* vízszint + függőlegesen közép */
+  padding: 0 !important;        /* ne tolja el a szöveget */
+  text-align: center;
+}
+
+/* A szövegblokk: félkövér, középre, biztos szélesség-keret, nem törik el */
+.vinyl-tabs .tab span{
+  display: block;
+  max-width: calc(var(--tabSize) - 18px); /* hogy a hosszú szó is beférjen */
+  margin: 0 auto !important;
+  text-align: center !important;
+  line-height: 1.12;
+  font-size: var(--tabFont);
+  font-weight: 700;
+  font-variation-settings: 'wght' 700;    /* ha változó betűtípus elérhető */
+  letter-spacing: .2px;
+  white-space: nowrap;                     /* "Bemutatkozás" egy sorban marad */
+  text-indent: 0 !important;
+}
+
+/* Speciális: a leghosszabb címkének pici szűkítés, hogy biztosan középre férjen */
+.vinyl-tabs .tab[data-target="intro"] span{
+  font-size: calc(var(--tabFont) - .5px);
+}
+
+/* Ha bármelyik korábbi szabály eltolná: tiltsuk le az eltolást/pozícionálást */
+.vinyl-tabs .tab span{
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+}
