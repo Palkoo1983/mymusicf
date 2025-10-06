@@ -1272,3 +1272,18 @@ body.gold-theme .vinyl-tabs .tab span::after{
 
   /* A többi mobil-specifikus szabály maradhat, ha van ilyen */
 }
+@media (max-width: 768px) {
+  /* Mobileszközön csökkentett betűméret a lemezek feliratainál */
+  .vinyl-tabs .tab span {
+    font-size: 0.8em; /* Kicsit kisebb betűméret */
+    white-space: normal; /* Engedjük meg a sortörést, ha szükséges */
+    line-height: 1.2; /* Egy kicsit szorosabb sorköz, hogy jobban elférjen */
+  }
+
+  /* Ha a lemez mérete változott, maradjon az előző beállítás */
+  :root { --tabSize: 86px; }
+  .topbar .brand > img.spinning-vinyl {
+    width: calc(var(--tabSize) * 1.25) !important;
+    height: calc(var(--tabSize) * 1.25) !important;
+  }
+}
