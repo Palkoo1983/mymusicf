@@ -151,10 +151,12 @@ qsa('#howto .chip[data-example]').forEach(btn => {
     setTimeout(() => {
       const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
       if (desc) {
-        desc.value = '';                 // ÜRES érték
-        desc.placeholder = text;         // CSAK mintaként
-        desc.dispatchEvent(new Event('input', { bubbles: true }));
-        try { desc.focus({ preventScroll: true }); } catch(_) {}
+       // ÚJ
+desc.value = '';                    // üres érték marad
+desc.placeholder = text;            // csak halvány minta
+desc.dispatchEvent(new Event('input', { bubbles: true }));
+try { desc.focus({ preventScroll: true }); } catch(_) {}
+
       }
       // biztos, ami biztos – fent maradunk
       window.scrollTo({ top: 0, behavior: 'smooth' });
