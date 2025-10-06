@@ -1,16 +1,18 @@
+(function(){ if (/SamsungBrowser/i.test(navigator.userAgent)) {
+  document.documentElement.classList.add('ua-samsung');
+}})();
 /* Samsung Internet detektálás – csak osztályt rakunk a <html>-re */
 (function () {
   if (/SamsungBrowser/i.test(navigator.userAgent)) {
     document.documentElement.classList.add('ua-samsung');
   }
 })();
-
 /* =========================================================
-   EnZenem – main script (FULL)
+   EnZenem – main script (FULL REPLACEMENT)
    - Tab navigation (vinyl-tabs) + scroll to top
    - Package card selection
-   - HOWTO -> ORDER + example chips (placeholder only)
-   - Brief helper (counter + quality) + examples on ORDER (placeholder only)
+   - HOWTO -> ORDER focus + example chips (scroll to top)
+   - Brief helper (counter + quality, NO DUPLICATES) + examples on ORDER
    - Order form (ALWAYS show license modal) + Contact form
    - Thanks overlay
    - Consent bar + License modal
@@ -29,54 +31,49 @@ async function postJSON(url, data) {
 const qs  = (sel, root = document) => root.querySelector(sel);
 const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-/* Egységes helper: a Leírás mezőbe CSAK placeholdert tegyünk */
-function setBriefPlaceholder(text){
-  const brief = document.querySelector('#orderForm textarea[name="brief"], #order textarea[name="brief"]');
-  if (!brief) return;
-  brief.value = '';                         // maradjon üres
-  brief.placeholder = text || '';           // csak minta
-  brief.dispatchEvent(new Event('input', { bubbles: true }));
-  try { brief.focus({ preventScroll: true }); } catch(_) {}
-}
-
 /* ---------- tabs ---------- */
 function initTabs() {
   const buttons = qsa('.tab');
   const panels  = qsa('main .panel');
 
-  function activate(targetId) {
-    if (!targetId) return;
+ function activate(targetId) {
+  if (!targetId) return;
 
-    if (document.activeElement && typeof document.activeElement.blur === 'function') {
-      document.activeElement.blur();
-    }
-
-    panels.forEach(p => {
-      const on = (p.id === targetId);
-      p.hidden = !on;
-      p.classList.toggle('active', on);
-      if (on) p.removeAttribute('inert');
-      else    p.setAttribute('inert', '');
-    });
-
-    buttons.forEach(b => {
-      const on = (b.dataset.target === targetId);
-      b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      b.classList.toggle('active', on);
-    });
-
-    if (targetId === 'order') setTimeout(initBriefHelper, 50);
-
-    const active = panels.find(p => p.id === targetId);
-    const h2 = active && active.querySelector('h2');
-    if (h2) {
-      h2.setAttribute('tabindex', '-1');
-      h2.focus();
-    }
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // ha épp egy másik elem (pl. YouTube gomb) van fókuszban, engedjük el
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur();
   }
 
+  panels.forEach(p => {
+    const on = (p.id === targetId);
+    p.hidden = !on;
+    p.classList.toggle('active', on);
+    // a rejtett paneleket tegyük „inert”-té, így nem kaphatnak fókuszt
+    if (on) p.removeAttribute('inert');
+    else    p.setAttribute('inert', '');
+  });
+
+  buttons.forEach(b => {
+    const on = (b.dataset.target === targetId);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.classList.toggle('active', on);
+  });
+
+  if (targetId === 'order') setTimeout(initBriefHelper, 50);
+
+  // fókuszt rakjunk az új panel címsorára a hozzáférhetőség miatt
+  const active = panels.find(p => p.id === targetId);
+  const h2 = active && active.querySelector('h2');
+  if (h2) {
+    h2.setAttribute('tabindex', '-1');
+    h2.focus();
+  }
+
+  // mindig a lap tetejére gördítünk
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+  // initial state
   const activePanel = panels.find(p => p.classList.contains('active')) || panels[0];
   panels.forEach(p => (p.hidden = p !== activePanel));
 
@@ -112,37 +109,54 @@ function initPackages() {
   });
 }
 
-/* ---------- HOWTO -> ORDER, example chips (PLACEHOLDER ONLY) ---------- */
+/* ---------- HOWTO -> ORDER, example chips ---------- */
 function initHowTo() {
   const openBtn     = qs('#howto-open-order');
   const orderTabBtn = qs('.tab[data-target="order"]');
 
-  function gotoOrderAndFocus() {
+  function focusBrief() {
+  const el = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+  if (el) el.focus({ preventScroll: true }); // ne görgessen fókuszkor
+}
+
+   // "Hogyan működik" gomb -> Megrendelés tetejére
+  openBtn?.addEventListener('click', () => {
     orderTabBtn?.click();
+
+    // 1) azonnal fel
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // 2) pici késleltetéssel még egyszer, hogy a tabváltás utáni
+    //   böngésző mozgást is felülírjuk
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      // ne húzza le a fókusz a textarea-ra
       const el = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-      if (el && el.focus) { try { el.focus({ preventScroll: true }); } catch(_) {} }
+      if (el && el.focus) {
+        try { el.focus({ preventScroll: true }); } catch(_) {}
+      }
     }, 120);
-  }
-
-  // "Hogyan működik" gomb -> Megrendelés tetejére
-  openBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    gotoOrderAndFocus();
   });
 
-  // Példa-chipek a HOWTO panelen -> CSAK PLACEHOLDER, NE VALUE
+  // Példa-chipek a HOWTO panelen -> beír, de mindig a lap tetején maradunk
   qsa('#howto .chip[data-example]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
+    btn.addEventListener('click', () => {
       const text = btn.getAttribute('data-example') || '';
+
       orderTabBtn?.click();
 
+      // azonnal fel
       window.scrollTo({ top: 0, behavior: 'smooth' });
+
       setTimeout(() => {
-        setBriefPlaceholder(text);
+        const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+        if (desc) {
+          desc.value = text;
+          desc.dispatchEvent(new Event('input', { bubbles: true }));
+          // fókusz görgetés nélkül
+          try { desc.focus({ preventScroll: true }); } catch(_) {}
+        }
+        // biztos, ami biztos – még egyszer a tetejére
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 120);
     });
@@ -154,6 +168,7 @@ function initBriefHelper() {
   const orderPanel = qs('#order');
   if (!orderPanel) return;
 
+  // guard: ha már létrehoztuk, kilépünk
   if (qs('#enz-quality', orderPanel)) return;
 
   const desc = qs('textarea[name="brief"], textarea#brief, textarea', orderPanel);
@@ -165,7 +180,7 @@ function initBriefHelper() {
   info.style.fontSize = '12px';
   info.style.marginTop = '6px';
   info.style.color = '#b6b6c3';
-  info.innerHTML = '<span id="enz-count">0</span>/<span id="enz-min">120</span> karakter • <strong id="enz-score">Túl rövid</strong>';
+  info.innerHTML = '<span id="enz-count">0</span> karakter • <strong id="enz-score">Túl rövid</strong>';
   desc.insertAdjacentElement('afterend', info);
 
   // minta leírások – csak egyszer
@@ -207,10 +222,11 @@ function initBriefHelper() {
       b.style.border = '1px solid #2a2b3a';
       b.style.background = '#10111a';
       b.style.color = '#f4f4f7';
-
-      // CSAK PLACEHOLDER, ne value
-      b.addEventListener('click', () => setBriefPlaceholder(t));
-
+      b.addEventListener('click', () => {
+        desc.value = t;
+        desc.dispatchEvent(new Event('input', { bubbles: true }));
+        desc.focus();
+      });
       exWrap.appendChild(b);
     });
 
@@ -265,6 +281,7 @@ function initOrderForm() {
   const cancelBtn   = qs('#licenseCancel');
   if (!orderForm) return;
 
+  // ne legyen natív navigáció – fetch küldi
   orderForm.setAttribute('action', 'javascript:void(0)');
 
   async function actuallySend(data) {
@@ -290,7 +307,7 @@ function initOrderForm() {
     e.preventDefault(); e.stopPropagation();
     const data = Object.fromEntries(new FormData(orderForm).entries());
 
-    // MINDIG kérdezzünk rá
+    // MINDIG kérdezzünk rá (nincs cookie / localStorage)
     showModal();
 
     const onAccept = () => {
@@ -319,6 +336,7 @@ function initContactForm() {
   const overlayClose  = qs('#overlayClose');
   if (!contactForm) return;
 
+  // ne navigáljon sehova – a JS küldi fetch-csel
   contactForm.setAttribute('action', 'javascript:void(0)');
 
   contactForm.addEventListener('submit', async (e) => {
@@ -332,7 +350,7 @@ function initContactForm() {
       const json = await postJSON('/api/contact', data);
       if (contactStatus) contactStatus.textContent = json.message || 'Köszönjük! Hamarosan válaszolunk.';
       contactForm.reset();
-      overlay?.classList.remove('hidden');
+      overlay?.classList.remove('hidden'); // felugró „Köszönjük” kártya
     } catch (err) {
       if (contactStatus) contactStatus.textContent = 'Nem sikerült elküldeni. Próbáld újra később.';
       console.error(err);
@@ -366,6 +384,8 @@ function initLicenseModal() {
   const cancel = qs('#licenseCancel');
   if (!modal || !ok || !cancel) return;
 
+  // A tényleges megnyitást az Order submit flow intézi.
+  // Itt csak fallback bezárás marad:
   ok.addEventListener('click', () => { /* submit flow kezeli */ });
   cancel.addEventListener('click', () => {
     modal.style.display = 'none';
@@ -384,8 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initConsent();
   initLicenseModal();
 });
-
-/* Jump linkek: <a data-jump="panelId"> */
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a[data-jump]');
   if (!a) return;
@@ -393,11 +411,46 @@ document.addEventListener('click', (e) => {
   const target = a.getAttribute('data-jump');
   const btn = document.querySelector(`.vinyl-tabs .tab[data-target="${target}"]`);
   if (btn) {
-    btn.click();
-    btn.focus();
+    btn.click();      // aktiválja a panelt (a te tab-logikád szerint)
+    btn.focus();      // fókusz a hozzáférhetőségért
   }
 });
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('contactForm');
+  const statusEl = document.getElementById('contactStatus');
+  const overlay = document.getElementById('thanksOverlay');
+  const closeBtn = document.getElementById('overlayClose');
 
+  if (!overlay) return;
+
+  // 1) Ha a státusz szöveg "elküldve" állapotra vált, felugrik az overlay
+  if (statusEl) {
+    const obs = new MutationObserver(() => {
+      const t = (statusEl.textContent || '').toLowerCase();
+      if (t.includes('elküldve') || t.includes('köszönjük')) {
+        overlay.classList.remove('hidden');
+        overlay.classList.add('show');
+      }
+    });
+    obs.observe(statusEl, { childList: true, subtree: true, characterData: true });
+  }
+
+  // 2) Biztos, ami biztos: form submitre is feljegyzünk egy "várakozó" állapotot
+  if (form) {
+    form.addEventListener('submit', () => {
+      // itt NEM állítjuk meg a saját küldési logikádat;
+      // az overlay végül a státusz üzenet alapján fog megjelenni
+    });
+  }
+
+  // 3) Bezárás gomb – overlay eltűnik, az oldalon maradunk
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      overlay.classList.add('hidden');
+      overlay.classList.remove('show');
+    });
+  }
+});
 /* Samsung Internet fix – smoothScroll + preventScroll polyfill */
 (function() {
   // smooth scroll fallback
@@ -423,106 +476,4 @@ document.addEventListener('click', (e) => {
     }
   };
 })();
-// --- Karakterszámláló: csak a számot írjuk, a "/120 karakter" marad a markupban ---
-document.addEventListener('DOMContentLoaded', () => {
-  const desc = document.querySelector('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-  const countEl = document.querySelector('#enz-quality #enz-count');
-  if (!desc || !countEl) return;
 
-  const render = () => { countEl.textContent = String((desc.value || '').trim().length); };
-  desc.addEventListener('input', render);
-  render();
-});
-// ——— YouTube Iframe API betöltése ———
-(function loadYT(){
-  if (window.YT && window.YT.Player) return;
-  const s = document.createElement('script');
-  s.src = "https://www.youtube.com/iframe_api";
-  document.head.appendChild(s);
-})();
-
-let ytPlayer;
-let userWantsAudio = (localStorage.getItem('enz-audio') === '1'); // megjegyezzük a választ
-
-function setToggleUI(on){
-  const btn = document.getElementById('soundToggle');
-  if (!btn) return;
-  btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-  btn.textContent = on ? '🔊 Hang KI' : '🔇 Hang BE';
-}
-
-window.onYouTubeIframeAPIReady = function(){
-  const host = document.getElementById('bg-audio');
-  if (!host) return;
-  const vid = host.dataset.video;
-  ytPlayer = new YT.Player('bg-audio-iframe', {
-    videoId: vid,
-    playerVars: {
-      autoplay: 1,
-      controls: 0,
-      disablekb: 1,
-      fs: 0,
-      rel: 0,
-      modestbranding: 1,
-      playsinline: 1,
-      loop: 1,
-      playlist: vid // loop működéséhez kell ugyanaz az ID
-    },
-    events: {
-      onReady: (e) => {
-        e.target.mute();      // szabályok miatt némítva indul
-        e.target.setVolume(100);
-        e.target.playVideo();
-        setToggleUI(false);
-      },
-      onStateChange: (e) => {
-        if (e.data === YT.PlayerState.ENDED) e.target.playVideo();
-      }
-    }
-  });
-};
-
-// ——— Hang be/ki gomb ———
-document.addEventListener('click', (ev) => {
-  const btn = ev.target.closest('#soundToggle');
-  if (!btn || !ytPlayer) return;
-
-  const isOn = btn.getAttribute('aria-pressed') === 'true';
-
-  if (isOn) {
-    // jelenleg szól → némítsuk
-    try { ytPlayer.mute(); } catch {}
-    localStorage.setItem('enz-audio','0');
-    setToggleUI(false);
-  } else {
-    // jelenleg néma → próbáljuk bekapcsolni
-    try {
-      ytPlayer.unMute();
-      ytPlayer.playVideo();
-      localStorage.setItem('enz-audio','1');
-      setToggleUI(true);
-    } catch {
-      // ha a böngésző mégsem engedi, marad némítva
-      setToggleUI(false);
-    }
-  }
-});
-
-// ——— Extra kényelem: az első felhasználói gesztusnál, ha korábban be volt kapcsolva, visszaadjuk a hangot ———
-(function restoreOnFirstGesture(){
-  const tryEnable = () => {
-    if (!ytPlayer) return cleanup();
-    if (localStorage.getItem('enz-audio') === '1') {
-      try { ytPlayer.unMute(); ytPlayer.playVideo(); setToggleUI(true); } catch {}
-    }
-    cleanup();
-  };
-  const cleanup = () => {
-    document.removeEventListener('click', tryEnable, true);
-    document.removeEventListener('keydown', tryEnable, true);
-    document.removeEventListener('touchstart', tryEnable, true);
-  };
-  document.addEventListener('click', tryEnable, true);
-  document.addEventListener('keydown', tryEnable, true);
-  document.addEventListener('touchstart', tryEnable, true);
-})();
