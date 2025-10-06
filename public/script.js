@@ -423,3 +423,12 @@ document.addEventListener('click', (e) => {
     }
   };
 })();
+document.addEventListener('DOMContentLoaded', function() {
+  const descriptionInput = document.getElementById('order-description');
+  const counterDisplay = document.getElementById('char-counter');
+  
+  descriptionInput.addEventListener('input', function() {
+    const currentLength = descriptionInput.value.length;
+    counterDisplay.textContent = `${currentLength}/120 karakter`;
+  });
+});
