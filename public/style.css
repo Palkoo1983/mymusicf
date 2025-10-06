@@ -1256,3 +1256,19 @@ body.gold-theme .vinyl-tabs .tab span::after{
   font-weight: 700 !important;
   letter-spacing: .2px;
 }
+/* ==== MOBIL: Eredeti kisebb menülemez + logó 25%-kal nagyobb ==== */
+
+/* Desktop változatlan marad, nem nyúlunk hozzá */
+
+@media (max-width: 768px) {
+  /* Mobilon a lemezek az eredeti (kisebb) méretre állnak vissza, pl. 86px-re */
+  :root { --tabSize: 86px; }
+
+  /* Logó mobilon: a kisebb menülemezhez képest +25% */
+  .topbar .brand > img.spinning-vinyl {
+    width: calc(var(--tabSize) * 1.25) !important;
+    height: calc(var(--tabSize) * 1.25) !important;
+  }
+
+  /* A többi mobil-specifikus szabály maradhat, ha van ilyen */
+}
