@@ -1315,3 +1315,15 @@ body {
   background-size: 20px 20px;
   background-blend-mode: overlay;
 }
+/* Textarea placeholder stílus – finom, nem zavaró */
+.form textarea::placeholder{
+  color: var(--muted);
+  opacity: .75;             /* halványabb, mint a normál szöveg */
+  white-space: pre-wrap;    /* ha több soros a minta, tördelje szépen */
+  line-height: 1.35;
+}
+
+/* nagy kontraszt igénynél kicsit erősebb */
+@media (prefers-contrast: more){
+  .form textarea::placeholder{ opacity: .95; }
+}
