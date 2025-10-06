@@ -1203,3 +1203,27 @@ body.gold-theme .vinyl-tabs .tab span::after{
   right: auto !important;
   transform: none !important;
 }
+/* ===== Logó: 10%-kal nagyobb, mint a menülemezek ===== */
+
+/* A menülemezek méretét (pl. 148px) használjuk alapnak */
+:root {
+  --tabSize: 148px; /* Menük átmérője */
+}
+
+/* A logó 10%-kal legyen nagyobb, mint a tab méret */
+.brand .spinning-vinyl {
+  width: calc(var(--tabSize) * 1.1); /* Tab méret 110%-a */
+  height: calc(var(--tabSize) * 1.1);
+}
+
+/* Mobilon, ha a tab mérete változik, a logó is arányosan követi */
+@media (max-width: 768px) {
+  :root {
+    --tabSize: 132px; /* Mobilon kisebb tabok, vagy ahogy beállítottad */
+  }
+  /* A logó mobilon is marad 10%-kal nagyobb */
+  .brand .spinning-vinyl {
+    width: calc(var(--tabSize) * 1.1);
+    height: calc(var(--tabSize) * 1.1);
+  }
+}
