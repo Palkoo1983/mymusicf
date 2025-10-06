@@ -346,6 +346,26 @@
 
   // Gomb átrakása a topbarba (jobb felső sarok)
   topbar.appendChild(btn);
+<script>
+(function(){
+  const holder = document.getElementById('bg-audio');       // ez a videó konténer
+  const btn    = document.getElementById('soundToggle');     // hang gomb
+  const topbar = document.querySelector('.topbar');          // felső sáv
+
+  if (holder && topbar){
+    // rakjuk a topbarba, hogy jobb felül megjelenhessen
+    topbar.appendChild(holder);
+  }
+  if (btn && topbar){
+    // a hang gomb már a topbarban van nálad – ha nem, ide is tehetjük:
+    topbar.appendChild(btn);
+  }
+
+  /* … innen mehet tovább a már beállított YouTube IFrame API-s kódod,
+     ami a #bg-audio-iframe elembe hozza létre a playert.
+     (Semmit nem kell átírni a playerből — a CSS fogja 16:9-re méretezni.) */
+})();
+</script>
 
   const videoId = holder.dataset.video || 'Crf1xVh4BYA';
   const mountId = 'bg-audio-iframe';
