@@ -1373,3 +1373,27 @@ body {
 
 /* 4) Ha valahol korábban ez szerepelt, kioltjuk: */
 body.gold-theme .bg-vinyl{ display:block !important; }   /* még egyszer, hogy egészen biztos legyen */
+/* === GOLD DOTS FIX — mindig látszódjon === */
+body.gold-theme .bg-vinyl{
+  display:block !important;          /* felülírja az esetleges display:none !important-ot */
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  /* pöttyök – két réteg, eltolva */
+  background-image:
+    radial-gradient(circle, rgba(255,215,100,.42) 0 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgba(255,215,100,.20) 0 1.5px, transparent 1.5px);
+  background-size: 14px 14px, 28px 28px;
+  background-position: 0 0, 7px 7px;
+  opacity:.28;
+  z-index:1;                          /* a body ::before/::after fölé */
+}
+
+/* a body pszeudo-rétegek menjenek ez alá */
+body.gold-theme::before,
+body.gold-theme::after{
+  z-index:0 !important;
+}
+
+/* tartalom a pöttyök fölé */
+.topbar, main, footer{ position:relative; z-index:2; }
