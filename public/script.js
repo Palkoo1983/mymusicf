@@ -224,12 +224,14 @@ function initBriefHelper() {
       b.style.border = '1px solid #2a2b3a';
       b.style.background = '#10111a';
       b.style.color = '#f4f4f7';
-      b.addEventListener('click', () => {
-  desc.value = '';               // üresen hagyjuk
-  desc.placeholder = t;          // csak minta
+      // ÚJ
+b.addEventListener('click', () => {
+  desc.value = '';                 // üres marad
+  desc.placeholder = t;            // csak minta
   desc.dispatchEvent(new Event('input', { bubbles: true }));
   try { desc.focus({ preventScroll: true }); } catch(_) {}
 });
+
 
     exTitle.insertAdjacentElement('afterend', exWrap);
   }
