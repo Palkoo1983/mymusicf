@@ -1101,3 +1101,26 @@ body.gold-theme::before{
 @media (prefers-reduced-motion: reduce){
   body.gold-theme::before{ animation: none; opacity:.28; }
 }
+/* ===== Tabs fix: címke KÖZÉPRE + a felirat mögötti áttetsző réteg kikapcs ===== */
+
+/* 1) Minden tab-feliratot 100% szélességű, valódi középre rendezésre kényszerítünk */
+.vinyl-tabs .tab span{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+}
+
+/* 2) Ha a "Bemutatkozás" (intro) eddig jobbra csúszott, ráerősítünk célzottan */
+.vinyl-tabs .tab[data-target="intro"] span{
+  margin: 0 auto !important;
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+/* 3) A felirat MÖGÖTTI áttetsző csík/karima kikapcsolása,
+      a lemez körüli GLOW-hoz NEM nyúlunk */
+body.gold-theme .vinyl-tabs .tab span::after{
+  content: none !important;
+}
