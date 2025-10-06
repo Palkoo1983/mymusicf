@@ -201,54 +201,60 @@ function initBriefHelper() {
   info.innerHTML = '<span id="enz-count">0</span> karakter • <strong id="enz-score">Túl rövid</strong>';
   desc.insertAdjacentElement('afterend', info);
 
-  // minta leírások – csak egyszer
-  if (!qs('#enz-order-examples', orderPanel)) {
-    const exWrap = document.createElement('div');
-    exWrap.id = 'enz-order-examples';
-    exWrap.style.display = 'flex';
-    exWrap.style.flexWrap = 'wrap';
-    exWrap.style.gap = '8px';
-    exWrap.style.marginTop = '8px';
+// minta leírások – csak egyszer
+if (!qs('#enz-order-examples', orderPanel)) {
+  const exWrap = document.createElement('div');
+  exWrap.id = 'enz-order-examples';
+  exWrap.style.display = 'flex';
+  exWrap.style.flexWrap = 'wrap';
+  exWrap.style.gap = '8px';
+  exWrap.style.marginTop = '8px';
 
-    const examples = [
-      'Születésnapra készül a dal a nővéremnek, Nóra 46 éves. Szereti a minimál techno és house zenét. Kulcsszavak: kitartás, logika, barátság, újrakezdés. Emlék: amikor együtt túráztunk a Csóványosra.',
-      'Esküvőre készül a dal, Kata és Máté számára. Stílus: romantikus pop, lassú tempó. Kulcsszavak: hűség, közös jövő, naplemente. Emlék: első közös balatoni nyaralás.',
-      'Évfordulónkra szeretném meglepni a páromat. Közepes tempójú rock-pop, pozitív hangulat. Kulcsszavak: humor, közös főzés, macskánk Mázli. Emlék: amikor megkaptuk az első közös lakás kulcsát.',
-      'Búcsúztatóra készül a dal. Méltóságteljes, nyugodt hangulat, kevés dob. Kulcsszavak: hála, fény, emlékek. Emlék: gyerekkori közös zongorázás a nappaliban.',
-      'Céges évzáróra kérek dalt. Tempó: lendületes, modern pop/elektronikus. Kulcsszavak: csapatmunka, innováció, 2025 célok, humor. Emlék: a tavaszi hackathon győzelmünk.',
-      'Gyerekdal 6 éves kislánynak, Lilinek. Vidám, egyszerű dallam, könnyen énekelhető refrén. Kulcsszavak: unikornis, szivárvány, ovi-barátok. Emlék: közös biciklizés a parkban.',
-      'Nyugdíjba vonuló kollégának. Hangulat: nosztalgikus, felemelő, akusztikus gitár+zongora. Kulcsszavak: segítőkészség, humor, 25 év, csapat. Emlék: a legendás hétfő reggeli kávék.',
-      'Jobbulást kívánó dal. Lassan építkező, reményt adó hangulat. Kulcsszavak: kitartás, gyógyulás, melletted állunk. Emlék: nyári tábortűz melletti beszélgetések.',
-      'Lánykéréshez készülő dal. Romantikus pop ballada, meleg hangzás. Kulcsszavak: közös jövő, „igen” pillanat, összetartozás. Emlék: első csók a Margitszigeten.',
-      'Ballagásra/diplomához kérünk dalt. Tempó: közepes, motiváló. Kulcsszavak: álom, kitartás, új kezdet. Emlék: éjszakai tanulások és a záróvizsga napja.'
-    ];
+  const examples = [
+    'Születésnapra készül a dal a nővéremnek, Nóra 46 éves. Szereti a minimál techno és house zenét. Kulcsszavak: kitartás, logika, barátság, újrakezdés. Emlék: amikor együtt túráztunk a Csóványosra.',
+    'Esküvőre készül a dal, Kata és Máté számára. Stílus: romantikus pop, lassú tempó. Kulcsszavak: hűség, közös jövő, naplemente. Emlék: első közös balatoni nyaralás.',
+    'Évfordulónkra szeretném meglepni a páromat. Közepes tempójú rock-pop, pozitív hangulat. Kulcsszavak: humor, közös főzés, macskánk Mázli. Emlék: amikor megkaptuk az első közös lakás kulcsát.',
+    'Búcsúztatóra készül a dal. Méltóságteljes, nyugodt hangulat, kevés dob. Kulcsszavak: hála, fény, emlékek. Emlék: gyerekkori közös zongorázás a nappaliban.',
+    'Céges évzáróra kérek dalt. Tempó: lendületes, modern pop/elektronikus. Kulcsszavak: csapatmunka, innováció, 2025 célok, humor. Emlék: a tavaszi hackathon győzelmünk.',
+    'Gyerekdal 6 éves kislánynak, Lilinek. Vidám, egyszerű dallam, könnyen énekelhető refrén. Kulcsszavak: unikornis, szivárvány, ovi-barátok. Emlék: közös biciklizés a parkban.',
+    'Nyugdíjba vonuló kollégának. Hangulat: nosztalgikus, felemelő, akusztikus gitár+zongora. Kulcsszavak: segítőkészség, humor, 25 év, csapat. Emlék: a legendás hétfő reggeli kávék.',
+    'Jobbulást kívánó dal. Lassan építkező, reményt adó hangulat. Kulcsszavak: kitartás, gyógyulás, melletted állunk. Emlék: nyári tábortűz melletti beszélgetések.',
+    'Lánykéréshez készülő dal. Romantikus pop ballada, meleg hangzás. Kulcsszavak: közös jövő, „igen” pillanat, összetartozás. Emlék: első csók a Margitszigeten.',
+    'Ballagásra/diplomához kérünk dalt. Tempó: közepes, motiváló. Kulcsszavak: álom, kitartás, új kezdet. Emlék: éjszakai tanulások és a záróvizsga napja.'
+  ];
 
-    const exTitle = document.createElement('div');
-    exTitle.textContent = 'Minta leírások:';
-    exTitle.style.marginTop = '10px';
-    exTitle.style.fontSize = '13px';
-    exTitle.style.color = '#b6b6c3';
-    info.insertAdjacentElement('afterend', exTitle);
+  const exTitle = document.createElement('div');
+  exTitle.textContent = 'Minta leírások:';
+  exTitle.style.marginTop = '10px';
+  exTitle.style.fontSize = '13px';
+  exTitle.style.color = '#b6b6c3';
+  info.insertAdjacentElement('afterend', exTitle);
 
-    examples.forEach(t => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = (t.slice(0, 24) + '… példa');
-      b.className = 'chip';
-      b.style.padding = '6px 10px';
-      b.style.borderRadius = '999px';
-      b.style.border = '1px solid #2a2b3a';
-      b.style.background = '#10111a';
-      b.style.color = '#f4f4f7';
-      // ÚJ
-      b.addEventListener('click', () => {
-  desc.value = '';               // üresen hagyjuk
-  desc.placeholder = t;          // csak minta (placeholder)
-  desc.dispatchEvent(new Event('input', { bubbles: true }));
-  try { desc.focus({ preventScroll: true }); } catch(_) {}
-});
-    exTitle.insertAdjacentElement('afterend', exWrap);
-  }
+  examples.forEach(t => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = (t.slice(0, 24) + '… példa');
+    b.className = 'chip';
+    b.style.padding = '6px 10px';
+    b.style.borderRadius = '999px';
+    b.style.border = '1px solid #2a2b3a';
+    b.style.background = '#10111a';
+    b.style.color = '#f4f4f7';
+
+    // CSAK PLACEHOLDER, ne value
+    b.addEventListener('click', () => {
+      desc.value = '';
+      desc.placeholder = t;
+      desc.dispatchEvent(new Event('input', { bubbles: true }));
+      try { desc.focus({ preventScroll: true }); } catch (_) {}
+    });
+
+    exWrap.appendChild(b);
+  });
+
+  exTitle.insertAdjacentElement('afterend', exWrap);
+}
+
 
   // tipp doboz
   const tip = document.createElement('div');
