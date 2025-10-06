@@ -1599,3 +1599,94 @@ body.gold-theme .bg-vinyl{
 @media (max-width: 1024px){
   #bg-audio{ display: none !important; }
 }
+/* === Desktop jobb oldali referencia panel (videóval) === */
+#refPanel{
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 420px;              /* állítható */
+  aspect-ratio: 16 / 9;
+  display: none;             /* csak desktopon látszik, lent kapcsoljuk be */
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0,0,0,.35);
+  z-index: 12;
+}
+#refPanel .refHead{
+  position: absolute; left: 8px; right: 8px; top: 8px;
+  display: flex; gap: 8px; align-items: center;
+  padding: 6px 8px;
+  background: rgba(0,0,0,.45);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 10px;
+  z-index: 2;
+  backdrop-filter: blur(6px);
+}
+#refPanel .refHead button,
+#refPanel .refHead select{
+  font: inherit;
+  color: #eef4fb;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+#refPanel .refHead button{ cursor:pointer }
+#refPanel .refHead select{ flex:1; min-width: 120px }
+
+#refPanel .refVideo,
+#refPanel .refVideo iframe{
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* A panel a topbar terében legyen – ha a topbar relatív, ide nem kell plusz beállítás */
+.topbar{ position: sticky; top: 0; z-index: 20; }
+
+/* Csak desktopon jelenjen meg a panel */
+@media (min-width: 1025px){
+  #refPanel{ display: block; }
+}
+
+/* === Mobil sáv (audio only), videó NINCS === */
+#refMobileBar{
+  display: none;          /* csak mobilon látszik */
+  position: sticky; top: 0; z-index: 19;
+  margin: 8px 12px;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(13,27,42,.55);
+  border: 1px solid rgba(188,208,230,.18);
+  backdrop-filter: blur(8px);
+}
+#refMobileBar .mobRow{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px; align-items: center;
+}
+#refMobileBar label{
+  grid-column: 1 / -1; color: var(--muted); font-size: .9rem;
+}
+#refMobileBar select, #refMobileBar button{
+  font: inherit;
+  color: #eef4fb;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+#refMobileBar button{ cursor: pointer; min-width: 52px; }
+
+/* Mobilon látszódjon, desktopon rejtve */
+@media (max-width: 1024px){
+  #refMobileBar{ display: block; }
+  #refPanel{ display: none !important; }
+}
+
+/* Biztosítsuk, hogy a topbar jobb oldalán legyen hely – ha kell, lehet kisebb szélesség */
+@media (max-width: 1280px){
+  #refPanel{ width: 360px; }
+}
