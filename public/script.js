@@ -109,34 +109,50 @@ function initPackages() {
   });
 }
 
-/* ---------- HOWTO -> ORDER, example chips ---------- */
+/* ---------- HOWTO -> ORDER, example chips (PLACEHOLDER ONLY) ---------- */
 function initHowTo() {
   const openBtn     = qs('#howto-open-order');
   const orderTabBtn = qs('.tab[data-target="order"]');
 
-  function focusBrief() {
-  const el = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-  if (el) el.focus({ preventScroll: true }); // ne görgessen fókuszkor
-}
-
-   // "Hogyan működik" gomb -> Megrendelés tetejére
-  openBtn?.addEventListener('click', () => {
+  function gotoOrderAndFocus() {
     orderTabBtn?.click();
-
-    // 1) azonnal fel
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    // 2) pici késleltetéssel még egyszer, hogy a tabváltás utáni
-    //   böngésző mozgást is felülírjuk
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      // ne húzza le a fókusz a textarea-ra
       const el = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-      if (el && el.focus) {
-        try { el.focus({ preventScroll: true }); } catch(_) {}
-      }
+      if (el && el.focus) { try { el.focus({ preventScroll: true }); } catch(_) {} }
     }, 120);
+  }
+
+  // "Hogyan működik" gomb -> Megrendelés tetejére
+  openBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    gotoOrderAndFocus();
   });
+
+  // Példa-chipek a HOWTO panelen -> CSAK PLACEHOLDER, NE VALUE
+  qsa('#howto .chip[data-example]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const text = btn.getAttribute('data-example') || '';
+      orderTabBtn?.click();
+
+      // azonnal fel
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      setTimeout(() => {
+        const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+        if (desc) {
+          desc.value = '';                 // üres érték marad
+          desc.placeholder = text;         // csak halvány minta
+          desc.dispatchEvent(new Event('input', { bubbles: true }));
+          try { desc.focus({ preventScroll: true }); } catch(_) {}
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 120);
+    });
+  });
+}
 
  // Példa-chipek a HOWTO panelen -> CSAK PLACEHOLDER, NE VALUE
 qsa('#howto .chip[data-example]').forEach(btn => {
