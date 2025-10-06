@@ -1227,3 +1227,32 @@ body.gold-theme .vinyl-tabs .tab span::after{
     height: calc(var(--tabSize) * 1.1);
   }
 }
+/* ==== SIZE SOURCE OF TRUTH – csak EZ határozza meg a méreteket ==== */
+/* Desktop alap (mostani nagy lemez): */
+:root { --tabSize: 148px; }
+
+/* Mobilon legyen ~25%-kal nagyobb (132px → ~165px) */
+@media (max-width: 768px){
+  :root { --tabSize: 165px; }
+}
+
+/* ==== Menülemezek: KÉNYSZERÍTETT MÉRET a változó alapján ==== */
+.vinyl-tabs .tab{
+  width: var(--tabSize) !important;
+  height: var(--tabSize) !important;
+}
+
+/* ==== LOGÓ: mindig 10%-kal nagyobb, mint a menülemez ==== */
+.topbar .brand > img.spinning-vinyl{
+  width: calc(var(--tabSize) * 1.10) !important;
+  height: calc(var(--tabSize) * 1.10) !important;
+  max-width: none !important;
+  max-height: none !important;
+  flex: 0 0 auto;
+}
+
+/* (Választható) kicsit erősebb felirat a lemezeken a jobb olvashatósághoz */
+.vinyl-tabs .tab span{
+  font-weight: 700 !important;
+  letter-spacing: .2px;
+}
