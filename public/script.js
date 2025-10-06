@@ -476,4 +476,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 })();
+// Példachip → csak PLACEHOLDER, ne valódi érték
+document.addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip[data-example]");
+  if (!chip) return;
 
+  const example = chip.dataset.example || "";
+  const brief = document.querySelector('#orderForm textarea[name="brief"]');
+
+  if (!brief) return;
+
+  // csak minta: ne legyen tényleges tartalom
+  brief.value = "";                       // kiürítjük, ha bármi volt benne
+  brief.placeholder = example;            // halvány “minta” a háttérben
+
+  // ha a chip nem a Megrendelés panelen van, nyissuk meg azt, és fókusz
+  const orderTab = document.querySelector('.tab[data-target="order"]');
+  if (orderTab) orderTab.click();
+  setTimeout(() => brief.focus(), 50);
+});
