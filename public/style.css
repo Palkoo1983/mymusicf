@@ -1494,3 +1494,31 @@ body.gold-theme .bg-vinyl{
   box-shadow: 0 14px 38px rgba(0,0,0,.45);
   outline: none;
 }
+/* Hanggomb – jobb felső sarok, nagyobb */
+.sound-toggle{
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10000;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(13,27,42,.75);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.05;
+  display: grid;
+  place-items: center;
+  padding: 6px 10px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+.sound-toggle:hover,
+.sound-toggle:focus-visible{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 38px rgba(0,0,0,.45);
+  outline: none;
+}
