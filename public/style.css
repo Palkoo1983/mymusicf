@@ -1124,3 +1124,12 @@ body.gold-theme::before{
 body.gold-theme .vinyl-tabs .tab span::after{
   content: none !important;
 }
+/* Csak a 'Bemutatkozás' tab finomhangolása, hogy középen legyen */
+.vinyl-tabs .tab[data-target="intro"] span {
+  display: flex;
+  justify-content: center; /* vízszintes középre igazítás */
+  align-items: center;   /* függőleges középre igazítás */
+  text-align: center;         /* szöveg középre igazítása */
+  margin: 0 auto;        /* automatikus margó, hogy tényleg középen legyen */
+}
+
