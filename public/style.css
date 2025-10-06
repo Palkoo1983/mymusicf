@@ -1295,3 +1295,17 @@ body.gold-theme .vinyl-tabs .tab span::after{
     height: 115px !important;
   }
 }
+/* Arany pontok hozzáadása a háttérhez, a szöveg zavarása nélkül */
+body {
+  background-color: #111; /* A jelenlegi sötét háttérszín marad */
+  background-image: radial-gradient(gold 1px, transparent 1px);
+  background-size: 20px 20px; /* A pöttyök sűrűsége */
+  background-blend-mode: overlay; /* Így a szöveg olvasható marad */
+}
+
+@media (max-width: 768px) {
+  /* Mobilnézetre külön finomíthatjuk a pontok méretét vagy távolságát, ha szükséges */
+  body {
+    background-size: 15px 15px;
+  }
+}
