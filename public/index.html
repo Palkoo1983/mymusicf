@@ -337,5 +337,107 @@
 <button id="soundToggle" class="sound-toggle" type="button" aria-pressed="false" aria-label="Hang bekapcsolása">
   🔇 Hang BE
 </button>
+<script>
+(function(){
+  const holder = document.getElementById('bg-audio');
+  const btn    = document.getElementById('soundToggle');
+  if (!holder || !btn) return;
+
+  const videoId = holder.dataset.video || 'Crf1xVh4BYA';
+  const mountId = 'bg-audio-iframe';
+
+  let player = null;
+  let ready  = false;
+  let wantPlay = false;   // ha a user már kért lejátszást, de a player még nem ready
+  let isPlaying = false;
+
+  // 1) YouTube IFrame API betöltése, ha nincs még
+  function loadYT(){
+    if (window.YT && window.YT.Player) { onYouTubeIframeAPIReady(); return; }
+    if (document.getElementById('yt-iframe-api')) return; // már töltődik
+    const s = document.createElement('script');
+    s.src = "https://www.youtube.com/iframe_api";
+    s.id  = "yt-iframe-api";
+    document.head.appendChild(s);
+  }
+
+  // 2) API ready → player létrehozása (láthatatlanul)
+  window.onYouTubeIframeAPIReady = function(){
+    if (player) return;
+    player = new YT.Player(mountId, {
+      height: '1',
+      width: '1',
+      videoId,
+      playerVars: {
+        autoplay: 0,          // felhasználói kattintásra indítunk
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        modestbranding: 1,
+        rel: 0,
+        playsinline: 1        // mobilon ne dobja teljes képernyőre
+      },
+      events: {
+        onReady: onReady,
+        onStateChange: onState
+      }
+    });
+  };
+
+  function onReady(){
+    ready = true;
+    // induláskor előkészítjük a videót és beállítunk hangerőt
+    try { player.setVolume(70); } catch(_) {}
+    try { player.cueVideoById(videoId); } catch(_) {}
+
+    if (wantPlay) {
+      // ha a user már rákattintott előtte, most azonnal indítjuk
+      try { player.playVideo(); } catch(_) {}
+    }
+  }
+
+  function onState(e){
+    // 1=playing, 2=paused, 0=ended
+    const st = e && typeof e.data === 'number' ? e.data : -1;
+    if (st === 1) {
+      isPlaying = true;
+      btn.textContent = '🔊 Hang KI';
+      btn.setAttribute('aria-pressed', 'true');
+      btn.setAttribute('aria-label', 'Hang kikapcsolása');
+    } else if (st === 2 || st === 0) {
+      isPlaying = false;
+      btn.textContent = '🔇 Hang BE';
+      btn.setAttribute('aria-pressed', 'false');
+      btn.setAttribute('aria-label', 'Hang bekapcsolása');
+    }
+  }
+
+  // 3) Gomb: első kattintás is működik (ha még nem ready, sorban áll)
+  btn.addEventListener('click', function(){
+    if (!ready) {
+      wantPlay = true; // jelezzük, hogy játszani akarunk, amint készen áll
+      btn.textContent = '🔊 Hang KI'; // vizuális visszajelzés azonnal
+      return;
+    }
+    if (isPlaying) {
+      try { player.pauseVideo(); } catch(_) {}
+    } else {
+      try { player.playVideo(); } catch(_) {}
+    }
+  });
+
+  // 4) Biztonsági: első felhasználói interakcióra is lövünk egy "play" kérést,
+  // ha addigra ready lett a player (ez segít mobil böngészőkön).
+  function primeOnce(){
+    document.removeEventListener('pointerdown', primeOnce, { passive:true });
+    if (!ready) { wantPlay = wantPlay || false; } // semmi extra
+  }
+  document.addEventListener('pointerdown', primeOnce, { passive:true });
+
+  // Indítjuk az API-t
+  loadYT();
+})();
+</script>
+
 </body>
 </html>
