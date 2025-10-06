@@ -437,6 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
 (function loadYT(){
   if (window.YT && window.YT.Player) return;
   const s = document.createElement('script');
+  s.src = "https://www.youtube.com/iframe_api";
   document.head.appendChild(s);
 })();
 
@@ -444,13 +445,17 @@ let ytPlayer;
 let userWantsAudio = (localStorage.getItem('enz-audio') === '1'); // megjegyezzük a választ
 
 function setToggleUI(on){
+  const btn = document.getElementById('soundToggle');
   if (!btn) return;
   btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   btn.textContent = on ? '🔊 Hang KI' : '🔇 Hang BE';
 }
 
+window.onYouTubeIframeAPIReady = function(){
+  const host = document.getElementById('bg-audio');
   if (!host) return;
   const vid = host.dataset.video;
+  ytPlayer = new YT.Player('bg-audio-iframe', {
     videoId: vid,
     playerVars: {
       autoplay: 1,
@@ -479,6 +484,7 @@ function setToggleUI(on){
 
 // ——— Hang be/ki gomb ———
 document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('#soundToggle');
   if (!btn || !ytPlayer) return;
 
   const isOn = btn.getAttribute('aria-pressed') === 'true';
@@ -492,6 +498,7 @@ document.addEventListener('click', (ev) => {
     // jelenleg néma → próbáljuk bekapcsolni
     try {
       ytPlayer.unMute();
+      ytPlayer.playVideo();
       localStorage.setItem('enz-audio','1');
       setToggleUI(true);
     } catch {
@@ -506,6 +513,7 @@ document.addEventListener('click', (ev) => {
   const tryEnable = () => {
     if (!ytPlayer) return cleanup();
     if (localStorage.getItem('enz-audio') === '1') {
+      try { ytPlayer.unMute(); ytPlayer.playVideo(); setToggleUI(true); } catch {}
     }
     cleanup();
   };

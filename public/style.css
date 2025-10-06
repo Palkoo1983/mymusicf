@@ -1439,19 +1439,55 @@ body.gold-theme .bg-vinyl{
   }
 }
 /* Rejtett, de futó háttérlejátszó */
-
+#bg-audio {
+  position: fixed;
+  left: -9999px; top: auto;
+  width: 1px; height: 1px;
+  overflow: hidden; pointer-events: none; z-index: 0;
+}
 
 /* Lebegő hangkapcsoló gomb */
-
+.sound-toggle{
+  position: fixed;
+  right: 14px; bottom: 14px;
+  z-index: 50;
+  padding: 10px 12px;
+  font-size: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,210,100,.35);
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  color: var(--ink, #eef4fb);
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
 .sound-toggle[aria-pressed="true"]{
   border-color: rgba(6,214,160,.6);
 }
 .sound-toggle:focus-visible{ outline: 3px solid rgba(255,255,255,.5); outline-offset: 2px; }
 @media (max-width: 480px){
-  
+  .sound-toggle{ right: 10px; bottom: 10px; font-size: 13px; padding: 8px 10px; }
 }
 /* === Audio toggle – jobb felső sarok, nagyobb méret === */
-
+#audioToggle{
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10000;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(13,27,42,.75);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
 #audioToggle:hover,
 #audioToggle:focus-visible{
   transform: translateY(-1px);
@@ -1459,7 +1495,27 @@ body.gold-theme .bg-vinyl{
   outline: none;
 }
 /* Hanggomb – jobb felső sarok, nagyobb */
-
+.sound-toggle{
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10000;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(13,27,42,.75);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.05;
+  display: grid;
+  place-items: center;
+  padding: 6px 10px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
 .sound-toggle:hover,
 .sound-toggle:focus-visible{
   transform: translateY(-1px);
@@ -1468,7 +1524,27 @@ body.gold-theme .bg-vinyl{
 }
 /* Hang gomb a topbaron belül, jobb felső sarokban */
 .topbar { position: sticky; top: 0; z-index: 20; } /* már nálad ilyen, csak biztosítjuk */
-
+.sound-toggle{
+  position: absolute;
+  top: max(8px, calc(env(safe-area-inset-top, 0px) + 8px));
+  right: max(10px, calc(env(safe-area-inset-right, 0px) + 10px));
+  z-index: 10001;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(13,27,42,.75);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.05;
+  display: grid;
+  place-items: center;
+  padding: 6px 8px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
 
 /* Hover/focus */
 .sound-toggle:hover,
@@ -1480,14 +1556,32 @@ body.gold-theme .bg-vinyl{
 
 /* Mobilon egy fokkal kisebb, hogy ne lógjon be a tartalomba */
 @media (max-width: 768px){
-  
+  .sound-toggle{
+    width: 48px;
+    height: 48px;
+    font-size: 12px;
+    top: max(6px, calc(env(safe-area-inset-top, 0px) + 6px));
+    right: max(8px, calc(env(safe-area-inset-right, 0px) + 8px));
+  }
 }
 /* Jobb felső referencia videó a topbarban – csak desktop */
 .topbar{ position: sticky; top:0; z-index:20; } /* nálad már ilyen, biztosítjuk */
 
 :root{ --logoH: 100px; } /* a desktop logó magassága (nálad 100px) */
 
-
+#bg-audio{
+  position: absolute;
+  top: 50%;                          /* középre a topbaron belül */
+  transform: translateY(-50%);
+  right: calc(10px + 56px + 10px);   /* a hanggomb (≈56px) mellé, kis térközzel */
+  height: var(--logoH);
+  width: calc(var(--logoH) * 16 / 9);/* 16:9 arány */
+  display: none;                      /* alapból rejtve */
+  z-index: 5;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
 
 #bg-audio iframe{
   width: 100% !important;
@@ -1498,12 +1592,12 @@ body.gold-theme .bg-vinyl{
 
 /* Csak desktopon jelenjen meg */
 @media (min-width: 1025px){
-  
+  #bg-audio{ display: block; }
 }
 
 /* Mobilon / tableten ne látszódjon */
 @media (max-width: 1024px){
-  
+  #bg-audio{ display: none !important; }
 }
 /* === Desktop jobb oldali referencia panel (videóval) === */
 #refPanel{

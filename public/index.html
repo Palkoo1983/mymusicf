@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&amp;display=swap" rel="stylesheet"/>
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="alternate icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png">  
+  <link rel="stylesheet" href="ref-widget/ref-widget.css">
 </head>
 
 <body class="gold-theme">
@@ -330,11 +331,42 @@
 </div>
 <script src="script.js"></script>
 <!-- Háttér YouTube-audio (némítva indul, gombbal bekapcsolható) -->
-
+<div id="bg-audio" data-video="Crf1xVh4BYA" aria-hidden="true">
+  <div id="bg-audio-iframe"></div>
 </div>
 
+<button id="soundToggle" class="sound-toggle" type="button" aria-pressed="false" aria-label="Hang bekapcsolása">
+  🔇 Hang BE
+</button>
+<script>
+(function(){
+  const holder = document.getElementById('bg-audio');
+  const btn    = document.getElementById('soundToggle');
+  const topbar = document.querySelector('.topbar');
+  if (!holder || !btn || !topbar) return;
 
+  // Gomb átrakása a topbarba (jobb felső sarok)
+  topbar.appendChild(btn);
+<script>
+(function(){
+  const holder = document.getElementById('bg-audio');       // ez a videó konténer
+  const btn    = document.getElementById('soundToggle');     // hang gomb
+  const topbar = document.querySelector('.topbar');          // felső sáv
 
+  if (holder && topbar){
+    // rakjuk a topbarba, hogy jobb felül megjelenhessen
+    topbar.appendChild(holder);
+  }
+  if (btn && topbar){
+    // a hang gomb már a topbarban van nálad – ha nem, ide is tehetjük:
+    topbar.appendChild(btn);
+  }
+
+  /* … innen mehet tovább a már beállított YouTube IFrame API-s kódod,
+     ami a #bg-audio-iframe elembe hozza létre a playert.
+     (Semmit nem kell átírni a playerből — a CSS fogja 16:9-re méretezni.) */
+})();
+</script>
 
   const videoId = holder.dataset.video || 'Crf1xVh4BYA';
   const mountId = 'bg-audio-iframe';
@@ -457,6 +489,7 @@
   </div>
 </div>
 
+  <script src="ref-widget/ref-widget.js"></script>
 </body>
 </html>
 <script>
