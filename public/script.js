@@ -423,12 +423,14 @@ document.addEventListener('click', (e) => {
     }
   };
 })();
-document.addEventListener('DOMContentLoaded', function() {
-  const descriptionInput = document.getElementById('order-description');
-  const counterDisplay = document.getElementById('char-counter');
-  
-  descriptionInput.addEventListener('input', function() {
-    const currentLength = descriptionInput.value.length;
-    counterDisplay.textContent = `${currentLength}/120 karakter`;
-  });
+document.addEventListener('DOMContentLoaded', () => {
+  const desc = document.querySelector('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+  if (!desc) return;
+  const countEl = document.querySelector('#enz-quality #enz-count');
+  if (!countEl) return;
+
+  const render = () => { countEl.textContent = `${(desc.value || '').trim().length}/120`; };
+  desc.addEventListener('input', render);
+  render(); // induláskor is frissít
 });
+
