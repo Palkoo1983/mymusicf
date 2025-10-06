@@ -490,3 +490,197 @@
 
 </body>
 </html>
+<script>
+(function(){
+  // ---- Segédek ----
+  const $ = (s, r=document)=>r.querySelector(s);
+  const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
+
+  // ---- Referenciák begyűjtése a meglévő markupból ----
+  function extractVideoId(src){
+    if (!src) return null;
+    try{
+      const u = new URL(src, location.href);
+      // /embed/VIDEOID
+      const m = u.pathname.match(/\/embed\/([^/?#]+)/);
+      if (m) return m[1];
+      // youtu.be/VIDEOID
+      if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
+      // v=VIDEOID
+      return u.searchParams.get('v');
+    }catch{ return null; }
+  }
+
+  const refNodes = $$('.embed .video iframe, .embeds .embed .video iframe');
+  const refs = refNodes.map(ifr => {
+    const id = extractVideoId(ifr.getAttribute('src'));
+    const titleEl = ifr.closest('.embed')?.querySelector('p');
+    const title = (titleEl?.textContent || 'Referencia').trim();
+    return id ? { id, title } : null;
+  }).filter(Boolean);
+
+  if (!refs.length) return; // nincs mit vezérelni
+
+  // ---- UI elemek ----
+  const panel     = $('#refPanel');
+  const vidHolder = $('#refVideo');
+  const selDesk   = $('#refSelect');
+  const prevBtn   = $('#refPrev');
+  const nextBtn   = $('#refNext');
+  const playBtn   = $('#refPlay');
+
+  const mobiBar   = $('#refMobileBar');
+  const selMobi   = $('#refSelectMobile');
+  const playMobi  = $('#refPlayMobile');
+
+  // Feltöltjük a selecteket
+  function fillSelect(select){
+    select.innerHTML = '';
+    refs.forEach((r, i) => {
+      const opt = document.createElement('option');
+      opt.value = r.id;
+      opt.textContent = r.title;
+      if (i === 0) opt.selected = true;
+      select.appendChild(opt);
+    });
+  }
+  fillSelect(selDesk);
+  fillSelect(selMobi);
+
+  // ---- YouTube iframe (egyet használunk mindenhez) ----
+  // Desktopon látható (panelben 16:9), mobilon rejtett (0×0), de ugyanaz a player.
+  let iframe;
+
+  function ensureIframe(){
+    if (iframe) return iframe;
+    iframe = document.createElement('iframe');
+    iframe.setAttribute('allow',
+      'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+    );
+    // Kezdésnek az első videó
+    const firstId = refs[0].id;
+    iframe.src = `https://www.youtube.com/embed/${firstId}?enablejsapi=1&rel=0&playsinline=1&mute=1`;
+    iframe.style.border = '0';
+    iframe.id = 'refPlayer';
+
+    // Desktop tartóba tesszük
+    vidHolder.appendChild(iframe);
+
+    // Mobilon „rejtett”, de nem display:none (hogy szólhasson)
+    const hiddenForAudio = window.matchMedia('(max-width: 1024px)').matches;
+    if (hiddenForAudio){
+      iframe.style.position = 'absolute';
+      iframe.style.width = '1px';
+      iframe.style.height = '1px';
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
+    }
+    return iframe;
+  }
+
+  // postMessage helper a YouTube-hoz
+  function yt(cmd, args){
+    const f = ensureIframe();
+    if (!f.contentWindow) return;
+    f.contentWindow.postMessage(JSON.stringify({
+      event: 'command',
+      func: cmd,
+      args: args || []
+    }), '*');
+  }
+
+  // Player állapot
+  let playerReady = false;
+  let isPlaying   = false;
+
+  // események bekérése
+  function askYTEvents(){
+    yt('addEventListener', ['onReady']);
+    yt('addEventListener', ['onStateChange']);
+  }
+  window.addEventListener('message', (e) => {
+    let data;
+    try { data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; }
+    catch { return; }
+
+    if (data?.event === 'onReady'){
+      playerReady = true;
+      return;
+    }
+    if (data?.info && typeof data.info.playerState !== 'undefined'){
+      const st = data.info.playerState; // 1=playing, 2=paused, 0=ended
+      if (st === 1){ isPlaying = true; updateButtons(); }
+      if (st === 2 || st === 0){ isPlaying = false; updateButtons(); }
+    }
+  });
+
+  // UI állapot ikonok
+  function updateButtons(){
+    playBtn.textContent  = isPlaying ? '⏸' : '▶';
+    playBtn.setAttribute('aria-pressed', String(isPlaying));
+    playMobi.textContent = isPlaying ? '⏸' : '▶';
+    playMobi.setAttribute('aria-pressed', String(isPlaying));
+  }
+
+  // Videó csere
+  function loadVideoById(id, autoplay){
+    const f = ensureIframe();
+    try{
+      const u = new URL(f.src, location.href);
+      // youtube „loadVideoById” postMessage a biztos:
+      yt('loadVideoById', [{ videoId: id }]);
+      if (autoplay){
+        yt('unMute');
+        yt('playVideo');
+      }else{
+        yt('pauseVideo');
+      }
+    }catch{
+      // fallback: src csere
+      f.src = `https://www.youtube.com/embed/${id}?enablejsapi=1&rel=0&playsinline=1&mute=1`;
+    }
+  }
+
+  // Select változás (desktop + mobil)
+  selDesk.addEventListener('change', () => {
+    loadVideoById(selDesk.value, isPlaying);
+    // tartsuk szinkronban a mobil selectet
+    selMobi.value = selDesk.value;
+  });
+  selMobi.addEventListener('change', () => {
+    loadVideoById(selMobi.value, isPlaying);
+    selDesk.value = selMobi.value;
+  });
+
+  // Előző/Következő
+  function step(offset){
+    const ids = refs.map(r => r.id);
+    const cur = selDesk.value || ids[0];
+    const i = Math.max(0, ids.indexOf(cur));
+    const j = (i + offset + ids.length) % ids.length;
+    selDesk.value = ids[j];
+    selMobi.value = ids[j];
+    loadVideoById(ids[j], isPlaying);
+  }
+  prevBtn.addEventListener('click', () => step(-1));
+  nextBtn.addEventListener('click', () => step(+1));
+
+  // Play/Pause (desktop + mobil)
+  function togglePlay(){
+    ensureIframe();
+    if (!playerReady) askYTEvents(); // első kattintáskor kérjük az eventeket
+    if (isPlaying){
+      yt('pauseVideo');
+    }else{
+      yt('unMute');
+      yt('playVideo');
+    }
+  }
+  playBtn.addEventListener('click', togglePlay);
+  playMobi.addEventListener('click', togglePlay);
+
+  // Indításkor építsük fel a player-t és kérjük az eseményeket
+  ensureIframe();
+  setTimeout(askYTEvents, 150);
+})();
+</script>
