@@ -967,3 +967,110 @@ body.gold-theme{
 /* arany téma alatt ne rajzoljon textúrát / vignettát */
 body.gold-theme .bg-vinyl{ display: none !important; }
 body.gold-theme::after{ content: none !important; }
+
+
+
+/* =========================
+   GLOSSY GOLD ENHANCEMENTS
+   (non-destructive overrides)
+   ========================= */
+
+/* Activate with <body class="gold-theme"> (already supported).
+   This block adds a glossy/specular look while preserving the same palette. */
+
+/* Global subtle animated sheen on the background */
+body.gold-theme.glossy::before,
+body.gold-theme::before{
+  content: "";
+  position: fixed;
+  inset: -20%;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.08) 15%, rgba(255,255,255,0) 30%) ,
+    radial-gradient(60% 100% at 50% -20%, rgba(255,245,200,.10), rgba(255,245,200,0) 60%);
+  mix-blend-mode: screen;
+  opacity: .45;
+  transform: translate3d(-10%,0,0);
+  animation: goldSheen 9s linear infinite;
+}
+@keyframes goldSheen{
+  0%   { transform: translate3d(-20%,0,0) }
+  50%  { transform: translate3d( 20%,0,0) }
+  100% { transform: translate3d(-20%,0,0) }
+}
+@media (prefers-reduced-motion: reduce){
+  body.gold-theme::before{ animation: none; opacity:.28 }
+}
+
+/* Make gold accents look glossy on interactive elements */
+body.gold-theme .btn.primary,
+body.gold-theme .vinyl-tabs .tab.is-active,
+body.gold-theme .vinyl-tabs .tab:focus-visible{
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.25), rgba(255,255,255,0) 45%),
+    linear-gradient(0deg, rgba(255,230,140,.35), rgba(255,230,140,.00) 60%),
+    var(--_goldLayer,var(--accent-grad, linear-gradient(90deg, #C08C2A, #FFD166, #AE7A17)));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.35),
+    inset 0 -1px 0 rgba(120,70,10,.35),
+    0 8px 22px rgba(0,0,0,.3);
+  border-color: rgba(255,210,100,.6);
+}
+
+/* Tabs get a small gloss strip */
+body.gold-theme .vinyl-tabs .tab span{
+  position: relative;
+}
+body.gold-theme .vinyl-tabs .tab span::after{
+  content:"";
+  position:absolute; left:8%; right:8%; top:8%;
+  height:20%; border-radius:99px;
+  background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,0));
+  opacity:.55;
+  pointer-events:none;
+}
+
+/* Optional utility to mark any element as gold surface without HTML changes */
+body.gold-theme .gold-surface,
+body.gold-theme .card.gold{
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 38%),
+    linear-gradient(0deg, rgba(255,230,140,.25), rgba(255,230,140,.00) 60%),
+    var(--_goldLayer,var(--accent-grad, linear-gradient(90deg, #C08C2A, #FFD166, #AE7A17)));
+  border-color: rgba(255,210,100,.55);
+}
+
+/* ---- Pricing cards hover glow (Árak & Formátumok) ---- */
+#pricing .card.package{
+  position: relative;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease, background .25s ease;
+  cursor: pointer;
+  outline: none;
+}
+#pricing .card.package::after{
+  /* subtle inner gold glow on hover target area */
+  content:"";
+  position:absolute; inset:0; border-radius: inherit;
+  background: radial-gradient(80% 60% at 50% 0%, rgba(255,255,255,.18), rgba(255,255,255,0) 60%);
+  opacity: 0; transition: opacity .25s ease;
+  pointer-events: none;
+}
+#pricing .card.package:hover,
+#pricing .card.package:focus-visible{
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(0,0,0,.35), 0 0 0 1px rgba(255,210,100,.35) inset;
+  border-color: rgba(255,210,100,.85);
+}
+#pricing .card.package:hover::after,
+#pricing .card.package:focus-visible::after{
+  opacity: .9;
+}
+#pricing .card.package:hover h3,
+#pricing .card.package:focus-visible h3{
+  text-shadow: 0 2px 6px rgba(0,0,0,.35);
+}
+
+/* Keyboard outline for accessibility */
+#pricing .card.package:focus-visible{
+  box-shadow: 0 0 0 3px rgba(255,255,255,.7), 0 10px 26px rgba(0,0,0,.35);
+}
