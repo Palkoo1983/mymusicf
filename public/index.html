@@ -468,6 +468,25 @@
   loadYT();
 })();
 </script>
+<!-- REFERENCE UI (desktop + mobil) -->
+<div id="refPanel" aria-hidden="true">
+  <div class="refHead">
+    <button id="refPrev" type="button" aria-label="Előző">◀</button>
+    <select id="refSelect" aria-label="Referencia választása"></select>
+    <button id="refNext" type="button" aria-label="Következő">▶</button>
+    <button id="refPlay" type="button" aria-pressed="false" aria-label="Lejátszás">▶</button>
+  </div>
+  <div id="refVideo" class="refVideo"></div>
+</div>
+
+<!-- Mobil: kompakt sáv (audio only) -->
+<div id="refMobileBar" aria-hidden="true">
+  <div class="mobRow">
+    <label for="refSelectMobile">Referencia:</label>
+    <select id="refSelectMobile"></select>
+    <button id="refPlayMobile" type="button" aria-pressed="false">▶</button>
+  </div>
+</div>
 
 </body>
 </html>
