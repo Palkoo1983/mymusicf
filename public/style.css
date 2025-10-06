@@ -1345,3 +1345,31 @@ body.gold-theme .bg-vinyl{
 
 /* biztos ami biztos: a tartalom legyen a textúra felett */
 .topbar, main, footer { position: relative; z-index: 1; }
+/* === FINAL PATCH — arany "matrix" pontok mindig látszanak === */
+
+/* 1) A .bg-vinyl újra engedélyezése gold-témán */
+body.gold-theme .bg-vinyl{
+  display:block !important;            /* felülírja a korábbi display:none !important-ot */
+  position:fixed; inset:0;
+  pointer-events:none;
+  z-index:0;                           /* tartalom alatt marad */
+  /* két réteg finom arany-pont */
+  background-image:
+    radial-gradient(circle, rgba(255,220,120,.28) 0 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,220,120,.14) 0 1px, transparent 1px);
+  background-size:12px 12px, 24px 24px;
+  background-position:0 0, 6px 6px;
+  opacity:.22;
+}
+
+/* 2) A tartalom biztosan a textúra fölött legyen */
+.topbar, main, footer { position:relative; z-index:1; }
+
+/* 3) NE rajzolj pontokat közvetlenül a <body>-ra (ez ütközött a gold override-okkal) */
+body {
+  background-blend-mode: normal; /* maradhat */
+  /* NINCS itt background-image a pöttyökre */
+}
+
+/* 4) Ha valahol korábban ez szerepelt, kioltjuk: */
+body.gold-theme .bg-vinyl{ display:block !important; }   /* még egyszer, hogy egészen biztos legyen */
