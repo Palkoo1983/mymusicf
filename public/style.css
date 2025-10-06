@@ -1564,3 +1564,38 @@ body.gold-theme .bg-vinyl{
     right: max(8px, calc(env(safe-area-inset-right, 0px) + 8px));
   }
 }
+/* Jobb felső referencia videó a topbarban – csak desktop */
+.topbar{ position: sticky; top:0; z-index:20; } /* nálad már ilyen, biztosítjuk */
+
+:root{ --logoH: 100px; } /* a desktop logó magassága (nálad 100px) */
+
+#bg-audio{
+  position: absolute;
+  top: 50%;                          /* középre a topbaron belül */
+  transform: translateY(-50%);
+  right: calc(10px + 56px + 10px);   /* a hanggomb (≈56px) mellé, kis térközzel */
+  height: var(--logoH);
+  width: calc(var(--logoH) * 16 / 9);/* 16:9 arány */
+  display: none;                      /* alapból rejtve */
+  z-index: 5;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+#bg-audio iframe{
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+  display: block !important;
+}
+
+/* Csak desktopon jelenjen meg */
+@media (min-width: 1025px){
+  #bg-audio{ display: block; }
+}
+
+/* Mobilon / tableten ne látszódjon */
+@media (max-width: 1024px){
+  #bg-audio{ display: none !important; }
+}
