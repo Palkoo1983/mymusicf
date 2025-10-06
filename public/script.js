@@ -433,5 +433,96 @@ document.addEventListener('DOMContentLoaded', () => {
   desc.addEventListener('input', render);
   render();
 });
+// ——— YouTube Iframe API betöltése ———
+(function loadYT(){
+  if (window.YT && window.YT.Player) return;
+  const s = document.createElement('script');
+  s.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(s);
+})();
 
+let ytPlayer;
+let userWantsAudio = (localStorage.getItem('enz-audio') === '1'); // megjegyezzük a választ
 
+function setToggleUI(on){
+  const btn = document.getElementById('soundToggle');
+  if (!btn) return;
+  btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  btn.textContent = on ? '🔊 Hang KI' : '🔇 Hang BE';
+}
+
+window.onYouTubeIframeAPIReady = function(){
+  const host = document.getElementById('bg-audio');
+  if (!host) return;
+  const vid = host.dataset.video;
+  ytPlayer = new YT.Player('bg-audio-iframe', {
+    videoId: vid,
+    playerVars: {
+      autoplay: 1,
+      controls: 0,
+      disablekb: 1,
+      fs: 0,
+      rel: 0,
+      modestbranding: 1,
+      playsinline: 1,
+      loop: 1,
+      playlist: vid // loop működéséhez kell ugyanaz az ID
+    },
+    events: {
+      onReady: (e) => {
+        e.target.mute();      // szabályok miatt némítva indul
+        e.target.setVolume(100);
+        e.target.playVideo();
+        setToggleUI(false);
+      },
+      onStateChange: (e) => {
+        if (e.data === YT.PlayerState.ENDED) e.target.playVideo();
+      }
+    }
+  });
+};
+
+// ——— Hang be/ki gomb ———
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('#soundToggle');
+  if (!btn || !ytPlayer) return;
+
+  const isOn = btn.getAttribute('aria-pressed') === 'true';
+
+  if (isOn) {
+    // jelenleg szól → némítsuk
+    try { ytPlayer.mute(); } catch {}
+    localStorage.setItem('enz-audio','0');
+    setToggleUI(false);
+  } else {
+    // jelenleg néma → próbáljuk bekapcsolni
+    try {
+      ytPlayer.unMute();
+      ytPlayer.playVideo();
+      localStorage.setItem('enz-audio','1');
+      setToggleUI(true);
+    } catch {
+      // ha a böngésző mégsem engedi, marad némítva
+      setToggleUI(false);
+    }
+  }
+});
+
+// ——— Extra kényelem: az első felhasználói gesztusnál, ha korábban be volt kapcsolva, visszaadjuk a hangot ———
+(function restoreOnFirstGesture(){
+  const tryEnable = () => {
+    if (!ytPlayer) return cleanup();
+    if (localStorage.getItem('enz-audio') === '1') {
+      try { ytPlayer.unMute(); ytPlayer.playVideo(); setToggleUI(true); } catch {}
+    }
+    cleanup();
+  };
+  const cleanup = () => {
+    document.removeEventListener('click', tryEnable, true);
+    document.removeEventListener('keydown', tryEnable, true);
+    document.removeEventListener('touchstart', tryEnable, true);
+  };
+  document.addEventListener('click', tryEnable, true);
+  document.addEventListener('keydown', tryEnable, true);
+  document.addEventListener('touchstart', tryEnable, true);
+})();
