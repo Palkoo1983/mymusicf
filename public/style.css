@@ -1522,3 +1522,45 @@ body.gold-theme .bg-vinyl{
   box-shadow: 0 14px 38px rgba(0,0,0,.45);
   outline: none;
 }
+/* Hang gomb a topbaron belül, jobb felső sarokban */
+.topbar { position: sticky; top: 0; z-index: 20; } /* már nálad ilyen, csak biztosítjuk */
+.sound-toggle{
+  position: absolute;
+  top: max(8px, calc(env(safe-area-inset-top, 0px) + 8px));
+  right: max(10px, calc(env(safe-area-inset-right, 0px) + 10px));
+  z-index: 10001;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(13,27,42,.75);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.05;
+  display: grid;
+  place-items: center;
+  padding: 6px 8px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+/* Hover/focus */
+.sound-toggle:hover,
+.sound-toggle:focus-visible{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 38px rgba(0,0,0,.45);
+  outline: none;
+}
+
+/* Mobilon egy fokkal kisebb, hogy ne lógjon be a tartalomba */
+@media (max-width: 768px){
+  .sound-toggle{
+    width: 48px;
+    height: 48px;
+    font-size: 12px;
+    top: max(6px, calc(env(safe-area-inset-top, 0px) + 6px));
+    right: max(8px, calc(env(safe-area-inset-right, 0px) + 8px));
+  }
+}
