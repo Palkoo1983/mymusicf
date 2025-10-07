@@ -2,36 +2,49 @@
 
 <html lang="hu">
 <head>
-<!-- apró, beágyazott ikonok (nem lesz 404) -->
-<link rel="icon" type="image/svg+xml"
-      href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="%23d4af37"/><circle cx="32" cy="32" r="18" fill="%230b0b0b"/><circle cx="32" cy="32" r="12" fill="%232a2a2a"/></svg>'>
-<link rel="shortcut icon" type="image/x-icon"
-      href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="/>
+  <!-- apró, beágyazott ikonok (nem lesz 404) -->
+  <link rel="icon" type="image/svg+xml"
+        href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="%23d4af37"/><circle cx="32" cy="32" r="18" fill="%230b0b0b"/><circle cx="32" cy="32" r="12" fill="%232a2a2a"/></svg>'>
+  <link rel="shortcut icon" type="image/x-icon"
+        href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="/>
 
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>EnZenem – Egyedi, profi zenék rendezvényekre</title>
-<style>
-  /* kritikus logóméret + az intro animáció kikapcsolása, a forgás megmarad */
-  @media (min-width:1025px){
-    .topbar .brand > img.spinning-vinyl{
-      width:100px; height:100px;
-      animation:
-        /* intro OFF */ none,
-        /* spin marad */
-        spin 8s linear infinite;
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EnZenem – Egyedi, profi zenék rendezvényekre</title>
+
+  <!-- KRITIKUS INLINE CSS: csak SPIN, nincs intro; fix méret; CLS védelem -->
+  <style>
+    @media (min-width:1025px){
+      .topbar .brand > img.spinning-vinyl{
+        width:100px !important;
+        height:100px !important;
+        animation: spin 8s linear infinite !important; /* csak spin */
+        transition: none !important;
+      }
     }
-  }
-  @media (max-width:768px){
-    .topbar .brand > img.spinning-vinyl{ width:92px; height:92px; }
-  }
-  /* biztos ami biztos: a smooth scroll csak interakciókor legyen érzékelhető */
-  html{ scroll-behavior:auto; }
-</style>
-<link href="style.css" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&amp;display=swap" rel="stylesheet"/>
+    @media (max-width:768px){
+      .topbar .brand > img.spinning-vinyl{
+        width:92px !important;
+        height:92px !important;
+        animation: spin 8s linear infinite !important;
+        transition: none !important;
+      }
+    }
+    .topbar{ min-height:120px; }
+    .brand{ align-items:center; }
+    html{ scroll-behavior:auto; } /* hard resetnél ne legyen visszagörgetés */
+  </style>
+
+  <!-- CSS: PRELOAD + noscript fallback (NE tedd be még egyszer alább!) -->
+  <link rel="preload" href="style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="style.css"></noscript>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body class="gold-theme">
 <div class="bg-vinyl">
 </div>
