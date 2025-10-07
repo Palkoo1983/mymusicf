@@ -485,3 +485,31 @@ document.addEventListener('DOMContentLoaded', () => {
   logoImg.parentNode.insertBefore(wrap, logoImg);
   wrap.appendChild(logoImg);
 });
+// LOGÓ: wrap + integer px. A lemezekhez NEM nyúlunk.
+document.addEventListener('DOMContentLoaded', () => {
+  const logoImg = document.querySelector('.topbar .brand > img.spinning-vinyl, .site-logo img');
+  if (!logoImg) return;
+
+  // ha már be van csomagolva, ne duplikáljuk
+  if (!logoImg.closest('.spin-wrap')) {
+    const wrap = document.createElement('span');
+    wrap.className = 'spin-wrap';
+    logoImg.parentNode.insertBefore(wrap, logoImg);
+    wrap.appendChild(logoImg);
+  }
+  const wrap = logoImg.closest('.spin-wrap');
+
+  // MENÜ lemez aktuális szélességének mérése → integer px (sweet spot)
+  const tab = document.querySelector('.vinyl-tabs .tab');
+  // fallback: ha nincs tab, használjuk a jelenlegi logo szélességét
+  const baseW = tab ? tab.getBoundingClientRect().width : logoImg.getBoundingClientRect().width;
+  const size = Math.round(baseW);           // egész px → nem recés
+  wrap.style.width  = size + 'px';
+  wrap.style.height = size + 'px';
+
+  // biztosan ne forogjon a kép, csak a wrap (felülírjuk inline is)
+  logoImg.style.animation = 'none';
+  logoImg.style.transform = 'none';
+  logoImg.style.width  = '100%';
+  logoImg.style.height = '100%';
+});
