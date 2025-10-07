@@ -162,6 +162,7 @@
 </label>
 <label class="full">Leírás / miről szóljon a dal?
             <textarea name="brief" placeholder="Milyen történetet, érzést, üzenetet közvetítsen a dal? Írd le az emlékeiteket, milyen az a személy(ek) akinek a dal íródik. Esküvőre a kettőtök történetét, születésnapra a személy tulajdonságait, életkorát, stb.." rows="5"></textarea>
+<div class="brief-count" id="brief-count">0 / 120</div>
 <div id="char-counter">0/120 karakter</div>
 </label>
 <label class="check full">
@@ -179,79 +180,34 @@
 <section class="panel" id="refs">
 <h2>Referenciák</h2>
 <div class="embeds">
-<div class="embed small">
-  <div class="video">
-    <iframe
-      src="https://www.youtube.com/embed/Crf1xVh4BYA?modestbranding=1&rel=0&playsinline=1"
-      title="YouTube Shorts – referencia"
-      loading="lazy"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      allowfullscreen>
-    </iframe>
-  </div>
-  <p>Példa: Kata &amp; Máté – Esküvő</p>
+<div class="embed small"><p>Példa: Kata &amp; Máté – Esküvő</p>
 </div>
- <div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/f_geI2Pgvuk" title="YouTube video player"></iframe></div>
-<p>Édesapám emlékére</p>
+ <div class="embed small"><p>Édesapám emlékére</p>
 </div>
-<div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/n-a7aFVrUdw" title="YouTube video player"></iframe></div>
-<p>Édesanyámnak</p>
+<div class="embed small"><p>Édesanyámnak</p>
 </div>
-<div class="embed small">
-<div class="video">
-<iframe
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-  allowfullscreen
-  loading="lazy"
-  referrerpolicy="strict-origin-when-cross-origin"
-  src="https://www.youtube.com/embed/2RY5bwiSR00?rel=0&amp;modestbranding=1&amp;playsinline=1&amp;vq=hd1080"
-  title="YouTube video player">
-</iframe>
-</div>
-<p>Születésnapra</p>
+<div class="embed small"><p>Születésnapra</p>
 </div>
 </div>
-<div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/CsnNiX_LgQc" title="YouTube video player"></iframe></div>
-<p>Pop - Szakítás-dinamikus</p>
+<div class="embed small"><p>Pop - Szakítás-dinamikus</p>
 </div>
-<div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/gXB9HPCJtfc" title="YouTube video player"></iframe></div>
-<p>Pop - Elektronikus- angol</p>
+<div class="embed small"><p>Pop - Elektronikus- angol</p>
 </div>
-<div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/uE3ohlhlyZU" title="YouTube video player"></iframe></div>
-<p>Testvérnek</p>
+<div class="embed small"><p>Testvérnek</p>
 </div>
-<div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/mMxDy1BATFk" title="YouTube video player"></iframe></div>
-<p>Testvér - Angol</p>
+<div class="embed small"><p>Testvér - Angol</p>
 </div>
-<div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/TGLKIQEjiQM" title="YouTube video player"></iframe></div>
-<p>Angol - Romantikus</p>
+<div class="embed small"><p>Angol - Romantikus</p>
 </div>
-<div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/YF-Onq_-F4g" title="YouTube video player"></iframe></div>
-<p>Magyar - romantikus</p>
+<div class="embed small"><p>Magyar - romantikus</p>
 </div>
-<div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/yJkzbC4PWy4" title="YouTube video player"></iframe></div>
-<p>Angol - Ars Poetica</p>
+<div class="embed small"><p>Angol - Ars Poetica</p>
 </div>
-<div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/Z78APd89pW8" title="YouTube video player"></iframe></div>
-<p>Magyar - Életút</p>
+<div class="embed small"><p>Magyar - Életút</p>
 </div>
-<div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/K489XbDIAmo" title="YouTube video player"></iframe></div>
-<p>Pop - biztató - angol</p>
+<div class="embed small"><p>Pop - biztató - angol</p>
 </div>
-<div class="embed small">
-<div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="" frameborder="0" src="https://www.youtube.com/embed/hkc58uSEosc" title="YouTube video player"></iframe></div>
-<p>Pop - biztató - magyar</p>
+<div class="embed small"><p>Pop - biztató - magyar</p>
 </div>
 
 </section>
@@ -337,9 +293,7 @@
     <select id="refSelect" aria-label="Referencia választása"></select>
     <button id="refNext" type="button" aria-label="Következő">▶</button>
     <button id="refPlay" type="button" aria-pressed="false" aria-label="Lejátszás">▶</button>
-  </div>
-  <div id="refVideo" class="refVideo"></div>
-</div>
+  </div></div>
 
 <!-- Mobil: kompakt sáv (audio only) -->
 <div id="refMobileBar" aria-hidden="true">

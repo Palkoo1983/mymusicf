@@ -497,3 +497,87 @@ document.addEventListener('click', (ev) => {
   document.addEventListener('keydown', tryEnable, true);
   document.addEventListener('touchstart', tryEnable, true);
 })();
+
+// ---------- STABLE CORE (pre-audio/video) ----------
+(function(){
+  // Tab navigation (ARIA-friendly)
+  const tablist = document.querySelector('[role="tablist"]');
+  const tabs = tablist ? Array.from(tablist.querySelectorAll('[role="tab"]')) : [];
+  const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+  function activateTab(tab){
+    if(!tab) return;
+    tabs.forEach(t => {
+      const selected = t === tab;
+      t.setAttribute('aria-selected', selected ? 'true' : 'false');
+      t.tabIndex = selected ? 0 : -1;
+      const panelId = t.getAttribute('aria-controls');
+      if(panelId){
+        const panel = document.getElementById(panelId);
+        if(panel) panel.hidden = !selected;
+      }
+    });
+    tab.focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  tabs.forEach(t => {
+    t.addEventListener('click', e => {
+      e.preventDefault();
+      activateTab(t);
+    });
+    t.addEventListener('keydown', e => {
+      const i = tabs.indexOf(t);
+      if(e.key === 'ArrowRight'){ e.preventDefault(); activateTab(tabs[(i+1)%tabs.length]); }
+      if(e.key === 'ArrowLeft'){ e.preventDefault(); activateTab(tabs[(i-1+tabs.length)%tabs.length]); }
+      if(e.key === 'Home'){ e.preventDefault(); activateTab(tabs[0]); }
+      if(e.key === 'End'){ e.preventDefault(); activateTab(tabs[tabs.length-1]); }
+    });
+  });
+
+  // Example chips -> set placeholder (NOT value)
+  const brief = document.querySelector('#order-brief, textarea#brief, textarea[name="brief"]');
+  const chips = Array.from(document.querySelectorAll('.example-chip'));
+  chips.forEach(ch => {
+    ch.addEventListener('click', () => {
+      if(brief){
+        const txt = ch.getAttribute('data-example') || ch.textContent.trim();
+        // show as hint only
+        brief.placeholder = txt;
+        brief.focus();
+      }
+    });
+  });
+
+  // Character counter "0 / 120" on brief (min 120)
+  const counter = document.querySelector('#brief-count, .brief-count');
+  const MIN = 120;
+  function updateCount(){
+    if(!brief || !counter) return;
+    const len = brief.value ? brief.value.trim().length : 0;
+    counter.textContent = `${len} / ${MIN}`;
+  }
+  if(brief && counter){
+    updateCount();
+    ['input','change','keyup'].forEach(ev => brief.addEventListener(ev, updateCount));
+  }
+
+  // Pricing cards -> select package; MP4 turns gold when active
+  const pkgInput = document.querySelector('input[name="package"]');
+  const cards = Array.from(document.querySelectorAll('.price-card, .package-card'));
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      const val = card.getAttribute('data-package') || card.dataset.package;
+      cards.forEach(c => c.classList.remove('active', 'gold'));
+      card.classList.add('active');
+      if((val||'').toUpperCase().includes('MP4')){
+        card.classList.add('gold');
+      }
+      if(pkgInput && val){ pkgInput.value = val; }
+      // when selected, ensure Order tab visible
+      const orderTab = tabs.find(t => (t.textContent||'').toLowerCase().includes('megrendelés') || t.getAttribute('data-panel') === 'order');
+      if(orderTab) activateTab(orderTab);
+      if(brief) brief.focus();
+    });
+  });
+})();
+// ---------- END STABLE CORE ----------
+
