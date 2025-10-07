@@ -1108,3 +1108,41 @@ body.gold-theme::after{ content: none !important; }
     display: block !important;  /* egymás alatt */
   }
 }
+/* ===== VINYL MENU — desktop override: 50% méret + jobbra igazítás ===== */
+@media (min-width: 992px){
+
+  /* skála a korábbi desktop-mérethez képest */
+  :root{ --tabScale: .5; }  /* 50% */
+
+  /* a teljes menüsor jobbra húzva (szélesség kitöltve, hogy legyen hely jobbra) */
+  .vinyl-tabs{
+    width: 100%;
+    justify-content: flex-end !important;  /* jobbra igazítás */
+    align-items: center !important;
+  }
+
+  /* lemezek: a korábban beállított --tabSize felét használjuk */
+  .vinyl-tabs .tab{
+    width:  calc(var(--tabSize) * var(--tabScale)) !important;
+    height: calc(var(--tabSize) * var(--tabScale)) !important;
+    margin: 0 !important;                 /* ne középre igazítsa magát */
+  }
+
+  /* a lemezen a cím maradjon középen, de méretben arányosan visszavéve */
+  .vinyl-tabs .tab span{
+    max-width: calc(var(--tabSize) * var(--tabScale) - 14px) !important;
+    font-size: calc(var(--tabFont) * var(--tabScale)) !important;
+    text-align: center !important;
+    white-space: nowrap;
+    margin: 0 !important;
+  }
+
+  /* logó: a lemez-eredő méret 120%-a, de szintén 50%-ra skálázva */
+  .topbar .brand > img.spinning-vinyl,
+  .site-logo img{
+    width:  calc(var(--tabSize) * 1.20 * var(--tabScale)) !important;
+    height: calc(var(--tabSize) * 1.20 * var(--tabScale)) !important;
+    margin: 0 !important;    /* ne középre igazítsa */
+    display: block !important;
+  }
+}
