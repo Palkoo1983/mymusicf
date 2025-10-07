@@ -987,3 +987,16 @@ body.gold-theme::after{ content: none !important; }
   box-shadow: 0 0 0 3px rgba(212,175,55,.35), 0 12px 24px rgba(0,0,0,.18);
   transform: translateY(-2px);
 }
+
+
+/* Hover hint and selected glow for pricing cards */
+.card.package:hover{
+  outline: 2px solid #d4af37;
+  box-shadow: 0 0 0 3px rgba(212,175,55,.35), 0 12px 24px rgba(0,0,0,.18);
+  transform: translateY(-2px);
+}
+.card.package.selected{
+  outline: 2px solid #d4af37;
+  box-shadow: 0 0 0 4px rgba(212,175,55,.35), 0 16px 28px rgba(0,0,0,.22);
+  transform: translateY(-3px);
+}

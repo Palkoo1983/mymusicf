@@ -139,9 +139,7 @@ function initHowTo() {
   });
 
   // Példa-chipek a HOWTO panelen -> beír, de mindig a lap tetején maradunk
-  qsa('#howto .chip[data-example]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const text = btn.getAttribute('data-example') || '';
+  qsa('#howto .chip[data-example]').forEach(btn => { btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); const text = btn.getAttribute('data-example') || '';
 
       orderTabBtn?.click();
 
@@ -151,7 +149,8 @@ function initHowTo() {
       setTimeout(() => {
         const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
         if (desc) {
-          desc.value = text;
+          desc.placeholder = text;
+
           desc.dispatchEvent(new Event('input', { bubbles: true }));
           // fókusz görgetés nélkül
           try { desc.focus({ preventScroll: true }); } catch(_) {}
@@ -180,7 +179,7 @@ function initBriefHelper() {
   info.style.fontSize = '12px';
   info.style.marginTop = '6px';
   info.style.color = '#b6b6c3';
-  info.innerHTML = '<span id="enz-count">0</span> karakter • <strong id="enz-score">Túl rövid</strong>';
+  info.innerHTML = '<span id="enz-count">0</span> / 120';
   desc.insertAdjacentElement('afterend', info);
 
   // minta leírások – csak egyszer
@@ -222,9 +221,8 @@ function initBriefHelper() {
       b.style.border = '1px solid #2a2b3a';
       b.style.background = '#10111a';
       b.style.color = '#f4f4f7';
-      b.addEventListener('click', () => {
-        desc.value = t;
-        desc.dispatchEvent(new Event('input', { bubbles: true }));
+      b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); desc.placeholder = t;
+
         desc.focus();
       });
       exWrap.appendChild(b);
@@ -248,15 +246,12 @@ function initBriefHelper() {
 
   // minőségértékelés
   const countEl = qs('#enz-count', info);
-  const scoreEl = qs('#enz-score', info);
-  function updateQuality() {
-    const len = (desc.value || '').trim().length;
-    countEl.textContent = String(len);
-    if (len < 120) { scoreEl.textContent = 'Túl rövid'; scoreEl.style.color = '#ef476f'; tip.style.display = 'block'; }
-    else if (len < 250) { scoreEl.textContent = 'Elfogadható'; scoreEl.style.color = ''; tip.style.display = 'none'; }
-    else if (len < 900) { scoreEl.textContent = 'Kiváló'; scoreEl.style.color = '#06d6a0'; tip.style.display = 'none'; }
-    else { scoreEl.textContent = 'Nagyon hosszú (rövidíts)'; scoreEl.style.color = '#ef476f'; tip.style.display = 'block'; }
-  }
+  function updateQuality(){
+  const len = (desc.value || '').trim().length;
+  countEl.textContent = String(len);
+  // toggle 'ok' class on info if meets minimum
+  info.classList.toggle('ok', len >= 120);
+}
   desc.addEventListener('input', updateQuality);
   updateQuality();
 
@@ -532,41 +527,6 @@ document.addEventListener('DOMContentLoaded', () => {
     card.addEventListener('keydown', function(e){
       if(e.key==='Enter' || e.key===' '){ e.preventDefault(); selectCard(card); }
     });
-  });
-})();
-
-
-// === Chips override: placeholder only, never set value ===
-(function(){
-  var brief = document.querySelector('textarea#brief, textarea[name="brief"], textarea.brief') || document.querySelector('textarea');
-  if(!brief) return;
-  function applyPlaceholder(text){
-    if(!text) return;
-    brief.placeholder = text;
-  }
-  function handleChipClick(e, el){
-    // Keep user's current text; do not allow external handlers to overwrite with example
-    var before = brief.value;
-    var example = el.getAttribute('data-example') || el.getAttribute('data-text') || el.textContent.trim();
-    // Stop other handlers from running if possible
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    e.stopPropagation();
-    // Apply placeholder now
-    applyPlaceholder(example);
-    // In case another listener modified value, restore it in microtask
-    setTimeout(function(){
-      if(brief.value !== before){
-        brief.value = before;
-        brief.dispatchEvent(new Event('input', {bubbles:true}));
-      }
-    }, 0);
-    brief.focus();
-  }
-  var selectors = '[data-example], .example-chip, .chip.example, .brief-example, .example';
-  var chips = Array.from(document.querySelectorAll(selectors));
-  chips.forEach(function(el){
-    el.addEventListener('click', function(e){ handleChipClick(e, el); }, true); // capture to preempt others
   });
 })();
 
