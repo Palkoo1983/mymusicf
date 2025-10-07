@@ -1,3 +1,11 @@
+// --- Betöltéskor NE állítsa vissza a böngésző a korábbi görgetési pozíciót ---
+(function() {
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+  // azonnali (nem "smooth") felgörgetés a tetejére
+  window.scrollTo(0, 0);
+})();
 /* Samsung Internet detektálás – csak osztályt rakunk a <html>-re */
 (function () {
   if (/SamsungBrowser/i.test(navigator.userAgent)) {
