@@ -479,29 +479,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-// === Brief character counter (min 120) ===
-(function(){
-  var brief = document.querySelector('textarea#brief, textarea[name="brief"], textarea.brief');
-  if(!brief){
-    // try to find the biggest textarea in Order panel
-    var areas = Array.from(document.querySelectorAll('textarea'));
-    if(areas.length) brief = areas.sort((a,b)=> (b.maxLength||99999)-(a.maxLength||99999))[0] || areas[0];
-  }
-  if(!brief) return;
-  var min = 120;
-  var counter = document.createElement('div');
-  counter.className = 'brief-counter';
-  var update = function(){
-    var n = (brief.value||'').length;
-    counter.textContent = n + ' / ' + min;
-    counter.classList.toggle('ok', n >= min);
-  };
-  brief.parentNode.insertBefore(counter, brief.nextSibling);
-  brief.addEventListener('input', update);
-  update();
-})();
-
-
 // === Example chips → placeholder only ===
 (function(){
   var brief = document.querySelector('textarea#brief, textarea[name="brief"], textarea.brief') || document.querySelector('textarea');
@@ -556,4 +533,65 @@ document.addEventListener('DOMContentLoaded', () => {
       if(e.key==='Enter' || e.key===' '){ e.preventDefault(); selectCard(card); }
     });
   });
+})();
+
+
+// === Chips override: placeholder only, never set value ===
+(function(){
+  var brief = document.querySelector('textarea#brief, textarea[name="brief"], textarea.brief') || document.querySelector('textarea');
+  if(!brief) return;
+  function applyPlaceholder(text){
+    if(!text) return;
+    brief.placeholder = text;
+  }
+  function handleChipClick(e, el){
+    // Keep user's current text; do not allow external handlers to overwrite with example
+    var before = brief.value;
+    var example = el.getAttribute('data-example') || el.getAttribute('data-text') || el.textContent.trim();
+    // Stop other handlers from running if possible
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    e.stopPropagation();
+    // Apply placeholder now
+    applyPlaceholder(example);
+    // In case another listener modified value, restore it in microtask
+    setTimeout(function(){
+      if(brief.value !== before){
+        brief.value = before;
+        brief.dispatchEvent(new Event('input', {bubbles:true}));
+      }
+    }, 0);
+    brief.focus();
+  }
+  var selectors = '[data-example], .example-chip, .chip.example, .brief-example, .example';
+  var chips = Array.from(document.querySelectorAll(selectors));
+  chips.forEach(function(el){
+    el.addEventListener('click', function(e){ handleChipClick(e, el); }, true); // capture to preempt others
+  });
+})();
+
+
+// === Character counter: ensure single instance and correct placement ===
+(function(){
+  var brief = document.querySelector('textarea#brief, textarea[name="brief"], textarea.brief') || document.querySelector('textarea');
+  if(!brief) return;
+  var min = 120;
+  // Remove duplicate counters except one
+  var existing = Array.from(document.querySelectorAll('.brief-counter'));
+  existing.forEach(function(node){ node.parentNode && node.parentNode.removeChild(node); });
+  // Create fresh counter just below the brief textarea
+  var counter = document.createElement('div');
+  counter.className = 'brief-counter';
+  function update(){
+    var n = (brief.value||'').length;
+    counter.textContent = n + ' / ' + min;
+    counter.classList.toggle('ok', n >= min);
+  }
+  if(brief.nextSibling){
+    brief.parentNode.insertBefore(counter, brief.nextSibling);
+  }else{
+    brief.parentNode.appendChild(counter);
+  }
+  brief.addEventListener('input', update);
+  update();
 })();

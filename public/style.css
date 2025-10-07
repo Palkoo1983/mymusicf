@@ -979,3 +979,11 @@ body.gold-theme::after{ content: none !important; }
   transform: translateY(-2px);
   transition: box-shadow .2s, transform .2s, outline-color .2s;
 }
+
+
+/* hover hint for clickable package cards */
+.package-card:hover,[data-package]:hover{
+  outline: 2px solid #d4af37;
+  box-shadow: 0 0 0 3px rgba(212,175,55,.35), 0 12px 24px rgba(0,0,0,.18);
+  transform: translateY(-2px);
+}
