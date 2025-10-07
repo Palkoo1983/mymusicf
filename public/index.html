@@ -38,6 +38,36 @@
   <!-- CSS: PRELOAD + noscript fallback (NE tedd be még egyszer alább!) -->
   <link rel="preload" href="style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="style.css"></noscript>
+<style id="late-overrides">
+  /* Ne legyen lassú visszagörgetés hard resetnél */
+  html{ scroll-behavior:auto }
+
+  /* Kerüljük az üres (fehér) villanást még a külső CSS előtt is */
+  body{ background-color:#0d1b2a }
+
+  /* CLS ellen: a topbar kapjon fix kezdeti magasságot */
+  .topbar{ min-height:120px }
+
+  /* A .no-intro jelzi: NINCS intro animáció, CSAK folyamatos forgás, fix, éles méret */
+  @media (min-width:1025px){
+    .no-intro .topbar .brand > img.spinning-vinyl{
+      width:100px !important;
+      height:100px !important;
+      animation: spin 8s linear infinite !important; /* intro OFF, spin ON */
+      margin:0 !important;
+      transition:none !important;
+    }
+  }
+  @media (max-width:768px){
+    .no-intro .topbar .brand > img.spinning-vinyl{
+      width:92px !important;
+      height:92px !important;
+      animation: spin 8s linear infinite !important;
+      margin:0 !important;
+      transition:none !important;
+    }
+  }
+</style>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -45,7 +75,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 
-<body class="gold-theme">
+<body class="gold-theme no-intro">
 <div class="bg-vinyl">
 </div>
 <header class="topbar">
