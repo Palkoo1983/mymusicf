@@ -69,29 +69,32 @@
 </head>
 
 <body class="gold-theme no-intro">
-<!-- Videopanel a menüsáv jobb oldalán -->
+<!-- Videopanel a menüsáv jobb oldalán, a lemezek mellett -->
 
 <style>
-  /* A menüsáv jobb felső részébe illeszkedő videopanel */
   .video-panel {
-    position: absolute; /* vagy fixed, ha mindig felül akarod látni */
+    position: absolute; /* vagy fixed, ha mindig látni akarod felül */
     top: 0;
     right: 0;
-    width: 14cm; /* vagy ennek megfelelő pixel érték pl. 300-350px */
-    height: 6cm;  /* kb. 60px a dizájnhoz igazítva */
+    width: 14cm; /* vagy ennek megfelelő pixel érték, pl. 300-350px */
+    height: 6cm; /* kb. 60px a dizájnhoz igazítva */
     background: #000;
     color: #f1c40f;
     display: flex;
     align-items: center;
     justify-content: space-around;
     z-index: 1000; /* hogy a menüsáv felett legyen */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
 
   .video-panel select, .video-panel button {
     margin: 0 5px;
   }
 
-  /* Hogy a fő tartalom ne csússzon a panel alá */
+  /* Töröljük a sárga csíkot, ha volt */
+  .some-old-class { display: none; } /* Ha volt valamilyen régi osztály, ami a csíkot okozta */
+
+  /* Igazítsuk a fő tartalmat, hogy ne lógjon alá semmi */
   body {
     padding-top: 80px; /* vagy amennyi hely kell a videopanel miatt */
   }
@@ -120,16 +123,7 @@
 
     // Töröljük az esetleges előző videót, ha volt
     const existingIframe = document.querySelector('.video-panel iframe');
-    if (existingIframe) {
-      existingIframe.remove();
-    }
-
-    // Beillesztjük a videópanelbe
-    document.querySelector('.video-panel').appendChild(videoFrame);
-  }
-
-  function pauseVideo() {
-    alert("A megállítás funkció ebben a változatban nem támogatott, mivel a videó beágyazva fut.");
+    if (existingIframe)
   }
 </script>
 
