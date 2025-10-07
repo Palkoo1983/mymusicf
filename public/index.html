@@ -67,57 +67,9 @@
   <!-- CSS – RENDES, RENDER-BLOCKING LINK (nincs preload → nincs FOUC/villanás) -->
   <link rel="stylesheet" href="style.css" />
 </head>
-<!-- Audio panel mobilra -->
-<div class="audio-panel">
-  <select id="audioSelect">
-    <option value="Crf1xVh4BYA">Minta – Esküvő (Shorts)</option>
-    <option value="f_geI2Pgvuk">Édesapám emlékére</option>
-    <option value="2RY5bwiSR00">Születésnapra</option>
-    <option value="n-a7aFVrUdw">Édesanyámnak</option>
-    <option value="CsnNiX_LgQc">Pop – Szakítás (dinamikus)</option>
-    <option value="gXB9HPCJtfc">Pop – Elektronikus (angol)</option>
-    <option value="uE3ohlhlyZU">Testvérnek</option>
-    <option value="TGLKIQEjiQM">Angol – Romantikus</option>
-    <option value="YF-Onq_-F4g">Magyar – Romantikus</option>
-    <option value="yJkzbC4PWy4">Angol – Ars Poetica</option>
-    <option value="Z78APd89pW8">Magyar – Életút</option>
-    <option value="K489XbDIAmo">Pop – Biztató (angol)</option>
-    <option value="hkc58uSEosc">Pop – Biztató (magyar)</option>
-  </select>
+<!-- VIDEO PANEL (desktop) + AUDIO PANEL (mobile) – TELJES BLOKK -->
 
-  <iframe id="audioFrame"
-          src="https://www.youtube.com/embed/2RY5bwiSR00"
-          allow="autoplay; encrypted-media"
-          allowfullscreen>
-  </iframe>
-
-  <div style="display: flex; justify-content: space-between;">
-    <button onclick="playAudio()">Lejátszás</button>
-    <button onclick="stopAudio()">Megállít</button>
-  </div>
-</div>
-
-<body class="gold-theme no-intro">
-<style>
-.video-panel {
-  position: absolute;
-  top: 20px; /* 1 cm-rel feljebb a korábbi 40px helyett */
-  right: 20px;
-  width: 600px; /* dupla szélesség az eddigi 300px helyett */
-  height: auto; /* a meglévő magasság marad, iframe méretéből jön */
-  background: #000;
-  color: #f1c40f;
-  padding: 10px;
-  border: 1px solid #f1c40f;
-  border-radius: 6px;
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-}
-
-</style>
+<!-- Videopanel – csak desktopon jelenik meg -->
 <div class="video-panel">
   <select id="videoSelect">
     <option value="Crf1xVh4BYA">Minta – Esküvő (Shorts)</option>
@@ -147,22 +99,65 @@
   </div>
 </div>
 
-<script>
-  function playVideo() {
-    const videoId = document.getElementById("videoSelect").value;
-    const url = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-    document.getElementById("videoFrame").src = url;
-  }
+<!-- Audiopanel – csak mobilon jelenik meg -->
+<div class="audio-panel">
+  <select id="audioSelect">
+    <option value="Crf1xVh4BYA">Minta – Esküvő (Shorts)</option>
+    <option value="f_geI2Pgvuk">Édesapám emlékére</option>
+    <option value="2RY5bwiSR00">Születésnapra</option>
+    <option value="n-a7aFVrUdw">Édesanyámnak</option>
+    <option value="CsnNiX_LgQc">Pop – Szakítás (dinamikus)</option>
+    <option value="gXB9HPCJtfc">Pop – Elektronikus (angol)</option>
+    <option value="uE3ohlhlyZU">Testvérnek</option>
+    <option value="TGLKIQEjiQM">Angol – Romantikus</option>
+    <option value="YF-Onq_-F4g">Magyar – Romantikus</option>
+    <option value="yJkzbC4PWy4">Angol – Ars Poetica</option>
+    <option value="Z78APd89pW8">Magyar – Életút</option>
+    <option value="K489XbDIAmo">Pop – Biztató (angol)</option>
+    <option value="hkc58uSEosc">Pop – Biztató (magyar)</option>
+  </select>
 
-  function stopVideo() {
-    document.getElementById("videoFrame").src = "";
-  }
+  <iframe id="audioFrame"
+          src="https://www.youtube.com/embed/2RY5bwiSR00"
+          allow="autoplay; encrypted-media"
+          allowfullscreen>
+  </iframe>
+
+  <div style="display: flex; justify-content: space-between;">
+    <button onclick="playAudio()">Lejátszás</button>
+    <button onclick="stopAudio()">Megállít</button>
+  </div>
+</div>
+
+<!-- CSS -->
+<style>
+.video-panel {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 600px;
+  height: auto;
+  background: #000;
+  color: #f1c40f;
+  padding: 10px;
+  border: 1px solid #f1c40f;
+  border-radius: 6px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
 .audio-panel {
-  display: none; /* alapból ne látszódjon */
+  display: none;
 }
 
 @media (max-width: 640px) {
-  .video-panel { display: none !important; } /* videopanel elrejtve mobilon */
+  .video-panel {
+    display: none !important;
+  }
+
   .audio-panel {
     display: flex;
     flex-direction: column;
@@ -172,7 +167,7 @@
     padding: 10px;
     border: 1px solid #f1c40f;
     border-radius: 6px;
-    width: 90vw;              /* teljesen az "Én zeném" szélességhez igazítva */
+    width: 90vw;
     margin: 0 auto;
     z-index: 999;
   }
@@ -188,11 +183,34 @@
 
   .audio-panel iframe {
     width: 100%;
-    height: 80px; /* kis magasság, csak hangsávnak */
+    height: 80px;
   }
 }
-  
+</style>
+
+<!-- JS -->
+<script>
+function playVideo() {
+  const videoId = document.getElementById("videoSelect").value;
+  const url = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+  document.getElementById("videoFrame").src = url;
+}
+
+function stopVideo() {
+  document.getElementById("videoFrame").src = "";
+}
+
+function playAudio() {
+  const audioId = document.getElementById("audioSelect").value;
+  const url = `https://www.youtube.com/embed/${audioId}?autoplay=1`;
+  document.getElementById("audioFrame").src = url;
+}
+
+function stopAudio() {
+  document.getElementById("audioFrame").src = "";
+}
 </script>
+
 <div class="bg-vinyl">
 </div>
 <header class="topbar">
