@@ -67,6 +67,35 @@
   <!-- CSS – RENDES, RENDER-BLOCKING LINK (nincs preload → nincs FOUC/villanás) -->
   <link rel="stylesheet" href="style.css" />
 </head>
+<!-- Audio panel mobilra -->
+<div class="audio-panel">
+  <select id="audioSelect">
+    <option value="Crf1xVh4BYA">Minta – Esküvő (Shorts)</option>
+    <option value="f_geI2Pgvuk">Édesapám emlékére</option>
+    <option value="2RY5bwiSR00">Születésnapra</option>
+    <option value="n-a7aFVrUdw">Édesanyámnak</option>
+    <option value="CsnNiX_LgQc">Pop – Szakítás (dinamikus)</option>
+    <option value="gXB9HPCJtfc">Pop – Elektronikus (angol)</option>
+    <option value="uE3ohlhlyZU">Testvérnek</option>
+    <option value="TGLKIQEjiQM">Angol – Romantikus</option>
+    <option value="YF-Onq_-F4g">Magyar – Romantikus</option>
+    <option value="yJkzbC4PWy4">Angol – Ars Poetica</option>
+    <option value="Z78APd89pW8">Magyar – Életút</option>
+    <option value="K489XbDIAmo">Pop – Biztató (angol)</option>
+    <option value="hkc58uSEosc">Pop – Biztató (magyar)</option>
+  </select>
+
+  <iframe id="audioFrame"
+          src="https://www.youtube.com/embed/2RY5bwiSR00"
+          allow="autoplay; encrypted-media"
+          allowfullscreen>
+  </iframe>
+
+  <div style="display: flex; justify-content: space-between;">
+    <button onclick="playAudio()">Lejátszás</button>
+    <button onclick="stopAudio()">Megállít</button>
+  </div>
+</div>
 
 <body class="gold-theme no-intro">
 <style>
@@ -128,6 +157,41 @@
   function stopVideo() {
     document.getElementById("videoFrame").src = "";
   }
+.audio-panel {
+  display: none; /* alapból ne látszódjon */
+}
+
+@media (max-width: 640px) {
+  .video-panel { display: none !important; } /* videopanel elrejtve mobilon */
+  .audio-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #000;
+    color: #f1c40f;
+    padding: 10px;
+    border: 1px solid #f1c40f;
+    border-radius: 6px;
+    width: 90vw;              /* teljesen az "Én zeném" szélességhez igazítva */
+    margin: 0 auto;
+    z-index: 999;
+  }
+
+  .audio-panel select,
+  .audio-panel button {
+    padding: 6px;
+    font-size: 0.9rem;
+    background: #111;
+    color: white;
+    border: 1px solid #ffcc00;
+  }
+
+  .audio-panel iframe {
+    width: 100%;
+    height: 80px; /* kis magasság, csak hangsávnak */
+  }
+}
+  
 </script>
 <div class="bg-vinyl">
 </div>
