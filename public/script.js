@@ -1,6 +1,8 @@
 /* Samsung Internet detektálás – csak osztályt rakunk a <html>-re */
-(function () {
-  if (/SamsungBrowser/i.test(navigator.userAgent)) {
+(function(){
+  var _menu = document.querySelector('.topbar, nav, .menu');
+  if(!_menu) return;
+if (/SamsungBrowser/i.test(navigator.userAgent)) {
     document.documentElement.classList.add('ua-samsung');
   }
 })();
@@ -450,37 +452,6 @@ function setToggleUI(on){
   btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   btn.textContent = on ? '🔊 Hang KI' : '🔇 Hang BE';
 }
-
-window.onYouTubeIframeAPIReady = function(){
-  const host = document.getElementById('bg-audio');
-  if (!host) return;
-  const vid = host.dataset.video;
-  ytPlayer = new YT.Player('bg-audio-iframe', {
-    videoId: vid,
-    playerVars: {
-      autoplay: 1,
-      controls: 0,
-      disablekb: 1,
-      fs: 0,
-      rel: 0,
-      modestbranding: 1,
-      playsinline: 1,
-      loop: 1,
-      playlist: vid // loop működéséhez kell ugyanaz az ID
-    },
-    events: {
-      onReady: (e) => {
-        e.target.mute();      // szabályok miatt némítva indul
-        e.target.setVolume(100);
-        e.target.playVideo();
-        setToggleUI(false);
-      },
-      onStateChange: (e) => {
-        if (e.data === YT.PlayerState.ENDED) e.target.playVideo();
-      }
-    }
-  });
-};
 
 // ——— Hang be/ki gomb ———
 document.addEventListener('click', (ev) => {

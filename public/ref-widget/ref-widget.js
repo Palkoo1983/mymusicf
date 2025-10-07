@@ -71,12 +71,7 @@
     s.src = 'https://www.youtube.com/iframe_api';
     s.id = 'yt-iframe-api';
     document.head.appendChild(s);
-    window.onYouTubeIframeAPIReady = function(){
-      ytReady = true;
-      ytQueue.forEach(fn=>{ try{ fn(); }catch(_){}});
-      ytQueue = [];
-    };
-  }
+    }
 
   // Desktop panel
   const panel = el('div', { class:'rw-panel' });
