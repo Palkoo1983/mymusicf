@@ -1323,4 +1323,17 @@ body.gold-theme::after{ content: none !important; }
 
 /* Biztos, ami biztos – a spin keyframes legyen definiálva */
 @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-
+/* LOGÓ – desktopon ~15%-kal kisebb, a forgás megmarad */
+@media (min-width: 992px){
+  /* ha korábban a képre volt kötve az animáció, az maradhat;
+     csak a méretet írjuk felül, NEM nyúlunk a transformhoz */
+  .topbar .brand > img.spinning-vinyl,
+  .site-logo img{
+    /* Ha van --tabFinal/--tabSize*--tabScale, ahhoz képest 0.85x;
+       ha nincs, 100px lesz az alap → 85px-re megy le. */
+    width:  calc(var(--tabFinal, calc(var(--tabSize, 100px) * var(--tabScale, 1))) * 0.85) !important;
+    height: calc(var(--tabFinal, calc(var(--tabSize, 100px) * var(--tabScale, 1))) * 0.85) !important;
+    image-rendering: auto !important;
+    display: block !important;
+  }
+}
