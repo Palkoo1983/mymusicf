@@ -15,35 +15,44 @@
   <title>EnZenem – Egyedi, profi zenék rendezvényekre</title>
 
   <!-- KRITIKUS INLINE CSS – végleges méret + csak spin, semmi intro/transition -->
-  <style>
-    /* Alap: stabil topbar, hogy ne legyen CLS */
-    .topbar{ min-height:120px; }
-    .brand{ align-items:center; }
-    html{ scroll-behavior:auto; } /* hard resetnél ne animáljon vissza */
+ <style>
+  /* Alap: stabil topbar, hogy ne legyen CLS */
+  .topbar{ min-height:120px; }
+  .brand{ align-items:center; }
+  html{ scroll-behavior:auto; } /* hard resetnél ne animáljon vissza */
 
-    /* Magas specifikációval írjuk felül a külső CSS-t */
-    html body.gold-theme .topbar .brand > img.spinning-vinyl{
-      image-rendering:auto !important;
-      backface-visibility:hidden !important;
-      will-change:transform !important;
-      transition:none !important;
-      animation: spin 8s linear infinite !important;
-      /* Desktop végleges méret */
-      width:100px !important;
-      height:100px !important;
-      margin:0 !important;
-      display:block !important;
-    }
-    @media (max-width:768px){
-      html body.gold-theme .topbar .brand > img.spinning-vinyl{
-        width:92px !important;
-        height:92px !important;
-      }
-    }
+  /* A képet fixen 100%-ra feszítjük a wrapben; animáció NEM az img-n van */
+  html body.gold-theme .topbar .brand > img.spinning-vinyl{
+    image-rendering:auto !important;
+    backface-visibility:hidden !important;
+    will-change:transform !important;
+    transition:none !important;
+    width:100% !important;
+    height:100% !important;
+    margin:0 !important;
+    display:block !important;
+  }
 
-    /* Ha a style.css-ben nincs meg: biztosítjuk a spin keyframe-et */
-    @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
-  </style>
+  /* A tényleges forgást a WRAP kapja */
+  .spin-wrap{
+    display:inline-block;
+    width:100px;   /* desktop alap */
+    height:100px;  /* desktop alap */
+    animation: spin 8s linear infinite;
+  }
+
+  /* Mobil: +20% (100px → 120px) */
+  @media (max-width:640px){
+    .spin-wrap{
+      width:120px !important;
+      height:120px !important;
+    }
+  }
+
+  /* Biztonsági keyframe (ha style.css-ben nincs) */
+  @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+</style>
+
 
   <!-- A LOGÓ előtöltése, hogy ne villanjon kisebb méretben / késve -->
   <link rel="preload" as="image" href="/assets/enzenem_logo.svg" fetchpriority="high" />
