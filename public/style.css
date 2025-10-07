@@ -1256,4 +1256,33 @@ body.gold-theme::after{ content: none !important; }
     display: block !important;
   }
 }
+/* === LOGÓ ÉLESÍTÉS – tegnapi módszer: animáció a WRAPPEREN, a kép fix integer px === */
+@media (min-width: 992px){
+  /* A wrapper forog → az <img>-et nem skálázzuk/forgatjuk minden frame-ben */
+  .spin-wrap{
+    /* méret: pontosan akkora, mint a mostani menülemez – NEM nyúlunk a lemezhez */
+    width:  var(--tabFinal) !important;   /* nálad ez már be van állítva */
+    height: var(--tabFinal) !important;
+    display: inline-block;
+    animation: spin 8s linear infinite;
+    will-change: transform;
+    backface-visibility: hidden;
+    transform-origin: 50% 50%;
+  }
+
+  /* maga a kép csak kitölti a wrappert – nincs transform, nincs scale → nincs recésedés */
+  .spin-wrap > img.spinning-vinyl,
+  .spin-wrap > .site-logo img{
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    image-rendering: auto !important; /* ne crisp-edges, ne pixelated */
+  }
+}
+
+/* ha nincs meg valahol a spin keyframes, itt egy biztos definíció */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 
