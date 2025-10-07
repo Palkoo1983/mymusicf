@@ -1397,3 +1397,27 @@ body.gold-theme::after{ content: none !important; }
     display: block !important;
   }
 }
+/* ============================
+   ENZENEM – Mobil logó tuning
+   ============================ */
+
+/* Alap logó (desktop): változatlan */
+.logo img {
+  width: 160px;
+  height: auto;
+  transition: transform 0.6s ease;
+}
+
+/* Mobil nézet – nagyobb + forgó */
+@media (max-width: 640px) {
+  .logo img {
+    width: 190px;              /* ~+20% */
+    animation: spin 12s linear infinite;
+  }
+}
+
+/* Finom, folyamatos forgás */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
