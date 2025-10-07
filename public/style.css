@@ -1421,3 +1421,30 @@ body.gold-theme::after{ content: none !important; }
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+
+/* ENZENEM LOGO – Spinner + Responsive Size */
+.enzenem-logo-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 20px;
+}
+
+.enzenem-logo {
+  width: 160px;
+  height: 160px;
+  animation: spin 10s linear infinite;
+}
+
+/* Mobile boost */
+@media (max-width: 640px) {
+  .enzenem-logo {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
