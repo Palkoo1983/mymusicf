@@ -1285,4 +1285,42 @@ body.gold-theme::after{ content: none !important; }
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+/* === LOGÓ ÉLESÍTÉS – végső override: kép NEM forog, csak a wrapper; minden régi anim/méret felülírva === */
+@media (min-width: 992px){
+  /* 1) a képről leszedjük az animációt és bármilyen transformot */
+  .topbar .brand > img.spinning-vinyl,
+  .site-logo img {
+    animation: none !important;
+    transform: none !important;   /* a forgás a wrapre kerül */
+    image-rendering: auto !important;
+    backface-visibility: hidden !important;
+    will-change: auto !important;
+    display: block !important;
+    /* a méretet JS állítja, de ha mégis marad valamelyik korábbi fix px szabály,
+       ne lépje túl a wrapet: */
+    max-width: 100% !important;
+    max-height: 100% !important;
+  }
+
+  /* 2) maga a forgó WRAP (új elem) */
+  .topbar .brand .spin-wrap{
+    display: inline-block !important;
+    animation: spin 8s linear infinite !important;
+    transform-origin: 50% 50% !important;
+    backface-visibility: hidden !important;
+    will-change: transform !important;
+    /* a méretet JS-ből állítjuk egész px-re (a menülemez mérete alapján) */
+    overflow: hidden; /* vágás, ha fél pixel miatt bármi kilógna */
+  }
+
+  /* 3) a kép csak kitölti a wrappert, NEM skálázzuk külön */
+  .topbar .brand .spin-wrap > img{
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+  }
+}
+
+/* Biztos, ami biztos – a spin keyframes legyen definiálva */
+@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
 
