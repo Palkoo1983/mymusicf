@@ -2,6 +2,33 @@
 
 <html lang="hu">
 <head>
+<style>
+  /* LOGÓ: végleges méret már az első paintnél + csak SPIN */
+  @media (min-width:1025px){
+    .topbar .brand > img.spinning-vinyl{
+      width:100px !important;
+      height:100px !important;
+      animation: spin 8s linear infinite !important;
+      transition: none !important;
+    }
+  }
+  @media (max-width:768px){
+    .topbar .brand > img.spinning-vinyl{
+      width:92px !important;
+      height:92px !important;
+      animation: spin 8s linear infinite !important;
+      transition: none !important;
+    }
+  }
+  /* CLS-stop: topbar fix magasság a külső CSS érkezéséig */
+  .topbar{ min-height:120px; }
+  .brand{ align-items:center; }
+  /* Hard resetnél ne legyen "lassú visszasimítás" */
+  html{ scroll-behavior: auto; }
+  /* Ha nálad külön van a spin keyframes, ez redundáns, de nem árt: */
+  @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+</style>
+
   <!-- apró, beágyazott ikonok (nem lesz 404) -->
   <link rel="icon" type="image/svg+xml"
         href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="%23d4af37"/><circle cx="32" cy="32" r="18" fill="%230b0b0b"/><circle cx="32" cy="32" r="12" fill="%232a2a2a"/></svg>'>
