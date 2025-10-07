@@ -47,6 +47,17 @@
 
   <!-- A LOGÓ előtöltése, hogy ne villanjon kisebb méretben / késve -->
   <link rel="preload" as="image" href="/assets/enzenem_logo.svg" fetchpriority="high" />
+<style>
+  /* ... egyéb stílusok ... */
+
+  @media (max-width: 640px) {
+    .spinning-vinyl,
+    .enzenem-logo {
+      width: 120px !important;
+      height: 120px !important;
+    }
+  }
+</style>
 
   <!-- FONTOK -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
