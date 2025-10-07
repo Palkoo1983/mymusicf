@@ -509,10 +509,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // MENÜ lemez aktuális szélességének mérése → integer px (sweet spot)
   const tab = document.querySelector('.vinyl-tabs .tab');
+  // fallback: ha nincs tab, használjuk a jelenlegi logo szélességét
   const baseW = tab ? tab.getBoundingClientRect().width : logoImg.getBoundingClientRect().width;
-  const isMobile = window.matchMedia('(max-width: 640px)').matches;
-  const factor = isMobile ? 1.2 : 1;
-  const size = Math.round(baseW * factor);   // mobilon +20%
+  const size = Math.round(baseW);           // egész px → nem recés
   wrap.style.width  = size + 'px';
   wrap.style.height = size + 'px';
 
