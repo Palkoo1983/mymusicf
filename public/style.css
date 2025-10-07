@@ -1337,3 +1337,23 @@ body.gold-theme::after{ content: none !important; }
     display: block !important;
   }
 }
+/* === LOGÓ MÉRET – desktopon kb. -15% (a wrapper méretét állítjuk) === */
+@media (min-width: 992px){
+  /* ha a JS becsomagolta (spin-wrap), EZ a mérvadó */
+  .topbar .brand .spin-wrap{
+    width: 102px !important;   /* állítsd 98/100/104-re, ha finomítani akarod */
+    height: 102px !important;
+  }
+  .topbar .brand .spin-wrap > img{
+    width: 100% !important;
+    height: 100% !important;
+    image-rendering: auto !important;
+  }
+
+  /* ha valamiért nincs wrapper, essünk vissza az <img>-re */
+  .topbar .brand > img.spinning-vinyl{
+    width: 102px !important;
+    height: 102px !important;
+    image-rendering: auto !important;
+  }
+}
