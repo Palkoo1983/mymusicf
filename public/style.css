@@ -1000,3 +1000,5 @@ body.gold-theme::after{ content: none !important; }
   box-shadow: 0 0 0 4px rgba(212,175,55,.35), 0 16px 28px rgba(0,0,0,.22);
   transform: translateY(-3px);
 }
+#order #enz-quality.too-short { color: #e74c3c; } /* piros, ha < 120 */
+#order #enz-quality.ok        { color: #2ecc71; } /* zöld, ha >= 120 */
