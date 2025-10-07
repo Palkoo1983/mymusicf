@@ -1146,3 +1146,81 @@ body.gold-theme::after{ content: none !important; }
     display: block !important;
   }
 }
+/* ===== VINYL MENU — desktop finomhang: -30% méret, BALRA igazítás, cím nem lóg ki ===== */
+@media (min-width: 992px){
+
+  /* a korábbi desktop tab-mérethez képest 70% */
+  :root{ --tabScale: .7; }  /* 100% → 70% (tehát -30%) */
+
+  /* MENÜSOR: balra igazítva, szép távolságokkal */
+  .vinyl-tabs{
+    width: 100%;
+    justify-content: flex-start !important;   /* BALRA */
+    align-items: center !important;
+    gap: 20px;
+  }
+
+  /* LEMEZ gomb: méret a skálából */
+  .vinyl-tabs .tab{
+    width:  calc(var(--tabSize) * var(--tabScale)) !important;
+    height: calc(var(--tabSize) * var(--tabScale)) !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;                     /* ne középre húzza magát */
+    text-align: center !important;
+  }
+
+  /* FELIRAT: törhet, középen marad, és okosan skáláz */
+  .vinyl-tabs .tab span{
+    display: block !important;
+    max-width: calc(var(--tabSize) * var(--tabScale) - 14px) !important;
+    /* dinamikus méret: a korábbihoz képest 70%, de nem megy 14px alá és 18px fölé */
+    font-size: clamp(14px, calc(var(--tabFont) * var(--tabScale) + 1px), 18px) !important;
+    font-weight: 700 !important;
+    line-height: 1.15 !important;
+    letter-spacing: .2px;
+    text-align: center !important;
+
+    /* << kulcs a kilógás ellen: engedjük a törést >> */
+    white-space: normal !important;           /* TÖRHET */
+    text-wrap: balance;                       /* szebb törés, ha támogatott */
+    word-break: break-word;                   /* hosszú szavaknál is befér */
+    hyphens: auto;                            /* ha van HU nyelvi támogatás */
+
+    /* biztos, ami biztos – minden eltolást kinullázunk */
+    position: static !important;
+    left: auto !important; right: auto !important;
+    transform: none !important;
+    margin: 0 auto !important;
+    padding: 0 6px;
+  }
+
+  /* EXTRA finomhang a leghosszabb címkére (Bemutatkozás) */
+  .vinyl-tabs .tab[data-target="intro"] span{
+    font-size: clamp(13.5px, calc(var(--tabFont) * var(--tabScale)), 17px) !important;
+  }
+
+  /* LOGÓ: a lemez-eredő méret 120%-a, de a 70%-os skálával együtt */
+  .topbar .brand > img.spinning-vinyl,
+  .site-logo img{
+    width:  calc(var(--tabSize) * 1.20 * var(--tabScale)) !important;
+    height: calc(var(--tabSize) * 1.20 * var(--tabScale)) !important;
+    max-width: none !important;
+    max-height: none !important;
+    display: block !important;
+    margin: 0 !important;  /* balra igazított sorban ne középre húzza */
+  }
+
+  /* CÍMEK (Árak / Formátumok stb.): maradjanak félkövérek és jól olvashatók */
+  .menu-label, .menu-caption, .format-title, .pricing-title{
+    font-weight: 700 !important;
+    font-size: clamp(18px, 1.2rem, 22px) !important;
+    line-height: 1.2;
+    text-align: left !important;  /* bal oldali menü mellé esztétikusabb */
+  }
+  .menu-label .line, .menu-caption .line,
+  .format-title .line, .pricing-title .line{
+    display: block !important;
+  }
+}
