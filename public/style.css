@@ -1224,3 +1224,19 @@ body.gold-theme::after{ content: none !important; }
     display: block !important;
   }
 }
+/* ===== LOGÓ = menülemez méret (desktop), nem nagyobb ===== */
+@media (min-width: 992px){
+  .topbar .brand > img.spinning-vinyl,
+  .site-logo img{
+    /* ugyanaz a méret, mint a taboké: var(--tabSize) × var(--tabScale) */
+    width:  calc(var(--tabSize) * var(--tabScale)) !important;
+    height: calc(var(--tabSize) * var(--tabScale)) !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;              /* balra igazított sorban maradjon */
+    display: block !important;
+
+    /* élsimítás / kisebb pixelesedés */
+    image-rendering: auto;
+  }
+}
