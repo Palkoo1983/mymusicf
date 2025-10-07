@@ -72,51 +72,39 @@
 <style>
 .video-panel {
   position: absolute;
-  top: 1.4rem;
-  right: 1.6rem;
-  background-color: black;
-  border: 2px solid #ffcc00;
+  top: 20px; /* 1 cm-rel feljebb a korábbi 40px helyett */
+  right: 20px;
+  width: 600px; /* dupla szélesség az eddigi 300px helyett */
+  height: auto; /* a meglévő magasság marad, iframe méretéből jön */
+  background: #000;
+  color: #f1c40f;
   padding: 10px;
-  width: 600px;            /* kétszeres szélesség */
-  height: 230px;           /* magasság változatlan */
-  box-sizing: border-box;
+  border: 1px solid #f1c40f;
+  border-radius: 6px;
+  z-index: 999;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  z-index: 20;
+  align-items: stretch;
+  gap: 8px;
 }
 
-.video-panel select,
-.video-panel button {
-  padding: 6px;
-  font-size: 0.9rem;
-  color: white;
-  background: #111;
-  border: 1px solid #ffcc00;
-}
-
-.video-panel iframe {
-  width: 100%;
-  height: 140px;            /* arányos videóméret */
-  border: none;
-}
 </style>
-
-<select id="videoSelect">
-  <option value="Crf1xVh4BYA">Minta – Esküvő (Shorts)</option>
-  <option value="f_geI2Pgvuk">Édesapám emlékére</option>
-  <option value="2RY5bwiSR00">Születésnapra</option>
-  <option value="n-a7aFVrUdw">Édesanyámnak</option>
-  <option value="CsnNiX_LgQc">Pop – Szakítás (dinamikus)</option>
-  <option value="gXB9HPCJtfc">Pop – Elektronikus (angol)</option>
-  <option value="uE3ohlhlyZU">Testvérnek</option>
-  <option value="TGLKIQEjiQM">Angol – Romantikus</option>
-  <option value="YF-Onq_-F4g">Magyar – Romantikus</option>
-  <option value="yJkzbC4PWy4">Angol – Ars Poetica</option>
-  <option value="Z78APd89pW8">Magyar – Életút</option>
-  <option value="K489XbDIAmo">Pop – Biztató (angol)</option>
-  <option value="hkc58uSEosc">Pop – Biztató (magyar)</option>
-</select>
+<div class="video-panel">
+  <select id="videoSelect">
+    <option value="Crf1xVh4BYA">Minta – Esküvő (Shorts)</option>
+    <option value="f_geI2Pgvuk">Édesapám emlékére</option>
+    <option value="2RY5bwiSR00">Születésnapra</option>
+    <option value="n-a7aFVrUdw">Édesanyámnak</option>
+    <option value="CsnNiX_LgQc">Pop – Szakítás (dinamikus)</option>
+    <option value="gXB9HPCJtfc">Pop – Elektronikus (angol)</option>
+    <option value="uE3ohlhlyZU">Testvérnek</option>
+    <option value="TGLKIQEjiQM">Angol – Romantikus</option>
+    <option value="YF-Onq_-F4g">Magyar – Romantikus</option>
+    <option value="yJkzbC4PWy4">Angol – Ars Poetica</option>
+    <option value="Z78APd89pW8">Magyar – Életút</option>
+    <option value="K489XbDIAmo">Pop – Biztató (angol)</option>
+    <option value="hkc58uSEosc">Pop – Biztató (magyar)</option>
+  </select>
 
   <iframe id="videoFrame"
           src="https://www.youtube.com/embed/2RY5bwiSR00"
