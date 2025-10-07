@@ -70,23 +70,23 @@
 
 <body class="gold-theme no-intro">
 <style>
-  .video-panel {
-    position: absolute;
-    top: 40px; /* kb. 2 cm-rel lejjebb, hogy a menüsáv alatt legyen */
-    right: 20px; /* 2 cm balra, ne lógjon ki */
-    width: 300px;
-    height: auto;
-    background: #000;
-    color: #f1c40f;
-    padding: 10px;
-    border: 1px solid #f1c40f;
-    border-radius: 6px;
-    z-index: 999;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
+.video-panel {
+  position: absolute;
+  top: 20px; /* 1 cm-rel feljebb a korábbi 40px helyett */
+  right: 20px;
+  width: 600px; /* dupla szélesség az eddigi 300px helyett */
+  height: auto; /* a meglévő magasság marad, iframe méretéből jön */
+  background: #000;
+  color: #f1c40f;
+  padding: 10px;
+  border: 1px solid #f1c40f;
+  border-radius: 6px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
 
   .video-panel select,
   .video-panel button {
