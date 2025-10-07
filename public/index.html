@@ -3,65 +3,58 @@
 <html lang="hu" class="no-intro">
 
 <head>
-  <!-- Favikonok (inlined) – nincs 404 -->
+  <!-- Ikonok (nincs 404) -->
   <link rel="icon" type="image/svg+xml"
         href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="%23d4af37"/><circle cx="32" cy="32" r="18" fill="%230b0b0b"/><circle cx="32" cy="32" r="12" fill="%232a2a2a"/></svg>'>
   <link rel="shortcut icon" type="image/x-icon"
         href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="/>
 
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="theme-color" content="#F3CD76" />
   <title>EnZenem – Egyedi, profi zenék rendezvényekre</title>
 
-  <!-- 0) Azonnal jelöljük, hogy NINCS intro animáció -->
-  <script>document.documentElement.classList.add('no-intro');</script>
-
-  <!-- 1) Első paint: háttér + topbar magasság, hogy ne legyen villanás/ugrás -->
+  <!-- KRITIKUS INLINE CSS – végleges méret + csak spin, semmi intro/transition -->
   <style>
-    html{scroll-behavior:auto}              /* hard resetnél ne „gördüljön vissza” */
-    body{background-color:#F3CD76}          /* első festéskor már végleges háttér */
-    .topbar{min-height:120px}               /* stabil header-magasság az első pillanattól */
-    .brand{align-items:center}
-  </style>
+    /* Alap: stabil topbar, hogy ne legyen CLS */
+    .topbar{ min-height:120px; }
+    .brand{ align-items:center; }
+    html{ scroll-behavior:auto; } /* hard resetnél ne animáljon vissza */
 
-  <!-- 2) A teljes stíluslap betöltése (EGYSZER) -->
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- 3) KÉSŐI OVERRIDE: intro OFF, csak folyamatos SPIN + végleges logóméret -->
-  <style>
-    /* Ha a style.css-ben van két animáció (intro + spin, !important-tal),
-       ezt a rövid keverhetetlen shorthand felülírja. */
-    @media (min-width:1025px){
-      .no-intro .topbar .brand > img.spinning-vinyl{
-        width:100px !important;
-        height:100px !important;
-        animation: spin 8s linear infinite !important; /* csak SPIN */
-        transition:none !important;
-        margin:0 !important;
-      }
+    /* Magas specifikációval írjuk felül a külső CSS-t */
+    html body.gold-theme .topbar .brand > img.spinning-vinyl{
+      image-rendering:auto !important;
+      backface-visibility:hidden !important;
+      will-change:transform !important;
+      transition:none !important;
+      animation: spin 8s linear infinite !important;
+      /* Desktop végleges méret */
+      width:100px !important;
+      height:100px !important;
+      margin:0 !important;
+      display:block !important;
     }
     @media (max-width:768px){
-      .no-intro .topbar .brand > img.spinning-vinyl{
+      html body.gold-theme .topbar .brand > img.spinning-vinyl{
         width:92px !important;
         height:92px !important;
-        animation: spin 8s linear infinite !important; /* csak SPIN */
-        transition:none !important;
-        margin:0 !important;
       }
     }
 
-    /* Ha a style.css CSS-változóval indítja az intrót, ezt is lenullázzuk: */
-    .no-intro:root{
-      --vinyl-intro: 0s !important;
-      --vinyl-intro-delay: 0s !important;
-    }
+    /* Ha a style.css-ben nincs meg: biztosítjuk a spin keyframe-et */
+    @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
   </style>
 
-  <!-- Google Fonts (preconnect) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- A LOGÓ előtöltése, hogy ne villanjon kisebb méretben / késve -->
+  <link rel="preload" as="image" href="/assets/enzenem_logo.svg" fetchpriority="high" />
+
+  <!-- FONTOK -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- CSS – RENDES, RENDER-BLOCKING LINK (nincs preload → nincs FOUC/villanás) -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 
 <body class="gold-theme no-intro">
@@ -73,7 +66,8 @@
 <img src="/assets/enzenem_logo.svg"
      alt="EnZenem – arany bakelit"
      class="spinning-vinyl"
-     width="100" height="100"> <!-- 240 → 100 -->
+     width="100" height="100"
+     decoding="async" fetchpriority="high">
     <div>
       <h1>EnZenem</h1>
       <h1>Örök ajándék és emlék!</h1>
