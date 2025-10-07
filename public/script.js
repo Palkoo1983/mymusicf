@@ -9,7 +9,7 @@
    EnZenem – main script (FULL REPLACEMENT)
    - Tab navigation (vinyl-tabs) + scroll to top
    - Package card selection
-   - HOWTO -> ORDER focus + example chips (scroll to top)
+   - HOWTO -> ORDER (delegált) + example chips → placeholder
    - Brief helper (counter + quality, NO DUPLICATES) + examples on ORDER
    - Order form (ALWAYS show license modal) + Contact form
    - Thanks overlay
@@ -37,7 +37,7 @@ function initTabs() {
   function activate(targetId) {
     if (!targetId) return;
 
-    // ha épp egy másik elem (pl. YouTube gomb) van fókuszban, engedjük el
+    // ha épp más elem van fókuszban, engedjük el
     if (document.activeElement && typeof document.activeElement.blur === 'function') {
       document.activeElement.blur();
     }
@@ -46,9 +46,7 @@ function initTabs() {
       const on = (p.id === targetId);
       p.hidden = !on;
       p.classList.toggle('active', on);
-      // a rejtett paneleket tegyük „inert”-té, így nem kaphatnak fókuszt
-      if (on) p.removeAttribute('inert');
-      else    p.setAttribute('inert', '');
+      if (on) p.removeAttribute('inert'); else p.setAttribute('inert', '');
     });
 
     buttons.forEach(b => {
@@ -59,7 +57,7 @@ function initTabs() {
 
     if (targetId === 'order') setTimeout(initBriefHelper, 50);
 
-    // fókuszt rakjunk az új panel címsorára a hozzáférhetőség miatt
+    // fókusz az új panel címsorára
     const active = panels.find(p => p.id === targetId);
     const h2 = active && active.querySelector('h2');
     if (h2) {
@@ -67,7 +65,7 @@ function initTabs() {
       h2.focus();
     }
 
-    // mindig a lap tetejére gördítünk
+    // tetejére görgetés
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -107,57 +105,57 @@ function initPackages() {
   });
 }
 
-/* ---------- HOWTO -> ORDER, example chips ---------- */
+/* ---------- HOWTO -> ORDER, example chips (delegált) ---------- */
 function initHowTo() {
-  const openBtn     = qs('#howto-open-order');
-  const orderTabBtn = qs('.tab[data-target="order"]');
+  const howto = qs('#howto');
+  if (!howto) return;
 
-  function focusBrief() {
-    const el = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-    if (el) el.focus({ preventScroll: true }); // ne görgessen fókuszkor
-  }
-
-  // "Hogyan működik" gomb -> Megrendelés tetejére
-  openBtn?.addEventListener('click', () => {
-    orderTabBtn?.click();
-
-    // 1) azonnal fel
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    // 2) pici késleltetéssel még egyszer
+  const orderTabSelector = '.vinyl-tabs .tab[data-target="order"]';
+  function gotoOrder() {
+    const btn = qs(orderTabSelector);
+    if (!btn) return;
+    btn.click(); // a te tab-logikád aktiválja az ORDER panelt
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      const el = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-      if (el && el.focus) {
-        try { el.focus({ preventScroll: true }); } catch(_) {}
+      const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+      if (desc) {
+        try { desc.focus({ preventScroll: true }); } catch(_) {}
       }
-    }, 120);
+    }, 60);
+  }
+
+  // „Ugorj a Megrendeléshez” gomb (ha van külön ilyen)
+  const openBtn = qs('#howto-open-order');
+  openBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    gotoOrder();
   });
 
-  // Példa-chipek a HOWTO panelen -> CSAK placeholder (nem érték!)
-  qsa('#howto .chip[data-example]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const text = btn.getAttribute('data-example') || '';
+  // Delegált kattintás-kezelés BÁRMELY minta-chipre a HOWTO panelen
+  howto.addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-example], .example-chip, .chip.example, .brief-example, .chip');
+    if (!chip) return;
 
-      orderTabBtn?.click();
+    e.preventDefault();
+    e.stopPropagation();
 
-      // azonnal fel
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    const text =
+      chip.getAttribute('data-example') ||
+      chip.getAttribute('data-text') ||
+      (chip.textContent || '').trim();
 
-      setTimeout(() => {
-        const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-        if (desc) {
-          // csak halvány útmutató – NEM írunk értéket!
-          desc.placeholder = text;
-          // jelezzen a számláló (ha kell), de a value-t nem bántjuk
-          desc.dispatchEvent(new Event('input', { bubbles: true }));
-          try { desc.focus({ preventScroll: true }); } catch(_) {}
-        }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 120);
-    });
+    // először átváltunk ORDER-re
+    gotoOrder();
+
+    // majd pici késleltetéssel beállítjuk a placeholdert
+    setTimeout(() => {
+      const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+      if (desc) {
+        desc.placeholder = text;              // CSAK placeholder!
+        desc.dispatchEvent(new Event('input', { bubbles: true }));
+        try { desc.focus({ preventScroll: true }); } catch(_) {}
+      }
+    }, 140);
   });
 }
 
@@ -198,7 +196,7 @@ function initBriefHelper() {
       'Céges évzáróra kérek dalt. Tempó: lendületes, modern pop/elektronikus. Kulcsszavak: csapatmunka, innováció, 2025 célok, humor. Emlék: a tavaszi hackathon győzelmünk.',
       'Gyerekdal 6 éves kislánynak, Lilinek. Vidám, egyszerű dallam, könnyen énekelhető refrén. Kulcsszavak: unikornis, szivárvány, ovi-barátok. Emlék: közös biciklizés a parkban.',
       'Nyugdíjba vonuló kollégának. Hangulat: nosztalgikus, felemelő, akusztikus gitár+zongora. Kulcsszavak: segítőkészség, humor, 25 év, csapat. Emlék: a legendás hétfő reggeli kávék.',
-      'Jobbulást kívánó dal. Lassan építkező, reményt adó hangulat. Kulcsszavak: kitartás, gyógyulás, melletted állunk. Emlék: nyári tábor­tűz melletti beszélgetések.',
+      'Jobbulást kívánó dal. Lassan építkező, reményt adó hangulat. Kulcsszavak: kitartás, gyógyulás, melletted állunk. Emlék: nyári tábortűz melletti beszélgetések.',
       'Lánykéréshez készülő dal. Romantikus pop ballada, meleg hangzás. Kulcsszavak: közös jövő, „igen” pillanat, összetartozás. Emlék: első csók a Margitszigeten.',
       'Ballagásra/diplomához kérünk dalt. Tempó: közepes, motiváló. Kulcsszavak: álom, kitartás, új kezdet. Emlék: éjszakai tanulások és a záróvizsga napja.'
     ];
@@ -225,7 +223,6 @@ function initBriefHelper() {
         e.stopPropagation();
         // csak placeholder – a value-t sosem írjuk!
         desc.placeholder = t;
-        // fókusz görgetés nélkül
         try { desc.focus({ preventScroll: true }); } catch(_) {}
       });
       exWrap.appendChild(b);
@@ -234,7 +231,7 @@ function initBriefHelper() {
     exTitle.insertAdjacentElement('afterend', exWrap);
   }
 
-  // tipp doboz
+  // tipp doboz (rejtett, később aktiválható)
   const tip = document.createElement('div');
   tip.style.display = 'none';
   tip.style.marginTop = '6px';
@@ -387,7 +384,6 @@ function initLicenseModal() {
   if (!modal || !ok || !cancel) return;
 
   // A tényleges megnyitást az Order submit flow intézi.
-  // Itt csak fallback bezárás marad:
   ok.addEventListener('click', () => { /* submit flow kezeli */ });
   cancel.addEventListener('click', () => {
     modal.style.display = 'none';
@@ -399,8 +395,8 @@ function initLicenseModal() {
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
   initPackages();
-  initHowTo();
-  initBriefHelper();   // ha már az ORDER aktív lenne induláskor
+  initHowTo();       // fontos a delegált HOWTO→ORDER miatt
+  initBriefHelper(); // ha az ORDER aktív lenne induláskor
   initOrderForm();
   initContactForm();
   initConsent();
@@ -415,8 +411,8 @@ document.addEventListener('click', (e) => {
   const target = a.getAttribute('data-jump');
   const btn = document.querySelector(`.vinyl-tabs .tab[data-target="${target}"]`);
   if (btn) {
-    btn.click();      // aktiválja a panelt
-    btn.focus();      // fókusz a hozzáférhetőségért
+    btn.click();
+    btn.focus();
   }
 });
 
@@ -440,8 +436,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     obs.observe(statusEl, { childList: true, subtree: true, characterData: true });
   }
-
-  // 2) Submitre itt nem nyúlunk bele – a saját küldési logika él
 
   // 3) Bezárás gomb – overlay eltűnik
   if (closeBtn) {
@@ -476,31 +470,4 @@ document.addEventListener('DOMContentLoaded', () => {
       origFocus.call(this);
     }
   };
-})();
-
-/* === Example chips → placeholder only (globális, ha máshol is van chip) === */
-(function(){
-  var brief = document.querySelector('textarea#brief, textarea[name="brief"], textarea.brief') || document.querySelector('textarea');
-  if(!brief) return;
-  function setPlaceholder(text){
-    if(!text) return;
-    brief.placeholder = text; // csak halvány útmutató
-  }
-  var chips = Array.from(document.querySelectorAll('[data-example], .example-chip, .chip.example, .brief-example'));
-  if(!chips.length){
-    // Fallback: look for buttons/links in HOWTO or ORDER with data-text
-    chips = Array.from(document.querySelectorAll('[data-text], .example'));
-  }
-  chips.forEach(function(el){
-    el.addEventListener('click', function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      var t = el.getAttribute('data-example') || el.getAttribute('data-text') || el.textContent.trim();
-      setPlaceholder(t);
-      // csak fókusz, értéket nem írunk
-      if (brief) {
-        try { brief.focus({ preventScroll: true }); } catch(_) {}
-      }
-    }, true);
-  });
 })();
