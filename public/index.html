@@ -69,6 +69,70 @@
 </head>
 
 <body class="gold-theme no-intro">
+<!-- Videopanel a menüsáv jobb oldalán -->
+
+<style>
+  /* A menüsáv jobb felső részébe illeszkedő videopanel */
+  .video-panel {
+    position: absolute; /* vagy fixed, ha mindig felül akarod látni */
+    top: 0;
+    right: 0;
+    width: 14cm; /* vagy ennek megfelelő pixel érték pl. 300-350px */
+    height: 6cm;  /* kb. 60px a dizájnhoz igazítva */
+    background: #000;
+    color: #f1c40f;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 1000; /* hogy a menüsáv felett legyen */
+  }
+
+  .video-panel select, .video-panel button {
+    margin: 0 5px;
+  }
+
+  /* Hogy a fő tartalom ne csússzon a panel alá */
+  body {
+    padding-top: 80px; /* vagy amennyi hely kell a videopanel miatt */
+  }
+</style>
+
+<div class="video-panel">
+  <select id="videoSelect">
+    <option value="ref1.mp4">Születésnapra</option>
+    <option value="ref2.mp4">Esküvőre</option>
+    <option value="ref3.mp4">Gyász</option>
+  </select>
+  <button onclick="playVideo()">Lejátszás</button>
+  <button onclick="pauseVideo()">Megállít</button>
+</div>
+
+<script>
+  function playVideo() {
+    const videoId = document.getElementById("videoSelect").value;
+    const videoUrl = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&mute=0';
+    const videoFrame = document.createElement('iframe');
+    videoFrame.src = videoUrl;
+    videoFrame.width = '100%';
+    videoFrame.height = '100%';
+    videoFrame.allow = 'autoplay';
+    videoFrame.allowFullscreen = true;
+
+    // Töröljük az esetleges előző videót, ha volt
+    const existingIframe = document.querySelector('.video-panel iframe');
+    if (existingIframe) {
+      existingIframe.remove();
+    }
+
+    // Beillesztjük a videópanelbe
+    document.querySelector('.video-panel').appendChild(videoFrame);
+  }
+
+  function pauseVideo() {
+    alert("A megállítás funkció ebben a változatban nem támogatott, mivel a videó beágyazva fut.");
+  }
+</script>
+
 <div class="bg-vinyl">
 </div>
 <header class="topbar">
