@@ -1422,25 +1422,20 @@ body.gold-theme::after{ content: none !important; }
   to   { transform: rotate(360deg); }
 }
 
-/* ENZENEM LOGO – Spinner + Responsive Size */
-.enzenem-logo-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-top: 20px;
-}
-
+/* === EnZenem forgó logó animáció + mobilméret === */
+.topbar img,
+.logo img,
 .enzenem-logo {
-  width: 160px;
-  height: 160px;
   animation: spin 10s linear infinite;
+  height: 48px;
+  transition: none !important;
 }
 
-/* Mobile boost */
 @media (max-width: 640px) {
+  .topbar img,
+  .logo img,
   .enzenem-logo {
-    width: 200px;
-    height: 200px;
+    height: 64px;
   }
 }
 
