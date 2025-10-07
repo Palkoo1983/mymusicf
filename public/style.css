@@ -1240,3 +1240,19 @@ body.gold-theme::after{ content: none !important; }
     image-rendering: auto;
   }
 }
+@media (min-width: 992px){
+  /* integer méret: így a böngésző nem “fél pixelt” skáláz */
+  :root{ --tabFinal: 120px; } /* ha szeretnéd: próbáld 116px vagy 128px értéken is */
+
+  .topbar .brand > img.spinning-vinyl,
+  .site-logo img{
+    width:  var(--tabFinal) !important;
+    height: var(--tabFinal) !important;
+    /* animáció marad (nem írjuk felül a transform-ot) */
+    image-rendering: auto;
+    backface-visibility: hidden;
+    will-change: transform;
+    transform-origin: 50% 50%;
+    display: block !important;
+  }
+}
