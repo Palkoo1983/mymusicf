@@ -2,7 +2,7 @@
 
 <html lang="hu">
 <head>
-  <!-- apró, beágyazott ikonok (nem lesz 404) -->
+  <!-- Favikonok – nincs több 404 -->
   <link rel="icon" type="image/svg+xml"
         href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="%23d4af37"/><circle cx="32" cy="32" r="18" fill="%230b0b0b"/><circle cx="32" cy="32" r="12" fill="%232a2a2a"/></svg>'>
   <link rel="shortcut icon" type="image/x-icon"
@@ -13,62 +13,73 @@
   <meta name="theme-color" content="#F3CD76">
   <title>EnZenem – Egyedi, profi zenék rendezvényekre</title>
 
-  <!-- KRITIKUS INLINE CSS: csak SPIN, nincs intro; fix méret; CLS védelem -->
+  <!-- FLASH KILLER: a legelső paint is a végleges állapot (nincs villanás) -->
   <style>
-    @media (min-width:1025px){
-      .topbar .brand > img.spinning-vinyl{
-        width:100px !important;
-        height:100px !important;
-        animation: spin 8s linear infinite !important; /* csak spin */
-        transition: none !important;
-      }
+    /* Alapszínek (összhangban a style.css-sel) */
+    :root{
+      --ink:#eef4fb; --muted:#bcd0e6;
+    }
+
+    html,body{height:100%}
+    html{scroll-behavior:auto} /* hard resetnél ne animáljon vissza */
+
+    /* GOLD háttér rögtön az első paintre – ne legyen „kék→arany” villanás */
+    body{
+      margin:0;
+      font-family:Poppins,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      color:var(--ink);
+      background:
+        /* enyhe csillanás */
+        linear-gradient(125deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.10) 18%, rgba(255,255,255,0) 40%),
+        /* fő világos→közepes arany */
+        radial-gradient(1100px 700px at 70% -10%, #FFF1B8 0%, #FFE08A 35%, #F9C85E 60%, #E8B247 85%, #D79A2E 100%),
+        /* kiegészítő mélyebb arany alulról */
+        radial-gradient(1200px 800px at -10% 110%, #8F6A1A 0%, #A97B1E 35%, #C28D25 65%, rgba(0,0,0,0) 100%);
+      background-blend-mode: screen, normal, normal;
+      overflow-x:hidden;
+    }
+
+    /* Finom háttértextúra azonnal */
+    .bg-vinyl{
+      position:fixed; inset:0; pointer-events:none;
+      background-image:
+        radial-gradient(circle at center, rgba(255,230,160,.12) 0 1px, transparent 1px),
+        radial-gradient(circle at center, rgba(255,230,160,.06) 0 2px, transparent 2px);
+      opacity:.18;
+    }
+
+    /* Topbar azonnal végleges méretben – CLS off */
+    .topbar{
+      position:sticky; top:0; z-index:20;
+      min-height:120px;
+      background:rgba(26,18,6,.55);
+      backdrop-filter:blur(10px);
+      border-bottom:1px solid rgba(255,210,100,.18);
+    }
+    .brand{ display:flex; align-items:center; gap:14px; padding:18px 22px 10px 22px; }
+    .brand h1{ margin:0; font-size:1.35rem; letter-spacing:.3px }
+    .brand p{ margin:2px 0 0 0; color:var(--muted); font-size:.9rem }
+
+    /* LOGÓ: nincs intro, csak folyamatos SPIN – első painttől */
+    .topbar .brand > img.spinning-vinyl{
+      width:100px; height:100px; display:block; margin:0;
+      animation: spin 8s linear infinite;
+      transform-origin:50% 50%; will-change:transform; backface-visibility:hidden;
+      image-rendering:auto;
     }
     @media (max-width:768px){
-      .topbar .brand > img.spinning-vinyl{
-        width:92px !important;
-        height:92px !important;
-        animation: spin 8s linear infinite !important;
-        transition: none !important;
-      }
+      .topbar .brand > img.spinning-vinyl{ width:92px; height:92px }
     }
-    .topbar{ min-height:120px; }
-    .brand{ align-items:center; }
-    html{ scroll-behavior:auto; } /* hard resetnél ne legyen visszagörgetés */
+    @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+    /* Tartalom keret (ne ugráljon a layout) */
+    main{ max-width:1100px; margin:18px auto; padding:6px 20px 60px }
+    .panel{ animation:none } /* biztos ami biztos: ne fusson intro anim */
   </style>
 
-  <!-- CSS: PRELOAD + noscript fallback (NE tedd be még egyszer alább!) -->
+  <!-- style.css: PRELOAD + noscript fallback (NE legyen második példány) -->
   <link rel="preload" href="style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link rel="stylesheet" href="style.css"></noscript>
-<style id="late-overrides">
-  /* Ne legyen lassú visszagörgetés hard resetnél */
-  html{ scroll-behavior:auto }
-
-  /* Kerüljük az üres (fehér) villanást még a külső CSS előtt is */
-  body{ background-color:#F3CD76 }
-
-  /* CLS ellen: a topbar kapjon fix kezdeti magasságot */
-  .topbar{ min-height:120px }
-
-  /* A .no-intro jelzi: NINCS intro animáció, CSAK folyamatos forgás, fix, éles méret */
-  @media (min-width:1025px){
-    .no-intro .topbar .brand > img.spinning-vinyl{
-      width:100px !important;
-      height:100px !important;
-      animation: spin 8s linear infinite !important; /* intro OFF, spin ON */
-      margin:0 !important;
-      transition:none !important;
-    }
-  }
-  @media (max-width:768px){
-    .no-intro .topbar .brand > img.spinning-vinyl{
-      width:92px !important;
-      height:92px !important;
-      animation: spin 8s linear infinite !important;
-      margin:0 !important;
-      transition:none !important;
-    }
-  }
-</style>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
