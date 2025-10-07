@@ -1357,3 +1357,42 @@ body.gold-theme::after{ content: none !important; }
     image-rendering: auto !important;
   }
 }
+/* === LOGÓ ÉLESÍTÉS (desktop) — fix integer méret + csak a wrapper forog === */
+@media (min-width: 992px){
+  /* 1) méret: próbáld 96px ↔ 104px között — integer px legyen */
+  :root{ --logoPx: 96px; } /* ha még recés, próbáld 100px vagy 104px értékre */
+
+  /* a FORGÁS a WRAPPEREN fusson (GPU layer + AA stabilabb) */
+  .topbar .brand .spin-wrap{
+    width: var(--logoPx) !important;
+    height: var(--logoPx) !important;
+    display: inline-block !important;
+
+    /* kompozitor-barát beállítások */
+    animation: spin 8s linear infinite !important;
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);            /* rétegpromóció */
+    -webkit-transform: translateZ(0);
+    contain: paint;
+  }
+
+  /* a KÉP ne animáljon, csak töltse ki a wrappert (így nem recésedik) */
+  .topbar .brand .spin-wrap > img{
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+
+    /* renderelési tippek SVG-re (WebKit/Chromium) */
+    image-rendering: auto !important;
+    shape-rendering: geometricPrecision;
+    text-rendering: optimizeLegibility;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* ha valahol még közvetlenül az <img> forogna, lelőjük */
+  .topbar .brand > img.spinning-vinyl{
+    animation: none !important;
+    transform: none !important;
+  }
+}
