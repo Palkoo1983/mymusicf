@@ -1,18 +1,18 @@
+(function(){ if (/SamsungBrowser/i.test(navigator.userAgent)) {
+  document.documentElement.classList.add('ua-samsung');
+}})();
 /* Samsung Internet detektálás – csak osztályt rakunk a <html>-re */
-(function(){
-  var _menu = document.querySelector('.topbar, nav, .menu');
-  if(!_menu) return;
-if (/SamsungBrowser/i.test(navigator.userAgent)) {
+(function () {
+  if (/SamsungBrowser/i.test(navigator.userAgent)) {
     document.documentElement.classList.add('ua-samsung');
   }
 })();
-
 /* =========================================================
-   EnZenem – main script (FULL)
+   EnZenem – main script (FULL REPLACEMENT)
    - Tab navigation (vinyl-tabs) + scroll to top
    - Package card selection
-   - HOWTO -> ORDER + example chips (placeholder only)
-   - Brief helper (counter + quality) + examples on ORDER (placeholder only)
+   - HOWTO -> ORDER focus + example chips (scroll to top)
+   - Brief helper (counter + quality, NO DUPLICATES) + examples on ORDER
    - Order form (ALWAYS show license modal) + Contact form
    - Thanks overlay
    - Consent bar + License modal
@@ -31,54 +31,49 @@ async function postJSON(url, data) {
 const qs  = (sel, root = document) => root.querySelector(sel);
 const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-/* Egységes helper: a Leírás mezőbe CSAK placeholdert tegyünk */
-function setBriefPlaceholder(text){
-  const brief = document.querySelector('#orderForm textarea[name="brief"], #order textarea[name="brief"]');
-  if (!brief) return;
-  brief.value = '';                         // maradjon üres
-  brief.placeholder = text || '';           // csak minta
-  brief.dispatchEvent(new Event('input', { bubbles: true }));
-  try { brief.focus({ preventScroll: true }); } catch(_) {}
-}
-
 /* ---------- tabs ---------- */
 function initTabs() {
   const buttons = qsa('.tab');
   const panels  = qsa('main .panel');
 
-  function activate(targetId) {
-    if (!targetId) return;
+ function activate(targetId) {
+  if (!targetId) return;
 
-    if (document.activeElement && typeof document.activeElement.blur === 'function') {
-      document.activeElement.blur();
-    }
-
-    panels.forEach(p => {
-      const on = (p.id === targetId);
-      p.hidden = !on;
-      p.classList.toggle('active', on);
-      if (on) p.removeAttribute('inert');
-      else    p.setAttribute('inert', '');
-    });
-
-    buttons.forEach(b => {
-      const on = (b.dataset.target === targetId);
-      b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      b.classList.toggle('active', on);
-    });
-
-    if (targetId === 'order') setTimeout(initBriefHelper, 50);
-
-    const active = panels.find(p => p.id === targetId);
-    const h2 = active && active.querySelector('h2');
-    if (h2) {
-      h2.setAttribute('tabindex', '-1');
-      h2.focus();
-    }
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // ha épp egy másik elem (pl. YouTube gomb) van fókuszban, engedjük el
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur();
   }
 
+  panels.forEach(p => {
+    const on = (p.id === targetId);
+    p.hidden = !on;
+    p.classList.toggle('active', on);
+    // a rejtett paneleket tegyük „inert”-té, így nem kaphatnak fókuszt
+    if (on) p.removeAttribute('inert');
+    else    p.setAttribute('inert', '');
+  });
+
+  buttons.forEach(b => {
+    const on = (b.dataset.target === targetId);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.classList.toggle('active', on);
+  });
+
+  if (targetId === 'order') setTimeout(initBriefHelper, 50);
+
+  // fókuszt rakjunk az új panel címsorára a hozzáférhetőség miatt
+  const active = panels.find(p => p.id === targetId);
+  const h2 = active && active.querySelector('h2');
+  if (h2) {
+    h2.setAttribute('tabindex', '-1');
+    h2.focus();
+  }
+
+  // mindig a lap tetejére gördítünk
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+  // initial state
   const activePanel = panels.find(p => p.classList.contains('active')) || panels[0];
   panels.forEach(p => (p.hidden = p !== activePanel));
 
@@ -114,37 +109,54 @@ function initPackages() {
   });
 }
 
-/* ---------- HOWTO -> ORDER, example chips (PLACEHOLDER ONLY) ---------- */
+/* ---------- HOWTO -> ORDER, example chips ---------- */
 function initHowTo() {
   const openBtn     = qs('#howto-open-order');
   const orderTabBtn = qs('.tab[data-target="order"]');
 
-  function gotoOrderAndFocus() {
+  function focusBrief() {
+  const el = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+  if (el) el.focus({ preventScroll: true }); // ne görgessen fókuszkor
+}
+
+   // "Hogyan működik" gomb -> Megrendelés tetejére
+  openBtn?.addEventListener('click', () => {
     orderTabBtn?.click();
+
+    // 1) azonnal fel
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // 2) pici késleltetéssel még egyszer, hogy a tabváltás utáni
+    //   böngésző mozgást is felülírjuk
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      // ne húzza le a fókusz a textarea-ra
       const el = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-      if (el && el.focus) { try { el.focus({ preventScroll: true }); } catch(_) {} }
+      if (el && el.focus) {
+        try { el.focus({ preventScroll: true }); } catch(_) {}
+      }
     }, 120);
-  }
-
-  // "Hogyan működik" gomb -> Megrendelés tetejére
-  openBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    gotoOrderAndFocus();
   });
 
-  // Példa-chipek a HOWTO panelen -> CSAK PLACEHOLDER, NE VALUE
+  // Példa-chipek a HOWTO panelen -> beír, de mindig a lap tetején maradunk
   qsa('#howto .chip[data-example]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
+    btn.addEventListener('click', () => {
       const text = btn.getAttribute('data-example') || '';
+
       orderTabBtn?.click();
 
+      // azonnal fel
       window.scrollTo({ top: 0, behavior: 'smooth' });
+
       setTimeout(() => {
-        setBriefPlaceholder(text);
+        const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+        if (desc) {
+          desc.value = text;
+          desc.dispatchEvent(new Event('input', { bubbles: true }));
+          // fókusz görgetés nélkül
+          try { desc.focus({ preventScroll: true }); } catch(_) {}
+        }
+        // biztos, ami biztos – még egyszer a tetejére
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 120);
     });
@@ -156,6 +168,7 @@ function initBriefHelper() {
   const orderPanel = qs('#order');
   if (!orderPanel) return;
 
+  // guard: ha már létrehoztuk, kilépünk
   if (qs('#enz-quality', orderPanel)) return;
 
   const desc = qs('textarea[name="brief"], textarea#brief, textarea', orderPanel);
@@ -167,7 +180,7 @@ function initBriefHelper() {
   info.style.fontSize = '12px';
   info.style.marginTop = '6px';
   info.style.color = '#b6b6c3';
-  info.innerHTML = '<span id="enz-count">0</span>/<span id="enz-min">120</span> karakter • <strong id="enz-score">Túl rövid</strong>';
+  info.innerHTML = '<span id="enz-count">0</span> karakter • <strong id="enz-score">Túl rövid</strong>';
   desc.insertAdjacentElement('afterend', info);
 
   // minta leírások – csak egyszer
@@ -209,10 +222,11 @@ function initBriefHelper() {
       b.style.border = '1px solid #2a2b3a';
       b.style.background = '#10111a';
       b.style.color = '#f4f4f7';
-
-      // CSAK PLACEHOLDER, ne value
-      b.addEventListener('click', () => setBriefPlaceholder(t));
-
+      b.addEventListener('click', () => {
+        desc.value = t;
+        desc.dispatchEvent(new Event('input', { bubbles: true }));
+        desc.focus();
+      });
       exWrap.appendChild(b);
     });
 
@@ -267,6 +281,7 @@ function initOrderForm() {
   const cancelBtn   = qs('#licenseCancel');
   if (!orderForm) return;
 
+  // ne legyen natív navigáció – fetch küldi
   orderForm.setAttribute('action', 'javascript:void(0)');
 
   async function actuallySend(data) {
@@ -292,7 +307,7 @@ function initOrderForm() {
     e.preventDefault(); e.stopPropagation();
     const data = Object.fromEntries(new FormData(orderForm).entries());
 
-    // MINDIG kérdezzünk rá
+    // MINDIG kérdezzünk rá (nincs cookie / localStorage)
     showModal();
 
     const onAccept = () => {
@@ -321,6 +336,7 @@ function initContactForm() {
   const overlayClose  = qs('#overlayClose');
   if (!contactForm) return;
 
+  // ne navigáljon sehova – a JS küldi fetch-csel
   contactForm.setAttribute('action', 'javascript:void(0)');
 
   contactForm.addEventListener('submit', async (e) => {
@@ -334,7 +350,7 @@ function initContactForm() {
       const json = await postJSON('/api/contact', data);
       if (contactStatus) contactStatus.textContent = json.message || 'Köszönjük! Hamarosan válaszolunk.';
       contactForm.reset();
-      overlay?.classList.remove('hidden');
+      overlay?.classList.remove('hidden'); // felugró „Köszönjük” kártya
     } catch (err) {
       if (contactStatus) contactStatus.textContent = 'Nem sikerült elküldeni. Próbáld újra később.';
       console.error(err);
@@ -368,6 +384,8 @@ function initLicenseModal() {
   const cancel = qs('#licenseCancel');
   if (!modal || !ok || !cancel) return;
 
+  // A tényleges megnyitást az Order submit flow intézi.
+  // Itt csak fallback bezárás marad:
   ok.addEventListener('click', () => { /* submit flow kezeli */ });
   cancel.addEventListener('click', () => {
     modal.style.display = 'none';
@@ -386,8 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initConsent();
   initLicenseModal();
 });
-
-/* Jump linkek: <a data-jump="panelId"> */
 document.addEventListener('click', (e) => {
   const a = e.target.closest('a[data-jump]');
   if (!a) return;
@@ -395,11 +411,46 @@ document.addEventListener('click', (e) => {
   const target = a.getAttribute('data-jump');
   const btn = document.querySelector(`.vinyl-tabs .tab[data-target="${target}"]`);
   if (btn) {
-    btn.click();
-    btn.focus();
+    btn.click();      // aktiválja a panelt (a te tab-logikád szerint)
+    btn.focus();      // fókusz a hozzáférhetőségért
   }
 });
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('contactForm');
+  const statusEl = document.getElementById('contactStatus');
+  const overlay = document.getElementById('thanksOverlay');
+  const closeBtn = document.getElementById('overlayClose');
 
+  if (!overlay) return;
+
+  // 1) Ha a státusz szöveg "elküldve" állapotra vált, felugrik az overlay
+  if (statusEl) {
+    const obs = new MutationObserver(() => {
+      const t = (statusEl.textContent || '').toLowerCase();
+      if (t.includes('elküldve') || t.includes('köszönjük')) {
+        overlay.classList.remove('hidden');
+        overlay.classList.add('show');
+      }
+    });
+    obs.observe(statusEl, { childList: true, subtree: true, characterData: true });
+  }
+
+  // 2) Biztos, ami biztos: form submitre is feljegyzünk egy "várakozó" állapotot
+  if (form) {
+    form.addEventListener('submit', () => {
+      // itt NEM állítjuk meg a saját küldési logikádat;
+      // az overlay végül a státusz üzenet alapján fog megjelenni
+    });
+  }
+
+  // 3) Bezárás gomb – overlay eltűnik, az oldalon maradunk
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      overlay.classList.add('hidden');
+      overlay.classList.remove('show');
+    });
+  }
+});
 /* Samsung Internet fix – smoothScroll + preventScroll polyfill */
 (function() {
   // smooth scroll fallback
@@ -425,159 +476,84 @@ document.addEventListener('click', (e) => {
     }
   };
 })();
-// --- Karakterszámláló: csak a számot írjuk, a "/120 karakter" marad a markupban ---
-document.addEventListener('DOMContentLoaded', () => {
-  const desc = document.querySelector('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-  const countEl = document.querySelector('#enz-quality #enz-count');
-  if (!desc || !countEl) return;
 
-  const render = () => { countEl.textContent = String((desc.value || '').trim().length); };
-  desc.addEventListener('input', render);
-  render();
-});
-// ——— YouTube Iframe API betöltése ———
-(function loadYT(){
-  if (window.YT && window.YT.Player) return;
-  const s = document.createElement('script');
-  s.src = "https://www.youtube.com/iframe_api";
-  document.head.appendChild(s);
-})();
 
-let ytPlayer;
-let userWantsAudio = (localStorage.getItem('enz-audio') === '1'); // megjegyezzük a választ
 
-function setToggleUI(on){
-  const btn = document.getElementById('soundToggle');
-  if (!btn) return;
-  btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-  btn.textContent = on ? '🔊 Hang KI' : '🔇 Hang BE';
-}
-
-// ——— Hang be/ki gomb ———
-document.addEventListener('click', (ev) => {
-  const btn = ev.target.closest('#soundToggle');
-  if (!btn || !ytPlayer) return;
-
-  const isOn = btn.getAttribute('aria-pressed') === 'true';
-
-  if (isOn) {
-    // jelenleg szól → némítsuk
-    try { ytPlayer.mute(); } catch {}
-    localStorage.setItem('enz-audio','0');
-    setToggleUI(false);
-  } else {
-    // jelenleg néma → próbáljuk bekapcsolni
-    try {
-      ytPlayer.unMute();
-      ytPlayer.playVideo();
-      localStorage.setItem('enz-audio','1');
-      setToggleUI(true);
-    } catch {
-      // ha a böngésző mégsem engedi, marad némítva
-      setToggleUI(false);
-    }
-  }
-});
-
-// ——— Extra kényelem: az első felhasználói gesztusnál, ha korábban be volt kapcsolva, visszaadjuk a hangot ———
-(function restoreOnFirstGesture(){
-  const tryEnable = () => {
-    if (!ytPlayer) return cleanup();
-    if (localStorage.getItem('enz-audio') === '1') {
-      try { ytPlayer.unMute(); ytPlayer.playVideo(); setToggleUI(true); } catch {}
-    }
-    cleanup();
-  };
-  const cleanup = () => {
-    document.removeEventListener('click', tryEnable, true);
-    document.removeEventListener('keydown', tryEnable, true);
-    document.removeEventListener('touchstart', tryEnable, true);
-  };
-  document.addEventListener('click', tryEnable, true);
-  document.addEventListener('keydown', tryEnable, true);
-  document.addEventListener('touchstart', tryEnable, true);
-})();
-
-// ---------- STABLE CORE (pre-audio/video) ----------
+// === Brief character counter (min 120) ===
 (function(){
-  // Tab navigation (ARIA-friendly)
-  const tablist = document.querySelector('[role="tablist"]');
-  const tabs = tablist ? Array.from(tablist.querySelectorAll('[role="tab"]')) : [];
-  const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
-  function activateTab(tab){
-    if(!tab) return;
-    tabs.forEach(t => {
-      const selected = t === tab;
-      t.setAttribute('aria-selected', selected ? 'true' : 'false');
-      t.tabIndex = selected ? 0 : -1;
-      const panelId = t.getAttribute('aria-controls');
-      if(panelId){
-        const panel = document.getElementById(panelId);
-        if(panel) panel.hidden = !selected;
-      }
-    });
-    tab.focus();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  var brief = document.querySelector('textarea#brief, textarea[name="brief"], textarea.brief');
+  if(!brief){
+    // try to find the biggest textarea in Order panel
+    var areas = Array.from(document.querySelectorAll('textarea'));
+    if(areas.length) brief = areas.sort((a,b)=> (b.maxLength||99999)-(a.maxLength||99999))[0] || areas[0];
   }
-  tabs.forEach(t => {
-    t.addEventListener('click', e => {
-      e.preventDefault();
-      activateTab(t);
-    });
-    t.addEventListener('keydown', e => {
-      const i = tabs.indexOf(t);
-      if(e.key === 'ArrowRight'){ e.preventDefault(); activateTab(tabs[(i+1)%tabs.length]); }
-      if(e.key === 'ArrowLeft'){ e.preventDefault(); activateTab(tabs[(i-1+tabs.length)%tabs.length]); }
-      if(e.key === 'Home'){ e.preventDefault(); activateTab(tabs[0]); }
-      if(e.key === 'End'){ e.preventDefault(); activateTab(tabs[tabs.length-1]); }
-    });
-  });
+  if(!brief) return;
+  var min = 120;
+  var counter = document.createElement('div');
+  counter.className = 'brief-counter';
+  var update = function(){
+    var n = (brief.value||'').length;
+    counter.textContent = n + ' / ' + min;
+    counter.classList.toggle('ok', n >= min);
+  };
+  brief.parentNode.insertBefore(counter, brief.nextSibling);
+  brief.addEventListener('input', update);
+  update();
+})();
 
-  // Example chips -> set placeholder (NOT value)
-  const brief = document.querySelector('#order-brief, textarea#brief, textarea[name="brief"]');
-  const chips = Array.from(document.querySelectorAll('.example-chip'));
-  chips.forEach(ch => {
-    ch.addEventListener('click', () => {
-      if(brief){
-        const txt = ch.getAttribute('data-example') || ch.textContent.trim();
-        // show as hint only
-        brief.placeholder = txt;
-        brief.focus();
-      }
-    });
-  });
 
-  // Character counter "0 / 120" on brief (min 120)
-  const counter = document.querySelector('#brief-count, .brief-count');
-  const MIN = 120;
-  function updateCount(){
-    if(!brief || !counter) return;
-    const len = brief.value ? brief.value.trim().length : 0;
-    counter.textContent = `${len} / ${MIN}`;
+// === Example chips → placeholder only ===
+(function(){
+  var brief = document.querySelector('textarea#brief, textarea[name="brief"], textarea.brief') || document.querySelector('textarea');
+  if(!brief) return;
+  function setPlaceholder(text){
+    if(!text) return;
+    brief.placeholder = text;
+    // do not overwrite value; soft hint only
   }
-  if(brief && counter){
-    updateCount();
-    ['input','change','keyup'].forEach(ev => brief.addEventListener(ev, updateCount));
+  var chips = Array.from(document.querySelectorAll('[data-example], .example-chip, .chip.example, .brief-example'));
+  if(!chips.length){
+    // Fallback: look for buttons/links in HOWTO or ORDER with data-text
+    chips = Array.from(document.querySelectorAll('[data-text], .example'));
   }
-
-  // Pricing cards -> select package; MP4 turns gold when active
-  const pkgInput = document.querySelector('input[name="package"]');
-  const cards = Array.from(document.querySelectorAll('.price-card, .package-card'));
-  cards.forEach(card => {
-    card.addEventListener('click', () => {
-      const val = card.getAttribute('data-package') || card.dataset.package;
-      cards.forEach(c => c.classList.remove('active', 'gold'));
-      card.classList.add('active');
-      if((val||'').toUpperCase().includes('MP4')){
-        card.classList.add('gold');
-      }
-      if(pkgInput && val){ pkgInput.value = val; }
-      // when selected, ensure Order tab visible
-      const orderTab = tabs.find(t => (t.textContent||'').toLowerCase().includes('megrendelés') || t.getAttribute('data-panel') === 'order');
-      if(orderTab) activateTab(orderTab);
-      if(brief) brief.focus();
+  chips.forEach(function(el){
+    el.addEventListener('click', function(){
+      var t = el.getAttribute('data-example') || el.getAttribute('data-text') || el.textContent.trim();
+      setPlaceholder(t);
+      // focus to allow immediate typing
+      if (brief) brief.focus();
     });
   });
 })();
-// ---------- END STABLE CORE ----------
 
+
+// === Package selection → golden glow + set input ===
+(function(){
+  var cards = Array.from(document.querySelectorAll('[data-package], .package-card'));
+  if(!cards.length) return;
+  var field = document.querySelector('input#package, input[name="package"], select#package, select[name="package"]');
+  function selectCard(card){
+    cards.forEach(function(c){ c.classList.remove('selected'); });
+    card.classList.add('selected');
+    var val = card.getAttribute('data-package') || card.dataset.package || card.getAttribute('aria-label') || card.textContent.trim();
+    if(field){
+      if(field.tagName === 'SELECT'){
+        var opt = Array.from(field.options).find(o => o.value===val || o.text===val);
+        if(opt) field.value = opt.value; else field.value = val;
+      }else{
+        field.value = val;
+      }
+      field.dispatchEvent(new Event('change', {bubbles:true}));
+    }
+    // scroll Order form into view if exists
+    var form = field ? field.closest('form') : null;
+    if(form) form.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+  cards.forEach(function(card){
+    card.addEventListener('click', function(){ selectCard(card); });
+    card.setAttribute('tabindex','0');
+    card.addEventListener('keydown', function(e){
+      if(e.key==='Enter' || e.key===' '){ e.preventDefault(); selectCard(card); }
+    });
+  });
+})();
