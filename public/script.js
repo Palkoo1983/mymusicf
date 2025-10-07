@@ -471,3 +471,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 })();
+// LOGÓ: a forgást a szülő wrapperre tesszük, az <img> marad fix méretű (tegnapi bevált fix)
+document.addEventListener('DOMContentLoaded', () => {
+  const logoImg = document.querySelector('.topbar .brand > img.spinning-vinyl, .site-logo img');
+  if (!logoImg) return;
+
+  // ha már be van csomagolva, nem csinálunk semmit
+  if (logoImg.closest('.spin-wrap')) return;
+
+  // wrapper létrehozása és beillesztése
+  const wrap = document.createElement('span');
+  wrap.className = 'spin-wrap';
+  logoImg.parentNode.insertBefore(wrap, logoImg);
+  wrap.appendChild(logoImg);
+});
