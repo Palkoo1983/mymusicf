@@ -1443,3 +1443,10 @@ body.gold-theme::after{ content: none !important; }
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+@media (max-width: 640px) {
+  .spinning-vinyl,
+  .enzenem-logo {
+    width: 120px !important;
+    height: 120px !important;
+  }
+}
