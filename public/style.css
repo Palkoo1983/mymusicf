@@ -1256,10 +1256,4 @@ body.gold-theme::after{ content: none !important; }
     display: block !important;
   }
 }
-/* Desktop: lemez + logó mérete ~-10% */
-@media (min-width: 992px){
-  :root{
-    /* ha eddig 120px volt: 120 × 0.9 = 108px */
-    --tabFinal: 108px;
-  }
-}
+
