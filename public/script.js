@@ -6,7 +6,7 @@
 })();
 
 /* =========================================================
-   EnZenem – main script (FULL REPLACEMENT)
+   EnZenem – main script
    - Tab navigation (vinyl-tabs) + scroll to top
    - Package card selection
    - HOWTO -> ORDER (delegált) + example chips → placeholder
@@ -395,7 +395,7 @@ function initLicenseModal() {
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
   initPackages();
-  initHowTo();       // fontos a delegált HOWTO→ORDER miatt
+  initHowTo();       // delegált HOWTO→ORDER
   initBriefHelper(); // ha az ORDER aktív lenne induláskor
   initOrderForm();
   initContactForm();
@@ -471,66 +471,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 })();
-/* ===== Desktop layout & scaling for vinyl menu ===== */
-@media (min-width: 992px) {
-  :root{
-    --disc-scale: 1.30;         /* lemezek +30% */
-    --logo-scale: 1.56;         /* 1.30 × 1.20 = ~1.56 → logó a lemezekhez képest +20% */
-  }
-
-  /* Menü sáv középre, töréssel ha kell */
-  .vinyl-menu {                 /* (ha más a wrapper: pl. .menu, .topbar → cseréld itt) */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 24px;
-    flex-wrap: wrap;            /* hosszú bemutatkozásnál se csússzon jobbra */
-    text-align: center;
-  }
-
-  /* Lemezek méretezése (ikon/elem) */
-  .vinyl, .disc {               /* (ha nálad .vinyl-item vagy .menu-disc → add hozzá itt) */
-    transform: scale(var(--disc-scale));
-    transform-origin: center center;
-    margin: 0 auto;
-    position: relative;         /* a belső cím középre igazításához kell */
-  }
-
-  /* Felirat a lemezen PONT középen (x és y) */
-  .disc .disc-label,
-  .disc .label,
-  .vinyl .label,
-  .vinyl-label {                /* (bármelyik meglévő belső cím osztály) */
-    position: absolute;
-    inset: 0;                   /* kitölti a lemezt */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 0 10px;            /* hosszabb szöveg ne lógjon ki */
-    line-height: 1.15;
-    pointer-events: none;       /* csak akkor, ha a felirat nem kattintható */
-  }
-
-  /* Logó nagyítása a lemezekhez képest +20% */
-  .brand-logo,
-  .logo {                       /* (melyik van nálad) */
-    transform: scale(var(--logo-scale));
-    transform-origin: center center;
-    margin: 0 auto;
-    display: block;
-  }
-
-  /* „Árak / Formátumok” típusú címek egymás alatt, erősebben és nagyobban */
-  .menu-label, .menu-caption {  /* (cseréld a tényleges cím osztályodra) */
-    display: block;
-    font-weight: 700;           /* félkövér */
-    font-size: clamp(16px, 1.15rem, 20px);
-    line-height: 1.2;
-  }
-  /* ha két részre bontod (pl. Árak / Formátumok): */
-  .menu-label .line,
-  .menu-caption .line {
-    display: block;             /* egymás alatt */
-  }
-}
