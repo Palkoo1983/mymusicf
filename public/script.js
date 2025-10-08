@@ -521,23 +521,3 @@ document.addEventListener('DOMContentLoaded', () => {
   logoImg.style.width  = '100%';
   logoImg.style.height = '100%';
 });
-/* ORDER – Minta leírások (dinamikus #enz-order-examples wrapper) */
-#order #enz-order-examples .chip,
-#order #enz-order-examples .chip * {
-  background: #000 !important;
-  color: #f3d27a !important;
-  -webkit-text-fill-color: #f3d27a !important;
-  background-image: none !important;
-  -webkit-background-clip: initial !important;
-  background-clip: initial !important;
-  text-shadow: none !important;
-  border: 1px solid #d4af37 !important;
-  border-radius: 999px !important;
-  padding: 8px 12px !important;
-
-  /* Biztos ami biztos: bármi “eltüntető” trükköt leverünk */
-  opacity: 1 !important;
-  mix-blend-mode: normal !important;
-  text-indent: 0 !important;
-  letter-spacing: normal !important;
-}
