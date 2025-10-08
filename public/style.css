@@ -1488,3 +1488,53 @@ body.gold-theme::after{ content: none !important; }
     padding: 8px 10px !important;
   }
 }
+/* ==== Dark Gold háttér – minimal (csak háttér, semmi más nem változik) ==== */
+body.gold-theme, body{
+  /* fő sötét-arany átmenet */
+  background:
+    /* finom “fényfolt” a felső sávban (arany csillanás) */
+    radial-gradient(1000px 600px at 50% 12%, rgba(212,175,55,0.22) 0%, rgba(212,175,55,0.10) 35%, rgba(212,175,55,0.00) 60%),
+    /* mély arany átmenet */
+    linear-gradient(160deg, #241a07 0%, #3b2a0a 35%, #6a4f14 65%, #b08d2a 100%);
+  background-attachment: fixed, fixed;
+  background-repeat: no-repeat, no-repeat;
+  background-size: 100% 100%, 100% 100%;
+}
+
+/* opcionális, nagyon visszafogott “fényjáték” – kikapcsol, ha zavaró */
+@keyframes goldGleam {
+  0%   { background-position: 0 0, 0 0; }
+  50%  { background-position: 10px 6px, 0 0; }
+  100% { background-position: 0 0, 0 0; }
+}
+body.gold-theme, body{
+  animation: goldGleam 24s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce){
+  body.gold-theme, body{ animation: none !important; }
+}
+/* ==== Dark Gold háttér – minimal (csak háttér, semmi más nem változik) ==== */
+body.gold-theme, body{
+  /* fő sötét-arany átmenet */
+  background:
+    /* finom “fényfolt” a felső sávban (arany csillanás) */
+    radial-gradient(1000px 600px at 50% 12%, rgba(212,175,55,0.22) 0%, rgba(212,175,55,0.10) 35%, rgba(212,175,55,0.00) 60%),
+    /* mély arany átmenet */
+    linear-gradient(160deg, #241a07 0%, #3b2a0a 35%, #6a4f14 65%, #b08d2a 100%);
+  background-attachment: fixed, fixed;
+  background-repeat: no-repeat, no-repeat;
+  background-size: 100% 100%, 100% 100%;
+}
+
+/* opcionális, nagyon visszafogott “fényjáték” – kikapcsol, ha zavaró */
+@keyframes goldGleam {
+  0%   { background-position: 0 0, 0 0; }
+  50%  { background-position: 10px 6px, 0 0; }
+  100% { background-position: 0 0, 0 0; }
+}
+body.gold-theme, body{
+  animation: goldGleam 24s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce){
+  body.gold-theme, body{ animation: none !important; }
+}
