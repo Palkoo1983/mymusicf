@@ -579,3 +579,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 })();
+// === ORDER kötelező mezők: Nyelv + Leírás (min 120) – beküldés blokkolása ===
+(function hardenOrderValidation(){
+  const form = document.getElementById('orderForm');
+  if (!form) return;
+
+  const lang = form.querySelector('input[name="language"]');
+  const desc = form.querySelector('textarea[name="brief"], textarea#brief, textarea');
+
+  // tegyük kötelezővé natívan is
+  if (lang) lang.setAttribute('required', '');
+  if (desc) { desc.setAttribute('required', ''); desc.setAttribute('minlength', '120'); }
+
+  // globális, CAPTURE fázisú submit-őr – megelőzi a többi listener működését
+  document.addEventListener('submit', function(e){
+    if (e.target !== form) return;
+
+    // alaphelyzet: nincs hiba
+    if (lang) lang.setCustomValidity('');
+    if (desc) desc.setCustomValidity('');
+
+    const missingLang = !lang || !lang.value || !lang.value.trim();
+    const briefText   = desc ? (desc.value || '').trim() : '';
+    let ok = true;
+
+    if (missingLang){
+      ok = false;
+      if (lang) lang.setCustomValidity('Kérlek add meg a nyelvet.');
+    }
+    if (desc && briefText.length < 120){
+      ok = false;
+      desc.setCustomValidity('Kérlek írj legalább 120 karaktert a leírásba.');
+    }
+
+    if (!ok){
+      e.preventDefault();
+      e.stopPropagation();           // ne fusson le semmilyen másik submit-handler
+      form.reportValidity();         // natív buborék/kiemelés
+    }
+  }, true); // ⬅ capture: igaz
+})();
