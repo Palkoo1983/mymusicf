@@ -134,7 +134,27 @@ html body #order .examples .chip:focus {
   box-shadow:0 0 0 2px rgba(243,210,122,.25) inset !important;
   outline:none !important;
 }
+/* === Samsung Internet: menüfülek felirata legyen látható, sima arany === */
+html.ua-samsung body .vinyl-tabs .tab span,
+html.ua-samsung body .vinyl-tabs .tab span.gold-text {
+  background-image: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  color: #f3d27a !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  text-shadow: none !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+}
 
+/* Aktív/hover állapotban se tűnjön el */
+html.ua-samsung body .vinyl-tabs .tab:hover span,
+html.ua-samsung body .vinyl-tabs .tab.active span {
+  color: #f3d27a !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  background-image: none !important;
+}
   </style>
 </head>
 
