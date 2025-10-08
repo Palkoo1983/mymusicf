@@ -1,5 +1,5 @@
 
-// Remove FOUC guard ASAP
+// Remove no-fouc guard ASAP (logo only)
 (function(){ 
   const drop = () => document.documentElement.classList.remove('no-fouc');
   if (document.readyState === 'loading') {
@@ -8,6 +8,7 @@
     drop();
   }
 })();
+
 
 // --- Betöltéskor NE állítsa vissza a böngésző a korábbi görgetési pozíciót ---
 (function() {
