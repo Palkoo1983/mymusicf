@@ -1488,3 +1488,32 @@ body.gold-theme::after{ content: none !important; }
     padding: 8px 10px !important;
   }
 }
+/* ==== ABSZOLÚT FEKETE HÁTTÉR – DIAG TESZT ==== */
+html, body{
+  min-height:100%;
+  background:#000 !important;
+  background-color:#000 !important;
+  background-image:none !important;
+  background-repeat:no-repeat !important;
+  background-size:100% 100% !important;
+  background-position:center top !important;
+}
+
+/* Teljes vásznas hátterek képeinek letiltása (kattinthatóság NEM változik) */
+.bg-vinyl, .overlay, .background, .page-bg, .site-bg, .backdrop{
+  background:transparent !important;
+  background-image:none !important;
+}
+
+/* Ha bármelyik fő konténer kapott hátteret, azt is vedd le */
+header, main, footer, .topbar, .panel, .content, .embeds, .cards, .consent, .license-modal{
+  background-image:none !important;
+}
+
+/* Pseudo-rétegek (gyakori „maradék csík” okai) */
+html::before, html::after,
+body::before, body::after{
+  content:none !important;
+  background:none !important;
+  background-image:none !important;
+}
