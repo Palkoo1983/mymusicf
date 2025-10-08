@@ -65,27 +65,34 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
 
   <!-- CSS – RENDES, RENDER-BLOCKING LINK (nincs preload → nincs FOUC/villanás) -->
-  <link rel="stylesheet" href="style.css" />
+ <link rel="stylesheet" href="style.css?v=gold1" />
 
 <style id="bg-override">
-  html body .bg-vinyl{ background: transparent !important; background-image: none !important; opacity:.12 !important; }
-  html body.gold-theme, html body{
+  /* 1) Az overlay ne takarja a body-t */
+  html body .bg-vinyl,
+  html body .overlay,
+  html body .background {
+    background: transparent !important;
+    background-image: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* 2) Erős, sötét-arany háttér a body-n (magas specifikusság + !important) */
+  html body.gold-theme,
+  html body{
     background:
-      radial-gradient(1000px 600px at 50% 12%, rgba(212,175,55,0.22) 0%, rgba(212,175,55,0.10) 35%, rgba(212,175,55,0.00) 60%) !important,
-      linear-gradient(160deg, #241a07 0%, #3b2a0a 35%, #6a4f14 65%, #b08d2a 100%) !important;
+      radial-gradient(1200px 700px at 50% 10%, rgba(238,189,64,0.32) 0%, rgba(238,189,64,0.12) 30%, rgba(238,189,64,0) 55%) !important,
+      linear-gradient(165deg, #120d04 0%, #2a1d08 38%, #5a4010 68%, #b8891b 100%) !important;
     background-attachment: fixed, fixed !important;
     background-repeat: no-repeat, no-repeat !important;
     background-size: 100% 100%, 100% 100% !important;
   }
-  /* Kapcsold ki az összes ismert overlayt 1 percre próbaképp */
-.bg-vinyl, .page-bg, .site-bg, .overlay, .backdrop { 
-  background: transparent !important; 
-  background-image: none !important; 
-  opacity: 0 !important; 
-  pointer-events: none !important;
-}
 
+  /* 3) Biztonsági: ha valahol sima body background szerepel */
+  html, body { background-color: #120d04 !important; }
 </style>
+
 
 </head>
 
@@ -97,6 +104,7 @@
   background-repeat: no-repeat, no-repeat !important;
   background-size: 100% 100%, 100% 100% !important;
 ">
+
 <style>
 .video-panel {
   position: absolute;
