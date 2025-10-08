@@ -241,9 +241,10 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     </select>
     <iframe id="videoFrame" src="https://www.youtube.com/embed/2RY5bwiSR00" allow="autoplay; encrypted-media" allowfullscreen></iframe>
     <div style="display:flex; gap:8px; justify-content:space-between;">
-      <button onclick="playVideo()"><span class="gold-text">Lejátszás</span></button>
-      <button onclick="stopVideo()"><span class="gold-text">Megállít</span></button>
-    </div>
+     <div class="actions">
+  <button type="button" onclick="playVideo()">Lejátszás</button>
+  <button type="button" onclick="stopVideo()">Megállít</button>
+</div>
   </div>
 
   <script>
