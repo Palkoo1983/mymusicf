@@ -155,42 +155,43 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   -webkit-text-fill-color: #f3d27a !important;
   background-image: none !important;
 }
-/* ===== MOBILE TUNING (≤640px) – 2 sor × 3 oszlop, tojás NINCS ===== */
+//* ===== MOBILE: 3×2 rács, kisebb lemezek, garantált kör ===== */
 @media (max-width: 640px){
-
-  /* 1) Logó és brand blokk: közép */
-  header.topbar .brand{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:10px;
-    text-align:center;
-  }
-  header.topbar .brand > img.spinning-vinyl{
-    margin:0 auto; /* tényleg középre */
-  }
-
-  /* 2) Menü: 3 oszlopos rács, kompakt hézag + kis oldalpadd */
   .vinyl-tabs{
     display:grid !important;
     grid-template-columns: repeat(3, 1fr);
-    gap:10px;            /* 12 → 10 */
-    padding:0 8px;       /* új: számol a szélesség-képlettel */
+    gap:10px;
+    padding:0 8px;
     justify-items:center;
     align-items:center;
   }
 
-  /* 3) Kör lemezek mérete – biztosan kifér 3 egymás mellett, nem vágja le */
   .vinyl-tabs .tab{
-    width: clamp(82px, calc((100vw - 16px - 2*10px)/3), 108px) !important;
-    aspect-ratio: 1 / 1;          /* garantáltan kör, nem „tojás” */
-    border-radius:999px;
-    padding:0 !important;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
+    /* kisebb méret + fix kör: width = height = --disc */
+    --disc: clamp(80px, calc((100vw - 16px - 2*10px)/3), 104px);
+    width: var(--disc) !important;
+    height: var(--disc) !important;     /* ← explicit! */
+    box-sizing: border-box;
+    border-radius: 999px;
+    padding: 0 !important;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+
+    /* ha valami skálázta, mobilon lőjük ki */
+    transform: none !important;
   }
+
+  .vinyl-tabs .tab span{
+    display:flex; align-items:center; justify-content:center;
+    width:100%; height:100%;
+    padding:0 6px;
+    text-align:center;
+    line-height:1.2;
+    font-size: clamp(0.8rem, 2.8vw, 0.95rem);
+  }
+}
+
 
   /* 4) Feliratok középen + skálázás */
   .vinyl-tabs .tab span{
