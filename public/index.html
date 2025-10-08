@@ -66,29 +66,29 @@
 
   <!-- CSS – RENDES, RENDER-BLOCKING LINK (nincs preload → nincs FOUC/villanás) -->
   <link rel="stylesheet" href="style.css" />
-</head>
-
-<body class="gold-theme no-intro">
-<style>
-.video-panel {
-  position: absolute;
-  top: 20px; /* 1 cm-rel feljebb a korábbi 40px helyett */
-  right: 20px;
-  width: 600px; /* dupla szélesség az eddigi 300px helyett */
-  height: auto; /* a meglévő magasság marad, iframe méretéből jön */
-  background: #000;
-  color: #f1c40f;
-  padding: 10px;
-  border: 1px solid #f1c40f;
-  border-radius: 6px;
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
+<style id="strict-mobile-audio-override">
+/* ===== STRICT MOBILE AUDIO OVERRIDE (last-in-head, wins specificity) ===== */
+@media (max-width: 900px){
+  html body .video-panel,
+  html body .video-panel * {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    position: static !important;
+  }
+  html body .audio-panel{
+    display: block !important;
+    visibility: visible !important;
+  }
 }
-
+@media (min-width: 901px){
+  html body .video-panel{ display: flex !important; visibility: visible !important; }
+  html body .audio-panel{ display: none !important; }
+}
 </style>
+</head>
+<!-- VIDEÓPANEL – csak desktopra -->
 <div class="video-panel">
   <select id="videoSelect">
     <option value="Crf1xVh4BYA">Minta – Esküvő (Shorts)</option>
@@ -118,6 +118,112 @@
   </div>
 </div>
 
+<!-- AUDIOPANEL – csak mobilra -->
+<div class="audio-panel">
+  <select id="audioSelect">
+    <option value="Crf1xVh4BYA">Minta – Esküvő (Shorts)</option>
+    <option value="f_geI2Pgvuk">Édesapám emlékére</option>
+    <option value="2RY5bwiSR00">Születésnapra</option>
+    <option value="n-a7aFVrUdw">Édesanyámnak</option>
+    <option value="CsnNiX_LgQc">Pop – Szakítás (dinamikus)</option>
+    <option value="gXB9HPCJtfc">Pop – Elektronikus (angol)</option>
+    <option value="uE3ohlhlyZU">Testvérnek</option>
+    <option value="TGLKIQEjiQM">Angol – Romantikus</option>
+    <option value="YF-Onq_-F4g">Magyar – Romantikus</option>
+    <option value="yJkzbC4PWy4">Angol – Ars Poetica</option>
+    <option value="Z78APd89pW8">Magyar – Életút</option>
+    <option value="K489XbDIAmo">Pop – Biztató (angol)</option>
+    <option value="hkc58uSEosc">Pop – Biztató (magyar)</option>
+  </select>
+
+  <iframe id="audioFrame"
+          src="https://www.youtube.com/embed/2RY5bwiSR00"
+          allow="autoplay; encrypted-media"
+          allowfullscreen>
+  </iframe>
+
+  <div style="display: flex; justify-content: space-between;">
+    <button onclick="playAudio()">Lejátszás</button>
+    <button onclick="stopAudio()">Megállít</button>
+  </div>
+</div>
+
+<!-- STÍLUSOK – helyezd a <head> végére vagy ide is maradhat -->
+<style>
+  .video-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 600px;
+    height: auto;
+    background: #000;
+    color: #f1c40f;
+    padding: 10px;
+    border: 1px solid #f1c40f;
+    border-radius: 6px;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .video-panel select,
+  .video-panel button {
+    padding: 6px;
+    font-size: 0.9rem;
+    background: #111;
+    color: white;
+    border: 1px solid #ffcc00;
+  }
+
+  .video-panel iframe {
+    width: 100%;
+    height: 140px;
+    border: none;
+  }
+
+  .audio-panel {
+    display: none;
+  }
+
+  @media (max-width: 640px) {
+    .video-panel {
+      display: none !important;
+    }
+
+    .audio-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #000;
+      color: #f1c40f;
+      padding: 10px;
+      border: 1px solid #f1c40f;
+      border-radius: 6px;
+      width: 90vw;
+      margin: 0 auto;
+      z-index: 999;
+    }
+
+    .audio-panel select,
+    .audio-panel button {
+      padding: 6px;
+      font-size: 0.9rem;
+      background: #111;
+      color: white;
+      border: 1px solid #ffcc00;
+    }
+
+    .audio-panel iframe {
+      width: 100%;
+      height: 80px;
+      border: none;
+    }
+  }
+</style>
+
+<!-- JS -->
 <script>
   function playVideo() {
     const videoId = document.getElementById("videoSelect").value;
@@ -128,7 +234,18 @@
   function stopVideo() {
     document.getElementById("videoFrame").src = "";
   }
+
+  function playAudio() {
+    const audioId = document.getElementById("audioSelect").value;
+    const url = `https://www.youtube.com/embed/${audioId}?autoplay=1`;
+    document.getElementById("audioFrame").src = url;
+  }
+
+  function stopAudio() {
+    document.getElementById("audioFrame").src = "";
+  }
 </script>
+
 <div class="bg-vinyl">
 </div>
 <header class="topbar">

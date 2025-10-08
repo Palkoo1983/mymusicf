@@ -1450,3 +1450,12 @@ body.gold-theme::after{ content: none !important; }
     height: 120px !important;
   }
 }
+function playAudio() {
+  const audioId = document.getElementById("audioSelect").value;
+  const url = `https://www.youtube.com/embed/${audioId}?autoplay=1`;
+  document.getElementById("audioFrame").src = url;
+}
+
+function stopAudio() {
+  document.getElementById("audioFrame").src = "";
+}
