@@ -215,6 +215,36 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     opacity: 1 !important;
   }
 }
+/* ===== MOBILE: lemezfelirat tényleg középen, max 2 sor ===== */
+@media (max-width: 640px){
+  .vinyl-tabs .tab{
+    display: grid;            /* már így van → középre tesz mindent */
+    place-items: center;
+  }
+
+  .vinyl-tabs .tab span{
+    display: flex !important;               /* FLEX → középre igazítás */
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 90%;
+    margin: 0 auto;
+    text-align: center;
+
+    /* két sorig engedjük, aztán vágás (clamp nélkül, hogy középre tudjon állni) */
+    line-height: 1.1;
+    font-size: clamp(0.82rem, 2.8vw, 0.96rem);
+    max-height: calc(1.1em * 2 + 2px);      /* ≈ 2 sor */
+    overflow: hidden;
+
+    /* intelligens tördelés, ne darabolja fel a szavakat */
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    hyphens: auto !important;
+    text-wrap: balance;
+  }
+}
 
 
   </style>
