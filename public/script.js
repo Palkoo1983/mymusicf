@@ -521,3 +521,37 @@ document.addEventListener('DOMContentLoaded', () => {
   logoImg.style.width  = '100%';
   logoImg.style.height = '100%';
 });
+// ORDER "Minta leírások" – futás közben beszúrjuk a szükséges CSS-t
+(function injectOrderExamplesStyles(){
+  const id = 'order-example-hotfix';
+  const old = document.getElementById(id);
+  if (old) old.remove();
+  const css = `
+#order #enz-order-examples .chip,
+#order #enz-order-examples .chip * {
+  background: #000 !important;
+  color: #f3d27a !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  background-image: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  text-shadow: none !important;
+  border: 1px solid #d4af37 !important;
+  border-radius: 999px !important;
+  padding: 8px 12px !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
+  text-indent: 0 !important;
+  letter-spacing: normal !important;
+}
+#order #enz-order-examples .chip:hover,
+#order #enz-order-examples .chip:focus {
+  box-shadow: 0 0 0 2px rgba(243,210,122,.25) inset !important;
+  outline: none !important;
+}
+  `.trim();
+  const style = document.createElement('style');
+  style.id = id;
+  style.textContent = css;
+  document.head.appendChild(style);
+})();
