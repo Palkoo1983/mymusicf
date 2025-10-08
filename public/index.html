@@ -217,39 +217,9 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     opacity:1 !important;
   }
 }
-/* === Desktop: arany, tömött lejátszás/megállít gombok a videó panelen === */
-@media (min-width: 641px){
-  .video-panel .actions{
-    display:flex; gap:10px; justify-content:space-between;
-  }
-  .video-panel .actions button{
-    background: linear-gradient(180deg,#ffe7a3 0%,#f8d267 30%,#d4af37 60%,#b8891b 100%) !important;
-    color:#101010 !important;                 /* jó kontraszt a tömött aranyon */
-    border:1px solid #b8891b !important;
-    border-radius:999px;
-    padding:10px 16px;
-    font-weight:600;
-    letter-spacing:.2px;
-    text-shadow:none !important;
-    box-shadow: 0 4px 12px rgba(212,175,55,.25), inset 0 1px 0 rgba(255,255,255,.25);
-    transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;
-    cursor:pointer;
-  }
-  .video-panel .actions button:hover{
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(212,175,55,.35), inset 0 1px 0 rgba(255,255,255,.35);
-  }
-  .video-panel .actions button:active{
-    transform: translateY(0);
-    box-shadow: inset 0 2px 8px rgba(0,0,0,.25);
-  }
-  .video-panel .actions button:focus{
-    outline: 2px solid #f3d27a; outline-offset: 2px;
-  }
-}
+
   </style>
 </head>
-
 <body class="gold-theme no-intro">
   <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
   <div class="video-panel">
@@ -270,9 +240,8 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     </select>
     <iframe id="videoFrame" src="https://www.youtube.com/embed/2RY5bwiSR00" allow="autoplay; encrypted-media" allowfullscreen></iframe>
     <div style="display:flex; gap:8px; justify-content:space-between;">
-     <div class="actions">
-  <button type="button" onclick="playVideo()">Lejátszás</button>
-  <button type="button" onclick="stopVideo()">Megállít</button>
+    <button onclick="playVideo()"><span class="gold-text">Lejátszás</span></button>
+    <button onclick="stopVideo()"><span class="gold-text">Megállít</span></button>
 </div>
   </div>
 
