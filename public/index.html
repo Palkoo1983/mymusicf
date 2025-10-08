@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="hu" class="no-intro">
 <head>
-  <!-- Ikonok (nincs 404) -->
+  <!-- Ikonok -->
   <link rel="icon" type="image/svg+xml"
         href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="%23d4af37"/><circle cx="32" cy="32" r="18" fill="%230b0b0b"/><circle cx="32" cy="32" r="12" fill="%232a2a2a"/></svg>'>
   <link rel="shortcut icon" type="image/x-icon"
@@ -12,7 +12,7 @@
   <meta name="theme-color" content="#F3CD76" />
   <title>EnZenem – Egyedi, profi zenék rendezvényekre</title>
 
-  <!-- KRITIKUS INLINE CSS – végleges méret + csak spin, semmi intro/transition -->
+  <!-- KRITIKUS INLINE CSS – csak a lemez pörgéshez -->
   <style>
     .topbar{ min-height:120px; }
     .brand{ align-items:center; }
@@ -50,452 +50,511 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
 
-  <!-- CSS -->
+  <!-- FŐ CSS -->
   <link rel="stylesheet" href="style.css?v=black1" />
 
-  <!-- FEKETE HÁTTÉR – GOLDEN buildhez (a Te blokkod meghagyva) -->
-  <style id="bg-black-test">
-    :root{ --bg1:#000000; --bg2:#000000; }
-    html, body{ background:#000 !important; background-image:none !important; background-color:#000 !important; }
-    .bg-vinyl, .overlay, .background{ background:transparent !important; background-image:none !important; opacity:0 !important; pointer-events:none !important; }
+  <!-- UI JAVÍTÁSOK: fekete háttér + arany szöveg mindenhol, elrendezési fixek -->
+  <style id="gold-ui-fixes">
+    /* ===== Elrendezés: brand szöveg a logó ALATT/ALNÁL, nem mellette takarva ===== */
+    header.topbar .brand{
+      display:flex; flex-wrap:wrap; gap:14px; align-items:center;
+    }
+    header.topbar .brand > div{
+      display:flex; flex-direction:column; gap:4px; min-width:260px;
+    }
+    header.topbar .brand h1,
+    header.topbar .brand p{ margin:0; line-height:1.2; }
+
+    /* ===== Menü: középre igazítás, nagyobb felirat, hogy jól olvasható legyen ===== */
+    .vinyl-tabs{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+    .vinyl-tabs .tab{ font-size:1.06rem; padding:8px 14px; }
+    .vinyl-tabs .tab span.gold-text{ display:inline-block; line-height:1.2; text-align:center; }
+
+    /* ===== Video panel: fekete háttér + arany feliratok/keretek ===== */
+    .video-panel{
+      position:absolute; top:20px; right:20px; width:600px; background:#000; color:#d4af37;
+      padding:10px; border:1px solid #d4af37; border-radius:6px; z-index:999; display:flex; flex-direction:column; gap:8px;
+    }
+    .video-panel iframe{ width:100%; aspect-ratio:16/9; border:0; }
+    .video-panel select,
+    .video-panel button{
+      background:#000; color:#f3d27a; border:1px solid #d4af37; padding:8px 10px; border-radius:6px;
+    }
+    .video-panel select:focus,
+    .video-panel button:focus{ outline:2px solid #f3d27a; outline-offset:1px; }
+
+    /* ===== Olvashatóság: a “Hogyan működik” lépések függőlegesen, nem egysorban ===== */
+    .panel ol{ display:block; list-style:decimal; padding-left:1.25rem; margin:0.2rem 0; }
+    .panel ol li{ display:list-item; margin:0.35rem 0; }
+
+    /* ===== Formok: fekete háttér, arany betűk minden inputon/textarea/selecten ===== */
+    input, textarea, select{
+      background:#000 !important;
+      color:#f3d27a !important;
+      -webkit-text-fill-color:#f3d27a !important;
+      border:1px solid #d4af37 !important;
+      border-radius:8px; padding:10px 12px;
+    }
+    input::placeholder, textarea::placeholder{ color:#c8a956; opacity:0.85; }
+    select option{ color:#f3d27a; background:#000; } /* böngészőtől függően változó, de segít */
+
+    /* Minta leírás gombok (chips) – látszódjanak fekete/aranyon */
+    .examples .chip{
+      background:#000; color:#f3d27a; border:1px solid #d4af37; border-radius:999px; padding:8px 12px;
+    }
+
+    /* “Beleegyezem” checkbox igazítás: négyzet a szöveg ELŐTT, nem fedésben */
+    label.check{ display:flex; align-items:center; gap:8px; }
+    label.check input[type="checkbox"]{
+      appearance:auto; width:18px; height:18px; margin:0;
+      accent-color:#d4af37; /* modern böngészők */
+      border:1px solid #d4af37;
+    }
+
+    /* Referenciák cím középre */
+    #refs h2{ text-align:center; }
+
+    /* Kapcsolat grid: bal oldali blokk és űrlap egymás alatt mobilon */
+    .contact-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media (max-width:900px){ .contact-grid{ grid-template-columns:1fr; } }
+
+    /* Kontakt lista függőlegesen, hézaggal */
+    .contacts{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; }
+
+    /* Linkek/gombok örököljék az arany színt (ha valahol túlírt) */
+    a.gold-text, button .gold-text, .btn .gold-text{ -webkit-text-fill-color:transparent !important; }
+
+    /* Biztonság kedvéért: minden alap szöveg legyen arany, ha kimaradt volna egy elem */
+    main, header, footer, nav, section, .note, .price, .promo-banner, .form-status, label, .actions, small{
+      color:inherit;
+    }
   </style>
 </head>
 
 <body class="gold-theme no-intro">
-<style>
-.video-panel {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 600px;
-  height: auto;
-  background: #000;
-  color: #f1c40f;
-  padding: 10px;
-  border: 1px solid #f1c40f;
-  border-radius: 6px;
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-}
-</style>
+  <!-- VIDEO PANEL -->
+  <div class="video-panel">
+    <select id="videoSelect" class="gold-text">
+      <option value="Crf1xVh4BYA">Minta – Esküvő (Shorts)</option>
+      <option value="f_geI2Pgvuk">Édesapám emlékére</option>
+      <option value="2RY5bwiSR00">Születésnapra</option>
+      <option value="n-a7aFVrUdw">Édesanyámnak</option>
+      <option value="CsnNiX_LgQc">Pop – Szakítás (dinamikus)</option>
+      <option value="gXB9HPCJtfc">Pop – Elektronikus (angol)</option>
+      <option value="uE3ohlhlyZU">Testvérnek</option>
+      <option value="TGLKIQEjiQM">Angol – Romantikus</option>
+      <option value="YF-Onq_-F4g">Magyar – Romantikus</option>
+      <option value="yJkzbC4PWy4">Angol – Ars Poetica</option>
+      <option value="Z78APd89pW8">Magyar – Életút</option>
+      <option value="K489XbDIAmo">Pop – Biztató (angol)</option>
+      <option value="hkc58uSEosc">Pop – Biztató (magyar)</option>
+    </select>
 
-<div class="video-panel">
-  <select id="videoSelect" class="gold-text gold-shimmer">
-    <option value="Crf1xVh4BYA">Minta – Esküvő (Shorts)</option>
-    <option value="f_geI2Pgvuk">Édesapám emlékére</option>
-    <option value="2RY5bwiSR00">Születésnapra</option>
-    <option value="n-a7aFVrUdw">Édesanyámnak</option>
-    <option value="CsnNiX_LgQc">Pop – Szakítás (dinamikus)</option>
-    <option value="gXB9HPCJtfc">Pop – Elektronikus (angol)</option>
-    <option value="uE3ohlhlyZU">Testvérnek</option>
-    <option value="TGLKIQEjiQM">Angol – Romantikus</option>
-    <option value="YF-Onq_-F4g">Magyar – Romantikus</option>
-    <option value="yJkzbC4PWy4">Angol – Ars Poetica</option>
-    <option value="Z78APd89pW8">Magyar – Életút</option>
-    <option value="K489XbDIAmo">Pop – Biztató (angol)</option>
-    <option value="hkc58uSEosc">Pop – Biztató (magyar)</option>
-  </select>
+    <iframe id="videoFrame"
+            src="https://www.youtube.com/embed/2RY5bwiSR00"
+            allow="autoplay; encrypted-media"
+            allowfullscreen>
+    </iframe>
 
-  <iframe id="videoFrame"
-          src="https://www.youtube.com/embed/2RY5bwiSR00"
-          allow="autoplay; encrypted-media"
-          allowfullscreen>
-  </iframe>
-
-  <div style="display: flex; justify-content: space-between;">
-    <button onclick="playVideo()"><span class="gold-text gold-shimmer">Lejátszás</span></button>
-    <button onclick="stopVideo()"><span class="gold-text gold-shimmer">Megállít</span></button>
-  </div>
-</div>
-
-<script>
-  function playVideo() {
-    const videoId = document.getElementById("videoSelect").value;
-    const url = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-    document.getElementById("videoFrame").src = url;
-  }
-  function stopVideo() { document.getElementById("videoFrame").src = ""; }
-</script>
-
-<div class="bg-vinyl"></div>
-
-<header class="topbar">
-  <div class="brand">
-    <img src="/assets/enzenem_logo.svg" alt="EnZenem – arany bakelit" class="spinning-vinyl" width="100" height="100" decoding="async" fetchpriority="high">
-    <div>
-      <h1 class="gold-text gold-shimmer">EnZenem</h1>
-      <h1 class="gold-text gold-shimmer">Örök ajándék és emlék!</h1>
-      <p class="gold-text gold-shimmer">Egyedi, személyre szabott dalok esküvőkre, születésnapokra és minden különleges alkalomra!</p>
+    <div style="display:flex; gap:8px; justify-content:space-between;">
+      <button onclick="playVideo()"><span class="gold-text gold-shimmer">Lejátszás</span></button>
+      <button onclick="stopVideo()"><span class="gold-text gold-shimmer">Megállít</span></button>
     </div>
   </div>
 
-  <nav class="vinyl-tabs">
-    <button class="tab" data-target="intro"><span class="gold-text gold-shimmer">Bemutatkozás</span></button>
-    <button class="tab" data-target="pricing"><span class="gold-text gold-shimmer">Árak / Formátumok</span></button>
-    <button class="tab" data-target="howto"><span class="gold-text gold-shimmer">Hogyan működik</span></button>
-    <button class="tab" data-target="order"><span class="gold-text gold-shimmer">Megrendelés</span></button>
-    <button class="tab" data-target="refs"><span class="gold-text gold-shimmer">Referenciák</span></button>
-    <button class="tab" data-target="contact"><span class="gold-text gold-shimmer">Kapcsolat</span></button>
-  </nav>
-</header>
+  <script>
+    function playVideo() {
+      const videoId = document.getElementById("videoSelect").value;
+      const url = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+      document.getElementById("videoFrame").src = url;
+    }
+    function stopVideo() { document.getElementById("videoFrame").src = ""; }
+  </script>
 
-<main>
-  <section class="panel active" id="intro">
-    <h2 class="gold-text gold-shimmer">Bemutatkozás</h2>
-    <p class="gold-text gold-shimmer">
-      Professzionális, személyre szabott dalokat készítünk
-      <strong class="gold-text gold-shimmer">esküvőkre</strong>, <strong class="gold-text gold-shimmer">búcsúztatókra</strong>,
-      <strong class="gold-text gold-shimmer">születésnapokra</strong>, <strong class="gold-text gold-shimmer">házi bulikba</strong> és bármilyen más alkalomra.
-      A dal lehet megható, ünnepi vagy felszabadult – mindent a te igazi történetedhez és igényeidhez igazítunk.
-    </p>
+  <div class="bg-vinyl"></div>
 
-    <ul class="badges">
-      <li class="gold-text gold-shimmer">Formátumok: <strong class="gold-text gold-shimmer">MP3</strong>, <strong class="gold-text gold-shimmer">WAV</strong>, <strong class="gold-text gold-shimmer">MP4 (videóklip)</strong></li>
-      <li class="gold-text gold-shimmer">Stílusok: pop, rock, akusztikus, opera, filmzene, lo-fi, és még sok más</li>
-      <li class="gold-text gold-shimmer">Ének: <strong class="gold-text gold-shimmer">női</strong> vagy <strong class="gold-text gold-shimmer">férfi</strong></li>
-      <li class="gold-text gold-shimmer">Leírás: emlékeitek, tulajdonságaitok részletes elmondása</li>
-      <li class="gold-text gold-shimmer">Gyors átfutás és érthető kommunikáció</li>
-      <li class="gold-text gold-shimmer">Biztonságos weboldal: <strong class="gold-text gold-shimmer">SSL tanúsítvány</strong></li>
-      <li class="gold-text gold-shimmer">Biztonságos fizetés: Visa vagy MasterCard – hivatalos banki <strong class="gold-text gold-shimmer">VPOS</strong> terminál</li>
-      <li class="gold-text gold-shimmer">Bejegyzett vállalkozás (HU)</li>
-      <li class="gold-text gold-shimmer">Ha nem kapod meg 36 órán belül a dalod, <strong class="gold-text gold-shimmer">100% pénzvisszatérítés!</strong></li>
-    </ul>
-
-    <p class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Hogyan működik?</strong></p>
-    <p><a href="#howto" class="jump-link gold-text gold-shimmer" data-jump="howto">Kattints ide: Hogyan működik →</a></p>
-  </section>
-
-  <section class="panel" id="pricing">
-    <h2 class="gold-text gold-shimmer">Árak &amp; Formátumok</h2>
-    <div class="promo-banner"><span class="gold-text gold-shimmer">Nyitási akció — 30 napig — 30% kedvezmény</span></div>
-    <div class="cards">
-      <div class="card package" data-package="mp3">
-        <h3 class="gold-text gold-shimmer">MP3</h3>
-        <p class="gold-text gold-shimmer">Magas minőségű, univerzális zenei formátum. Minden eszközön lejátszható.</p>
-        <p class="price gold-text gold-shimmer">Alap csomag</p>
-        <p class="gold-text gold-shimmer"><span class="old-price gold-text gold-shimmer">15 000 Ft</span> → <span class="new-price gold-text gold-shimmer">10 500 Ft</span><br/><span class="promo-note gold-text gold-shimmer">Nyitási akció — 30 napig — 30%</span></p>
-      </div>
-      <div class="card package" data-package="mp4">
-        <h3 class="gold-text gold-shimmer">MP4</h3>
-        <p class="gold-text gold-shimmer">Egyszerű, ízléses, statikus <em class="gold-text gold-shimmer">videóklip</em> a zenéhez, felirattal.</p>
-        <p class="price gold-text gold-shimmer">Videó csomag</p>
-        <p class="gold-text gold-shimmer"><span class="old-price gold-text gold-shimmer">30 000 Ft</span> → <span class="new-price gold-text gold-shimmer">21 000 Ft</span><br/><span class="promo-note gold-text gold-shimmer">Nyitási akció — 30 napig — 30%</span></p>
-      </div>
-      <div class="card package" data-package="wav">
-        <h3 class="gold-text gold-shimmer">WAV</h3>
-        <p class="gold-text gold-shimmer">Stúdióminőség, veszteségmentes hang. Ajánlott hangtechnikához.</p>
-        <p class="price gold-text gold-shimmer">Prémium csomag</p>
-        <p class="gold-text gold-shimmer"><span class="old-price gold-text gold-shimmer">50 000 Ft</span> → <span class="new-price gold-text gold-shimmer">35 000 Ft</span><br/><span class="promo-note gold-text gold-shimmer">Nyitási akció — 30 napig — 30%</span></p>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel" id="howto" hidden>
-    <h2 class="gold-text gold-shimmer">Hogyan működik</h2>
-    <ol class="gold-text gold-shimmer">
-      <li class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Csomagválasztás</strong> – MP3 / MP4 / WAV</li>
-      <li class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Megrendelő űrlap</strong> – a <em class="gold-text gold-shimmer">Leírás</em> mezőt töltsd ki minél részletesebben</li>
-      <li class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Ellenőrzés & fizetés</strong> – bankkártya (VPOS)</li>
-      <li class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Kézbesítés</strong> – letöltési link e-mailben (kb. 36 óra)</li>
-    </ol>
-    <div class="note gold-text gold-shimmer">💡 A Leírás mezőbe írd: kinek készül, milyen alkalomra, stílus/hangulat, 3–5 kulcsszó, 1–2 konkrét emlék.</div>
-    <p class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Minta leírások:</strong></p>
-    <div class="examples">
-      <button class="chip" data-example="Születésnapra készül a dal a nővéremnek, Nóra 46 éves. Szereti a minimál techno és house zenét. Kulcsszavak: kitartás, logika, barátság, újrakezdés. Emlék: amikor együtt túráztunk a Csóványosra."><span class="gold-text gold-shimmer">🎂 Szülinap</span></button>
-      <button class="chip" data-example="Esküvőre készül a dal, Kata és Máté számára. Stílus: romantikus pop, lassú tempó. Kulcsszavak: hűség, közös jövő, naplemente. Emlék: első közös balatoni nyaralás."><span class="gold-text gold-shimmer">💍 Esküvő</span></button>
-      <button class="chip" data-example="Évfordulónkra szeretném meglepni a páromat. Közepes tempójú rock-pop, pozitív hangulat. Kulcsszavak: humor, közös főzés, macskánk Mázli. Emlék: amikor megkaptuk az első közös lakás kulcsát."><span class="gold-text gold-shimmer">💞 Évforduló</span></button>
-      <button class="chip" data-example="Búcsúztatóra készül a dal. Méltóságteljes, nyugodt hangulat, kevés dob. Kulcsszavak: hála, fény, emlékek. Emlék: gyerekkori közös zongorázás a nappaliban."><span class="gold-text gold-shimmer">🕯️ Búcsúztató</span></button>
-      <button class="chip" data-example="Céges évzáróra kérek dalt. Tempó: lendületes, modern pop/elektronikus. Kulcsszavak: csapatmunka, innováció, 2025 célok, humor. Emlék: a tavaszi hackathon győzelmünk."><span class="gold-text gold-shimmer">🏢 Céges rendezvény</span></button>
-      <button class="chip" data-example="Gyerekdal 6 éves kislánynak, Lilinek. Vidám, egyszerű dallam, könnyen énekelhető refrén. Kulcsszavak: unikornis, szivárvány, ovi-barátok. Emlék: közös biciklizés a parkban."><span class="gold-text gold-shimmer">🧸 Gyerekdal</span></button>
-      <button class="chip" data-example="Nyugdíjba vonuló kollégának. Hangulat: nosztalgikus, felemelő, akusztikus gitár+zongora. Kulcsszavak: segítőkészség, humor, 25 év, csapat. Emlék: a legendás hétfő reggeli kávék."><span class="gold-text gold-shimmer">🎓 Nyugdíj</span></button>
-      <button class="chip" data-example="Jobbulást kívánó dal. Lassan építkező, reményt adó hangulat. Kulcsszavak: kitartás, gyógyulás, melletted állunk. Emlék: nyári tábortűz melletti beszélgetések."><span class="gold-text gold-shimmer">❤️‍🩹 Jobbulást</span></button>
-      <button class="chip" data-example="Lánykéréshez készülő dal. Romantikus pop ballada, meleg hangzás. Kulcsszavak: közös jövő, „igen” pillanat, összetartozás. Emlék: első csók a Margitszigeten."><span class="gold-text gold-shimmer">💎 Lánykérés</span></button>
-      <button class="chip" data-example="Ballagásra/diplomához kérünk dalt. Tempó: közepes, motiváló. Kulcsszavak: álom, kitartás, új kezdet. Emlék: éjszakai tanulások és a záróvizsga napja."><span class="gold-text gold-shimmer">🎓 Ballagás/Diploma</span></button>
-    </div>
-    <p style="margin-top:14px">
-      <button id="howto-open-order" class="btn"><span class="gold-text gold-shimmer">Nyissuk meg az űrlapot</span></button>
-    </p>
-  </section>
-
-  <section class="panel" id="order">
-    <h2 class="gold-text gold-shimmer">Megrendelés</h2>
-    <form class="form" id="orderForm">
-      <input autocomplete="off" name="_hp" style="display:none" tabindex="-1" type="text"/>
-      <div class="grid">
-        <label class="gold-text gold-shimmer">Csomag (fizetés bankkártyával: Visa vagy MasterCard)
-          <select name="package" required="">
-            <option value="basic">Alap (MP3)</option>
-            <option value="video">Videó csomag (MP4)</option>
-            <option value="premium">Prémium (WAV)</option>
-          </select>
-        </label>
-        <label class="gold-text gold-shimmer">E-mail (ahová a linket küldjük)
-          <input name="email" placeholder="pelda@domain.hu" required="" type="email"/>
-        </label>
-        <label class="gold-text gold-shimmer">Esemény típusa
-          <select name="event_type" required="">
-            <option value="Esküvő">Esküvő</option>
-            <option value="Búcsúztatás">Búcsúztatás</option>
-            <option value="Születésnap">Születésnap</option>
-            <option value="Céges rendezvény">Céges rendezvény</option>
-            <option value="Egyéb">Egyéb</option>
-          </select>
-        </label>
-        <label class="gold-text gold-shimmer">Zenei stílus (írható is)
-          <input list="style-list" name="style" placeholder="pl. pop / rock / opera / saját megjelölés" required="" type="text"/>
-          <datalist id="style-list">
-            <option value="Pop">
-            <option value="Rock">
-            <option value="Opera">
-            <option value="Akusztikus">
-            <option value="Filmzene">
-            <option value="Lo-fi">
-          </datalist>
-        </label>
-        <label class="gold-text gold-shimmer">Ének
-          <select name="vocal" required="">
-            <option>Női</option>
-            <option>Férfi</option>
-          </select>
-        </label>
-        <label class="gold-text gold-shimmer">Nyelv (pl. magyar, angol, német, holland, stb..)
-          <input name="language" placeholder="pl. magyar / angol / német / holland / stb.." type="text"/>
-        </label>
-        <label class="full gold-text gold-shimmer">Leírás / miről szóljon a dal?
-          <textarea name="brief" placeholder="Milyen történetet, érzést, üzenetet közvetítsen a dal? Írd le az emlékeiteket, milyen az a személy(ek) akinek a dal íródik. Esküvőre a kettőtök történetét, születésnapra a személy tulajdonságait, életkorát, stb.." rows="5"></textarea>
-        </label>
-        <label class="check full gold-text gold-shimmer">
-          <input name="consent" required="" type="checkbox"/>
-          Beleegyezem, hogy az adataimat a megrendelés feldolgozásához felhasználjátok. (Részletek: <a href="adatkezeles.html" class="gold-text gold-shimmer" target="_blank">Adatkezelés</a>, <a href="aszf.html" class="gold-text gold-shimmer" target="_blank">ÁSZF</a>)
-        </label>
-      </div>
-      <div class="actions">
-        <button class="primary" type="submit"><span class="gold-text gold-shimmer">Megrendelés leadása</span></button>
-        <span class="form-status gold-text gold-shimmer" id="orderStatus"></span>
-      </div>
-    </form>
-    <p class="note gold-text gold-shimmer">Fizetés: előre. A megrendelés gomb megnyomásával átirányítunk a fizetési terminálra. Amennyiben sikeres a fizetés, csak akkor kapjuk meg a megrendelést.</p>
-  </section>
-
-  <section class="panel" id="refs">
-    <h2 class="gold-text gold-shimmer">Referenciák</h2>
-    <div class="embeds gold-text gold-shimmer">
-
-      <div class="embed small">
-        <div class="video">
-          <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen frameborder="0"
-                  src="https://www.youtube.com/embed/Crf1xVh4BYA"
-                  title="YouTube video player"></iframe>
-        </div>
-        <p class="gold-text gold-shimmer">Minta – Esküvő (Shorts)</p>
-      </div>
-
-      <div class="embed small">
-        <div class="video">
-          <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen frameborder="0"
-                  src="https://www.youtube.com/embed/f_geI2Pgvuk"
-                  title="YouTube video player"></iframe>
-        </div>
-        <p class="gold-text gold-shimmer">Édesapám emlékére</p>
-      </div>
-
-      <div class="embed small">
-        <div class="video">
-          <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
-                  src="https://www.youtube.com/embed/2RY5bwiSR00?rel=0&amp;modestbranding=1&amp;playsinline=1&amp;vq=hd1080"
-                  title="YouTube video player"></iframe>
-        </div>
-        <p class="gold-text gold-shimmer">Születésnapra</p>
-      </div>
-
-      <div class="embed small">
-        <div class="video">
-          <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen frameborder="0"
-                  src="https://www.youtube.com/embed/n-a7aFVrUdw"
-                  title="YouTube video player"></iframe>
-        </div>
-        <p class="gold-text gold-shimmer">Édesanyámnak</p>
-      </div>
-
-      <div class="embed small">
-        <div class="video">
-          <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen frameborder="0"
-                  src="https://www.youtube.com/embed/CsnNiX_LgQc"
-                  title="YouTube video player"></iframe>
-        </div>
-        <p class="gold-text gold-shimmer">Pop – Szakítás (dinamikus)</p>
-      </div>
-
-      <div class="embed small">
-        <div class="video">
-          <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen frameborder="0"
-                  src="https://www.youtube.com/embed/gXB9HPCJtfc"
-                  title="YouTube video player"></iframe>
-        </div>
-        <p class="gold-text gold-shimmer">Pop – Elektronikus (angol)</p>
-      </div>
-
-      <div class="embed small">
-        <div class="video">
-          <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen frameborder="0"
-                  src="https://www.youtube.com/embed/uE3ohlhlyZU"
-                  title="YouTube video player"></iframe>
-        </div>
-        <p class="gold-text gold-shimmer">Testvérnek</p>
-      </div>
-
-      <div class="embed small">
-        <div class="video">
-          <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen frameborder="0"
-                  src="https://www.youtube.com/embed/TGLKIQEjiQM"
-                  title="YouTube video player"></iframe>
-        </div>
-        <p class="gold-text gold-shimmer">Angol – Romantikus</p>
-      </div>
-
-      <div class="embed small">
-        <div class="video">
-          <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen frameborder="0"
-                  src="https://www.youtube.com/embed/YF-Onq_-F4g"
-                  title="YouTube video player"></iframe>
-        </div>
-        <p class="gold-text gold-shimmer">Magyar – Romantikus</p>
-      </div>
-
-      <div class="embed small">
-        <div class="video">
-          <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen frameborder="0"
-                  src="https://www.youtube.com/embed/yJkzbC4PWy4"
-                  title="YouTube video player"></iframe>
-        </div>
-        <p class="gold-text gold-shimmer">Angol – Ars Poetica</p>
-      </div>
-
-      <div class="embed small">
-        <div class="video">
-          <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen frameborder="0"
-                  src="https://www.youtube.com/embed/Z78APd89pW8"
-                  title="YouTube video player"></iframe>
-        </div>
-        <p class="gold-text gold-shimmer">Magyar – Életút</p>
-      </div>
-
-      <div class="embed small">
-        <div class="video">
-          <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen frameborder="0"
-                  src="https://www.youtube.com/embed/K489XbDIAmo"
-                  title="YouTube video player"></iframe>
-        </div>
-        <p class="gold-text gold-shimmer">Pop – Biztató (angol)</p>
-      </div>
-
-      <div class="embed small">
-        <div class="video">
-          <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen frameborder="0"
-                  src="https://www.youtube.com/embed/hkc58uSEosc"
-                  title="YouTube video player"></iframe>
-        </div>
-        <p class="gold-text gold-shimmer">Pop – Biztató (magyar)</p>
-      </div>
-
-    </div>
-  </section>
-
-  <section class="panel" id="contact">
-    <h2 class="gold-text gold-shimmer">Kapcsolat</h2>
-    <div class="contact-grid">
+  <header class="topbar">
+    <div class="brand">
+      <!-- LOGÓ -->
+      <img src="/assets/enzenem_logo.svg"
+          alt="EnZenem – arany bakelit"
+          class="spinning-vinyl"
+          width="100" height="100"
+          decoding="async" fetchpriority="high">
       <div>
-        <h3 class="gold-text gold-shimmer">Elérhetőségek</h3>
-        <ul class="contacts">
-          <li class="gold-text gold-shimmer">Név: Gombkötő Pál e.v.</li>
-          <li class="gold-text gold-shimmer">E-mail: <a href="mailto:info@enzenem.hu" class="gold-text gold-shimmer">info@enzenem.hu</a></li>
-          <li class="gold-text gold-shimmer">Telefon: +36 (30) 515 1352</li>
-          <li class="gold-text gold-shimmer">Székhely: 1097 Budapest Aszódi utca 8. 123.</li>
-        </ul>
+        <h1 class="gold-text gold-shimmer">EnZenem</h1>
+        <h1 class="gold-text gold-shimmer">Örök ajándék és emlék!</h1>
+        <p class="gold-text gold-shimmer">Egyedi, személyre szabott dalok esküvőkre, születésnapokra és minden különleges alkalomra!</p>
       </div>
-      <form class="form" id="contactForm">
+    </div>
+
+    <nav class="vinyl-tabs">
+      <button class="tab" data-target="intro"><span class="gold-text gold-shimmer">Bemutatkozás</span></button>
+      <button class="tab" data-target="pricing"><span class="gold-text gold-shimmer">Árak / Formátumok</span></button>
+      <button class="tab" data-target="howto"><span class="gold-text gold-shimmer">Hogyan működik</span></button>
+      <button class="tab" data-target="order"><span class="gold-text gold-shimmer">Megrendelés</span></button>
+      <button class="tab" data-target="refs"><span class="gold-text gold-shimmer">Referenciák</span></button>
+      <button class="tab" data-target="contact"><span class="gold-text gold-shimmer">Kapcsolat</span></button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="panel active" id="intro">
+      <h2 class="gold-text gold-shimmer">Bemutatkozás</h2>
+      <p class="gold-text gold-shimmer">
+        Professzionális, személyre szabott dalokat készítünk
+        <strong class="gold-text gold-shimmer">esküvőkre</strong>, <strong class="gold-text gold-shimmer">búcsúztatókra</strong>,
+        <strong class="gold-text gold-shimmer">születésnapokra</strong>, <strong class="gold-text gold-shimmer">házi bulikba</strong> és bármilyen más alkalomra.
+        A dal lehet megható, ünnepi vagy felszabadult – mindent a te igazi történetedhez és igényeidhez igazítunk.
+      </p>
+
+      <ul class="badges">
+        <li class="gold-text gold-shimmer">Formátumok: <strong class="gold-text gold-shimmer">MP3</strong>, <strong class="gold-text gold-shimmer">WAV</strong>, <strong class="gold-text gold-shimmer">MP4 (videóklip)</strong></li>
+        <li class="gold-text gold-shimmer">Stílusok: pop, rock, akusztikus, opera, filmzene, lo-fi, és még sok más</li>
+        <li class="gold-text gold-shimmer">Ének: <strong class="gold-text gold-shimmer">női</strong> vagy <strong class="gold-text gold-shimmer">férfi</strong></li>
+        <li class="gold-text gold-shimmer">Leírás: emlékeitek, tulajdonságaitok részletes elmondása</li>
+        <li class="gold-text gold-shimmer">Gyors átfutás és érthető kommunikáció</li>
+        <li class="gold-text gold-shimmer">Biztonságos weboldal: <strong class="gold-text gold-shimmer">SSL tanúsítvány</strong></li>
+        <li class="gold-text gold-shimmer">Biztonságos fizetés: Visa vagy MasterCard – hivatalos banki <strong class="gold-text gold-shimmer">VPOS</strong> terminál</li>
+        <li class="gold-text gold-shimmer">Bejegyzett vállalkozás (HU)</li>
+        <li class="gold-text gold-shimmer">Ha nem kapod meg 36 órán belül a dalod, <strong class="gold-text gold-shimmer">100% pénzvisszatérítés!</strong></li>
+      </ul>
+
+      <p class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Hogyan működik?</strong></p>
+      <p><a href="#howto" class="jump-link gold-text gold-shimmer" data-jump="howto">Kattints ide: Hogyan működik →</a></p>
+    </section>
+
+    <section class="panel" id="pricing">
+      <h2 class="gold-text gold-shimmer">Árak &amp; Formátumok</h2>
+      <div class="promo-banner"><span class="gold-text gold-shimmer">Nyitási akció — 30 napig — 30% kedvezmény</span></div>
+      <div class="cards">
+        <div class="card package" data-package="mp3">
+          <h3 class="gold-text gold-shimmer">MP3</h3>
+          <p class="gold-text gold-shimmer">Magas minőségű, univerzális zenei formátum. Minden eszközön lejátszható.</p>
+          <p class="price gold-text gold-shimmer">Alap csomag</p>
+          <p class="gold-text gold-shimmer"><span class="old-price gold-text gold-shimmer">15 000 Ft</span> → <span class="new-price gold-text gold-shimmer">10 500 Ft</span><br/><span class="promo-note gold-text gold-shimmer">Nyitási akció — 30 napig — 30%</span></p>
+        </div>
+        <div class="card package" data-package="mp4">
+          <h3 class="gold-text gold-shimmer">MP4</h3>
+          <p class="gold-text gold-shimmer">Egyszerű, ízléses, statikus <em class="gold-text gold-shimmer">videóklip</em> a zenéhez, felirattal.</p>
+          <p class="price gold-text gold-shimmer">Videó csomag</p>
+          <p class="gold-text gold-shimmer"><span class="old-price gold-text gold-shimmer">30 000 Ft</span> → <span class="new-price gold-text gold-shimmer">21 000 Ft</span><br/><span class="promo-note gold-text gold-shimmer">Nyitási akció — 30 napig — 30%</span></p>
+        </div>
+        <div class="card package" data-package="wav">
+          <h3 class="gold-text gold-shimmer">WAV</h3>
+          <p class="gold-text gold-shimmer">Stúdióminőség, veszteségmentes hang. Ajánlott hangtechnikához.</p>
+          <p class="price gold-text gold-shimmer">Prémium csomag</p>
+          <p class="gold-text gold-shimmer"><span class="old-price gold-text gold-shimmer">50 000 Ft</span> → <span class="new-price gold-text gold-shimmer">35 000 Ft</span><br/><span class="promo-note gold-text gold-shimmer">Nyitási akció — 30 napig — 30%</span></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="howto" hidden>
+      <h2 class="gold-text gold-shimmer">Hogyan működik</h2>
+      <ol class="gold-text gold-shimmer">
+        <li class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Csomagválasztás</strong> – MP3 / MP4 / WAV</li>
+        <li class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Megrendelő űrlap</strong> – a <em class="gold-text gold-shimmer">Leírás</em> mezőt töltsd ki minél részletesebben</li>
+        <li class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Ellenőrzés & fizetés</strong> – bankkártya (VPOS)</li>
+        <li class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Kézbesítés</strong> – letöltési link e-mailben (kb. 36 óra)</li>
+      </ol>
+
+      <div class="note gold-text gold-shimmer">💡 A Leírás mezőbe írd: kinek készül, milyen alkalomra, stílus/hangulat, 3–5 kulcsszó, 1–2 konkrét emlék.</div>
+
+      <p class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Minta leírások:</strong></p>
+      <div class="examples">
+        <button class="chip" data-example="Születésnapra készül a dal a nővéremnek, Nóra 46 éves. Szereti a minimál techno és house zenét. Kulcsszavak: kitartás, logika, barátság, újrakezdés. Emlék: amikor együtt túráztunk a Csóványosra."><span class="gold-text gold-shimmer">🎂 Szülinap</span></button>
+        <button class="chip" data-example="Esküvőre készül a dal, Kata és Máté számára. Stílus: romantikus pop, lassú tempó. Kulcsszavak: hűség, közös jövő, naplemente. Emlék: első közös balatoni nyaralás."><span class="gold-text gold-shimmer">💍 Esküvő</span></button>
+        <button class="chip" data-example="Évfordulónkra szeretném meglepni a páromat. Közepes tempójú rock-pop, pozitív hangulat. Kulcsszavak: humor, közös főzés, macskánk Mázli. Emlék: amikor megkaptuk az első közös lakás kulcsát."><span class="gold-text gold-shimmer">💞 Évforduló</span></button>
+        <button class="chip" data-example="Búcsúztatóra készül a dal. Méltóságteljes, nyugodt hangulat, kevés dob. Kulcsszavak: hála, fény, emlékek. Emlék: gyerekkori közös zongorázás a nappaliban."><span class="gold-text gold-shimmer">🕯️ Búcsúztató</span></button>
+        <button class="chip" data-example="Céges évzáróra kérek dalt. Tempó: lendületes, modern pop/elektronikus. Kulcsszavak: csapatmunka, innováció, 2025 célok, humor. Emlék: a tavaszi hackathon győzelmünk."><span class="gold-text gold-shimmer">🏢 Céges rendezvény</span></button>
+        <button class="chip" data-example="Gyerekdal 6 éves kislánynak, Lilinek. Vidám, egyszerű dallam, könnyen énekelhető refrén. Kulcsszavak: unikornis, szivárvány, ovi-barátok. Emlék: közös biciklizés a parkban."><span class="gold-text gold-shimmer">🧸 Gyerekdal</span></button>
+        <button class="chip" data-example="Nyugdíjba vonuló kollégának. Hangulat: nosztalgikus, felemelő, akusztikus gitár+zongora. Kulcsszavak: segítőkészség, humor, 25 év, csapat. Emlék: a legendás hétfő reggeli kávék."><span class="gold-text gold-shimmer">🎓 Nyugdíj</span></button>
+        <button class="chip" data-example="Jobbulást kívánó dal. Lassan építkező, reményt adó hangulat. Kulcsszavak: kitartás, gyógyulás, melletted állunk. Emlék: nyári tábortűz melletti beszélgetések."><span class="gold-text gold-shimmer">❤️‍🩹 Jobbulást</span></button>
+        <button class="chip" data-example="Lánykéréshez készülő dal. Romantikus pop ballada, meleg hangzás. Kulcsszavak: közös jövő, „igen” pillanat, összetartozás. Emlék: első csók a Margitszigeten."><span class="gold-text gold-shimmer">💎 Lánykérés</span></button>
+        <button class="chip" data-example="Ballagásra/diplomához kérünk dalt. Tempó: közepes, motiváló. Kulcsszavak: álom, kitartás, új kezdet. Emlék: éjszakai tanulások és a záróvizsga napja."><span class="gold-text gold-shimmer">🎓 Ballagás/Diploma</span></button>
+      </div>
+
+      <p style="margin-top:14px">
+        <button id="howto-open-order" class="btn"><span class="gold-text gold-shimmer">Nyissuk meg az űrlapot</span></button>
+      </p>
+    </section>
+
+    <section class="panel" id="order">
+      <h2 class="gold-text gold-shimmer">Megrendelés</h2>
+      <form class="form" id="orderForm">
         <input autocomplete="off" name="_hp" style="display:none" tabindex="-1" type="text"/>
-        <label class="gold-text gold-shimmer">Név
-          <input name="name" placeholder="Név" required="" type="text"/>
-        </label>
-        <label class="gold-text gold-shimmer">E-mail
-          <input name="email" placeholder="pelda@domain.hu" required="" type="email"/>
-        </label>
-        <label class="gold-text gold-shimmer">Üzenet
-          <textarea name="message" placeholder="Miben segíthetünk?" required="" rows="5"></textarea>
-        </label>
+        <div class="grid">
+          <label class="gold-text gold-shimmer">Csomag (fizetés bankkártyával: Visa vagy MasterCard)
+            <select name="package" required="">
+              <option value="basic">Alap (MP3)</option>
+              <option value="video">Videó csomag (MP4)</option>
+              <option value="premium">Prémium (WAV)</option>
+            </select>
+          </label>
+          <label class="gold-text gold-shimmer">E-mail (ahová a linket küldjük)
+            <input name="email" placeholder="pelda@domain.hu" required="" type="email"/>
+          </label>
+          <label class="gold-text gold-shimmer">Esemény típusa
+            <select name="event_type" required="">
+              <option value="Esküvő">Esküvő</option>
+              <option value="Búcsúztatás">Búcsúztatás</option>
+              <option value="Születésnap">Születésnap</option>
+              <option value="Céges rendezvény">Céges rendezvény</option>
+              <option value="Egyéb">Egyéb</option>
+            </select>
+          </label>
+          <label class="gold-text gold-shimmer">Zenei stílus (írható is)
+            <input list="style-list" name="style" placeholder="pl. pop / rock / opera / saját megjelölés" required="" type="text"/>
+            <datalist id="style-list">
+              <option value="Pop">
+              <option value="Rock">
+              <option value="Opera">
+              <option value="Akusztikus">
+              <option value="Filmzene">
+              <option value="Lo-fi">
+            </datalist>
+          </label>
+          <label class="gold-text gold-shimmer">Ének
+            <select name="vocal" required="">
+              <option>Női</option>
+              <option>Férfi</option>
+            </select>
+          </label>
+          <label class="gold-text gold-shimmer">Nyelv (pl. magyar, angol, német, holland, stb..)
+            <input name="language" placeholder="pl. magyar / angol / német / holland / stb.." type="text"/>
+          </label>
+          <label class="full gold-text gold-shimmer">Leírás / miről szóljon a dal?
+            <textarea name="brief" placeholder="Milyen történetet, érzést, üzenetet közvetítsen a dal? Írd le az emlékeiteket, milyen az a személy(ek) akinek a dal íródik. Esküvőre a kettőtök történetét, születésnapra a személy tulajdonságait, életkorát, stb.." rows="5"></textarea>
+          </label>
+          <label class="check full gold-text gold-shimmer">
+            <input name="consent" required="" type="checkbox"/>
+            Beleegyezem, hogy az adataimat a megrendelés feldolgozásához felhasználjátok. (Részletek: <a href="adatkezeles.html" class="gold-text gold-shimmer" target="_blank">Adatkezelés</a>, <a href="aszf.html" class="gold-text gold-shimmer" target="_blank">ÁSZF</a>)
+          </label>
+        </div>
         <div class="actions">
-          <button class="primary" type="submit"><span class="gold-text gold-shimmer">Üzenet küldése</span></button>
-          <span class="form-status gold-text gold-shimmer" id="contactStatus"></span>
+          <button class="primary" type="submit"><span class="gold-text gold-shimmer">Megrendelés leadása</span></button>
+          <span class="form-status gold-text gold-shimmer" id="orderStatus"></span>
         </div>
       </form>
+      <p class="note gold-text gold-shimmer">Fizetés: előre. A megrendelés gomb megnyomásával átirányítunk a fizetési terminálra. Amennyiben sikeres a fizetés, csak akkor kapjuk meg a megrendelést.</p>
+    </section>
+
+    <section class="panel" id="refs">
+      <h2 class="gold-text gold-shimmer">Referenciák</h2>
+      <div class="embeds gold-text gold-shimmer">
+
+        <div class="embed small">
+          <div class="video">
+            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen frameborder="0"
+                    src="https://www.youtube.com/embed/Crf1xVh4BYA"
+                    title="YouTube video player"></iframe>
+          </div>
+          <p class="gold-text gold-shimmer">Minta – Esküvő (Shorts)</p>
+        </div>
+
+        <div class="embed small">
+          <div class="video">
+            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen frameborder="0"
+                    src="https://www.youtube.com/embed/f_geI2Pgvuk"
+                    title="YouTube video player"></iframe>
+          </div>
+          <p class="gold-text gold-shimmer">Édesapám emlékére</p>
+        </div>
+
+        <div class="embed small">
+          <div class="video">
+            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
+                    src="https://www.youtube.com/embed/2RY5bwiSR00?rel=0&amp;modestbranding=1&amp;playsinline=1&amp;vq=hd1080"
+                    title="YouTube video player"></iframe>
+          </div>
+          <p class="gold-text gold-shimmer">Születésnapra</p>
+        </div>
+
+        <div class="embed small">
+          <div class="video">
+            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen frameborder="0"
+                    src="https://www.youtube.com/embed/n-a7aFVrUdw"
+                    title="YouTube video player"></iframe>
+          </div>
+          <p class="gold-text gold-shimmer">Édesanyámnak</p>
+        </div>
+
+        <div class="embed small">
+          <div class="video">
+            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen frameborder="0"
+                    src="https://www.youtube.com/embed/CsnNiX_LgQc"
+                    title="YouTube video player"></iframe>
+          </div>
+          <p class="gold-text gold-shimmer">Pop – Szakítás (dinamikus)</p>
+        </div>
+
+        <div class="embed small">
+          <div class="video">
+            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen frameborder="0"
+                    src="https://www.youtube.com/embed/gXB9HPCJtfc"
+                    title="YouTube video player"></iframe>
+          </div>
+          <p class="gold-text gold-shimmer">Pop – Elektronikus (angol)</p>
+        </div>
+
+        <div class="embed small">
+          <div class="video">
+            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen frameborder="0"
+                    src="https://www.youtube.com/embed/uE3ohlhlyZU"
+                    title="YouTube video player"></iframe>
+          </div>
+          <p class="gold-text gold-shimmer">Testvérnek</p>
+        </div>
+
+        <div class="embed small">
+          <div class="video">
+            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen frameborder="0"
+                    src="https://www.youtube.com/embed/TGLKIQEjiQM"
+                    title="YouTube video player"></iframe>
+          </div>
+          <p class="gold-text gold-shimmer">Angol – Romantikus</p>
+        </div>
+
+        <div class="embed small">
+          <div class="video">
+            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen frameborder="0"
+                    src="https://www.youtube.com/embed/YF-Onq_-F4g"
+                    title="YouTube video player"></iframe>
+          </div>
+          <p class="gold-text gold-shimmer">Magyar – Romantikus</p>
+        </div>
+
+        <div class="embed small">
+          <div class="video">
+            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen frameborder="0"
+                    src="https://www.youtube.com/embed/yJkzbC4PWy4"
+                    title="YouTube video player"></iframe>
+          </div>
+          <p class="gold-text gold-shimmer">Angol – Ars Poetica</p>
+        </div>
+
+        <div class="embed small">
+          <div class="video">
+            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen frameborder="0"
+                    src="https://www.youtube.com/embed/Z78APd89pW8"
+                    title="YouTube video player"></iframe>
+          </div>
+          <p class="gold-text gold-shimmer">Magyar – Életút</p>
+        </div>
+
+        <div class="embed small">
+          <div class="video">
+            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen frameborder="0"
+                    src="https://www.youtube.com/embed/K489XbDIAmo"
+                    title="YouTube video player"></iframe>
+          </div>
+          <p class="gold-text gold-shimmer">Pop – Biztató (angol)</p>
+        </div>
+
+        <div class="embed small">
+          <div class="video">
+            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen frameborder="0"
+                    src="https://www.youtube.com/embed/hkc58uSEosc"
+                    title="YouTube video player"></iframe>
+          </div>
+          <p class="gold-text gold-shimmer">Pop – Biztató (magyar)</p>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="panel" id="contact">
+      <h2 class="gold-text gold-shimmer">Kapcsolat</h2>
+      <div class="contact-grid">
+        <div>
+          <h3 class="gold-text gold-shimmer">Elérhetőségek</h3>
+          <ul class="contacts">
+            <li class="gold-text gold-shimmer">Név: Gombkötő Pál e.v.</li>
+            <li class="gold-text gold-shimmer">E-mail: <a href="mailto:info@enzenem.hu" class="gold-text gold-shimmer">info@enzenem.hu</a></li>
+            <li class="gold-text gold-shimmer">Telefon: +36 (30) 515 1352</li>
+            <li class="gold-text gold-shimmer">Székhely: 1097 Budapest Aszódi utca 8. 123.</li>
+          </ul>
+        </div>
+        <form class="form" id="contactForm">
+          <input autocomplete="off" name="_hp" style="display:none" tabindex="-1" type="text"/>
+          <label class="gold-text gold-shimmer">Név
+            <input name="name" placeholder="Név" required="" type="text"/>
+          </label>
+          <label class="gold-text gold-shimmer">E-mail
+            <input name="email" placeholder="pelda@domain.hu" required="" type="email"/>
+          </label>
+          <label class="gold-text gold-shimmer">Üzenet
+            <textarea name="message" placeholder="Miben segíthetünk?" required="" rows="5"></textarea>
+          </label>
+          <div class="actions">
+            <button class="primary" type="submit"><span class="gold-text gold-shimmer">Üzenet küldése</span></button>
+            <span class="form-status gold-text gold-shimmer" id="contactStatus"></span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <div class="overlay hidden" id="thanksOverlay">
+      <div class="overlay-card">
+        <h3 class="gold-text gold-shimmer" style="margin-top:0">Köszönjük!</h3>
+        <p class="gold-text gold-shimmer">Üzeneted elküldtük. Hamarosan válaszolunk.</p>
+        <button class="primary" id="overlayClose"><span class="gold-text gold-shimmer">Bezárás</span></button>
+      </div>
     </div>
-  </section>
+  </main>
 
-  <div class="overlay hidden" id="thanksOverlay">
-    <div class="overlay-card">
-      <h3 class="gold-text gold-shimmer" style="margin-top:0">Köszönjük!</h3>
-      <p class="gold-text gold-shimmer">Üzeneted elküldtük. Hamarosan válaszolunk.</p>
-      <button class="primary" id="overlayClose"><span class="gold-text gold-shimmer">Bezárás</span></button>
+  <footer>
+    <div class="footer-links">
+      <a href="aszf.html" target="_blank" class="gold-text gold-shimmer">ÁSZF</a>
+      <a href="adatkezeles.html" target="_blank" class="gold-text gold-shimmer">Adatkezelés</a>
     </div>
-  </div>
-</main>
+    <small class="gold-text gold-shimmer">© 2025 EnZenem – Minden jog fenntartva.</small>
+  </footer>
 
-<footer>
-  <div class="footer-links">
-    <a href="aszf.html" target="_blank" class="gold-text gold-shimmer">ÁSZF</a>
-    <a href="adatkezeles.html" target="_blank" class="gold-text gold-shimmer">Adatkezelés</a>
-  </div>
-  <small class="gold-text gold-shimmer">© 2025 EnZenem – Minden jog fenntartva.</small>
-</footer>
-
-<!-- ÁSZF / Adatkezelés elfogadó sáv -->
-<div aria-label="Felhasználási feltételek" aria-live="polite" class="consent" id="consent" role="dialog">
-  <p class="gold-text gold-shimmer">
-    Az oldal használatával elfogadod az
-    <a href="aszf.html" target="_blank" class="gold-text gold-shimmer">ÁSZF</a> és az
-    <a href="adatkezeles.html" target="_blank" class="gold-text gold-shimmer">Adatkezelés</a> feltételeit.
-  </p>
-  <button class="primary" id="consentAccept"><span class="gold-text gold-shimmer">Elfogadom</span></button>
-</div>
-
-<!-- Licenc figyelmeztetés (modál) -->
-<div aria-hidden="true" aria-label="Felhasználási feltételek" class="license-modal" id="license-warning" role="dialog" style="display:none">
-  <div class="license-card" role="document">
-    <h3 class="gold-text gold-shimmer" style="margin-top:0">Felhasználási feltételek – fontos tudnivalók</h3>
+  <!-- ÁSZF / Adatkezelés elfogadó sáv -->
+  <div aria-label="Felhasználási feltételek" aria-live="polite" class="consent" id="consent" role="dialog">
     <p class="gold-text gold-shimmer">
-      A megrendelt zeneszám felhasználása <strong class="gold-text gold-shimmer">kizárólag magáncélra</strong> engedélyezett:
-      családi, baráti körben és <strong class="gold-text gold-shimmer">kisebb, nem nyilvános rendezvényeken</strong>.
+      Az oldal használatával elfogadod az
+      <a href="aszf.html" target="_blank" class="gold-text gold-shimmer">ÁSZF</a> és az
+      <a href="adatkezeles.html" target="_blank" class="gold-text gold-shimmer">Adatkezelés</a> feltételeit.
     </p>
-    <ul style="margin:8px 0 12px 18px; line-height:1.5">
-      <li class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Nem engedélyezett</strong>: országos médiasugárzás, TV/radio/stream csatornák, nagy nyilvános események, reklámkampányok.</li>
-      <li class="gold-text gold-shimmer">Széles körű, üzleti vagy nyilvános felhasználás <strong class="gold-text gold-shimmer">külön, írásos engedélyhez és egyedi liszenszhez</strong> kötött.</li>
-      <li class="gold-text gold-shimmer">Kétség esetén kérj tőlünk visszaigazolást: <a href="mailto:info@enzenem.hu" class="gold-text gold-shimmer">info@enzenem.hu</a></li>
-    </ul>
-    <p class="gold-text gold-shimmer">Az <a href="aszf.html" target="_blank" class="gold-text gold-shimmer">ÁSZF</a> és az <a href="adatkezeles.html" target="_blank" class="gold-text gold-shimmer">Adatkezelés</a> elfogadása mellett kérjük, hogy ezeket a feltételeket is tudomásul vedd.</p>
-    <div class="actions" style="display:flex; gap:8px; margin-top:12px">
-      <button class="primary" id="licenseCancel" style="background:#2b2b2b"><span class="gold-text gold-shimmer">Mégse</span></button>
-      <button class="primary" id="licenseAccept"><span class="gold-text gold-shimmer">Elfogadom</span></button>
+    <button class="primary" id="consentAccept"><span class="gold-text gold-shimmer">Elfogadom</span></button>
+  </div>
+
+  <!-- Licenc figyelmeztetés (modál) -->
+  <div aria-hidden="true" aria-label="Felhasználási feltételek" class="license-modal" id="license-warning" role="dialog" style="display:none">
+    <div class="license-card" role="document">
+      <h3 class="gold-text gold-shimmer" style="margin-top:0">Felhasználási feltételek – fontos tudnivalók</h3>
+      <p class="gold-text gold-shimmer">
+        A megrendelt zeneszám felhasználása <strong class="gold-text gold-shimmer">kizárólag magáncélra</strong> engedélyezett:
+        családi, baráti körben és <strong class="gold-text gold-shimmer">kisebb, nem nyilvános rendezvényeken</strong>.
+      </p>
+      <ul style="margin:8px 0 12px 18px; line-height:1.5">
+        <li class="gold-text gold-shimmer"><strong class="gold-text gold-shimmer">Nem engedélyezett</strong>: országos médiasugárzás, TV/radio/stream csatornák, nagy nyilvános események, reklámkampányok.</li>
+        <li class="gold-text gold-shimmer">Széles körű, üzleti vagy nyilvános felhasználás <strong class="gold-text gold-shimmer">külön, írásos engedélyhez és egyedi liszenszhez</strong> kötött.</li>
+        <li class="gold-text gold-shimmer">Kétség esetén kérj tőlünk visszaigazolást: <a href="mailto:info@enzenem.hu" class="gold-text gold-shimmer">info@enzenem.hu</a></li>
+      </ul>
+      <p class="gold-text gold-shimmer">Az <a href="aszf.html" target="_blank" class="gold-text gold-shimmer">ÁSZF</a> és az <a href="adatkezeles.html" target="_blank" class="gold-text gold-shimmer">Adatkezelés</a> elfogadása mellett kérjük, hogy ezeket a feltételeket is tudomásul vedd.</p>
+      <div class="actions" style="display:flex; gap:8px; margin-top:12px">
+        <button class="primary" id="licenseCancel" style="background:#2b2b2b"><span class="gold-text gold-shimmer">Mégse</span></button>
+        <button class="primary" id="licenseAccept"><span class="gold-text gold-shimmer">Elfogadom</span></button>
+      </div>
     </div>
   </div>
-</div>
 
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
