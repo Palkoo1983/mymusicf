@@ -10,8 +10,8 @@
 
 /* --------- Színek --------- */
 :root{
-  --bg1:#2a1d08;   /* mélyebb kék */
-  --bg2:#5a4010;   /* közép kék */
+  --bg1:#0d1b2a;   /* mélyebb kék */
+  --bg2:#123254;   /* közép kék */
   --bg3:#16436f;   /* világosabb kék */
   --ink:#eef4fb;   /* fő szöveg – törtfehér kékes */
   --muted:#bcd0e6; /* halvány szöveg */
@@ -1487,18 +1487,4 @@ body.gold-theme::after{ content: none !important; }
     font-size: 14px !important;
     padding: 8px 10px !important;
   }
-}
-
-
-/* === GOLD BACKGROUND OVERRIDE (background only) === */
-html, body{
-  background-image:
-    radial-gradient(1200px 680px at 50% 10%,
-      rgba(238,189,64,0.22) 0%,
-      rgba(238,189,64,0.10) 32%,
-      rgba(238,189,64,0.00) 58%),
-    linear-gradient(165deg, var(--bg1) 0%, var(--bg2) 48%, var(--bg1) 100%) !important;
-  background-repeat: no-repeat, no-repeat !important;
-  background-size: 100% 100%, 100% 100% !important;
-  background-position: center top, center top !important;
 }
