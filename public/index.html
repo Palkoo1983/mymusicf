@@ -155,7 +155,7 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   -webkit-text-fill-color: #f3d27a !important;
   background-image: none !important;
 }
-/* ===== MOBILE TUNING (≤640px) – 2 sor × 3 oszlop ===== */
+/* ===== MOBILE TUNING (≤640px) – 2 sor × 3 oszlop, tojás NINCS ===== */
 @media (max-width: 640px){
 
   /* 1) Logó és brand blokk: közép */
@@ -170,28 +170,29 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     margin:0 auto; /* tényleg középre */
   }
 
-  /* 2) Menü: 3 oszlopos rács, kompakt hézagok */
+  /* 2) Menü: 3 oszlopos rács, kompakt hézag + kis oldalpadd */
   .vinyl-tabs{
     display:grid !important;
     grid-template-columns: repeat(3, 1fr);
-    gap:12px;
+    gap:10px;            /* 12 → 10 */
+    padding:0 8px;       /* új: számol a szélesség-képlettel */
     justify-items:center;
     align-items:center;
   }
 
-  /* 3) Kör lemezek mérete – hogy 3 kiférjen egymás mellé */
+  /* 3) Kör lemezek mérete – biztosan kifér 3 egymás mellett, nem vágja le */
   .vinyl-tabs .tab{
-    width: clamp(88px, 28vw, 118px) !important;
-    aspect-ratio: 1 / 1;          /* kör marad */
-    border-radius: 999px;
-    padding: 0 !important;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    width: clamp(82px, calc((100vw - 16px - 2*10px)/3), 108px) !important;
+    aspect-ratio: 1 / 1;          /* garantáltan kör, nem „tojás” */
+    border-radius:999px;
+    padding:0 !important;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
   }
 
-  /* 4) Feliratok pontos középre + skálázás */
+  /* 4) Feliratok középen + skálázás */
   .vinyl-tabs .tab span{
     display:flex !important;
     align-items:center !important;
@@ -200,7 +201,7 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     padding:0 6px;
     text-align:center;
     line-height:1.2;
-    font-size: clamp(0.85rem, 3.2vw, 1rem);
+    font-size: clamp(0.85rem, 3.0vw, 0.98rem);
     word-break: break-word;
   }
 
