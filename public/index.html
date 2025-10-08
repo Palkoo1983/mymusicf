@@ -12,27 +12,18 @@
   <meta name="theme-color" content="#F3CD76" />
   <title>EnZenem – Egyedi, profi zenék rendezvényekre</title>
 
-  <!-- KRITIKUS INLINE CSS – csak a lemez pörgéshez -->
+  <!-- Lemez pörgés – minimal inline -->
   <style>
     .topbar{ min-height:120px; }
     .brand{ align-items:center; }
     html{ scroll-behavior:auto; }
     html body.gold-theme .topbar .brand > img.spinning-vinyl{
-      image-rendering:auto !important;
-      backface-visibility:hidden !important;
-      will-change:transform !important;
-      transition:none !important;
       animation: spin 8s linear infinite !important;
-      width:100px !important;
-      height:100px !important;
-      margin:0 !important;
-      display:block !important;
+      width:100px !important; height:100px !important; margin:0 !important; display:block !important;
+      image-rendering:auto !important; backface-visibility:hidden !important; transition:none !important;
     }
     @media (max-width:768px){
-      html body.gold-theme .topbar .brand > img.spinning-vinyl{
-        width:92px !important;
-        height:92px !important;
-      }
+      html body.gold-theme .topbar .brand > img.spinning-vinyl{ width:92px !important; height:92px !important; }
     }
     @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
   </style>
@@ -40,9 +31,7 @@
   <!-- LOGÓ előtöltés -->
   <link rel="preload" as="image" href="/assets/enzenem_logo.svg" fetchpriority="high" />
   <style>
-    @media (max-width: 640px) {
-      .spinning-vinyl, .enzenem-logo { width: 120px !important; height: 120px !important; }
-    }
+    @media (max-width: 640px) { .spinning-vinyl, .enzenem-logo { width: 120px !important; height: 120px !important; } }
   </style>
 
   <!-- FONTOK -->
@@ -53,111 +42,82 @@
   <!-- FŐ CSS -->
   <link rel="stylesheet" href="style.css?v=black1" />
 
-  <!-- UI JAVÍTÁSOK: fekete háttér + arany szöveg mindenhol, elrendezési fixek -->
+  <!-- GOLD UI FIXES + mostani patchek -->
   <style id="gold-ui-fixes">
-    /* Brand blokk: szöveg külön oszlopban, egymás alatt */
-    header.topbar .brand{
-      display:flex; flex-wrap:wrap; gap:14px; align-items:center;
-    }
-    header.topbar .brand > div{
-      display:flex; flex-direction:column; gap:4px; min-width:260px;
-    }
-    header.topbar .brand h1,
-    header.topbar .brand p{ margin:0; line-height:1.2; }
+    /* Brand blokk – szövegek egymás alatt */
+    header.topbar .brand{ display:flex; flex-wrap:wrap; gap:14px; align-items:center; }
+    header.topbar .brand > div{ display:flex; flex-direction:column; gap:4px; min-width:260px; }
+    header.topbar .brand h1, header.topbar .brand p{ margin:0; line-height:1.2; }
 
-    /* Menü: középre, jó olvashatóság (méret NEM nő) */
+    /* Menü középre */
     .vinyl-tabs{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
     .vinyl-tabs .tab{ padding:8px 14px; }
     .vinyl-tabs .tab span.gold-text{ display:inline-block; line-height:1.2; text-align:center; }
 
-    /* Videó panel – vissza az EREDETI kb. méret/pozíció (nem lóg ki) */
-    .video-panel{
-      position:absolute; top:40px; right:20px; width:300px;
-      background:#000; color:#d4af37;
-      padding:10px; border:1px solid #d4af37; border-radius:6px; z-index:999;
-      display:flex; flex-direction:column; gap:8px;
-    }
+    /* Videó panel – régi méret, pozíciót JS számolja (lásd alul) */
+    .video-panel{ position:absolute; right:20px; width:300px; background:#000; color:#d4af37;
+      padding:10px; border:1px solid #d4af37; border-radius:6px; z-index:999; display:flex; flex-direction:column; gap:8px; }
     .video-panel iframe{ width:100%; aspect-ratio:16/9; border:0; }
-    /* A selectre NEM tesszük a .gold-text-et (különben eltűnik a szöveg) */
-    .video-panel select,
-    .video-panel button{
+    .video-panel select, .video-panel button{
       background:#000; color:#f3d27a; border:1px solid #d4af37; padding:8px 10px; border-radius:6px;
     }
     .video-panel select option{ color:#f3d27a; background:#000; }
-    .video-panel select:focus,
-    .video-panel button:focus{ outline:2px solid #f3d27a; outline-offset:1px; }
+    .video-panel select:focus, .video-panel button:focus{ outline:2px solid #f3d27a; outline-offset:1px; }
 
-    /* “Hogyan működik”: cím középen, lista függőlegesen */
+    /* “Hogyan működik”: cím középen, lista álló */
     #howto h2{ text-align:center; margin-bottom:8px; }
     #howto ol{ display:block; list-style:decimal; padding-left:1.25rem; margin:0.2rem auto; max-width:900px; }
     #howto ol li{ display:list-item; margin:0.35rem 0; }
 
-    /* Formok: FEKETE háttér, ARANY betű – magas specifikáció, hogy mindent leverjen */
+    /* Formok – fekete háttér, arany szöveg + autofill fix */
     html body input, html body textarea, html body select{
-      background:#000 !important;
-      color:#f3d27a !important;
-      -webkit-text-fill-color:#f3d27a !important;
-      border:1px solid #d4af37 !important;
-      border-radius:8px; padding:10px 12px;
+      background:#000 !important; color:#f3d27a !important; -webkit-text-fill-color:#f3d27a !important;
+      border:1px solid #d4af37 !important; border-radius:8px; padding:10px 12px;
     }
     html body input::placeholder, html body textarea::placeholder{ color:#c8a956; opacity:0.85; }
     html body select option{ color:#f3d27a; background:#000; }
-
-    /* “Minta leírások” – chip gombok mindenhol fekete/arany */
-    .examples .chip{
-      background:#000; color:#f3d27a; border:1px solid #d4af37; border-radius:999px; padding:8px 12px;
+    input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill{
+      -webkit-text-fill-color:#f3d27a !important; caret-color:#f3d27a !important;
+      box-shadow:0 0 0 1000px #000 inset !important; border:1px solid #d4af37 !important;
+    }
+    input:-webkit-autofill:focus, textarea:-webkit-autofill:focus, select:-webkit-autofill:focus{
+      -webkit-text-fill-color:#f3d27a !important; box-shadow:0 0 0 1000px #000 inset !important;
     }
 
-    /* “Beleegyezem” checkbox: négyzet a szöveg ELŐTT, nem fedésben */
+    /* Minta leírások – pill gombok: egyszerű arany szöveg (ne text-clip) */
+    .examples .chip, .examples .chip *{
+      background-image:none !important; -webkit-background-clip:initial !important; background-clip:initial !important;
+      color:#f3d27a !important; -webkit-text-fill-color:#f3d27a !important; text-shadow:none !important;
+    }
+    .examples .chip{ background:#000; border:1px solid #d4af37; border-radius:999px; padding:8px 12px; }
+
+    /* Checkbox igazítás */
     label.check{ display:flex; align-items:center; gap:8px; }
-    label.check input[type="checkbox"]{
-      appearance:auto; width:18px; height:18px; margin:0;
-      accent-color:#d4af37;
-      border:1px solid #d4af37;
-    }
+    label.check input[type="checkbox"]{ appearance:auto; width:18px; height:18px; margin:0; accent-color:#d4af37; border:1px solid #d4af37; }
 
-    /* Referenciák cím középen */
+    /* Referenciák cím középre */
     #refs h2{ text-align:center; }
 
-    /* Kapcsolat grid: mobilon egymás alatt */
+    /* Kapcsolat grid – mobilon alá */
     .contact-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
     @media (max-width:900px){ .contact-grid{ grid-template-columns:1fr; } }
-
-    /* Kontakt lista szépen függőlegesen */
     .contacts{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; }
 
-    /* Arany szöveg kényszerítése – ha valahol felülírnák */
+    /* Arany szöveg kényszerítése + menü fehér !important leverése */
     html body .gold-text{
       display:inline-block;
-      background-image: linear-gradient(
-        180deg,
-        #ffe7a3 0%,
-        #f8d267 22%,
-        #d4af37 45%,
-        #b8891b 60%,
-        #f3d27a 78%,
-        #a6791a 100%
-      );
-      -webkit-background-clip: text !important;
-      background-clip: text !important;
-      color: transparent !important;
-      -webkit-text-fill-color: transparent !important;
-      text-shadow:
-        0 0 8px rgba(255,215,130,0.35),
-        0 2px 6px rgba(0,0,0,0.45);
+      background-image:linear-gradient(180deg,#ffe7a3 0%,#f8d267 22%,#d4af37 45%,#b8891b 60%,#f3d27a 78%,#a6791a 100%);
+      -webkit-background-clip:text !important; background-clip:text !important;
+      color:transparent !important; -webkit-text-fill-color:transparent !important;
+      text-shadow:0 0 8px rgba(255,215,130,.35), 0 2px 6px rgba(0,0,0,.45);
     }
-    /* A menü korábbi fehér !important leverése */
-    html body .vinyl-tabs .tab span{
-      color: transparent !important;
-      -webkit-text-fill-color: transparent !important;
-    }
+    html body .vinyl-tabs .tab span{ color:transparent !important; -webkit-text-fill-color:transparent !important; }
   </style>
 </head>
 
 <body class="gold-theme no-intro">
-  <!-- VIDEO PANEL -->
+  <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
   <div class="video-panel">
-    <!-- FONTOS: nincs .gold-text a selecten -->
     <select id="videoSelect" aria-label="Videó választó">
       <option value="Crf1xVh4BYA">Minta – Esküvő (Shorts)</option>
       <option value="f_geI2Pgvuk">Édesapám emlékére</option>
@@ -173,13 +133,7 @@
       <option value="K489XbDIAmo">Pop – Biztató (angol)</option>
       <option value="hkc58uSEosc">Pop – Biztató (magyar)</option>
     </select>
-
-    <iframe id="videoFrame"
-            src="https://www.youtube.com/embed/2RY5bwiSR00"
-            allow="autoplay; encrypted-media"
-            allowfullscreen>
-    </iframe>
-
+    <iframe id="videoFrame" src="https://www.youtube.com/embed/2RY5bwiSR00" allow="autoplay; encrypted-media" allowfullscreen></iframe>
     <div style="display:flex; gap:8px; justify-content:space-between;">
       <button onclick="playVideo()"><span class="gold-text">Lejátszás</span></button>
       <button onclick="stopVideo()"><span class="gold-text">Megállít</span></button>
@@ -187,24 +141,30 @@
   </div>
 
   <script>
-    function playVideo() {
-      const videoId = document.getElementById("videoSelect").value;
-      const url = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-      document.getElementById("videoFrame").src = url;
-    }
-    function stopVideo() { document.getElementById("videoFrame").src = ""; }
+    function playVideo(){ const id=document.getElementById("videoSelect").value; document.getElementById("videoFrame").src=`https://www.youtube.com/embed/${id}?autoplay=1`; }
+    function stopVideo(){ document.getElementById("videoFrame").src=""; }
+    /* Pozicionálás: félúton a lap teteje és a menüsáv alja között */
+    (function positionVideoPanel(){
+      function place(){
+        const panel=document.querySelector('.video-panel');
+        const menu=document.querySelector('.vinyl-tabs');
+        if(!panel||!menu) return;
+        const menuBottom=menu.offsetTop+menu.offsetHeight;
+        const panelH=panel.offsetHeight||0;
+        const desiredTop=Math.max(8,(menuBottom-panelH)/2);
+        panel.style.top=desiredTop+'px';
+      }
+      window.addEventListener('load',place);
+      window.addEventListener('resize',place);
+      document.addEventListener('DOMContentLoaded',place);
+    })();
   </script>
 
   <div class="bg-vinyl"></div>
 
   <header class="topbar">
     <div class="brand">
-      <!-- LOGÓ -->
-      <img src="/assets/enzenem_logo.svg"
-          alt="EnZenem – arany bakelit"
-          class="spinning-vinyl"
-          width="100" height="100"
-          decoding="async" fetchpriority="high">
+      <img src="/assets/enzenem_logo.svg" alt="EnZenem – arany bakelit" class="spinning-vinyl" width="100" height="100" decoding="async" fetchpriority="high">
       <div>
         <h1 class="gold-text">EnZenem</h1>
         <h1 class="gold-text">Örök ajándék és emlék!</h1>
@@ -286,16 +246,16 @@
 
       <p class="gold-text"><strong class="gold-text">Minta leírások:</strong></p>
       <div class="examples">
-        <button class="chip" data-example="Születésnapra készül a dal a nővéremnek, Nóra 46 éves. Szereti a minimál techno és house zenét. Kulcsszavak: kitartás, logika, barátság, újrakezdés. Emlék: amikor együtt túráztunk a Csóványosra."><span class="gold-text">🎂 Szülinap</span></button>
-        <button class="chip" data-example="Esküvőre készül a dal, Kata és Máté számára. Stílus: romantikus pop, lassú tempó. Kulcsszavak: hűség, közös jövő, naplemente. Emlék: első közös balatoni nyaralás."><span class="gold-text">💍 Esküvő</span></button>
-        <button class="chip" data-example="Évfordulónkra szeretném meglepni a páromat. Közepes tempójú rock-pop, pozitív hangulat. Kulcsszavak: humor, közös főzés, macskánk Mázli. Emlék: amikor megkaptuk az első közös lakás kulcsát."><span class="gold-text">💞 Évforduló</span></button>
-        <button class="chip" data-example="Búcsúztatóra készül a dal. Méltóságteljes, nyugodt hangulat, kevés dob. Kulcsszavak: hála, fény, emlékek. Emlék: gyerekkori közös zongorázás a nappaliban."><span class="gold-text">🕯️ Búcsúztató</span></button>
-        <button class="chip" data-example="Céges évzáróra kérek dalt. Tempó: lendületes, modern pop/elektronikus. Kulcsszavak: csapatmunka, innováció, 2025 célok, humor. Emlék: a tavaszi hackathon győzelmünk."><span class="gold-text">🏢 Céges rendezvény</span></button>
-        <button class="chip" data-example="Gyerekdal 6 éves kislánynak, Lilinek. Vidám, egyszerű dallam, könnyen énekelhető refrén. Kulcsszavak: unikornis, szivárvány, ovi-barátok. Emlék: közös biciklizés a parkban."><span class="gold-text">🧸 Gyerekdal</span></button>
-        <button class="chip" data-example="Nyugdíjba vonuló kollégának. Hangulat: nosztalgikus, felemelő, akusztikus gitár+zongora. Kulcsszavak: segítőkészség, humor, 25 év, csapat. Emlék: a legendás hétfő reggeli kávék."><span class="gold-text">🎓 Nyugdíj</span></button>
-        <button class="chip" data-example="Jobbulást kívánó dal. Lassan építkező, reményt adó hangulat. Kulcsszavak: kitartás, gyógyulás, melletted állunk. Emlék: nyári tábortűz melletti beszélgetések."><span class="gold-text">❤️‍🩹 Jobbulást</span></button>
-        <button class="chip" data-example="Lánykéréshez készülő dal. Romantikus pop ballada, meleg hangzás. Kulcsszavak: közös jövő, „igen” pillanat, összetartozás. Emlék: első csók a Margitszigeten."><span class="gold-text">💎 Lánykérés</span></button>
-        <button class="chip" data-example="Ballagásra/diplomához kérünk dalt. Tempó: közepes, motiváló. Kulcsszavak: álom, kitartás, új kezdet. Emlék: éjszakai tanulások és a záróvizsga napja."><span class="gold-text">🎓 Ballagás/Diploma</span></button>
+        <button class="chip"><span>🎂 Szülinap</span></button>
+        <button class="chip"><span>💍 Esküvő</span></button>
+        <button class="chip"><span>💞 Évforduló</span></button>
+        <button class="chip"><span>🕯️ Búcsúztató</span></button>
+        <button class="chip"><span>🏢 Céges rendezvény</span></button>
+        <button class="chip"><span>🧸 Gyerekdal</span></button>
+        <button class="chip"><span>🎓 Nyugdíj</span></button>
+        <button class="chip"><span>❤️‍🩹 Jobbulást</span></button>
+        <button class="chip"><span>💎 Lánykérés</span></button>
+        <button class="chip"><span>🎓 Ballagás/Diploma</span></button>
       </div>
 
       <p style="margin-top:14px">
@@ -330,12 +290,7 @@
           <label class="gold-text">Zenei stílus (írható is)
             <input list="style-list" name="style" placeholder="pl. pop / rock / opera / saját megjelölés" required="" type="text"/>
             <datalist id="style-list">
-              <option value="Pop">
-              <option value="Rock">
-              <option value="Opera">
-              <option value="Akusztikus">
-              <option value="Filmzene">
-              <option value="Lo-fi">
+              <option value="Pop"><option value="Rock"><option value="Opera"><option value="Akusztikus"><option value="Filmzene"><option value="Lo-fi">
             </datalist>
           </label>
           <label class="gold-text">Ének
@@ -366,137 +321,20 @@
     <section class="panel" id="refs">
       <h2 class="gold-text">Referenciák</h2>
       <div class="embeds gold-text">
-
-        <div class="embed small">
-          <div class="video">
-            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen frameborder="0"
-                    src="https://www.youtube.com/embed/Crf1xVh4BYA"
-                    title="YouTube video player"></iframe>
-          </div>
-          <p class="gold-text">Minta – Esküvő (Shorts)</p>
-        </div>
-
-        <div class="embed small">
-          <div class="video">
-            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen frameborder="0"
-                    src="https://www.youtube.com/embed/f_geI2Pgvuk"
-                    title="YouTube video player"></iframe>
-          </div>
-          <p class="gold-text">Édesapám emlékére</p>
-        </div>
-
-        <div class="embed small">
-          <div class="video">
-            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
-                    src="https://www.youtube.com/embed/2RY5bwiSR00?rel=0&amp;modestbranding=1&amp;playsinline=1&amp;vq=hd1080"
-                    title="YouTube video player"></iframe>
-          </div>
-          <p class="gold-text">Születésnapra</p>
-        </div>
-
-        <div class="embed small">
-          <div class="video">
-            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen frameborder="0"
-                    src="https://www.youtube.com/embed/n-a7aFVrUdw"
-                    title="YouTube video player"></iframe>
-          </div>
-          <p class="gold-text">Édesanyámnak</p>
-        </div>
-
-        <div class="embed small">
-          <div class="video">
-            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen frameborder="0"
-                    src="https://www.youtube.com/embed/CsnNiX_LgQc"
-                    title="YouTube video player"></iframe>
-          </div>
-          <p class="gold-text">Pop – Szakítás (dinamikus)</p>
-        </div>
-
-        <div class="embed small">
-          <div class="video">
-            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen frameborder="0"
-                    src="https://www.youtube.com/embed/gXB9HPCJtfc"
-                    title="YouTube video player"></iframe>
-          </div>
-          <p class="gold-text">Pop – Elektronikus (angol)</p>
-        </div>
-
-        <div class="embed small">
-          <div class="video">
-            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen frameborder="0"
-                    src="https://www.youtube.com/embed/uE3ohlhlyZU"
-                    title="YouTube video player"></iframe>
-          </div>
-          <p class="gold-text">Testvérnek</p>
-        </div>
-
-        <div class="embed small">
-          <div class="video">
-            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen frameborder="0"
-                    src="https://www.youtube.com/embed/TGLKIQEjiQM"
-                    title="YouTube video player"></iframe>
-          </div>
-          <p class="gold-text">Angol – Romantikus</p>
-        </div>
-
-        <div class="embed small">
-          <div class="video">
-            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen frameborder="0"
-                    src="https://www.youtube.com/embed/YF-Onq_-F4g"
-                    title="YouTube video player"></iframe>
-          </div>
-          <p class="gold-text">Magyar – Romantikus</p>
-        </div>
-
-        <div class="embed small">
-          <div class="video">
-            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen frameborder="0"
-                    src="https://www.youtube.com/embed/yJkzbC4PWy4"
-                    title="YouTube video player"></iframe>
-          </div>
-          <p class="gold-text">Angol – Ars Poetica</p>
-        </div>
-
-        <div class="embed small">
-          <div class="video">
-            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen frameborder="0"
-                    src="https://www.youtube.com/embed/Z78APd89pW8"
-                    title="YouTube video player"></iframe>
-          </div>
-          <p class="gold-text">Magyar – Életút</p>
-        </div>
-
-        <div class="embed small">
-          <div class="video">
-            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen frameborder="0"
-                    src="https://www.youtube.com/embed/K489XbDIAmo"
-                    title="YouTube video player"></iframe>
-          </div>
-          <p class="gold-text">Pop – Biztató (angol)</p>
-        </div>
-
-        <div class="embed small">
-          <div class="video">
-            <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen frameborder="0"
-                    src="https://www.youtube.com/embed/hkc58uSEosc"
-                    title="YouTube video player"></iframe>
-          </div>
-          <p class="gold-text">Pop – Biztató (magyar)</p>
-        </div>
-
+        <!-- (beágyazások változatlanok) -->
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/Crf1xVh4BYA" title="YouTube video player"></iframe></div><p class="gold-text">Minta – Esküvő (Shorts)</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/f_geI2Pgvuk" title="YouTube video player"></iframe></div><p class="gold-text">Édesapám emlékére</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/2RY5bwiSR00?rel=0&amp;modestbranding=1&amp;playsinline=1&amp;vq=hd1080" title="YouTube video player"></iframe></div><p class="gold-text">Születésnapra</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/n-a7aFVrUdw" title="YouTube video player"></iframe></div><p class="gold-text">Édesanyámnak</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/CsnNiX_LgQc" title="YouTube video player"></iframe></div><p class="gold-text">Pop – Szakítás (dinamikus)</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/gXB9HPCJtfc" title="YouTube video player"></iframe></div><p class="gold-text">Pop – Elektronikus (angol)</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/uE3ohlhlyZU" title="YouTube video player"></iframe></div><p class="gold-text">Testvérnek</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/TGLKIQEjiQM" title="YouTube video player"></iframe></div><p class="gold-text">Angol – Romantikus</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/YF-Onq_-F4g" title="YouTube video player"></iframe></div><p class="gold-text">Magyar – Romantikus</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/yJkzbC4PWy4" title="YouTube video player"></iframe></div><p class="gold-text">Angol – Ars Poetica</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/Z78APd89pW8" title="YouTube video player"></iframe></div><p class="gold-text">Magyar – Életút</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/K489XbDIAmo" title="YouTube video player"></iframe></div><p class="gold-text">Pop – Biztató (angol)</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/hkc58uSEosc" title="YouTube video player"></iframe></div><p class="gold-text">Pop – Biztató (magyar)</p></div>
       </div>
     </section>
 
