@@ -1,3 +1,7 @@
+:root{
+  --bg1: #000000;
+  --bg2: #000000;
+}
 // --- Betöltéskor NE állítsa vissza a böngésző a korábbi görgetési pozíciót ---
 (function() {
   if ('scrollRestoration' in history) {
@@ -521,3 +525,20 @@ document.addEventListener('DOMContentLoaded', () => {
   logoImg.style.width  = '100%';
   logoImg.style.height = '100%';
 });
+/* ==== ABSZOLÚT FEKETE HÁTTÉR – GOLDEN buildhez ==== */
+html, body{
+  background: #000 !important;
+  background-color: #000 !important;
+  background-image: none !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+}
+
+/* Ha az overlay adna saját mintát, csak a mintát szedjük le, kattinthatóság marad */
+.bg-vinyl,
+.overlay,
+.background{
+  background: transparent !important;
+  background-image: none !important;
+  /* NINCS opacity/pointer-events módosítás, hogy minden kattintható maradjon */
+}
