@@ -1459,3 +1459,13 @@ function playAudio() {
 function stopAudio() {
   document.getElementById("audioFrame").src = "";
 }
+
+/* ===== Mobile audio-only override (minimal change) ===== */
+@media (max-width: 900px){
+  .video-panel{ display: none !important; }
+  .audio-panel{ display: block !important; }
+}
+@media (min-width: 901px){
+  .video-panel{ display: flex !important; }
+  .audio-panel{ display: none !important; }
+}

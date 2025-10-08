@@ -1,15 +1,3 @@
-
-// Remove no-fouc guard ASAP (logo only)
-(function(){ 
-  const drop = () => document.documentElement.classList.remove('no-fouc');
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', drop, {once:true});
-  } else {
-    drop();
-  }
-})();
-
-
 // --- Betöltéskor NE állítsa vissza a böngésző a korábbi görgetési pozíciót ---
 (function() {
   if ('scrollRestoration' in history) {
@@ -533,25 +521,3 @@ document.addEventListener('DOMContentLoaded', () => {
   logoImg.style.width  = '100%';
   logoImg.style.height = '100%';
 });
-
-
-// Runtime safeguard: toggle video/audio by viewport width
-(function(){
-  function applyAVToggle(){
-    const isMobile = window.matchMedia('(max-width: 900px)').matches;
-    const vp = document.querySelector('.video-panel');
-    const ap = document.querySelector('.audio-panel');
-    if (vp && ap){
-      vp.style.display = isMobile ? 'none' : 'flex';
-      ap.style.display = isMobile ? 'block' : 'none';
-    }
-  }
-  window.addEventListener('resize', applyAVToggle);
-  window.addEventListener('orientationchange', applyAVToggle);
-  // Run once on load
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', applyAVToggle, {once:true});
-  } else {
-    applyAVToggle();
-  }
-})();
