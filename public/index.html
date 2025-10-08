@@ -112,6 +112,29 @@
       text-shadow:0 0 8px rgba(255,215,130,.35), 0 2px 6px rgba(0,0,0,.45);
     }
     html body .vinyl-tabs .tab span{ color:transparent !important; -webkit-text-fill-color:transparent !important; }
+  /* ORDER – Minta leírások: legyen pontosan olyan, mint a Hogyan működik alatt */
+html body #order .examples .chip,
+html body #order .examples .chip * {
+  background:#000 !important;
+  color:#f3d27a !important;
+  -webkit-text-fill-color:#f3d27a !important;
+  background-image:none !important;
+  -webkit-background-clip:initial !important;
+  background-clip:initial !important;
+  text-shadow:none !important;
+  border:1px solid #d4af37 !important;
+  border-radius:999px !important;
+  padding:8px 12px !important;
+}
+
+/* Ha valami extra btn/chip stílus rárakódik, üssük le: */
+html body #order .examples .chip:hover,
+html body #order .examples .chip:focus {
+  filter:none !important;
+  box-shadow:0 0 0 2px rgba(243,210,122,.25) inset !important;
+  outline:none !important;
+}
+
   </style>
 </head>
 
