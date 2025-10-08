@@ -521,32 +521,3 @@ document.addEventListener('DOMContentLoaded', () => {
   logoImg.style.width  = '100%';
   logoImg.style.height = '100%';
 });
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  // 1) CSS-változók (a golden build ezeket használja a body-gradiensekhez)
-  const root = document.documentElement;
-  root.style.setProperty('--bg1', '#000000');
-  root.style.setProperty('--bg2', '#000000');
-
-  // 2) Body háttér kényszerítése (minden más fölé)
-  const b = document.body;
-  b.style.setProperty('background', '#000', 'important');
-  b.style.setProperty('backgroundImage', 'none', 'important');
-  b.style.setProperty('backgroundColor', '#000', 'important');
-
-  // 3) Minden ismert overlay réteg „lekapcsolása” (ha még aktív lenne)
-  const ov = document.querySelector('.bg-vinyl');
-  if (ov) {
-    ov.style.background = 'transparent';
-    ov.style.backgroundImage = 'none';
-    ov.style.opacity = '0';
-    ov.style.pointerEvents = 'none';
-  }
-  document.querySelectorAll('.overlay, .background').forEach(el => {
-    el.style.background = 'transparent';
-    el.style.backgroundImage = 'none';
-    el.style.opacity = '0';
-    el.style.pointerEvents = 'none';
-  });
-});
-</script>
