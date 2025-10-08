@@ -68,7 +68,14 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 
-<body class="gold-theme no-intro">
+<body class="gold-theme no-intro" style="
+  background:
+    radial-gradient(1000px 600px at 50% 12%, rgba(212,175,55,0.22) 0%, rgba(212,175,55,0.10) 35%, rgba(212,175,55,0.00) 60%) !important,
+    linear-gradient(160deg, #241a07 0%, #3b2a0a 35%, #6a4f14 65%, #b08d2a 100%) !important;
+  background-attachment: fixed, fixed !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-size: 100% 100%, 100% 100% !important;
+">
 <style>
 .video-panel {
   position: absolute;
@@ -87,6 +94,7 @@
   align-items: stretch;
   gap: 8px;
 }
+.bg-vinyl { background: transparent !important; }
 
 </style>
 <div class="video-panel">
