@@ -155,69 +155,67 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   -webkit-text-fill-color: #f3d27a !important;
   background-image: none !important;
 }
-//* ===== MOBILE: 3×2 rács, kisebb lemezek, garantált kör ===== */
+/* ===== MOBILE: 3×2 rács, nagyobb (de nem tojás) lemezek + okos felirat ===== */
 @media (max-width: 640px){
+
+  /* Rács: 3 oszlop, kompakt hézag + kis oldalpadd */
   .vinyl-tabs{
-    display:grid !important;
+    display: grid !important;
     grid-template-columns: repeat(3, 1fr);
-    gap:10px;
-    padding:0 8px;
-    justify-items:center;
-    align-items:center;
+    gap: 8px;
+    padding: 0 8px;
+    justify-items: center;
+    align-items: center;
   }
 
+  /* Körök – szélesség = magasság = --disc → nem lehet „tojás” */
   .vinyl-tabs .tab{
-    /* kisebb méret + fix kör: width = height = --disc */
-    --disc: clamp(80px, calc((100vw - 16px - 2*10px)/3), 104px);
+    --disc: clamp(84px, calc((100vw - 16px - 2*8px)/3), 112px);
     width: var(--disc) !important;
-    height: var(--disc) !important;     /* ← explicit! */
-    box-sizing: border-box;
+    height: var(--disc) !important;
     border-radius: 999px;
     padding: 0 !important;
     display: grid;
     place-items: center;
     overflow: hidden;
-
-    /* ha valami skálázta, mobilon lőjük ki */
-    transform: none !important;
+    transform: none !important; /* ha valami skálázta, lőjük ki mobilon */
+    box-sizing: border-box;
   }
 
+  /* Felirat középen, max 2 sor, normális tördelés */
   .vinyl-tabs .tab span{
-    display:flex; align-items:center; justify-content:center;
-    width:100%; height:100%;
-    padding:0 6px;
-    text-align:center;
-    line-height:1.2;
-    font-size: clamp(0.8rem, 2.8vw, 0.95rem);
-  }
-}
+    width: 90%;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 6px;
+    text-align: center;
+    line-height: 1.08;
+    font-size: clamp(0.82rem, 2.8vw, 0.96rem);
 
+    white-space: normal !important;
+    word-break: normal !important;       /* ne vágja ketté a szavakat */
+    overflow-wrap: anywhere !important;   /* szóköznél/pontnál törjön először */
+    hyphens: auto !important;             /* kötőjelezés (lang="hu") */
 
-  /* 4) Feliratok középen + skálázás */
-  .vinyl-tabs .tab span{
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:100%; height:100%;
-    padding:0 6px;
-    text-align:center;
-    line-height:1.2;
-    font-size: clamp(0.85rem, 3.0vw, 0.98rem);
-    word-break: break-word;
+    display: -webkit-box;                 /* 2 sor limit (ha támogatott) */
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
   }
 
-  /* 5) Samsungon is maradjon éles, arany szín */
+  /* Samsungon maradjon éles, arany */
   html.ua-samsung .vinyl-tabs .tab span{
-    background-image:none !important;
-    -webkit-background-clip:initial !important;
-    background-clip:initial !important;
-    color:#f3d27a !important;
-    -webkit-text-fill-color:#f3d27a !important;
-    text-shadow:none !important;
-    filter:none !important;
-    opacity:1 !important;
+    background-image: none !important;
+    -webkit-background-clip: initial !important;
+    background-clip: initial !important;
+    color: #f3d27a !important;
+    -webkit-text-fill-color: #f3d27a !important;
+    text-shadow: none !important;
+    filter: none !important;
+    opacity: 1 !important;
   }
 }
+
 
   </style>
 </head>
