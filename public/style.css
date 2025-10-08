@@ -1601,3 +1601,34 @@ html body nav a.gold-text{
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
 }
+/* === Samsung Internet (ua-samsung) – minden glow/clip OFF, éles arany szöveg === */
+html.ua-samsung * {
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+/* A gradient-clip-es arany szöveg helyett egyszerű, éles arany */
+html.ua-samsung .gold-text,
+html.ua-samsung .vinyl-tabs .tab span {
+  background-image: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  color: #f3d27a !important;
+  -webkit-text-fill-color: #f3d27a !important;
+}
+
+/* Chip/btn hover/focus belső fény ki, hogy ne mosson */
+html.ua-samsung .examples .chip:hover,
+html.ua-samsung .examples .chip:focus,
+html.ua-samsung #order #enz-order-examples .chip:hover,
+html.ua-samsung #order #enz-order-examples .chip:focus,
+html.ua-samsung .video-panel button:hover,
+html.ua-samsung .video-panel button:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Biztos, ami biztos: menüfülek felirata is sima arany */
+html.ua-samsung .vinyl-tabs .tab span {
+  color: #f3d27a !important;
+}
