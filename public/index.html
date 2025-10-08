@@ -50,7 +50,7 @@
 <style>
   /* ... egyéb stílusok ... */
 
-  @media (max-width: 900px) {
+  @media (max-width: 640px) {
     .spinning-vinyl,
     .enzenem-logo {
       width: 120px !important;
@@ -129,23 +129,7 @@
 
 <!-- STÍLUSOK – helyezd a <head> végére vagy ide is maradhat -->
 <style>
-  .video-panel {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 600px;
-    height: auto;
-    background: #000;
-    color: #f1c40f;
-    padding: 10px;
-    border: 1px solid #f1c40f;
-    border-radius: 6px;
-    z-index: 999;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
+  
 
   .video-panel select,
   .video-panel button {
@@ -162,27 +146,12 @@
     border: none;
   }
 
-  .audio-panel {
-    display: none;
-  }
+  
 
   @media (max-width: 900px) {
-    .video-panel {
-      display: none !important;
-    }
+    
 
-    .audio-panel { display: flex !important;
-      flex-direction: column;
-      gap: 8px;
-      background: #000;
-      color: #f1c40f;
-      padding: 10px;
-      border: 1px solid #f1c40f;
-      border-radius: 6px;
-      width: 90vw;
-      margin: 0 auto;
-      z-index: 999;
-    }
+    
 
     .audio-panel select,
     .audio-panel button {
@@ -199,6 +168,16 @@
       border: none;
     }
   }
+
+/* === Authoritative AV visibility === */
+.video-panel{ display:flex !important; }
+.audio-panel{ display:none !important; }
+
+@media (max-width:900px){
+  .video-panel{ display:none !important; }
+  .audio-panel{ display:flex !important; }
+}
+
 </style>
 
 <!-- JS -->
