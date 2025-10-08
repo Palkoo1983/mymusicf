@@ -1517,3 +1517,31 @@ body::before, body::after{
   background:none !important;
   background-image:none !important;
 }
+/* ==== FINAL: FORCE PURE BLACK BACKGROUND (DIAG) ==== */
+html, body{
+  background: #000 !important;
+  background-color: #000 !important;
+  background-image: none !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+}
+
+/* minden nagy overlay/textúra lekapcsolása */
+.bg-vinyl, .overlay, .background, .page-bg, .site-bg, .backdrop{
+  background: transparent !important;
+  background-image: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Samsung Internet fix – NE állítsa át más árnyalatra */
+@supports (-webkit-touch-callout: none) {
+  body { background-color: #000 !important; }
+}
+
+/* gold-theme előző rétegeinek biztos lenullázása */
+body.gold-theme{
+  background: #000 !important;
+  background-image: none !important;
+}
+body.gold-theme::after{ content: none !important; }
