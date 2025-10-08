@@ -246,6 +246,14 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   }
 }
 
+/* ===== MOBILE fix: menüfeliratok ne törjenek szavon belül ===== */
+@media (max-width: 640px){
+  .vinyl-tabs .tab span{
+    word-break: keep-all !important;    /* ne vágja szavakat */
+    overflow-wrap: normal !important;    /* csak szóköznél törjön */
+    hyphens: none !important;            /* kötőjelezés OFF */
+  }
+}
 
   </style>
 </head>
