@@ -1450,12 +1450,41 @@ body.gold-theme::after{ content: none !important; }
     height: 120px !important;
   }
 }
-function playAudio() {
-  const audioId = document.getElementById("audioSelect").value;
-  const url = `https://www.youtube.com/embed/${audioId}?autoplay=1`;
-  document.getElementById("audioFrame").src = url;
-}
 
-function stopAudio() {
-  document.getElementById("audioFrame").src = "";
+/* ===== CSS-only mobile 'audio' mode (no HTML/JS changes) ===== */
+@media (max-width: 900px){
+  /* Hide the YouTube video visually but keep it in DOM so sound can play after user action */
+  .video-panel iframe#videoFrame{
+    height: 0 !important;
+    min-height: 0 !important;
+    border: 0 !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+  }
+  /* Compact "audio bar" look */
+  .video-panel{
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: #000 !important;
+    color: #ffcc00 !important;
+    border: 1px solid #ffcc00 !important;
+    border-radius: 8px !important;
+    padding: 8px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    z-index: 10 !important;
+  }
+  .video-panel > div[style]{
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+  }
+  .video-panel select,
+  .video-panel button{
+    font-size: 14px !important;
+    padding: 8px 10px !important;
+  }
 }
