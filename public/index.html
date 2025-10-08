@@ -155,6 +155,63 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   -webkit-text-fill-color: #f3d27a !important;
   background-image: none !important;
 }
+/* ===== MOBILE TUNING (≤640px) ===== */
+@media (max-width: 640px){
+
+  /* 1) Logó és brand blokk: közép */
+  header.topbar .brand{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    text-align:center;
+  }
+  header.topbar .brand > img.spinning-vinyl{
+    margin:0 auto;            /* tényleg középre */
+  }
+
+  /* 2) Menü lemezek 20–30% nagyobbak + szebb rács */
+  .vinyl-tabs{
+    justify-content:center;
+    gap:14px;
+  }
+  /* Ha korábban fix px volt, ezt felülírjuk rugalmasra */
+  .vinyl-tabs .tab{
+    width: clamp(110px, 30vw, 140px) !important;   /* ~+25% */
+    height: clamp(110px, 30vw, 140px) !important;
+    padding:0 !important;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:999px;
+  }
+
+  /* 3) Feliratok pontos középre (vízszint + függőleg) */
+  .vinyl-tabs .tab span{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:100%; height:100%;
+    padding:0 8px;
+    text-align:center;
+    line-height:1.2;
+    /* ha túl kicsi volt a betű: */
+    font-size: clamp(0.9rem, 3.6vw, 1.05rem);
+  }
+
+  /* Samsungon is maradjon arany és éles */
+  html.ua-samsung .vinyl-tabs .tab span{
+    background-image:none !important;
+    -webkit-background-clip:initial !important;
+    background-clip:initial !important;
+    color:#f3d27a !important;
+    -webkit-text-fill-color:#f3d27a !important;
+    text-shadow:none !important;
+    filter:none !important;
+    opacity:1 !important;
+  }
+}
+
   </style>
 </head>
 
