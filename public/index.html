@@ -66,6 +66,32 @@
 
   <!-- CSS – RENDES, RENDER-BLOCKING LINK (nincs preload → nincs FOUC/villanás) -->
   <link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="style.css?v=gold-test" />
+
+<!-- FEKETE HÁTTÉR – GOLDEN buildhez -->
+<style id="bg-black-test">
+  /* 1) A golden build body-ja var(--bg1/--bg2)-t használ → írjuk feketére */
+  :root{
+    --bg1: #000000;
+    --bg2: #000000;
+  }
+
+  /* 2) Ha mégis maradna bármi gradient: tiltsuk le, legyen TÉNYLEG fekete */
+  html, body{
+    background: #000 !important;
+    background-image: none !important;
+    background-color: #000 !important;
+  }
+
+  /* 3) Ha az overlay takarná: (ha akarod, ezt a blokkot hagyhatod ki az első körben)
+     de teszthez érdemes bekapcsolni, hogy biztos lásd a feketét. */
+  .bg-vinyl, .overlay, .background{
+    background: transparent !important;
+    background-image: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+</style>
 
 <style id="bg-override">
   html body .bg-vinyl{ background: transparent !important; background-image: none !important; opacity:.12 !important; }
