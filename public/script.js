@@ -1,7 +1,3 @@
-:root{
-  --bg1: #000000;
-  --bg2: #000000;
-}
 // --- Betöltéskor NE állítsa vissza a böngésző a korábbi görgetési pozíciót ---
 (function() {
   if ('scrollRestoration' in history) {
