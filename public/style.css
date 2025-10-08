@@ -1566,3 +1566,38 @@ html, body{
   background-color:#0a0a0b; /* végtelen fekete alap, nincs alul csík */
   color:#f5f5f5; /* alap szöveg marad jól olvasható */
 }
+/* ==== GOLD TEXT – FORCE OVERRIDE (tabs, gombok, linkek) ==== */
+html body .gold-text{
+  display:inline-block; /* stabilabb background-clip */
+  background-image: linear-gradient(
+    180deg,
+    #ffe7a3 0%,
+    #f8d267 22%,
+    #d4af37 45%,
+    #b8891b 60%,
+    #f3d27a 78%,
+    #a6791a 100%
+  );
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important; /* Chrome/Safari */
+  text-shadow:
+    0 0 8px rgba(255,215,130,0.35),
+    0 2px 6px rgba(0,0,0,0.45);
+}
+
+/* Kifejezetten a menü-tab feliratára (felülírja a fehér !important-ot) */
+html body .vinyl-tabs .tab span.gold-text{
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Ha gombban/primary-ben is fehérre kényszerítik a színt */
+html body button .gold-text,
+html body .btn .gold-text,
+html body .primary .gold-text,
+html body nav a.gold-text{
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
