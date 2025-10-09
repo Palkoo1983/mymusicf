@@ -254,8 +254,27 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     hyphens: none !important;            /* kötőjelezés OFF */
   }
 }
-
   </style>
+<style>
+  @supports (-webkit-touch-callout: none) {
+    .vinyl-tabs {
+      grid-template-columns: repeat(3, 1fr) !important;
+      padding: 0 10px !important;
+      gap: 10px !important;
+      justify-items: center !important;
+      align-items: center !important;
+    }
+
+    .vinyl-tabs .tab {
+      --disc: 92px !important;       /* nagyobb lemez */
+      font-size: 13px !important;    /* nagyobb szöveg */
+      line-height: 1.2;
+      padding-top: 5px !important;   /* középre húzza a feliratot */
+      text-align: center;
+    }
+  }
+</style>
+
 </head>
 <body class="gold-theme no-intro">
   <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
