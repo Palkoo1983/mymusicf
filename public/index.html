@@ -1,5 +1,16 @@
 <!DOCTYPE html>
-<html lang="hu" class="no-intro">
+<script>
+  try {
+    if (/SamsungBrowser/i.test(navigator.userAgent)) {
+      document.write('<html lang="hu" class="no-intro ua-samsung">');
+    } else {
+      document.write('<html lang="hu" class="no-intro">');
+    }
+  } catch (e) {
+    document.write('<html lang="hu" class="no-intro">');
+  }
+</script>
+
 <head>
 <script>
     (function () {
