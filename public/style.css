@@ -1632,3 +1632,26 @@ html.ua-samsung .video-panel button:focus {
 html.ua-samsung .vinyl-tabs .tab span {
   color: #f3d27a !important;
 }
+/* ========== iOS / iPhone / iPad fix – csak ott hat ========== */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 640px) {
+    .vinyl-tabs {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 0 8px;
+      justify-items: center;
+      align-items: center;
+    }
+
+    .vinyl-tabs .tab {
+      --disc: 90px;
+      font-size: 13px;
+    }
+
+    .vinyl-tabs .tab span {
+      line-height: 1.1;
+      text-align: center;
+    }
+  }
+}
