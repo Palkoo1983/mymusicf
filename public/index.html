@@ -255,7 +255,6 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   }
 }
   </style>
-
 <style>
 @supports (-webkit-touch-callout: none) {
   .vinyl-tabs {
@@ -279,8 +278,8 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 
   .vinyl-tabs .tab span {
     display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     width: 90%;
     padding: 0 4px;
@@ -288,6 +287,7 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     font-size: 13px !important;
     max-height: calc(1.1em * 2);
     overflow: hidden;
+
     white-space: normal !important;
     word-break: keep-all !important;
     overflow-wrap: normal !important;
@@ -295,6 +295,7 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   }
 }
 </style>
+
 </head>
 <body class="gold-theme no-intro">
   <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
@@ -599,18 +600,5 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   </div>
 
   <script src="script.js"></script>
-<script>
-  document.querySelectorAll('.example-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const briefField = document.getElementById('brief');
-      if (briefField) {
-        setTimeout(() => {
-          briefField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100); // Kicsi várakozás a beírás után
-      }
-    });
-  });
-</script>
-
 </body>
 </html>
