@@ -156,14 +156,20 @@ function initHowTo() {
     gotoOrder();
 
     // majd pici késleltetéssel beállítjuk a placeholdert
-    setTimeout(() => {
-      const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-      if (desc) {
-        desc.placeholder = text;              // CSAK placeholder!
-        desc.dispatchEvent(new Event('input', { bubbles: true }));
-        try { desc.focus({ preventScroll: true }); } catch(_) {}
-      }
-    }, 140);
+   setTimeout(() => {
+  const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+  if (desc) {
+    desc.placeholder = text; // csak placeholder marad
+    desc.dispatchEvent(new Event('input', { bubbles: true }));
+    try { desc.focus({ preventScroll: true }); } catch(_) {}
+
+    // görgessen oda!
+    desc.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+  }
+}, 140);
   });
 }
 
