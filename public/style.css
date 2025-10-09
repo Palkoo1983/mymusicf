@@ -1734,7 +1734,7 @@ html.ua-samsung #contact button span {
   opacity: 1 !important;
   mix-blend-mode: normal !important;
 }
-/* Samsung Internet vizuális fixek */
+/* Samsung Internet vizuális fixek – FRISSÍTETT */
 
 html.ua-samsung .vinyl-tabs {
   display: grid !important;
@@ -1759,14 +1759,14 @@ html.ua-samsung .vinyl-tabs .tab {
 }
 
 html.ua-samsung .vinyl-tabs .tab span {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: bold;
   color: #f3d27a !important;
   -webkit-text-fill-color: #f3d27a !important;
   background: none !important;
   background-clip: initial !important;
   -webkit-background-clip: initial !important;
-  text-shadow: none !important;
+  text-shadow: 0 0 1px #000 !important;
   mix-blend-mode: normal !important;
   line-height: 1.1;
   text-align: center;
@@ -1778,12 +1778,12 @@ html.ua-samsung .order-btn,
 html.ua-samsung .submit-btn {
   color: #f3d27a !important;
   -webkit-text-fill-color: #f3d27a !important;
-  background: #222 !important;
+  background: #1a1a1a !important;
   border: 1px solid #f3d27a !important;
   font-weight: bold;
   font-size: 15px;
   padding: 10px 20px;
-  box-shadow: 0 0 4px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 4px rgba(255, 215, 0, 0.4);
 }
 
 html.ua-samsung #order-submit span,
@@ -1794,12 +1794,12 @@ html.ua-samsung #howto-open-order span {
   background: none !important;
   background-clip: initial !important;
   -webkit-background-clip: initial !important;
-  text-shadow: none !important;
+  text-shadow: 0 0 1px #000 !important;
   mix-blend-mode: normal !important;
   font-weight: bold;
 }
 
-/* Külön fix: megrendelés és kapcsolat gombok teljes szélességűek legyenek */
+/* Gombok szélesség beállítása */
 html.ua-samsung #order-submit,
 html.ua-samsung #contact-submit {
   width: 100%;
@@ -1807,5 +1807,3 @@ html.ua-samsung #contact-submit {
   margin: 0 auto;
   display: block;
 }
-
-
