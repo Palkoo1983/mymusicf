@@ -1708,3 +1708,12 @@ html.ua-samsung .vinyl-tabs .tab span {
 .video-panel .controls button:hover {
   background-color: var(--accent-dark);
 }
+.video-panel select,
+.video-panel button {
+  width: 100%;
+  padding: 1em;
+  font-weight: bold;
+  font-size: 16px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
