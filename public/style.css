@@ -1717,10 +1717,22 @@ html.ua-samsung .vinyl-tabs .tab span {
   border-radius: 8px;
   margin-bottom: 6px;
 }
-html.ua-samsung button#order-submit,
-html.ua-samsung button#contact-submit,
-html.ua-samsung button#howto-open-order {
-  color: white !important;
-  -webkit-text-fill-color: white !important;
+/* --- Samsung Internet fix: gradientet tiltjuk, látható szöveg --- */
+html.ua-samsung .gold-text,
+html.ua-samsung button .gold-text,
+html.ua-samsung .vinyl-tabs .tab span,
+html.ua-samsung #order button span,
+html.ua-samsung #contact button span {
+  background: none !important;
+  background-image: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  color: #f3d27a !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  text-shadow: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal !important;
 }
+
 
