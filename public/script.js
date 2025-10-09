@@ -6,12 +6,18 @@
   // azonnali (nem "smooth") felgörgetés a tetejére
   window.scrollTo(0, 0);
 })();
-/* Samsung Internet detektálás – csak osztályt rakunk a <html>-re */
+// Samsung Internet detektálás – biztosan lefut
 (function () {
-  if (/SamsungBrowser/i.test(navigator.userAgent)) {
-    document.documentElement.classList.add('ua-samsung');
+  try {
+    var ua = navigator.userAgent || "";
+    if (ua.includes("SamsungBrowser")) {
+      document.documentElement.classList.add("ua-samsung");
+    }
+  } catch (e) {
+    console.warn("Samsung detection error:", e);
   }
 })();
+
 
 /* =========================================================
    EnZenem – main script
