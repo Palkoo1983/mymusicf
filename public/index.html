@@ -601,15 +601,8 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   <script src="script.js"></script>
 <script>
   (function () {
-    try {
-      if (navigator.userAgent && /SamsungBrowser/i.test(navigator.userAgent)) {
-        document.documentElement.classList.add('ua-samsung');
-        console.log('Samsung detected: ua-samsung class added');
-      } else {
-        console.log('Not Samsung Browser');
-      }
-    } catch (e) {
-      console.warn('Samsung detection error:', e);
+    if (/SamsungBrowser/i.test(navigator.userAgent)) {
+      document.documentElement.classList.add('ua-samsung');
     }
   })();
 </script>
