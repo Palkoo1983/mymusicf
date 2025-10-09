@@ -1717,3 +1717,10 @@ html.ua-samsung .vinyl-tabs .tab span {
   border-radius: 8px;
   margin-bottom: 6px;
 }
+/* Samsung Internet fix: gombfeliratok visszaállítása */
+html.ua-samsung #order-submit,
+html.ua-samsung #contact-submit,
+html.ua-samsung #howto-open-order {
+  color: white !important;
+  -webkit-text-fill-color: white !important;
+}
