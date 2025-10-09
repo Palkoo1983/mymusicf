@@ -1,53 +1,614 @@
 <!DOCTYPE html>
 <html lang="hu" class="no-intro">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EnZenem.hu – Samsung fix</title>
+<script>
+  try {
+    if (/SamsungBrowser/i.test(navigator.userAgent)) {
+      document.documentElement.classList.add('ua-samsung');
+      console.log('✅ Samsung detektálva');
+    }
+  } catch(e) { console.warn(e); }
+</script>
+
+  <!-- Ikonok -->
+  <link rel="icon" type="image/svg+xml"
+        href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="%23d4af37"/><circle cx="32" cy="32" r="18" fill="%230b0b0b"/><circle cx="32" cy="32" r="12" fill="%232a2a2a"/></svg>'>
+  <link rel="shortcut icon" type="image/x-icon"
+        href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="/>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#F3CD76" />
+  <title>EnZenem – Egyedi, profi zenék rendezvényekre</title>
+
+  <!-- Lemez pörgés – minimal inline -->
   <style>
-    /* 1. Megelőzzük a "villanást" Samsungon – addig rejtjük el a tartalmat */
-    html.samsung-preload body {
-      visibility: hidden;
+    .topbar{ min-height:120px; }
+    .brand{ align-items:center; }
+    html{ scroll-behavior:auto; }
+    html body.gold-theme .topbar .brand > img.spinning-vinyl{
+      animation: spin 8s linear infinite !important;
+      width:100px !important; height:100px !important; margin:0 !important; display:block !important;
+      image-rendering:auto !important; backface-visibility:hidden !important; transition:none !important;
     }
-
-    html.ua-samsung body {
-      visibility: visible;
+    @media (max-width:768px){
+      html body.gold-theme .topbar .brand > img.spinning-vinyl{ width:92px !important; height:92px !important; }
     }
-
-    /* --- Samsung Internet fix: gradientet tiltjuk, látható szöveg --- */
-    html.ua-samsung .gold-text,
-    html.ua-samsung button .gold-text,
-    html.ua-samsung .vinyl-tabs .tab span,
-    html.ua-samsung #order button span,
-    html.ua-samsung #contact button span {
-      background: none !important;
-      background-image: none !important;
-      -webkit-background-clip: initial !important;
-      background-clip: initial !important;
-      color: #f3d27a !important;
-      -webkit-text-fill-color: #f3d27a !important;
-      text-shadow: none !important;
-      filter: none !important;
-      opacity: 1 !important;
-      mix-blend-mode: normal !important;
-    }
+    @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
   </style>
-  <script>
-    try {
-      document.documentElement.classList.add('samsung-preload');
-      if (/SamsungBrowser/i.test(navigator.userAgent)) {
-        document.documentElement.classList.add('ua-samsung');
-        console.log('✅ Samsung detektálva');
-      }
-      document.documentElement.classList.remove('samsung-preload');
-    } catch(e) {
-      console.warn(e);
+
+  <!-- LOGÓ előtöltés -->
+  <link rel="preload" as="image" href="/assets/enzenem_logo.svg" fetchpriority="high" />
+  <style>
+    @media (max-width: 640px) { .spinning-vinyl, .enzenem-logo { width: 120px !important; height: 120px !important; } }
+  </style>
+
+  <!-- FONTOK -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- FŐ CSS -->
+  <link rel="stylesheet" href="style.css?v=black1" />
+
+  <!-- GOLD UI FIXES + mostani patchek -->
+  <style id="gold-ui-fixes">
+    /* Brand blokk – szövegek egymás alatt */
+    header.topbar .brand{ display:flex; flex-wrap:wrap; gap:14px; align-items:center; }
+    header.topbar .brand > div{ display:flex; flex-direction:column; gap:4px; min-width:260px; }
+    header.topbar .brand h1, header.topbar .brand p{ margin:0; line-height:1.2; }
+
+    /* Menü középre */
+    .vinyl-tabs{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+    .vinyl-tabs .tab{ padding:8px 14px; }
+    .vinyl-tabs .tab span.gold-text{ display:inline-block; line-height:1.2; text-align:center; }
+
+    /* Videó panel – régi méret, pozíciót JS számolja (lásd alul) */
+    .video-panel{ position:absolute; right:20px; width:300px; background:#000; color:#d4af37;
+      padding:10px; border:1px solid #d4af37; border-radius:6px; z-index:999; display:flex; flex-direction:column; gap:8px; }
+    .video-panel iframe{ width:100%; aspect-ratio:16/9; border:0; }
+    .video-panel select, .video-panel button{
+      background:#000; color:#f3d27a; border:1px solid #d4af37; padding:8px 10px; border-radius:6px;
     }
-  </script>
+    .video-panel select option{ color:#f3d27a; background:#000; }
+    .video-panel select:focus, .video-panel button:focus{ outline:2px solid #f3d27a; outline-offset:1px; }
+
+    /* “Hogyan működik”: cím középen, lista álló */
+    #howto h2{ text-align:center; margin-bottom:8px; }
+    #howto ol{ display:block; list-style:decimal; padding-left:1.25rem; margin:0.2rem auto; max-width:900px; }
+    #howto ol li{ display:list-item; margin:0.35rem 0; }
+
+    /* Formok – fekete háttér, arany szöveg + autofill fix */
+    html body input, html body textarea, html body select{
+      background:#000 !important; color:#f3d27a !important; -webkit-text-fill-color:#f3d27a !important;
+      border:1px solid #d4af37 !important; border-radius:8px; padding:10px 12px;
+    }
+    html body input::placeholder, html body textarea::placeholder{ color:#c8a956; opacity:0.85; }
+    html body select option{ color:#f3d27a; background:#000; }
+    input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill{
+      -webkit-text-fill-color:#f3d27a !important; caret-color:#f3d27a !important;
+      box-shadow:0 0 0 1000px #000 inset !important; border:1px solid #d4af37 !important;
+    }
+    input:-webkit-autofill:focus, textarea:-webkit-autofill:focus, select:-webkit-autofill:focus{
+      -webkit-text-fill-color:#f3d27a !important; box-shadow:0 0 0 1000px #000 inset !important;
+    }
+
+    /* Minta leírások – pill gombok: egyszerű arany szöveg (ne text-clip) */
+    .examples .chip, .examples .chip *{
+      background-image:none !important; -webkit-background-clip:initial !important; background-clip:initial !important;
+      color:#f3d27a !important; -webkit-text-fill-color:#f3d27a !important; text-shadow:none !important;
+    }
+    .examples .chip{ background:#000; border:1px solid #d4af37; border-radius:999px; padding:8px 12px; }
+
+    /* Checkbox igazítás */
+    label.check{ display:flex; align-items:center; gap:8px; }
+    label.check input[type="checkbox"]{ appearance:auto; width:18px; height:18px; margin:0; accent-color:#d4af37; border:1px solid #d4af37; }
+
+    /* Referenciák cím középre */
+    #refs h2{ text-align:center; }
+
+    /* Kapcsolat grid – mobilon alá */
+    .contact-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media (max-width:900px){ .contact-grid{ grid-template-columns:1fr; } }
+    .contacts{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; }
+
+    /* Arany szöveg kényszerítése + menü fehér !important leverése */
+    html body .gold-text{
+      display:inline-block;
+      background-image:linear-gradient(180deg,#ffe7a3 0%,#f8d267 22%,#d4af37 45%,#b8891b 60%,#f3d27a 78%,#a6791a 100%);
+      -webkit-background-clip:text !important; background-clip:text !important;
+      color:transparent !important; -webkit-text-fill-color:transparent !important;
+      text-shadow:0 0 8px rgba(255,215,130,.35), 0 2px 6px rgba(0,0,0,.45);
+    }
+    html body .vinyl-tabs .tab span{ color:transparent !important; -webkit-text-fill-color:transparent !important; }
+  /* ORDER – Minta leírások: legyen pontosan olyan, mint a Hogyan működik alatt */
+html body #order .examples .chip,
+html body #order .examples .chip * {
+  background:#000 !important;
+  color:#f3d27a !important;
+  -webkit-text-fill-color:#f3d27a !important;
+  background-image:none !important;
+  -webkit-background-clip:initial !important;
+  background-clip:initial !important;
+  text-shadow:none !important;
+  border:1px solid #d4af37 !important;
+  border-radius:999px !important;
+  padding:8px 12px !important;
+}
+
+/* Ha valami extra btn/chip stílus rárakódik, üssük le: */
+html body #order .examples .chip:hover,
+html body #order .examples .chip:focus {
+  filter:none !important;
+  box-shadow:0 0 0 2px rgba(243,210,122,.25) inset !important;
+  outline:none !important;
+}
+/* === Samsung Internet: menüfülek felirata legyen látható, sima arany === */
+html.ua-samsung body .vinyl-tabs .tab span,
+html.ua-samsung body .vinyl-tabs .tab span.gold-text {
+  background-image: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  color: #f3d27a !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  text-shadow: none !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+}
+
+/* Aktív/hover állapotban se tűnjön el */
+html.ua-samsung body .vinyl-tabs .tab:hover span,
+html.ua-samsung body .vinyl-tabs .tab.active span {
+  color: #f3d27a !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  background-image: none !important;
+}
+/* ===== MOBILE: 3×2 rács, nagyobb (de nem tojás) lemezek + okos felirat ===== */
+@media (max-width: 640px){
+
+  /* Rács: 3 oszlop, kompakt hézag + kis oldalpadd */
+  .vinyl-tabs{
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 0 8px;
+    justify-items: center;
+    align-items: center;
+  }
+
+  /* Körök – szélesség = magasság = --disc → nem lehet „tojás” */
+  .vinyl-tabs .tab{
+    --disc: clamp(84px, calc((100vw - 16px - 2*8px)/3), 112px);
+    width: var(--disc) !important;
+    height: var(--disc) !important;
+    border-radius: 999px;
+    padding: 0 !important;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    transform: none !important; /* ha valami skálázta, lőjük ki mobilon */
+    box-sizing: border-box;
+  }
+
+  /* Felirat középen, max 2 sor, normális tördelés */
+  .vinyl-tabs .tab span{
+    width: 90%;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 6px;
+    text-align: center;
+    line-height: 1.08;
+    font-size: clamp(0.82rem, 2.8vw, 0.96rem);
+
+    white-space: normal !important;
+    word-break: normal !important;       /* ne vágja ketté a szavakat */
+    overflow-wrap: anywhere !important;   /* szóköznél/pontnál törjön először */
+    hyphens: auto !important;             /* kötőjelezés (lang="hu") */
+
+    display: -webkit-box;                 /* 2 sor limit (ha támogatott) */
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+
+  /* Samsungon maradjon éles, arany */
+  html.ua-samsung .vinyl-tabs .tab span{
+    background-image: none !important;
+    -webkit-background-clip: initial !important;
+    background-clip: initial !important;
+    color: #f3d27a !important;
+    -webkit-text-fill-color: #f3d27a !important;
+    text-shadow: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+}
+/* ===== MOBILE: lemezfelirat tényleg középen, max 2 sor ===== */
+@media (max-width: 640px){
+  .vinyl-tabs .tab{
+    display: grid;            /* már így van → középre tesz mindent */
+    place-items: center;
+  }
+
+  .vinyl-tabs .tab span{
+    display: flex !important;               /* FLEX → középre igazítás */
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 90%;
+    margin: 0 auto;
+    text-align: center;
+
+    /* két sorig engedjük, aztán vágás (clamp nélkül, hogy középre tudjon állni) */
+    line-height: 1.1;
+    font-size: clamp(0.82rem, 2.8vw, 0.96rem);
+    max-height: calc(1.1em * 2 + 2px);      /* ≈ 2 sor */
+    overflow: hidden;
+
+    /* intelligens tördelés, ne darabolja fel a szavakat */
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    hyphens: auto !important;
+    text-wrap: balance;
+  }
+}
+
+/* ===== MOBILE fix: menüfeliratok ne törjenek szavon belül ===== */
+@media (max-width: 640px){
+  .vinyl-tabs .tab span{
+    word-break: keep-all !important;    /* ne vágja szavakat */
+    overflow-wrap: normal !important;    /* csak szóköznél törjön */
+    hyphens: none !important;            /* kötőjelezés OFF */
+  }
+}
+  </style>
+<style>
+@supports (-webkit-touch-callout: none) {
+  .vinyl-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 0 10px;
+    justify-items: center;
+    align-items: center;
+  }
+
+  .vinyl-tabs .tab {
+    --disc: 92px !important;
+    width: var(--disc) !important;
+    height: var(--disc) !important;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    padding: 0 !important;
+  }
+
+  .vinyl-tabs .tab span {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 90%;
+    padding: 0 4px;
+    line-height: 1.1;
+    font-size: 13px !important;
+    max-height: calc(1.1em * 2);
+    overflow: hidden;
+
+    white-space: normal !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    hyphens: none !important;
+  }
+}
+</style>
+
 </head>
-<body>
-  <h1 class="gold-text">EnZenem.hu – Teszt Samsung Fix</h1>
-  <button id="order-submit"><span class="gold-text">Megrendelem</span></button>
-  <button id="contact-submit"><span class="gold-text">Üzenetküldés</span></button>
+<body class="gold-theme no-intro">
+  <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
+  <div class="video-panel">
+    <select id="videoSelect" aria-label="Videó választó">
+      <option value="Crf1xVh4BYA">Minta – Esküvő (Shorts)</option>
+      <option value="f_geI2Pgvuk">Édesapám emlékére</option>
+      <option value="2RY5bwiSR00">Születésnapra</option>
+      <option value="n-a7aFVrUdw">Édesanyámnak</option>
+      <option value="CsnNiX_LgQc">Pop – Szakítás (dinamikus)</option>
+      <option value="gXB9HPCJtfc">Pop – Elektronikus (angol)</option>
+      <option value="uE3ohlhlyZU">Testvérnek</option>
+      <option value="TGLKIQEjiQM">Angol – Romantikus</option>
+      <option value="YF-Onq_-F4g">Magyar – Romantikus</option>
+      <option value="yJkzbC4PWy4">Angol – Ars Poetica</option>
+      <option value="Z78APd89pW8">Magyar – Életút</option>
+      <option value="K489XbDIAmo">Pop – Biztató (angol)</option>
+      <option value="hkc58uSEosc">Pop – Biztató (magyar)</option>
+    </select>
+    <iframe id="videoFrame" src="https://www.youtube.com/embed/2RY5bwiSR00" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <div style="display:flex; gap:8px; justify-content:space-between;">
+    <button onclick="playVideo()"><span class="gold-text">Lejátszás</span></button>
+    <button onclick="stopVideo()"><span class="gold-text">Megállít</span></button>
+</div>
+  </div>
+
+  <script>
+    function playVideo(){ const id=document.getElementById("videoSelect").value; document.getElementById("videoFrame").src=`https://www.youtube.com/embed/${id}?autoplay=1`; }
+    function stopVideo(){ document.getElementById("videoFrame").src=""; }
+    /* Pozicionálás: félúton a lap teteje és a menüsáv alja között */
+    (function positionVideoPanel(){
+      function place(){
+        const panel=document.querySelector('.video-panel');
+        const menu=document.querySelector('.vinyl-tabs');
+        if(!panel||!menu) return;
+        const menuBottom=menu.offsetTop+menu.offsetHeight;
+        const panelH=panel.offsetHeight||0;
+        const desiredTop=Math.max(8,(menuBottom-panelH)/2);
+        panel.style.top=desiredTop+'px';
+      }
+      window.addEventListener('load',place);
+      window.addEventListener('resize',place);
+      document.addEventListener('DOMContentLoaded',place);
+    })();
+  </script>
+
+  <div class="bg-vinyl"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <img src="/assets/enzenem_logo.svg" alt="EnZenem – arany bakelit" class="spinning-vinyl" width="100" height="100" decoding="async" fetchpriority="high">
+      <div>
+        <h1 class="gold-text">EnZenem</h1>
+        <h1 class="gold-text">Örök ajándék és emlék!</h1>
+        <p class="gold-text">Egyedi, személyre szabott dalok esküvőkre, születésnapokra és minden különleges alkalomra!</p>
+      </div>
+    </div>
+
+    <nav class="vinyl-tabs">
+      <button class="tab" data-target="intro"><span class="gold-text">Bemutatkozás</span></button>
+      <button class="tab" data-target="pricing"><span class="gold-text">Árak / Csomagok</span></button>
+      <button class="tab" data-target="howto"><span class="gold-text">Hogyan működik</span></button>
+      <button class="tab" data-target="order"><span class="gold-text">Megrendelés</span></button>
+      <button class="tab" data-target="refs"><span class="gold-text">Referenciák</span></button>
+      <button class="tab" data-target="contact"><span class="gold-text">Kapcsolat</span></button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="panel active" id="intro">
+      <h2 class="gold-text">Bemutatkozás</h2>
+      <p class="gold-text">
+        Professzionális, személyre szabott dalokat készítünk
+        <strong class="gold-text">esküvőkre</strong>, <strong class="gold-text">búcsúztatókra</strong>,
+        <strong class="gold-text">születésnapokra</strong>, <strong class="gold-text">házi bulikba</strong> és bármilyen más alkalomra.
+        A dal lehet megható, ünnepi vagy felszabadult – mindent a te igazi történetedhez és igényeidhez igazítunk.
+      </p>
+
+      <ul class="badges">
+        <li class="gold-text">Formátumok: <strong class="gold-text">MP3</strong>, <strong class="gold-text">WAV</strong>, <strong class="gold-text">MP4 (videóklip)</strong></li>
+        <li class="gold-text">Stílusok: pop, rock, akusztikus, opera, filmzene, lo-fi, és még sok más</li>
+        <li class="gold-text">Ének: <strong class="gold-text">női</strong> vagy <strong class="gold-text">férfi</strong></li>
+        <li class="gold-text">Leírás: emlékeitek, tulajdonságaitok részletes elmondása</li>
+        <li class="gold-text">Gyors átfutás és érthető kommunikáció</li>
+        <li class="gold-text">Biztonságos weboldal: <strong class="gold-text">SSL tanúsítvány</strong></li>
+        <li class="gold-text">Biztonságos fizetés: Visa vagy MasterCard – hivatalos banki <strong class="gold-text">VPOS</strong> terminál</li>
+        <li class="gold-text">Bejegyzett vállalkozás (HU)</li>
+        <li class="gold-text">Ha nem kapod meg 36 órán belül a dalod, <strong class="gold-text">100% pénzvisszatérítés!</strong></li>
+      </ul>
+
+      <p class="gold-text"><strong class="gold-text">Hogyan működik?</strong></p>
+      <p><a href="#howto" class="jump-link gold-text" data-jump="howto">Kattints ide: Hogyan működik →</a></p>
+    </section>
+
+    <section class="panel" id="pricing">
+      <h2 class="gold-text">Árak &amp; Csomagok</h2>
+      <div class="promo-banner"><span class="gold-text">Nyitási akció — 30 napig — 30% kedvezmény</span></div>
+      <div class="cards">
+        <div class="card package" data-package="mp3">
+          <h3 class="gold-text">MP3</h3>
+          <p class="gold-text">Magas minőségű, univerzális zenei formátum. Minden eszközön lejátszható.</p>
+          <p class="price gold-text">Alap csomag</p>
+          <p class="gold-text"><span class="old-price gold-text">15 000 Ft</span> → <span class="new-price gold-text">10 500 Ft</span><br/><span class="promo-note gold-text">Nyitási akció — 30 napig — 30%</span></p>
+        </div>
+        <div class="card package" data-package="mp4">
+          <h3 class="gold-text">MP4</h3>
+          <p class="gold-text">Egyszerű, ízléses, statikus <em class="gold-text">videóklip</em> a zenéhez, felirattal.</p>
+          <p class="price gold-text">Videó csomag</p>
+          <p class="gold-text"><span class="old-price gold-text">30 000 Ft</span> → <span class="new-price gold-text">21 000 Ft</span><br/><span class="promo-note gold-text">Nyitási akció — 30 napig — 30%</span></p>
+        </div>
+        <div class="card package" data-package="wav">
+          <h3 class="gold-text">WAV</h3>
+          <p class="gold-text">Stúdióminőség, veszteségmentes hang. Ajánlott hangtechnikához.</p>
+          <p class="price gold-text">Prémium csomag</p>
+          <p class="gold-text"><span class="old-price gold-text">50 000 Ft</span> → <span class="new-price gold-text">35 000 Ft</span><br/><span class="promo-note gold-text">Nyitási akció — 30 napig — 30%</span></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="howto" hidden>
+      <h2 class="gold-text">Hogyan működik</h2>
+      <ol class="gold-text">
+        <li class="gold-text"><strong class="gold-text">Csomagválasztás</strong> – MP3 / MP4 / WAV</li>
+        <li class="gold-text"><strong class="gold-text">Megrendelő űrlap</strong> – a <em class="gold-text">Leírás</em> mezőt töltsd ki minél részletesebben</li>
+        <li class="gold-text"><strong class="gold-text">Ellenőrzés & fizetés</strong> – bankkártya (VPOS)</li>
+        <li class="gold-text"><strong class="gold-text">Kézbesítés</strong> – letöltési link e-mailben (kb. 36 óra)</li>
+      </ol>
+
+      <div class="note gold-text">💡 A Leírás mezőbe írd: kinek készül, milyen alkalomra, stílus/hangulat, 3–5 kulcsszó, 1–2 konkrét emlék.</div>
+
+      <p class="gold-text"><strong class="gold-text">Minta leírások:</strong></p>
+      <div class="examples">
+        <button class="chip"><span>🎂 Szülinap</span></button>
+        <button class="chip"><span>💍 Esküvő</span></button>
+        <button class="chip"><span>💞 Évforduló</span></button>
+        <button class="chip"><span>🕯️ Búcsúztató</span></button>
+        <button class="chip"><span>🏢 Céges rendezvény</span></button>
+        <button class="chip"><span>🧸 Gyerekdal</span></button>
+        <button class="chip"><span>🎓 Nyugdíj</span></button>
+        <button class="chip"><span>❤️‍🩹 Jobbulást</span></button>
+        <button class="chip"><span>💎 Lánykérés</span></button>
+        <button class="chip"><span>🎓 Ballagás/Diploma</span></button>
+      </div>
+
+      <p style="margin-top:14px">
+        <button id="howto-open-order" class="btn"><span class="gold-text">Nyissuk meg az űrlapot</span></button>
+      </p>
+    </section>
+
+    <section class="panel" id="order">
+      <h2 class="gold-text">Megrendelés</h2>
+      <form class="form" id="orderForm">
+        <input autocomplete="off" name="_hp" style="display:none" tabindex="-1" type="text"/>
+        <div class="grid">
+          <label class="gold-text">Csomag (fizetés bankkártyával: Visa vagy MasterCard)
+            <select name="package" required="">
+              <option value="basic">Alap (MP3)</option>
+              <option value="video">Videó csomag (MP4)</option>
+              <option value="premium">Prémium (WAV)</option>
+            </select>
+          </label>
+          <label class="gold-text">E-mail (ahová a linket küldjük)
+            <input name="email" placeholder="pelda@domain.hu" required="" type="email"/>
+          </label>
+          <label class="gold-text">Esemény típusa
+            <select name="event_type" required="">
+              <option value="Esküvő">Esküvő</option>
+              <option value="Búcsúztatás">Búcsúztatás</option>
+              <option value="Születésnap">Születésnap</option>
+              <option value="Céges rendezvény">Céges rendezvény</option>
+              <option value="Egyéb">Egyéb</option>
+            </select>
+          </label>
+          <label class="gold-text">Zenei stílus (írható is)
+            <input list="style-list" name="style" placeholder="pl. pop / rock / opera / saját megjelölés" required="" type="text"/>
+            <datalist id="style-list">
+              <option value="Pop"><option value="Rock"><option value="Opera"><option value="Akusztikus"><option value="Filmzene"><option value="Lo-fi">
+            </datalist>
+          </label>
+          <label class="gold-text">Ének
+            <select name="vocal" required="">
+              <option>Női</option>
+              <option>Férfi</option>
+            </select>
+          </label>
+          <label class="gold-text">Nyelv (pl. magyar, angol, német, holland, stb..)
+            <input name="language" placeholder="pl. magyar / angol / német / holland / stb.." type="text"/>
+          </label>
+          <label class="full gold-text">Leírás / miről szóljon a dal?
+            <textarea name="brief" placeholder="Milyen történetet, érzést, üzenetet közvetítsen a dal? Írd le az emlékeiteket, milyen az a személy(ek) akinek a dal íródik. Esküvőre a kettőtök történetét, születésnapra a személy tulajdonságait, életkorát, stb.." rows="5"></textarea>
+          </label>
+          <label class="check full gold-text">
+            <input name="consent" required="" type="checkbox"/>
+            Beleegyezem, hogy az adataimat a megrendelés feldolgozásához felhasználjátok. (Részletek: <a href="adatkezeles.html" class="gold-text" target="_blank">Adatkezelés</a>, <a href="aszf.html" class="gold-text" target="_blank">ÁSZF</a>)
+          </label>
+        </div>
+        <div class="actions">
+          <button class="primary" type="submit"><span class="gold-text">Megrendelés leadása</span></button>
+          <span class="form-status gold-text" id="orderStatus"></span>
+        </div>
+      </form>
+      <p class="note gold-text">Fizetés: előre. A megrendelés gomb megnyomásával átirányítunk a fizetési terminálra. Amennyiben sikeres a fizetés, csak akkor kapjuk meg a megrendelést.</p>
+    </section>
+
+    <section class="panel" id="refs">
+      <h2 class="gold-text">Referenciák</h2>
+      <div class="embeds gold-text">
+        <!-- (beágyazások változatlanok) -->
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/Crf1xVh4BYA" title="YouTube video player"></iframe></div><p class="gold-text">Minta – Esküvő (Shorts)</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/f_geI2Pgvuk" title="YouTube video player"></iframe></div><p class="gold-text">Édesapám emlékére</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="https://www.youtube.com/embed/2RY5bwiSR00?rel=0&amp;modestbranding=1&amp;playsinline=1&amp;vq=hd1080" title="YouTube video player"></iframe></div><p class="gold-text">Születésnapra</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/n-a7aFVrUdw" title="YouTube video player"></iframe></div><p class="gold-text">Édesanyámnak</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/CsnNiX_LgQc" title="YouTube video player"></iframe></div><p class="gold-text">Pop – Szakítás (dinamikus)</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/gXB9HPCJtfc" title="YouTube video player"></iframe></div><p class="gold-text">Pop – Elektronikus (angol)</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/uE3ohlhlyZU" title="YouTube video player"></iframe></div><p class="gold-text">Testvérnek</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/TGLKIQEjiQM" title="YouTube video player"></iframe></div><p class="gold-text">Angol – Romantikus</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/YF-Onq_-F4g" title="YouTube video player"></iframe></div><p class="gold-text">Magyar – Romantikus</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/yJkzbC4PWy4" title="YouTube video player"></iframe></div><p class="gold-text">Angol – Ars Poetica</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/Z78APd89pW8" title="YouTube video player"></iframe></div><p class="gold-text">Magyar – Életút</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/K489XbDIAmo" title="YouTube video player"></iframe></div><p class="gold-text">Pop – Biztató (angol)</p></div>
+        <div class="embed small"><div class="video"><iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen frameborder="0" src="https://www.youtube.com/embed/hkc58uSEosc" title="YouTube video player"></iframe></div><p class="gold-text">Pop – Biztató (magyar)</p></div>
+      </div>
+    </section>
+
+    <section class="panel" id="contact">
+      <h2 class="gold-text">Kapcsolat</h2>
+      <div class="contact-grid">
+        <div>
+          <h3 class="gold-text">Elérhetőségek</h3>
+          <ul class="contacts">
+            <li class="gold-text">Név: Gombkötő Pál e.v.</li>
+            <li class="gold-text">E-mail: <a href="mailto:info@enzenem.hu" class="gold-text">info@enzenem.hu</a></li>
+            <li class="gold-text">Telefon: +36 (30) 515 1352</li>
+            <li class="gold-text">Székhely: 1097 Budapest Aszódi utca 8. 123.</li>
+          </ul>
+        </div>
+        <form class="form" id="contactForm">
+          <input autocomplete="off" name="_hp" style="display:none" tabindex="-1" type="text"/>
+          <label class="gold-text">Név
+            <input name="name" placeholder="Név" required="" type="text"/>
+          </label>
+          <label class="gold-text">E-mail
+            <input name="email" placeholder="pelda@domain.hu" required="" type="email"/>
+          </label>
+          <label class="gold-text">Üzenet
+            <textarea name="message" placeholder="Miben segíthetünk?" required="" rows="5"></textarea>
+          </label>
+          <div class="actions">
+            <button class="primary" type="submit"><span class="gold-text">Üzenet küldése</span></button>
+            <span class="form-status gold-text" id="contactStatus"></span>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <div class="overlay hidden" id="thanksOverlay">
+      <div class="overlay-card">
+        <h3 class="gold-text" style="margin-top:0">Köszönjük!</h3>
+        <p class="gold-text">Üzeneted elküldtük. Hamarosan válaszolunk.</p>
+        <button class="primary" id="overlayClose"><span class="gold-text">Bezárás</span></button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-links">
+      <a href="aszf.html" target="_blank" class="gold-text">ÁSZF</a>
+      <a href="adatkezeles.html" target="_blank" class="gold-text">Adatkezelés</a>
+    </div>
+    <small class="gold-text">© 2025 EnZenem – Minden jog fenntartva.</small>
+  </footer>
+
+  <!-- ÁSZF / Adatkezelés elfogadó sáv -->
+  <div aria-label="Felhasználási feltételek" aria-live="polite" class="consent" id="consent" role="dialog">
+    <p class="gold-text">
+      Az oldal használatával elfogadod az
+      <a href="aszf.html" target="_blank" class="gold-text">ÁSZF</a> és az
+      <a href="adatkezeles.html" target="_blank" class="gold-text">Adatkezelés</a> feltételeit.
+    </p>
+    <button class="primary" id="consentAccept"><span class="gold-text">Elfogadom</span></button>
+  </div>
+
+  <!-- Licenc figyelmeztetés (modál) -->
+  <div aria-hidden="true" aria-label="Felhasználási feltételek" class="license-modal" id="license-warning" role="dialog" style="display:none">
+    <div class="license-card" role="document">
+      <h3 class="gold-text" style="margin-top:0">Felhasználási feltételek – fontos tudnivalók</h3>
+      <p class="gold-text">
+        A megrendelt zeneszám felhasználása <strong class="gold-text">kizárólag magáncélra</strong> engedélyezett:
+        családi, baráti körben és <strong class="gold-text">kisebb, nem nyilvános rendezvényeken</strong>.
+      </p>
+      <ul style="margin:8px 0 12px 18px; line-height:1.5">
+        <li class="gold-text"><strong class="gold-text">Nem engedélyezett</strong>: országos médiasugárzás, TV/radio/stream csatornák, nagy nyilvános események, reklámkampányok.</li>
+        <li class="gold-text">Széles körű, üzleti vagy nyilvános felhasználás <strong class="gold-text">külön, írásos engedélyhez és egyedi liszenszhez</strong> kötött.</li>
+        <li class="gold-text">Kétség esetén kérj tőlünk visszaigazolást: <a href="mailto:info@enzenem.hu" class="gold-text">info@enzenem.hu</a></li>
+      </ul>
+      <p class="gold-text">Az <a href="aszf.html" target="_blank" class="gold-text">ÁSZF</a> és az <a href="adatkezeles.html" target="_blank" class="gold-text">Adatkezelés</a> elfogadása mellett kérjük, hogy ezeket a feltételeket is tudomásul vedd.</p>
+      <div class="actions" style="display:flex; gap:8px; margin-top:12px">
+        <button class="primary" id="licenseCancel" style="background:#2b2b2b"><span class="gold-text">Mégse</span></button>
+        <button class="primary" id="licenseAccept"><span class="gold-text">Elfogadom</span></button>
+      </div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+
 </body>
 </html>
+
