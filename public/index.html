@@ -598,7 +598,11 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
       </div>
     </div>
   </div>
-
   <script src="script.js"></script>
+<script>
+  if (/SamsungBrowser/i.test(navigator.userAgent)) {
+    document.documentElement.classList.add('ua-samsung');
+  }
+</script>
 </body>
 </html>
