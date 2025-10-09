@@ -1680,3 +1680,31 @@ html.ua-samsung .vinyl-tabs .tab span {
 .video-panel .controls button:hover {
   background-color: var(--accent-dark);
 }
+/* ===== Videopanel gombok – teljes szélesség, erőltetve is ===== */
+
+.video-panel .controls {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
+  width: 100% !important;
+  margin-top: 12px;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+.video-panel .controls button {
+  flex: 1 1 0% !important;
+  padding: 16px 0 !important;
+  font-size: 18px !important;
+  font-weight: bold;
+  border-radius: 10px;
+  border: none;
+  background-color: var(--accent);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.video-panel .controls button:hover {
+  background-color: var(--accent-dark);
+}
