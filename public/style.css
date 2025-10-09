@@ -1655,3 +1655,28 @@ html.ua-samsung .vinyl-tabs .tab span {
     }
   }
 }
+/* ======== VIDEOPANEL gombok (PLAY/STOP) nagyobbak és kitöltik a videó alatti teret ======== */
+
+.video-panel .controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.video-panel .controls button {
+  flex: 1;
+  padding: 14px 0;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--accent);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.video-panel .controls button:hover {
+  background-color: var(--accent-dark);
+}
