@@ -156,18 +156,28 @@ function initHowTo() {
     gotoOrder();
 
     // majd pici késleltetéssel beállítjuk a placeholdert
-   setTimeout(() => {
+  setTimeout(() => {
   const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
   if (desc) {
-    desc.placeholder = text; // csak placeholder marad
+    desc.placeholder = text;
     desc.dispatchEvent(new Event('input', { bubbles: true }));
-    try { desc.focus({ preventScroll: true }); } catch(_) {}
 
-    // görgessen oda!
-    desc.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center'
-    });
+    // Csak mobilon scrollozunk a mezőhöz
+    const isMobile = window.innerWidth < 640;
+
+    if (isMobile) {
+      try { desc.focus({ preventScroll: true }); } catch(_) {}
+      desc.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    } else {
+      // Desktop: inkább az ORDER lap tetejére ugorjon
+      const orderPanel = qs('#order');
+      if (orderPanel) {
+        orderPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
   }
 }, 140);
   });
