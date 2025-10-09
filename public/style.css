@@ -1657,3 +1657,21 @@ input[type="submit"]:hover {
   background-color: #d4af37;
   color: #0b0b0b;
 }
+/* ========= Kiegészítés – Csak a kért három fix ======== */
+
+/* 1) Desktop: Ne legyen szóelválasztás a menüfüleken */
+@media (min-width: 641px) {
+  .vinyl-tabs .tab {
+    white-space: nowrap;
+    word-break: normal;
+  }
+}
+
+/* 3) Samsung Internet: Gombfeliratok láthatósága */
+@media screen and (-webkit-min-device-pixel-ratio: 1) {
+  .button, button, input[type="submit"] {
+    color: #e3c878; /* Az arany felirat visszaállítása */
+    background-color: transparent;
+    border: 1px solid #e3c878;
+  }
+}
