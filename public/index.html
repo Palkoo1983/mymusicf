@@ -295,7 +295,20 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   }
 }
 </style>
-
+  <script>
+    (function () {
+      try {
+        if (navigator.userAgent && /SamsungBrowser/i.test(navigator.userAgent)) {
+          document.documentElement.classList.add('ua-samsung');
+          console.log('Samsung detected: ua-samsung class added');
+        } else {
+          console.log('Not Samsung Browser');
+        }
+      } catch (e) {
+        console.warn('Samsung detection error:', e);
+      }
+    })();
+  </script>
 </head>
 <body class="gold-theme no-intro">
   <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
