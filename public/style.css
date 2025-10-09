@@ -1632,3 +1632,28 @@ html.ua-samsung .video-panel button:focus {
 html.ua-samsung .vinyl-tabs .tab span {
   color: #f3d27a !important;
 }
+
+/* === Samsung Internet & Safari Button Fix === */
+button,
+input[type="submit"] {
+  all: unset;
+  background-color: #0b0b0b;
+  color: #d4af37;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 2px solid #d4af37;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  display: inline-block;
+  width: 100%;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+button:hover,
+input[type="submit"]:hover {
+  background-color: #d4af37;
+  color: #0b0b0b;
+}
