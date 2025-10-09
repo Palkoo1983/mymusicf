@@ -1,6 +1,15 @@
 <!DOCTYPE html>
-<html lang="hu" class="no-intro samsung-preload">
+<html lang="hu" class="no-intro">
 <head>
+<script>
+  try {
+    if (/SamsungBrowser/i.test(navigator.userAgent)) {
+      document.documentElement.classList.add('ua-samsung');
+      console.log('✅ Samsung detektálva');
+    }
+  } catch(e) { console.warn(e); }
+</script>
+
   <!-- Ikonok -->
   <link rel="icon" type="image/svg+xml"
         href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="%23d4af37"/><circle cx="32" cy="32" r="18" fill="%230b0b0b"/><circle cx="32" cy="32" r="12" fill="%232a2a2a"/></svg>'>
@@ -256,75 +265,45 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 }
   </style>
 <style>
-  @supports (-webkit-touch-callout: none) {
-    .vinyl-tabs {
-      grid-template-columns: repeat(3, 1fr) !important;
-      padding: 0 10px !important;
-      gap: 10px !important;
-      justify-items: center !important;
-      align-items: center !important;
-    }
-
-    .vinyl-tabs .tab {
-      --disc: 92px !important;       /* nagyobb lemez */
-      font-size: 13px !important;    /* nagyobb szöveg */
-      line-height: 1.2;
-      padding-top: 5px !important;   /* középre húzza a feliratot */
-      text-align: center;
-    }
+@supports (-webkit-touch-callout: none) {
+  .vinyl-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 0 10px;
+    justify-items: center;
+    align-items: center;
   }
+
+  .vinyl-tabs .tab {
+    --disc: 92px !important;
+    width: var(--disc) !important;
+    height: var(--disc) !important;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    padding: 0 !important;
+  }
+
+  .vinyl-tabs .tab span {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 90%;
+    padding: 0 4px;
+    line-height: 1.1;
+    font-size: 13px !important;
+    max-height: calc(1.1em * 2);
+    overflow: hidden;
+
+    white-space: normal !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    hyphens: none !important;
+  }
+}
 </style>
-
-
-  <style>
-    html.samsung-preload body {
-      visibility: hidden;
-    }
-    html.ua-samsung body,
-    html.ua-ipad body {
-      visibility: visible;
-    }
-
-    html.ua-samsung .gold-text,
-    html.ua-samsung button .gold-text,
-    html.ua-samsung .vinyl-tabs .tab span,
-    html.ua-samsung #order button span,
-    html.ua-samsung #contact button span,
-    html.ua-ipad .gold-text,
-    html.ua-ipad button .gold-text,
-    html.ua-ipad .vinyl-tabs .tab span,
-    html.ua-ipad #order button span,
-    html.ua-ipad #contact button span {
-      background: none !important;
-      background-image: none !important;
-      -webkit-background-clip: initial !important;
-      background-clip: initial !important;
-      color: #f3d27a !important;
-      -webkit-text-fill-color: #f3d27a !important;
-      text-shadow: none !important;
-      filter: none !important;
-      opacity: 1 !important;
-      mix-blend-mode: normal !important;
-    }
-  </style>
-
-  <script>
-    try {
-      document.documentElement.classList.add('samsung-preload');
-      const ua = navigator.userAgent;
-      if (/SamsungBrowser/i.test(ua)) {
-        document.documentElement.classList.add('ua-samsung');
-        console.log('✅ Samsung detektálva');
-      }
-      if (/iPad|Macintosh/.test(ua) && 'ontouchend' in document) {
-        document.documentElement.classList.add('ua-ipad');
-        console.log('✅ iPad detektálva');
-      }
-      document.documentElement.classList.remove('samsung-preload');
-    } catch(e) {
-      console.warn(e);
-    }
-  </script>
 
 </head>
 <body class="gold-theme no-intro">
@@ -628,7 +607,8 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
       </div>
     </div>
   </div>
-
   <script src="script.js"></script>
+
 </body>
 </html>
+
