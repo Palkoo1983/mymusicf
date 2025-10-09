@@ -1734,5 +1734,78 @@ html.ua-samsung #contact button span {
   opacity: 1 !important;
   mix-blend-mode: normal !important;
 }
+/* Samsung Internet vizuális fixek */
+
+html.ua-samsung .vinyl-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  justify-items: center;
+  align-items: center;
+  padding: 0 8px;
+}
+
+html.ua-samsung .vinyl-tabs .tab {
+  --disc: 100px;
+  width: var(--disc);
+  height: var(--disc);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background-color: #111;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  padding: 0;
+}
+
+html.ua-samsung .vinyl-tabs .tab span {
+  font-size: 12.5px;
+  font-weight: bold;
+  color: #f3d27a !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  background: none !important;
+  background-clip: initial !important;
+  -webkit-background-clip: initial !important;
+  text-shadow: none !important;
+  mix-blend-mode: normal !important;
+  line-height: 1.1;
+  text-align: center;
+}
+
+html.ua-samsung .btn,
+html.ua-samsung button,
+html.ua-samsung .order-btn,
+html.ua-samsung .submit-btn {
+  color: #f3d27a !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  background: #222 !important;
+  border: 1px solid #f3d27a !important;
+  font-weight: bold;
+  font-size: 15px;
+  padding: 10px 20px;
+  box-shadow: 0 0 4px rgba(255, 215, 0, 0.3);
+}
+
+html.ua-samsung #order-submit span,
+html.ua-samsung #contact-submit span,
+html.ua-samsung #howto-open-order span {
+  color: #f3d27a !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  background: none !important;
+  background-clip: initial !important;
+  -webkit-background-clip: initial !important;
+  text-shadow: none !important;
+  mix-blend-mode: normal !important;
+  font-weight: bold;
+}
+
+/* Külön fix: megrendelés és kapcsolat gombok teljes szélességűek legyenek */
+html.ua-samsung #order-submit,
+html.ua-samsung #contact-submit {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  display: block;
+}
 
 
