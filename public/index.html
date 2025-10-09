@@ -599,19 +599,6 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     </div>
   </div>
   <script src="script.js"></script>
-<script defer>
-  window.addEventListener("DOMContentLoaded", function () {
-    try {
-      var ua = navigator.userAgent || "";
-      if (ua.includes("SamsungBrowser")) {
-        document.documentElement.classList.add("ua-samsung");
-        console.log("✅ Samsung UI detected – class ua-samsung added");
-      }
-    } catch (e) {
-      console.warn("Samsung detection error:", e);
-    }
-  });
-</script>
 
 </body>
 </html>
