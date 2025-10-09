@@ -256,8 +256,6 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 }
   </style>
 
-
-
 <style>
 @supports (-webkit-touch-callout: none) {
   .vinyl-tabs {
@@ -601,5 +599,18 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   </div>
 
   <script src="script.js"></script>
+<script>
+  document.querySelectorAll('.example-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const briefField = document.getElementById('brief');
+      if (briefField) {
+        setTimeout(() => {
+          briefField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100); // Kicsi várakozás a beírás után
+      }
+    });
+  });
+</script>
+
 </body>
 </html>
