@@ -256,23 +256,44 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 }
   </style>
 <style>
-  @supports (-webkit-touch-callout: none) {
-    .vinyl-tabs {
-      grid-template-columns: repeat(3, 1fr) !important;
-      padding: 0 10px !important;
-      gap: 10px !important;
-      justify-items: center !important;
-      align-items: center !important;
-    }
-
-    .vinyl-tabs .tab {
-      --disc: 92px !important;       /* nagyobb lemez */
-      font-size: 13px !important;    /* nagyobb szöveg */
-      line-height: 1.2;
-      padding-top: 5px !important;   /* középre húzza a feliratot */
-      text-align: center;
-    }
+@supports (-webkit-touch-callout: none) {
+  .vinyl-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 0 10px;
+    justify-items: center;
+    align-items: center;
   }
+
+  .vinyl-tabs .tab {
+    --disc: 92px !important;
+    width: var(--disc) !important;
+    height: var(--disc) !important;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    padding: 0 !important;
+  }
+
+  .vinyl-tabs .tab span {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 90%;
+    padding: 0 4px;
+    line-height: 1.1;
+    font-size: 13px !important;
+    max-height: calc(1.1em * 2);
+    overflow: hidden;
+
+    white-space: normal !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+    hyphens: none !important;
+  }
+}
 </style>
 
 </head>
