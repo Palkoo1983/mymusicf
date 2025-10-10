@@ -205,7 +205,7 @@ function bindExampleChips(){
       if (!full) return; // nincs mit mondani
 
       // Buborékban is a TELJES szöveg jelenjen meg
-      setBubbleText(full);
+      setBubbleText(chip.getAttribute('data-label') || full);
       toggleBubble(true);
 
       // NovaBot felmondja a TELJES placeholdert
