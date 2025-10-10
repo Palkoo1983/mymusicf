@@ -2179,3 +2179,96 @@ html.ua-webview .video-panel.yt-smooth { will-change: opacity, transform; }
   backface-visibility: hidden;
   transform: translateZ(0);
 }
+/* === Nova – Samsung Internet & Android WebView: VINYL GROOVES FIX === */
+/* csak Samsung/WebView alatt él */
+:root.nb-samsung, :root.nb-webview {
+  --nb-vinyl-gold: #d4af37;      /* arany alap */
+  --nb-vinyl-gold-deep: #a67c00; /* mélyebb arany */
+  --nb-vinyl-shadow: rgba(0,0,0,.35);
+  --nb-groove-dark: rgba(0,0,0,.22);
+  --nb-groove-fade: rgba(0,0,0,0);
+}
+
+/* célozzuk a tipikus lemez-elemeket – ha nálad más az osztály, szólj és szűkítek rá */
+.nb-samsung :is(.vinyl, .record, .disc, .disk),
+.nb-webview :is(.vinyl, .record, .disc, .disk),
+.nb-samsung .vinyl-tabs .tab,
+.nb-webview .vinyl-tabs .tab {
+  position: relative;
+  border-radius: 50%;
+  background: var(--nb-vinyl-gold);
+  /* a korábbi fakító effektek hatástalanítása */
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  isolation: isolate;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.07),
+    inset 0 12px 28px rgba(0,0,0,.18),
+    0 2px 10px rgba(0,0,0,.12);
+}
+
+/* Fény + arany árnyalat finom átmenetek – ALUL */
+.nb-samsung :is(.vinyl, .record, .disc, .disk)::before,
+.nb-webview :is(.vinyl, .record, .disc, .disk)::before,
+.nb-samsung .vinyl-tabs .tab::before,
+.nb-webview .vinyl-tabs .tab::before {
+  content: "";
+  position: absolute; inset: 0; border-radius: 50%;
+  z-index: 0; pointer-events: none;
+  background:
+    /* enyhe highlight a bal-felső kvadránsban */
+    radial-gradient(120% 120% at 28% 28%, rgba(255,255,255,.25) 0%, rgba(255,255,255,0) 45%),
+    /* arany árnyalat “forgatása” – visszafogott */
+    conic-gradient(from 30deg,
+      rgba(247,226,126,.32) 0 18%,
+      rgba(212,175,55,.38) 18% 44%,
+      rgba(166,124,0,.36)  44% 62%,
+      rgba(247,226,126,.30) 62% 82%,
+      rgba(212,175,55,.36) 82% 100%);
+  box-shadow:
+    inset 0 0 30px rgba(212,175,55,.22);
+}
+
+/* BARÁZDÁK – nagyon finom körkörös csíkozás felül (külön rétegen) */
+.nb-samsung :is(.vinyl, .record, .disc, .disk)::after,
+.nb-webview :is(.vinyl, .record, .disc, .disk)::after,
+.nb-samsung .vinyl-tabs .tab::after,
+.nb-webview .vinyl-tabs .tab::after {
+  content: "";
+  position: absolute; inset: 0; border-radius: 50%;
+  z-index: 0; pointer-events: none;
+  /* két groove technika együtt: Samsungon a repeating-radial jó, conic kiegészít */
+  background:
+    /* finom középfény, hogy ne legyen “szürke folt” */
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 40%),
+    /* barázda: ismétlődő, nagyon vékony körök */
+    repeating-radial-gradient(circle at 50% 50%,
+      var(--nb-groove-dark) 0px, var(--nb-groove-dark) 0.6px,
+      var(--nb-groove-fade) 0.6px, var(--nb-groove-fade) 2.0px),
+    /* kiegészítő enyhe körkörös fény-árnyék */
+    repeating-conic-gradient(from 0deg,
+      rgba(0,0,0,.05) 0deg 2deg,
+      rgba(0,0,0,0) 2deg 6deg);
+  opacity: .85;
+  /* Moiré és “pixeles” hullámzás ellen egy minimális skálázás */
+  transform: translateZ(0) scale(1.001);
+  will-change: transform;
+}
+
+/* biztosítsuk, hogy a lemez tartalma a fény/rávetítés fölött legyen */
+.nb-samsung :is(.vinyl, .record, .disc, .disk) > *:not(:where(script,style)),
+.nb-webview :is(.vinyl, .record, .disc, .disk) > *:not(:where(script,style)),
+.nb-samsung .vinyl-tabs .tab > *:not(:where(script,style)),
+.nb-webview .vinyl-tabs .tab > *:not(:where(script,style)) {
+  position: relative;
+  z-index: 1;
+}
+
+/* (Ha a lemez mögött kép volt és most eltűnt: erősítsük az arany alapot) */
+.nb-samsung :is(.vinyl, .record, .disc, .disk),
+.nb-webview :is(.vinyl, .record, .disc, .disk) {
+  background-color: var(--nb-vinyl-gold);
+  background-blend-mode: normal;
+}
