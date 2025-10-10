@@ -17,31 +17,49 @@
     console.warn("Samsung detection error:", e);
   }
 })();
-// --- WebView + Desktop mód mobilon detektálás → UA-osztályok, hogy a mobil szabályok WebView-ben is éljenek ---
+// --- WebView + "Asztali webhely kérése" – JAVÍTOTT, DESKTOP-SAFE DETEKTÁLÁS ---
 (function () {
   try {
-    var ua = navigator.userAgent || "";
+    var ua   = navigator.userAgent || "";
     var html = document.documentElement;
 
-    // Android WebView: "wv" jelző
-    var isAndroidWV = /\bwv\b/i.test(ua);
+    // Mobil jelleg: tényleges Android/iOS VAGY "coarse" pointer + nincs hover
+    var isAndroid = /Android/i.test(ua);
+    var isIOS     = /iPhone|iPad|iPod/i.test(ua);
+    var coarse    = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    var noHover   = window.matchMedia && window.matchMedia("(hover: none)").matches;
+    var isMobileLike = (isAndroid || isIOS || (coarse && noHover));
 
-    // iOS WebView: Safari nélküli AppleWebKit, vagy webkit bridge elérhető
-    var isIOS = /iPhone|iPad|iPod/i.test(ua);
-    var isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
-    var isIOSWV = isIOS && (!isSafari || !!(window.webkit && window.webkit.messageHandlers));
+    // Tényleges WebView-k
+    var isAndroidWV = isAndroid && /\bwv\b/i.test(ua);
+    var isSafari    = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
+    var isIOSWV     = isIOS && (!isSafari || !!(window.webkit && window.webkit.messageHandlers));
 
-    // "Asztali webhely kérése" mobilon:
-    // a fizikai képernyő kicsi, de a viewport széles → a mobil @media nem lép életbe
-    var physMin = Math.min(screen.width, screen.height);          // fizikai px
-    var looksDesktop = window.innerWidth >= 900;                  // CSS px
-    var desktopReqOnMobile = looksDesktop && physMin <= 900;
+    // Desktop jelleg (klasszikus egér + hover) – ez biztosan NEM mobil
+    var isDesktopLike = window.matchMedia && window.matchMedia("(pointer: fine) and (hover: hover)").matches && !(isAndroid || isIOS);
 
-    if (isAndroidWV) html.classList.add("ua-androidwv");
-    if (isIOSWV)     html.classList.add("ua-ioswv");
-    if (desktopReqOnMobile) html.classList.add("ua-desktopreq");
-  } catch (e) {}
+    function applyFlags(){
+      // tisztítás
+      html.classList.remove("ua-androidwv","ua-ioswv","ua-mobilelike","ua-desktopreq");
+
+      if (isAndroidWV) html.classList.add("ua-androidwv");
+      if (isIOSWV)     html.classList.add("ua-ioswv");
+      if (isMobileLike) html.classList.add("ua-mobilelike");
+
+      // "Asztali webhely kérése" CSAK mobil eszközön kapcsoljon
+      var looksDesktop = window.innerWidth >= 900;
+      if (isMobileLike && looksDesktop) html.classList.add("ua-desktopreq");
+
+      // Biztonsági szelep: ha desktop, TILTSD le
+      if (isDesktopLike) html.classList.remove("ua-desktopreq");
+    }
+
+    applyFlags();
+    addEventListener("resize", applyFlags, {passive:true});
+    addEventListener("orientationchange", applyFlags);
+  } catch(e) {}
 })();
+
 
 
 /* =========================================================
