@@ -120,7 +120,7 @@
       arak: 'Ebben a részben találhatóak választható zenei csomagjaink és ezek árai, díjai.',
       referenciak: 'Itt találhatóak a weboldal tulajdonosának az eredeti videói, példaként – meghallgathatod hogy milyen minőségre számíthatsz.',
       megrendeles: 'Itt adhatod le a megrendelést. A minta leírások segítenek a Leírás megfogalmazásában, görgess a lenti Leírás rész alá és próbáld ki!',
-      hogyan: 'Itt röviden elmagyarázzuk, hogyan zajlik a vásárlási folyamat – vásárlást a rendelés fülön tudod megtenni.',
+      hogyan: 'Itt röviden elmagyarázzuk, hogyan zajlik a vásárlási folyamat – a tényleges vásárlást a megrendelés fülön tudod megtenni.',
       kapcsolat: 'Itt tudsz üzenni és kérdezni tőlünk.'
     };
     const text = map[name] || 'Ez a rész segít, hogy gyorsan eligazodj ezen a fülön.';
