@@ -1,49 +1,75 @@
-// === NovaBot Assistant v3.1 (intro flight + dock fix + talk visual + full-brief speech) ===
+// === NovaBot Assistant v3.2 (stable dock + audio enable + talk visual + full-brief speech) ===
 (function(){
   const state = {
     bubbleOpen: false,
     synth: ('speechSynthesis' in window) ? window.speechSynthesis : null,
   };
 
-  // —— helpers ——————————————————————————————————————————————————————
+  // ---- audio flags (Samsung Internet / WebView) ----
+  let NB_AUDIO_ENABLED = false;   // felhasználó engedélyezte-e a hangot
+  let NB_VOICES_READY  = false;   // betöltöttek-e a TTS hangok
+
+  // ---- helpers ---------------------------------------------------------
   function qs(sel, root=document){ return root.querySelector(sel); }
   function qsa(sel, root=document){ return Array.from(root.querySelectorAll(sel)); }
-
-  // ékezetfüggetlen normálás (tab detektáláshoz)
   function norm(s){
-    return (s || "")
-      .toString()
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g,'')
-      .replace(/\s+/g,' ')
-      .trim();
+    return (s || "").toString().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/\s+/g,' ').trim();
   }
 
-  // —— beszéd (Web Speech API) ————————————————————————————————
+  // ---- speaking visuals ------------------------------------------------
   function setSpeaking(on){
     const root = document.getElementById('novabot');
     if(!root) return;
     root.classList.toggle('novabot-speaking', !!on);
   }
 
+  // ---- TTS (Web Speech API) --------------------------------------------
   function speak(text){
     try{
-      if(!state.synth) return;
+      // Samsung Internet / WebView: TTS csak user gesztus után
+      if (!state.synth || !NB_AUDIO_ENABLED) {
+        setSpeaking(false);
+        return;
+      }
+
+      // Voices betöltése (egyes böngészőkben csak később jön meg)
+      const loadVoices = () => {
+        const voices = state.synth.getVoices();
+        if (voices && voices.length) {
+          NB_VOICES_READY = true;
+          return voices;
+        }
+        return [];
+      };
+
+      let voices = loadVoices();
+      if (!NB_VOICES_READY) {
+        state.synth.onvoiceschanged = () => { NB_VOICES_READY = true; };
+        setTimeout(()=>{ voices = loadVoices(); }, 120);
+      }
+
       state.synth.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      const voices = state.synth.getVoices();
-      const hu = voices.find(v => /hu|hungar/i.test(v.lang));
-      if(hu) u.voice = hu;
-      u.rate = 1.0; u.pitch = 1.0;
+
+      // magyar hang preferencia
+      const hu = (voices||[]).find(v => /hu|hungar/i.test(v.lang));
+      if (hu) u.voice = hu;
+      u.lang = hu ? hu.lang : 'hu-HU';
+      u.rate = 1.0; u.pitch = 1.0; u.volume = 1.0;
+
       u.onstart = ()=> setSpeaking(true);
       u.onend   = ()=> setSpeaking(false);
       u.onerror = ()=> setSpeaking(false);
+
       state.synth.speak(u);
-    }catch(e){ setSpeaking(false); }
+    }catch(e){
+      setSpeaking(false);
+    }
   }
 
-  // —— UI létrehozás ———————————————————————————————————————————————
+  // ---- UI létrehozás ---------------------------------------------------
   function createUI(){
     if(qs('#novabot')) return;
 
@@ -71,7 +97,7 @@
     glow.className = 'novabot-eyeGlow';
     avatarWrap.appendChild(glow);
 
-    // beszéd-hullám vizuál (kis pulzáló pont)
+    // beszéd-hullám vizuál (kis pulzáló pont – CSS pozicionálja "száj" alá)
     const talk = document.createElement('div');
     talk.className = 'novabot-talkWave';
     avatarWrap.appendChild(talk);
@@ -79,13 +105,37 @@
     root.appendChild(avatarWrap);
     document.body.appendChild(root);
 
-    // induláskor legyen dokkolva jobb-alsó sarokban (CSS: #novabot.nb-docked)
+    // ---- Hang engedélyezése gomb (Samsung/WebView) ----
+    const soundBtn = document.createElement('button');
+    soundBtn.type = 'button';
+    soundBtn.className = 'novabot-sound-btn';
+    soundBtn.textContent = 'Hang engedélyezése';
+    soundBtn.setAttribute('aria-label', 'Hang engedélyezése');
+    root.appendChild(soundBtn);
+
+    const enableAudio = ()=>{
+      NB_AUDIO_ENABLED = true;
+      try { state.synth?.cancel(); state.synth?.resume?.(); } catch(e){}
+      soundBtn.classList.add('hide');
+    };
+    soundBtn.addEventListener('click', (e)=>{ e.stopPropagation(); enableAudio(); });
+
+    // első user gesztusra is engedélyezzük (tap/click bárhol)
+    const firstGesture = ()=>{
+      enableAudio();
+      document.removeEventListener('touchstart', firstGesture, {passive:true});
+      document.removeEventListener('click', firstGesture, true);
+    };
+    document.addEventListener('touchstart', firstGesture, {passive:true});
+    document.addEventListener('click', firstGesture, true);
+
+    // indulás: dokkolt jobb-alsó sarokban
     root.classList.add('nb-docked');
 
-    // interakció
+    // interakciók
     avatarWrap.addEventListener('click', () => {
       toggleBubble(true);
-      const msg = 'Szia, én vagyok NovaBot! Itt vagyok lent és segítek Neked. Próbáld ki a bakelit lemez füleket, vagy ugorj a Megrendelés részhez.';
+      const msg = 'Szia, én vagyok NovaBot! Itt vagyok lent és segítek Neked. Próbáld ki a bakelit lemez füleket vagy kattints a Megrendelés lemezre.';
       setBubbleText(msg);
       speak(msg);
       pointToHowTo();
@@ -113,14 +163,14 @@
     b.classList.toggle('show', state.bubbleOpen);
   }
 
-  // —— fül-leírások (változatlan logika, HU szövegek) ——————————
+  // ---- Tab leírások ----------------------------------------------------
   function describeTab(name){
     const map = {
       bemutatkozas: 'Ez a rész bemutatja, mivel foglalkozik a weboldalunk.',
       arak: 'Ebben a részben találhatóak választható zenei csomagjaink és ezek árai, díjai.',
-      referenciak: 'Itt találhatóak a weboldal tulajdonosának az eredeti videói, példaként – meghallgathatod hogy milyen minőségre számíthatsz.',
-      megrendeles: 'Itt adhatod le a megrendelést. A minta leírások segítenek a Leírás megfogalmazásában, görgess a lenti Leírás rész alá és próbáld ki!',
-      hogyan: 'Itt röviden elmagyarázzuk, hogyan zajlik a vásárlási folyamat – a tényleges vásárlást a megrendelés fülön tudod megtenni.',
+      referenciak: 'Itt találhatóak a weboldal tulajdonosának eredeti videói, példaként – hogy megtudd, milyen minőségre számíthatsz.',
+      megrendeles: 'Itt adhatod le a megrendelést. A mintaleírások segítenek a Leírás megfogalmazásában, görgess le és próbáld ki.',
+      hogyan: 'Itt röviden elmagyarázzuk, hogyan zajlik a folyamat – a tényleges vásárlást a Megrendelés fülön tudod megtenni.',
       kapcsolat: 'Itt tudsz üzenni és kérdezni tőlünk.'
     };
     const text = map[name] || 'Ez a rész segít, hogy gyorsan eligazodj ezen a fülön.';
@@ -176,7 +226,7 @@
     }, true);
   }
 
-  // —— BRIEF kiolvasása (Megrendelés) ————————————————————————
+  // ---- BRIEF kiolvasása (Megrendelés) ---------------------------------
   function getOrderBriefText() {
     const cand =
       document.querySelector('#order textarea, #order [name*="leiras" i], #order [name*="description" i]') ||
@@ -186,12 +236,11 @@
     return (
       cand.getAttribute('placeholder') ||
       (typeof cand.value === 'string' ? cand.value : '') ||
-      cand.textContent ||
-      ''
+      cand.textContent || ''
     ).trim();
   }
 
-  // —— Mintagombok: TELJES placeholdert mondunk; buborékban a rövid cím marad ——
+  // ---- Mintagombok: TELJES placeholdert mondunk -----------------------
   function bindExampleChips(){
     document.addEventListener('click', (e)=>{
       const chip = e.target.closest('.example-chip, .example, .chip, .minta, .mintaleiras, [data-example], [data-minta]');
@@ -202,13 +251,13 @@
 
       let full = (chip.getAttribute('data-example') || chip.getAttribute('data-minta') || chip.getAttribute('data-full') || '').trim();
 
-      // Ha másik script most állít placeholdert, várunk 1 kicsit és újraolvasunk
+      // Ha másik script most állít placeholdert, várunk kicsit és újraolvasunk
       setTimeout(()=>{
         const briefNow = getOrderBriefText();
         if (briefNow) full = briefNow;
         if (!full) return;
 
-        // Buborék: rövid cím (ha van), hang: TELJES szöveg
+        // Buborék: rövid cím, hang: TELJES szöveg
         const label = (chip.getAttribute('data-label') || '').trim();
         setBubbleText(label || full);
         toggleBubble(true);
@@ -217,7 +266,7 @@
     }, true);
   }
 
-  // —— Intro flight a videó lejátszó gombhoz ————————————————
+  // ---- (Opcióként marad) Play célpont kereső – ha később újra kell ----
   function getPlayTarget(){
     const sel = [
       '.play-btn', '.video__play', '.video-play', '.hero-video .play',
@@ -232,49 +281,20 @@
     return el || null;
   }
 
-  function rectCenter(el){
-    const r = el.getBoundingClientRect();
-    return { x: r.left + r.width/2, y: r.top + r.height/2 };
-  }
-
-  function showPointerAt(x, y){
-    const ring = document.createElement('div');
-    ring.className = 'nb-pointer';
-    ring.style.left = (x - 28) + 'px';
-    ring.style.top  = (y - 28) + 'px';
-    document.body.appendChild(ring);
-    setTimeout(()=> ring.remove(), 2200);
-  }
-
-  // — dokkolás helper: mindig vissza jobb-alsó sarokba ————————
-  function dockBottomRight(){
+  // ---- Intro flight: KIKAPCSOLVA (stabil dokk) -------------------------
+  function runIntroFlight(){
+    // csak dokkoljunk stabilan jobb-alsó sarokba, nincs animáció
+    try { sessionStorage.setItem('nb_intro_done', '1'); } catch(e){}
     const root = document.getElementById('novabot');
-    if(!root) return;
-    root.style.left = '';
-    root.style.top  = '';
-    root.style.right = '';
-    root.style.bottom = '';
-    root.style.transition = 'none';
-    root.classList.remove('nb-inflight');
+    if (!root) return;
+    root.classList.remove('nb-flying', 'nb-inflight');
     root.classList.add('nb-docked');
+    root.style.transform  = 'none';
+    root.style.transition = 'none';
+    root.style.left = ''; root.style.top = ''; root.style.right = ''; root.style.bottom = '';
   }
 
-// REPÜLÉS KIKAPCSOLVA – stabil dokkolás jobb-alsó sarokban
-function runIntroFlight(){
-  // jelezzük, hogy "lefutott", így később sem próbálkozik
-  try { sessionStorage.setItem('nb_intro_done', '1'); } catch(e){}
-  const root = document.getElementById('novabot');
-  if (!root) return;
-
-  // biztosan dokkolt állapotban, stabil jobb-alsó pozícióban
-  root.classList.remove('nb-flying', 'nb-inflight');
-  root.classList.add('nb-docked');
-  root.style.transform  = 'none';
-  root.style.transition = 'none';
-  root.style.left = ''; root.style.top = ''; root.style.right = ''; root.style.bottom = '';
-}
-
-  // —— Textarea fókusz hint ————————————————————————————————
+  // ---- Textarea fókusz hint -------------------------------------------
   function bindOrderTextarea(){
     const tryBind = () => {
       const el = qs('#order textarea, #order [name*="leiras" i], #order [name*="description" i]');
@@ -294,15 +314,13 @@ function runIntroFlight(){
     }, 300);
   }
 
-  // —— init ————————————————————————————————————————————————————
+  // ---- init ------------------------------------------------------------
   function init(){
     createUI();
     bindTabs();
     bindExampleChips();
     bindOrderTextarea();
-
-    // Intro flight a videó play gombhoz (egyszer / munkamenet)
-    setTimeout(runIntroFlight, 700);
+    setTimeout(runIntroFlight, 700); // most no-op: stabil dokkolás
   }
 
   if(document.readyState === 'loading'){
