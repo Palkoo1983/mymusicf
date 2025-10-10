@@ -812,7 +812,7 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 
   <script src="./assets/novabot/novabot.js"></script>
 <script>
-/* ===== GOLDEN – Order minta-gombok rövid címei ===== */
+/* ===== GOLDEN – minta gombok csonkamentesítése ===== */
 const NB_EXAMPLE_LABELS = [
   { re: /szuletesnap/i,                   label: "Születésnapra" },
   { re: /evfordulo/i,                     label: "Évfordulóra" },
@@ -835,28 +835,53 @@ function nbLabelFrom(fullText, fallback=""){
   return (fullText||"").split(/[.:!\n]/)[0].trim() || "Minta";
 }
 
+// a „… példa” / „ példa” végződések és hasonlók levágása
+function stripPeldaTail(s){
+  return (s||"")
+    .replace(/\s*…?\s*p[eé]lda\.?$/i, "")   // "… példa" / " pelda"
+    .replace(/\s*…\s*$/,"")                 // záró hárompont
+    .trim();
+}
+
 function nbNormalizeOrderChips(root=document){
-  const sel = '#order .example-chip, #order .example, #order .chip, #order .minta, #order .mintaleiras, #order [data-example], #order [data-minta]';
+  const sel = '.example-chip, .example, .chip, .minta, .mintaleiras, [data-example], [data-minta]';
   root.querySelectorAll(sel).forEach(el=>{
-    const full = el.getAttribute('data-example')
-               || el.getAttribute('data-minta')
-               || el.getAttribute('data-full')
-               || el.textContent || "";
-    if (!el.getAttribute('data-example')) el.setAttribute('data-example', full.trim());
+    // eredeti (teljes) szöveg forrása
+    const fullSrc = el.getAttribute('data-example')
+                  || el.getAttribute('data-minta')
+                  || el.getAttribute('data-full')
+                  || el.getAttribute('title')
+                  || el.textContent
+                  || "";
+    // mentsük el data-example-be, hogy biztosan meglegyen a teljes verzió
+    if (!el.getAttribute('data-example')) el.setAttribute('data-example', fullSrc.trim());
+
+    // ha jelenleg csonka szöveg látszik, azt takarítsuk
+    const current = stripPeldaTail(el.textContent);
+
+    // golden cím előállítása (előnyben a már kiosztott data-label)
     const existing = (el.getAttribute('data-label') || el.getAttribute('aria-label') || "").trim();
-    const label = nbLabelFrom(full, existing);
-    el.textContent = label;                 // csak rövid cím látszik
-    el.setAttribute('data-label', label);   // NovaBot is ezt használja
+    const label = nbLabelFrom(fullSrc, existing || current);
+
+    // felirat csere + attribútumok
+    el.textContent = label;
+    el.setAttribute('data-label', label);
     el.setAttribute('aria-label', label);
     el.title = label;
   });
 }
 
 function initOrderChipPatch(){
+  // 1) azonnal
   nbNormalizeOrderChips();
-  const target = document.getElementById('order') || document.body;
-  new MutationObserver(()=> nbNormalizeOrderChips())
-    .observe(target, { childList:true, subtree:true });
+  // 2) későn betöltődő elemekre: figyelő az egész dokumentumon
+  const mo = new MutationObserver(()=> nbNormalizeOrderChips(document));
+  mo.observe(document.documentElement, { childList:true, subtree:true });
+  // 3) biztos ami biztos – pár próbálkozás időzítve (SPA-k miatt)
+  let tries = 0; const iv = setInterval(()=>{
+    nbNormalizeOrderChips();
+    if (++tries >= 10) clearInterval(iv);
+  }, 300);
 }
 
 if (document.readyState === 'loading'){
