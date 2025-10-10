@@ -9,6 +9,17 @@
     }
   } catch(e) { console.warn(e); }
 </script>
+<script>
+(function(){
+  // Itt most csak annyit adunk hozzá, hogy az iOS WebView-t és más WebView-kat is felismerjük.
+  const ua = navigator.userAgent || "";
+  const isWebView = /(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i.test(ua) || /\bwv\b/i.test(ua);
+
+  if(isWebView) {
+    document.body.classList.add('is-webview');
+  }
+})();
+</script>
 
   <!-- Ikonok -->
   <link rel="icon" type="image/svg+xml"
