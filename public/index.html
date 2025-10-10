@@ -1,18 +1,17 @@
 <!DOCTYPE html>
 <html lang="hu" class="no-intro">
 <head>
-<!-- Anti-blink: alap háttér + booting állapot -->
+
+<!-- [GOLDEN WV PATCH v2] Anti-blink base -->
 <meta name="theme-color" content="#0d1b2a">
 <style>
   :root{ --bg:#0d1b2a; }
   html, body { background:#0d1b2a; }
-  /* Booting alatt: semmi transition/anim, a videó nem villan be */
   html.booting *{ transition:none !important; animation:none !important; }
   html.booting .video-panel iframe,
   html.booting .video-panel video{ visibility:hidden !important; }
 </style>
 <script>
-  // induláskor: stabil vh + booting flag
   (function(){
     var svh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--svh', svh+'px');
@@ -22,6 +21,9 @@
     }, {passive:true});
   })();
 </script>
+
+<link rel="preconnect" href="https://www.youtube-nocookie.com" crossorigin>
+<link rel="preconnect" href="https://i.ytimg.com" crossorigin>
 
 <script>
   try {
@@ -187,24 +189,6 @@
     }
   }).observe(html, {attributes:true, attributeFilter:["class"]});
 })();
-</script>
-<script>
-  // Anti-blink: booting gyors kivezetése, amikor a flagek már fent vannak
-  (function(){
-    function release(){
-      // 1–2 frame késleltetés, hogy a ua-* classok már érvényesüljenek
-      requestAnimationFrame(function(){
-        setTimeout(function(){
-          document.documentElement.classList.remove('booting');
-        }, 80); // ~0.08s
-      });
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', release, {once:true});
-    } else {
-      release();
-    }
-  })();
 </script>
 
   <!-- Ikonok -->
@@ -501,6 +485,25 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   }
 }
 </style>
+
+
+<!-- [GOLDEN WV PATCH v2] Anti-blink release -->
+<script>
+  (function(){
+    function release(){
+      requestAnimationFrame(function(){
+        setTimeout(function(){
+          document.documentElement.classList.remove('booting');
+        }, 80);
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', release, {once:true});
+    } else {
+      release();
+    }
+  })();
+</script>
 
 </head>
 <body class="gold-theme no-intro">

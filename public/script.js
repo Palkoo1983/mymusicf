@@ -687,3 +687,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, true); // ⬅ capture: igaz
 })();
+
+/* [GOLDEN WV PATCH v2] Mark video/sample as ready in WebView to avoid flash */
+(function(){
+  function arm(el){
+    if(!el) return;
+    var ready = function(){ el.classList.add('is-ready'); };
+    var ifr = el.querySelector('iframe');
+    if (ifr){
+      var t = setTimeout(ready, 150);
+      ifr.addEventListener('load', function(){ clearTimeout(t); ready(); }, {once:true});
+    }
+    var vid = el.querySelector('video');
+    if (vid){
+      if (vid.readyState >= 2){ ready(); }
+      else {
+        var ok = function(){ ready(); vid.removeEventListener('loadeddata', ok); };
+        vid.addEventListener('loadeddata', ok);
+        setTimeout(ready, 200);
+      }
+    }
+  }
+  function init(){
+    if (!document.documentElement.classList.contains('ua-webview')) return;
+    arm(document.querySelector('.video-panel'));
+    arm(document.querySelector('.sample-player'));
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, {once:true});
+  } else {
+    init();
+  }
+})();
+

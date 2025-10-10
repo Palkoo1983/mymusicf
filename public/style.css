@@ -2074,3 +2074,20 @@ html.ua-webview .lead, html.ua-androidwv .lead, html.ua-ioswv .lead, html.ua-mob
   font-size: clamp(14px, 2.9vw, 17px) !important;
   line-height: 1.45 !important;
 }
+
+/* [GOLDEN WV PATCH v2] WebView fade-in + paint optimization */
+html.ua-webview .video-panel,
+html.ua-webview .sample-player { opacity: 0; }
+html.ua-webview .video-panel.is-ready,
+html.ua-webview .sample-player.is-ready { 
+  opacity: 1; 
+  transition: opacity 120ms linear;
+}
+html.ua-webview .video-panel,
+html.ua-webview iframe,
+html.ua-webview video {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  contain: paint;
+}
+
