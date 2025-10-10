@@ -1,6 +1,28 @@
 <!DOCTYPE html>
 <html lang="hu" class="no-intro">
 <head>
+<!-- Anti-blink: alap háttér + booting állapot -->
+<meta name="theme-color" content="#0d1b2a">
+<style>
+  :root{ --bg:#0d1b2a; }
+  html, body { background:#0d1b2a; }
+  /* Booting alatt: semmi transition/anim, a videó nem villan be */
+  html.booting *{ transition:none !important; animation:none !important; }
+  html.booting .video-panel iframe,
+  html.booting .video-panel video{ visibility:hidden !important; }
+</style>
+<script>
+  // induláskor: stabil vh + booting flag
+  (function(){
+    var svh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--svh', svh+'px');
+    document.documentElement.classList.add('booting');
+    addEventListener('resize', function(){
+      document.documentElement.style.setProperty('--svh', (window.innerHeight*0.01)+'px');
+    }, {passive:true});
+  })();
+</script>
+
 <script>
   try {
     if (/SamsungBrowser/i.test(navigator.userAgent)) {
