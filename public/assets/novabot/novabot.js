@@ -112,20 +112,60 @@
     speak(text);
   }
 
-  function bindTabs(){
-    document.addEventListener('click', (e)=>{
-      const tab = e.target.closest('.vinyl-tabs .tab, [data-tab], [data-target], nav a, .nav a, .menu a');
-      if(!tab) return;
-      const target = (tab.getAttribute('data-tab') || tab.getAttribute('data-target') || tab.getAttribute('href') || '').toLowerCase();
-      if(/how/.test(target)) describeTab('hogyan');
-      else if(/ar|price|csomag|arak/.test(target)) describeTab('arak');
-      else if(/order|rendel|megrendel/.test(target)) describeTab('megrendeles');
-      else if(/ref|minta|referenc/.test(target)) describeTab('referenciak');
-      else if(/contact|kapcsol/.test(target)) describeTab('kapcsolat');
-      else if(/bemut|home|fooldal/.test(target)) describeTab('bemutatkozas');
-      else describeTab('');
-    }, true);
-  }
+ // Ékezet- és kis/nagybetű-független összehasonlító
+function norm(s){
+  return (s || "")
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')               // ékezetek bontása
+    .replace(/[\u0300-\u036f]/g,'') // ékezetek törlése
+    .replace(/\s+/g,' ')            // felesleges whitespace
+    .trim();
+}
+
+function bindTabs(){
+  document.addEventListener('click', (e)=>{
+    const tab = e.target.closest('.vinyl-tabs .tab, [data-tab], [data-target], nav a, .nav a, .menu a, a[href^="#"]');
+    if(!tab) return;
+
+    // Gyűjtsünk minden lehetséges „hintet”: attr + label
+    const href  = tab.getAttribute('href') || '';
+    const dt    = tab.getAttribute('data-target') || '';
+    const dtab  = tab.getAttribute('data-tab') || '';
+    const aria  = tab.getAttribute('aria-controls') || '';
+    const id    = tab.id || '';
+    const label = tab.textContent || tab.getAttribute('aria-label') || '';
+
+    const hintRaw = [href, dt, dtab, aria, id].join(' ');
+    const hint = norm(hintRaw);
+    const text = norm(label);
+
+    // Match-elés (ékezetfüggetlen)
+    if ( /how|hogyan|howto/.test(hint) || /hogyan/.test(text) ){
+      describeTab('hogyan');
+    }
+    else if ( /ar|arak|price|pricing|csomag/.test(hint) || /arak|csomag/.test(text) ){
+      // Árak/Csomagok
+      describeTab('arak');
+    }
+    else if ( /order|rendel|megrendel/.test(hint) || /megrendeles|rendeles/.test(text) ){
+      describeTab('megrendeles');
+    }
+    else if ( /ref|minta|referenc/.test(hint) || /referencia|referenciak|minta/.test(text) ){
+      describeTab('referenciak');
+    }
+    else if ( /contact|kapcsol/.test(hint) || /kapcsolat/.test(text) ){
+      describeTab('kapcsolat');
+    }
+    else if ( /bemut|fooldal|home|intro/.test(hint) || /bemutatkozas|fooldal|home/.test(text) ){
+      // Bemutatkozás
+      describeTab('bemutatkozas');
+    }
+    else {
+      describeTab('');
+    }
+  }, true);
+}
 
   function bindExampleChips(){
     document.addEventListener('click', (e)=>{
