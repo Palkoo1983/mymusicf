@@ -259,7 +259,7 @@
     root.classList.add('nb-docked');
   }
 
- function runIntroFlight(){
+function runIntroFlight(){
   try{
     if (sessionStorage.getItem('nb_intro_done')) return;
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -274,51 +274,36 @@
     const MSG_PLAY    = 'Indítsd el a videót!';
     const MSG_WELCOME = 'Szia, én vagyok NovaBot 🤖 – segítek eligazodni! Kattints rám vagy a menükre, és elmondom, mit hol találsz.';
 
-    // helper az animált lépéshez (left/top transitionnel, garantált reflow-val)
-    const animateTo = (left, top, dur=800) => new Promise(resolve=>{
-      root.style.transition = 'none';
-      // reflow – rögzítjük a jelenlegi kezdőállapotot
+    // segéd: animált mozgatás transformmal
+    const flyTo = (x, y, dur=800) => new Promise(resolve=>{
+      root.classList.add('nb-flying');
+      // kényszerített reflow, hogy a transition biztosan érvényesüljön
       void root.offsetWidth;
-      root.style.transition = `left ${dur}ms cubic-bezier(.2,.7,.2,1), top ${dur}ms cubic-bezier(.2,.7,.2,1)`;
+      root.style.transition = `transform ${dur}ms cubic-bezier(.2,.7,.2,1)`;
       const onEnd = (ev)=>{
-        if(ev.propertyName==='left' || ev.propertyName==='top'){
+        if(ev.propertyName === 'transform'){
           root.removeEventListener('transitionend', onEnd);
           resolve();
         }
       };
       root.addEventListener('transitionend', onEnd);
-      root.style.left = Math.round(left) + 'px';
-      root.style.top  = Math.round(top)  + 'px';
+      root.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`;
     });
 
-    // indulás: vedd le a dokkolást, abszolút pozik
+    // 0) indulás: vegyük le a dokkolást, repülés mód
     root.classList.remove('nb-docked');
-    root.classList.add('nb-inflight');
-    root.style.right = 'auto';
-    root.style.bottom = 'auto';
+    root.classList.add('nb-flying');
+    root.style.transform = `translate3d(-${(avatar.offsetWidth||120)+40}px, -${(avatar.offsetHeight||120)+40}px, 0)`; // bal-felsőből
 
-    // 0) START – bal felső sarok (képernyőn kívülről)
-    const startLeft = -((avatar.offsetWidth || 120) + 40);
-    const startTop  = -((avatar.offsetHeight || 120) + 40);
-    root.style.left = startLeft + 'px';
-    root.style.top  = startTop  + 'px';
-
-    // 1) CÉL: play gomb közepe
+    // 1) cél 1: play gomb közepe
     const r   = target.getBoundingClientRect();
     const cx  = r.left + r.width/2;
     const cy  = r.top  + r.height/2;
-    const toL = cx - (avatar.offsetWidth||120)/2;
-    const toT = cy - (avatar.offsetHeight||120)/2 - 8;
+    const toX = cx - (avatar.offsetWidth||120)/2;
+    const toY = cy - (avatar.offsetHeight||120)/2 - 8;
 
-    // kis fénycsóva induláskor
-    const trail = document.createElement('div');
-    trail.className = 'novabot-fxTrail';
-    avatar.appendChild(trail);
-    setTimeout(()=> trail.remove(), 900);
-
-    // animáció: top-left → play
-    animateTo(toL, toT, 800).then(()=>{
-      // megérkezett: célgyűrű + "Indítsd el a videót!"
+    flyTo(toX, toY, 800).then(()=>{
+      // célgyűrű + voice
       const ring = document.createElement('div');
       ring.className = 'nb-pointer';
       ring.style.left = (cx - 28) + 'px';
@@ -330,25 +315,24 @@
       toggleBubble(true);
       speak(MSG_PLAY);
 
-      // 2s várakozás a play gombnál
+      // 2s-ig maradunk itt, aztán jobb-alsó
       setTimeout(async ()=>{
-        // 2) CÉL: jobb–alsó sarok (animálva)
         const pad = 18;
-        const finalL = window.innerWidth  - (avatar.offsetWidth||120) - pad;
-        const finalT = window.innerHeight - (avatar.offsetHeight||120) - pad;
+        const finalX = window.innerWidth  - (avatar.offsetWidth||120) - pad;
+        const finalY = window.innerHeight - (avatar.offsetHeight||120) - pad;
 
-        await animateTo(finalL, finalT, 800);
+        await flyTo(finalX, finalY, 800);
 
-        // dokkolás + üdvözlő szöveg (látható marad)
-        root.style.left = '';
-        root.style.top  = '';
-        root.style.transition = 'none';
-        root.classList.remove('nb-inflight');
+        // DOKKOLÁS: vissza jobb-alsó sarokba, transform törlés
+        root.classList.remove('nb-flying');
         root.classList.add('nb-docked');
+        root.style.transform = 'none';
+        root.style.transition = 'none';
 
+        // üdv buborék (ha hangot is akarsz, tedd ide a speak-et)
         setBubbleText(MSG_WELCOME);
         toggleBubble(true);
-        // ha szeretnéd, itt fel is olvastathatod: speak(MSG_WELCOME);
+        // speak(MSG_WELCOME);
 
         sessionStorage.setItem('nb_intro_done', '1');
       }, 2000);
@@ -356,6 +340,7 @@
 
   }catch(e){ /* no-op */ }
 }
+
 
   // —— Textarea fókusz hint ————————————————————————————————
   function bindOrderTextarea(){
