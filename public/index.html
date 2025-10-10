@@ -811,6 +811,74 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   <script src="script.js"></script>
 
   <script src="./assets/novabot/novabot.js"></script>
+<script>
+/* ===== UX PATCHES – Order chips rövid cím + emoji takarítás ===== */
+
+// ékezet- és kis/nagybetű-független normálás
+function nbNorm(s){
+  return (s||"").toString()
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,' ').trim();
+}
+
+// egyszerű emoji-szűrő (általános webes fallback)
+function stripEmojis(s){
+  return (s||"").replace(/[\u{1F3FB}-\u{1F3FF}]/gu,'')     // skin tones
+                 .replace(/[\u{1F1E6}-\u{1F1FF}]/gu,'')     // flags
+                 .replace(/[\u{1F300}-\u{1F6FF}]/gu,'')     // misc symbols
+                 .replace(/[\u{1F700}-\u{1F77F}]/gu,'')     // alchemy
+                 .replace(/[\u{1F900}-\u{1F9FF}]/gu,'')     // supplemental
+                 .replace(/[\u{2600}-\u{26FF}]/gu,'')       // misc symbols
+                 .replace(/[\u{2700}-\u{27BF}]/gu,'');      // dingbats
+}
+
+// teljes minta szövegből rövid cím
+function labelFromExample(full){
+  const t = nbNorm(stripEmojis(full));
+  if (/szuletesnap/.test(t)) return "Születésnapra";
+  if (/evfordulo/.test(t))  return "Évfordulóra";
+  if (/ballagas/.test(t))   return "Ballagásra";
+  if (/nevnap/.test(t))     return "Névnapra";
+  if (/karacsony|unnep|szilveszter/.test(t)) return "Ünnepre";
+  if (/esk|eljegyz|hazassag/.test(t)) return "Eljegyzés/Esküvő";
+  if (/rendezveny|ceges|party|buli|esemeny/.test(t)) return "Rendezvényre";
+  // fallback: első mondatrész
+  return (full||"").split(/[.:!\n]/)[0].trim() || "Minta";
+}
+
+// csak rövid cím jelenjen meg a gombokon; a teljes szöveg marad data-example-ben
+function normalizeOrderChips(root=document){
+  const sel = '#order .example-chip, #order .example, #order .chip, #order .minta, #order .mintaleiras, #order [data-example], #order [data-minta]';
+  document.querySelectorAll(sel).forEach(el=>{
+    const full = el.getAttribute('data-example')
+             || el.getAttribute('data-minta')
+             || el.getAttribute('data-full')
+             || el.textContent || "";
+    // ha még nincs eltárolva, tegyük be data-example-be
+    if (!el.getAttribute('data-example')) el.setAttribute('data-example', full.trim());
+    const labelAttr = el.getAttribute('data-label') || el.getAttribute('aria-label');
+    const label = (labelAttr && labelAttr.trim()) || labelFromExample(full);
+    el.textContent = label;
+    el.setAttribute('aria-label', label);
+  });
+}
+
+// indítás + figyelő, ha később kerülnek be a gombok
+function initUxPatches(){
+  normalizeOrderChips();
+  const target = document.getElementById('order') || document.body;
+  const mo = new MutationObserver(()=> normalizeOrderChips());
+  mo.observe(target, { childList:true, subtree:true });
+}
+
+if (document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', initUxPatches);
+} else {
+  initUxPatches();
+}
+</script>
+
 </body>
 </html>
 
