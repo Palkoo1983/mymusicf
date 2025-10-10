@@ -1948,3 +1948,129 @@ html.ua-androidwv .lead, html.ua-ioswv .lead, html.ua-mobilelike.ua-desktopreq .
   font-size: clamp(14px, 2.9vw, 17px) !important;
   line-height: 1.45 !important;
 }
+/* =========================
+   WEBVIEW / MOBILON KÉRT DESKTOP – CÉLZOTT PATCH (DESKTOP-SAFE)
+   Csak itt él: html.ua-webview, html.ua-androidwv, html.ua-ioswv, html.ua-mobilelike.ua-desktopreq
+   ========================= */
+
+/* 0) Globál: vízszintes görgetés tiltás + tipó skála normalizálás */
+html.ua-webview, html.ua-webview body,
+html.ua-androidwv, html.ua-androidwv body,
+html.ua-ioswv, html.ua-ioswv body,
+html.ua-mobilelike.ua-desktopreq, html.ua-mobilelike.ua-desktopreq body{
+  width:100% !important;
+  max-width:100% !important;
+  overflow-x:hidden !important;
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+
+/* 1) Player/dropdown ne legyen abszolút – különben rálóg a menüre */
+html.ua-webview .video-panel,
+html.ua-androidwv .video-panel,
+html.ua-ioswv .video-panel,
+html.ua-mobilelike.ua-desktopreq .video-panel,
+html.ua-webview .sample-player,
+html.ua-androidwv .sample-player,
+html.ua-ioswv .sample-player,
+html.ua-mobilelike.ua-desktopreq .sample-player,
+html.ua-webview .sample-dropdown,
+html.ua-androidwv .sample-dropdown,
+html.ua-ioswv .sample-dropdown,
+html.ua-mobilelike.ua-desktopreq .sample-dropdown{
+  position: static !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 8px 0 0 0 !important;
+  padding: 8px 8px 0 8px !important;
+  transform: none !important;
+  z-index: 2 !important;
+}
+
+/* 1/b) Iframe/videó méretezés – ne legyen óriási, shorts-állóhoz is jó */
+html.ua-webview .video-panel iframe,
+html.ua-webview .video-panel video,
+html.ua-androidwv .video-panel iframe,
+html.ua-androidwv .video-panel video,
+html.ua-ioswv .video-panel iframe,
+html.ua-ioswv .video-panel video,
+html.ua-mobilelike.ua-desktopreq .video-panel iframe,
+html.ua-mobilelike.ua-desktopreq .video-panel video{
+  display:block !important;
+  width:100% !important;
+  max-width:480px !important;   /* WebView-ben méretkorlát */
+  aspect-ratio: 9 / 16;         /* shorts/álló videó */
+  height:auto !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* 2) Vinyl menü – mobil grid WebView + mobilon kért desktop-módban */
+html.ua-webview .vinyl-tabs,
+html.ua-androidwv .vinyl-tabs,
+html.ua-ioswv .vinyl-tabs,
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs{
+  display:grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap:10px !important;
+  padding:0 8px !important;
+  justify-items:center !important;
+  align-items:center !important;
+}
+
+html.ua-webview .vinyl-tabs .tab,
+html.ua-androidwv .vinyl-tabs .tab,
+html.ua-ioswv .vinyl-tabs .tab,
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab{
+  --disc: 92px;
+  width: var(--disc) !important;
+  height: var(--disc) !important;
+  display:grid !important;
+  place-items:center !important;
+  border-radius:50% !important;
+  overflow:hidden !important;
+  padding:0 !important;
+  transform: translateZ(0); /* Samsung reflow bug */
+}
+
+/* 2/b) Felirat – hogy a “Bemutatkozás” beférjen */
+html.ua-webview .vinyl-tabs .tab .label,
+html.ua-androidwv .vinyl-tabs .tab .label,
+html.ua-ioswv .vinyl-tabs .tab .label,
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab .label{
+  width:90% !important;
+  margin:0 auto !important;
+  text-align:center !important;
+  font-size: 13.5px !important;
+  line-height: 1.15 !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* 3) Rétegezés – menü biztosan a player fölött */
+html.ua-webview .topbar,
+html.ua-webview .vinyl-tabs,
+html.ua-androidwv .topbar,
+html.ua-androidwv .vinyl-tabs,
+html.ua-ioswv .topbar,
+html.ua-ioswv .vinyl-tabs,
+html.ua-mobilelike.ua-desktopreq .topbar,
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs{
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+/* 4) “Bemutatkozás” tipó WebView-ben (ha van külön intro/ about konténered, ráírhatjuk külön) */
+html.ua-webview h1, html.ua-androidwv h1, html.ua-ioswv h1, html.ua-mobilelike.ua-desktopreq h1{
+  font-size: clamp(20px, 3.8vw, 28px) !important;
+}
+html.ua-webview h2, html.ua-androidwv h2, html.ua-ioswv h2, html.ua-mobilelike.ua-desktopreq h2{
+  font-size: clamp(18px, 3.2vw, 24px) !important;
+}
+html.ua-webview p,  html.ua-androidwv p,  html.ua-ioswv p,  html.ua-mobilelike.ua-desktopreq p,
+html.ua-webview .lead, html.ua-androidwv .lead, html.ua-ioswv .lead, html.ua-mobilelike.ua-desktopreq .lead{
+  font-size: clamp(14px, 2.9vw, 17px) !important;
+  line-height: 1.45 !important;
+}
