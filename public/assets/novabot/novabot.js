@@ -167,19 +167,29 @@ function bindTabs(){
   }, true);
 }
 
-  function bindExampleChips(){
-    document.addEventListener('click', (e)=>{
-      const chip = e.target.closest('.example-chip, .example, .chip, .minta, .mintaleiras, [data-example], [data-minta]');
-      if(!chip) return;
-      const inOrder = chip.closest('#order, [id*=\"order\" i], [data-section*=\"order\" i], [data-section*=\"megrendel\" i], [data-target*=\"order\" i], [href*=\"#order\" i]');
-      if(!inOrder) return;
-      const txt = (chip.getAttribute('data-example') || chip.getAttribute('data-minta') || chip.textContent || '').trim();
-      if(!txt) return;
-      setBubbleText(txt);
-      toggleBubble(true);
-      speak(txt);
-    }, true);
-  }
+function bindExampleChips(){
+  document.addEventListener('click', (e)=>{
+    const chip = e.target.closest('.example-chip, .example, .chip, .minta, .mintaleiras, [data-example], [data-minta]');
+    if(!chip) return;
+
+    // csak a Megrendelés szekcióban reagáljon
+    const inOrder = chip.closest('#order, [id*="order" i], [data-section*="order" i], [data-section*="megrendel" i], [data-target*="order" i], [href*="#order" i]');
+    if(!inOrder) return;
+
+    // TELJES minta + rövid cím előállítás
+    const full  = (chip.getAttribute('data-example') || chip.getAttribute('data-minta') || chip.getAttribute('data-full') || chip.textContent || '').trim();
+    const labelAttr = (chip.getAttribute('data-label') || chip.getAttribute('aria-label') || '').trim();
+    const label = labelAttr || (typeof nbLabelFrom === 'function' ? nbLabelFrom(full) : (full.split(/[.:!\n]/)[0].trim() || 'Minta'));
+
+    // Buborék + felolvasás -> a RÖVID, egységes cím
+    setBubbleText(label);
+    toggleBubble(true);
+    speak(label);
+
+    // Ha később a teljes placeholdert szeretnéd olvastatni:
+    // speak(full);
+  }, true);
+}
 
   function bindOrderTextarea(){
     const tryBind = () => {
