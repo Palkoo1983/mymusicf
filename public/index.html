@@ -188,6 +188,24 @@
   }).observe(html, {attributes:true, attributeFilter:["class"]});
 })();
 </script>
+<script>
+  // Anti-blink: booting gyors kivezetése, amikor a flagek már fent vannak
+  (function(){
+    function release(){
+      // 1–2 frame késleltetés, hogy a ua-* classok már érvényesüljenek
+      requestAnimationFrame(function(){
+        setTimeout(function(){
+          document.documentElement.classList.remove('booting');
+        }, 80); // ~0.08s
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', release, {once:true});
+    } else {
+      release();
+    }
+  })();
+</script>
 
   <!-- Ikonok -->
   <link rel="icon" type="image/svg+xml"
