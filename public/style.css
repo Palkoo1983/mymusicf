@@ -2272,3 +2272,18 @@ html.ua-webview .video-panel.yt-smooth { will-change: opacity, transform; }
   background-color: var(--nb-vinyl-gold);
   background-blend-mode: normal;
 }
+/**** Nova – Samsung/WebView Vinyl Fix (erősebb verzió) ****/
+:root.nb-samsung .vinyl-tabs .tab,
+:root.nb-webview .vinyl-tabs .tab {
+  /* Erősebb színkényszerítés: arany alap és látható barázdák */
+  background-color: #d4af37 !important; /* Arany alap */
+  background-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 60%), 
+                    repeating-radial-gradient(circle at 50% 50%, 
+                      rgba(0,0,0,0.25) 0px, rgba(0,0,0,0.25) 1px, 
+                      rgba(0,0,0,0) 1px, rgba(0,0,0,0) 3px);
+  background-size: cover;
+  /* Egyéb finomítások a barázdákhoz */
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+}
+
+/* Ha van konkrét lemez konténer, ide még egyedi szelektor mehet */
