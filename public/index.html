@@ -967,6 +967,20 @@ function initOrderChipPatch(){
 // indítás
 initOrderChipPatch();
 </script>
+<script>
+(function(){
+  if (!/SamsungBrowser/i.test(navigator.userAgent||"")) return;
+  window.addEventListener('load', function(){
+    requestAnimationFrame(function(){
+      document.querySelectorAll('.vinyl-tabs .tab, .vinyl, .record').forEach(function(el){
+        el.style.willChange = 'opacity';
+        el.style.opacity = '0.999';
+        setTimeout(function(){ el.style.opacity = ''; el.style.willChange = ''; }, 0);
+      });
+    });
+  });
+})();
+</script>
 
 </body>
 </html>
