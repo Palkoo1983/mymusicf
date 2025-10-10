@@ -2095,3 +2095,5 @@ html.ua-webview .video-panel{ will-change: opacity, transform; }
 document.querySelectorAll('.video-panel iframe[src*="youtube"]').forEach(el=>{
   el.setAttribute('referrerpolicy','strict-origin-when-cross-origin');
 });
+/* [SAFE MODE] WebView finomítás – nincs layout-változás */
+html.ua-webview .video-panel.yt-smooth { will-change: opacity, transform; }
