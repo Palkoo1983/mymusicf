@@ -259,88 +259,20 @@
     root.classList.add('nb-docked');
   }
 
+// REPÜLÉS KIKAPCSOLVA – stabil dokkolás jobb-alsó sarokban
 function runIntroFlight(){
-  try{
-    if (sessionStorage.getItem('nb_intro_done')) return;
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // jelezzük, hogy "lefutott", így később sem próbálkozik
+  try { sessionStorage.setItem('nb_intro_done', '1'); } catch(e){}
+  const root = document.getElementById('novabot');
+  if (!root) return;
 
-    const target = getPlayTarget();
-    if(!target) return;
-
-    const root   = document.getElementById('novabot');
-    const avatar = root?.querySelector('.novabot-avatar');
-    if(!root || !avatar) return;
-
-    const MSG_PLAY    = 'Indítsd el a videót!';
-    const MSG_WELCOME = 'Szia, én vagyok NovaBot 🤖 – segítek eligazodni! Kattints rám vagy a menükre, és elmondom, mit hol találsz.';
-
-    // segéd: animált mozgatás transformmal
-    const flyTo = (x, y, dur=800) => new Promise(resolve=>{
-      root.classList.add('nb-flying');
-      // kényszerített reflow, hogy a transition biztosan érvényesüljön
-      void root.offsetWidth;
-      root.style.transition = `transform ${dur}ms cubic-bezier(.2,.7,.2,1)`;
-      const onEnd = (ev)=>{
-        if(ev.propertyName === 'transform'){
-          root.removeEventListener('transitionend', onEnd);
-          resolve();
-        }
-      };
-      root.addEventListener('transitionend', onEnd);
-      root.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`;
-    });
-
-    // 0) indulás: vegyük le a dokkolást, repülés mód
-    root.classList.remove('nb-docked');
-    root.classList.add('nb-flying');
-    root.style.transform = `translate3d(-${(avatar.offsetWidth||120)+40}px, -${(avatar.offsetHeight||120)+40}px, 0)`; // bal-felsőből
-
-    // 1) cél 1: play gomb közepe
-    const r   = target.getBoundingClientRect();
-    const cx  = r.left + r.width/2;
-    const cy  = r.top  + r.height/2;
-    const toX = cx - (avatar.offsetWidth||120)/2;
-    const toY = cy - (avatar.offsetHeight||120)/2 - 8;
-
-    flyTo(toX, toY, 800).then(()=>{
-      // célgyűrű + voice
-      const ring = document.createElement('div');
-      ring.className = 'nb-pointer';
-      ring.style.left = (cx - 28) + 'px';
-      ring.style.top  = (cy - 28) + 'px';
-      document.body.appendChild(ring);
-      setTimeout(()=> ring.remove(), 2100);
-
-      setBubbleText(MSG_PLAY);
-      toggleBubble(true);
-      speak(MSG_PLAY);
-
-      // 2s-ig maradunk itt, aztán jobb-alsó
-      setTimeout(async ()=>{
-        const pad = 18;
-        const finalX = window.innerWidth  - (avatar.offsetWidth||120) - pad;
-        const finalY = window.innerHeight - (avatar.offsetHeight||120) - pad;
-
-        await flyTo(finalX, finalY, 800);
-
-        // DOKKOLÁS: vissza jobb-alsó sarokba, transform törlés
-        root.classList.remove('nb-flying');
-        root.classList.add('nb-docked');
-        root.style.transform = 'none';
-        root.style.transition = 'none';
-
-        // üdv buborék (ha hangot is akarsz, tedd ide a speak-et)
-        setBubbleText(MSG_WELCOME);
-        toggleBubble(true);
-        // speak(MSG_WELCOME);
-
-        sessionStorage.setItem('nb_intro_done', '1');
-      }, 2000);
-    });
-
-  }catch(e){ /* no-op */ }
+  // biztosan dokkolt állapotban, stabil jobb-alsó pozícióban
+  root.classList.remove('nb-flying', 'nb-inflight');
+  root.classList.add('nb-docked');
+  root.style.transform  = 'none';
+  root.style.transition = 'none';
+  root.style.left = ''; root.style.top = ''; root.style.right = ''; root.style.bottom = '';
 }
-
 
   // —— Textarea fókusz hint ————————————————————————————————
   function bindOrderTextarea(){
