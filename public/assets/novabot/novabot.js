@@ -167,6 +167,23 @@ function bindTabs(){
   }, true);
 }
 
+// --- HELPER: BRIEF placeholder/érték leolvasása a Megrendelés szekcióból ---
+function getOrderBriefText() {
+  // keresünk egy leírás textarea-t / inputot
+  const cand =
+    document.querySelector('#order textarea, #order [name*="leiras" i], #order [name*="description" i]') ||
+    document.querySelector('[data-section*="order" i] textarea, [data-section*="megrendel" i] textarea');
+
+  if (!cand) return "";
+
+  // előny: placeholder, ha nincs, akkor value, ha nincs, akkor textContent
+  return (
+    cand.getAttribute('placeholder') ||
+    (typeof cand.value === 'string' ? cand.value : '') ||
+    cand.textContent ||
+    ''
+  ).trim();
+}
 function bindExampleChips(){
   document.addEventListener('click', (e)=>{
     const chip = e.target.closest('.example-chip, .example, .chip, .minta, .mintaleiras, [data-example], [data-minta]');
@@ -176,18 +193,24 @@ function bindExampleChips(){
     const inOrder = chip.closest('#order, [id*="order" i], [data-section*="order" i], [data-section*="megrendel" i], [data-target*="order" i], [href*="#order" i]');
     if(!inOrder) return;
 
-    // TELJES minta + rövid cím előállítás
-    const full  = (chip.getAttribute('data-example') || chip.getAttribute('data-minta') || chip.getAttribute('data-full') || chip.textContent || '').trim();
-    const labelAttr = (chip.getAttribute('data-label') || chip.getAttribute('aria-label') || '').trim();
-    const label = labelAttr || (typeof nbLabelFrom === 'function' ? nbLabelFrom(full) : (full.split(/[.:!\n]/)[0].trim() || 'Minta'));
+    // 1) TELJES minta a chip attribútumaiból (ha már eltároltuk)
+    let full = (chip.getAttribute('data-example') || chip.getAttribute('data-minta') || chip.getAttribute('data-full') || '').trim();
 
-    // Buborék + felolvasás -> a RÖVID, egységes cím
-    setBubbleText(label);
-    toggleBubble(true);
-    speak(label);
+    // 2) Ha másik script most állítja be a textarea placeholderét, egy nagyon rövid késleltetéssel újraolvasunk
+    setTimeout(()=>{
+      // ha még nincs tartalom, vagy szeretnénk a frissen beállított BRIEF-et, olvassuk ki a textarea-ból
+      const briefNow = getOrderBriefText();
+      if (briefNow) full = briefNow;
 
-    // Ha később a teljes placeholdert szeretnéd olvastatni:
-    // speak(full);
+      if (!full) return; // nincs mit mondani
+
+      // Buborékban is a TELJES szöveg jelenjen meg
+      setBubbleText(full);
+      toggleBubble(true);
+
+      // NovaBot felmondja a TELJES placeholdert
+      speak(full);
+    }, 60); // 1 frame-nél kicsit több, hogy a másik logika lefusson
   }, true);
 }
 
