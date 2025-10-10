@@ -260,62 +260,100 @@
   }
 
   function runIntroFlight(){
-    try{
-      // csak egyszer / munkamenet, és ha nincs reduced-motion
-      if (sessionStorage.getItem('nb_intro_done')) return;
-      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  try{
+    // egyszer / munkamenet és tiszteletben tartjuk a reduced-motion beállítást
+    if (sessionStorage.getItem('nb_intro_done')) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-      const target = getPlayTarget();
-      if(!target) return;
+    const target = getPlayTarget();
+    if(!target) return;
 
-      const root   = document.getElementById('novabot');
-      const avatar = root?.querySelector('.novabot-avatar');
-      if(!root || !avatar) return;
+    const root   = document.getElementById('novabot');
+    const avatar = root?.querySelector('.novabot-avatar');
+    if(!root || !avatar) return;
 
-      // repülés mód: levesszük a dokkolást, abszolút pozik
-      root.classList.remove('nb-docked');
-      root.classList.add('nb-inflight');
-      root.style.transition = 'left 900ms cubic-bezier(.2,.7,.2,1), top 900ms cubic-bezier(.2,.7,.2,1)';
-      root.style.right = 'auto';
-      root.style.bottom = 'auto';
+    // SZÖVEGEK
+    const MSG_PLAY   = 'Indítsd el a videót!';
+    const MSG_WELCOME = 'Szia, én vagyok NovaBot 🤖 – segítek eligazodni! Kattints rám vagy a menükre, és elmondom, mit hol találsz.';
 
-      const startTop = Math.round(window.innerHeight * 0.3);
-      root.style.left = (- (avatar.offsetWidth || 120) - 40) + 'px';
-      root.style.top  = startTop + 'px';
+    // indulás: levesszük a dokkolást, abszolút pozicionálás
+    root.classList.remove('nb-docked');
+    root.classList.add('nb-inflight');
+    root.style.transition = 'left 900ms cubic-bezier(.2,.7,.2,1), top 900ms cubic-bezier(.2,.7,.2,1)';
+    root.style.right = 'auto';
+    root.style.bottom = 'auto';
 
-      // kis fénycsóva
-      const trail = document.createElement('div');
-      trail.className = 'novabot-fxTrail';
-      avatar.appendChild(trail);
-      setTimeout(()=> trail.remove(), 1000);
+    // KEZDŐ POZÍCIÓ: bal felső sarok kívülről
+    const startLeft = -((avatar.offsetWidth || 120) + 40);
+    const startTop  = -((avatar.offsetHeight || 120) + 40);
+    root.style.left = startLeft + 'px';
+    root.style.top  = startTop  + 'px';
 
-      const { x, y } = rectCenter(target);
-      const toLeft = Math.round(x - (avatar.offsetWidth||120)/2);
-      const toTop  = Math.round(y - (avatar.offsetHeight||120)/2 - 8);
+    // kis fénycsóva
+    const trail = document.createElement('div');
+    trail.className = 'novabot-fxTrail';
+    avatar.appendChild(trail);
+    setTimeout(()=> trail.remove(), 1000);
 
-      // 1) berepül
-      requestAnimationFrame(()=>{
-        root.style.left = toLeft + 'px';
-        root.style.top  = toTop  + 'px';
-      });
+    // CÉL 1: play gomb közepe
+    const rect = target.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top  + rect.height/2;
+    const toLeft = Math.round(cx - (avatar.offsetWidth||120)/2);
+    const toTop  = Math.round(cy - (avatar.offsetHeight||120)/2 - 8);
 
-      // 2) kijelölés + voice prompt
+    // 1) berepül a play gombhoz
+    requestAnimationFrame(()=>{
+      root.style.left = toLeft + 'px';
+      root.style.top  = toTop  + 'px';
+    });
+
+    // 2) kijelölés + „Indítsd el a videót!” (kb. 2s)
+    setTimeout(()=>{
+      // célgyűrű
+      const ring = document.createElement('div');
+      ring.className = 'nb-pointer';
+      ring.style.left = (cx - 28) + 'px';
+      ring.style.top  = (cy - 28) + 'px';
+      document.body.appendChild(ring);
+      setTimeout(()=> ring.remove(), 2100);
+
+      setBubbleText(MSG_PLAY);
+      toggleBubble(true);
+      speak(MSG_PLAY);
+    }, 950);
+
+    // 3) végpozíció: jobb–alsó sarok (animálva), majd dokkolás + eredeti üdv
+    setTimeout(()=>{
+      // cél koordináták kiszámítása (viewport alján-jobbján belül)
+      const pad = 18;
+      const finalLeft = window.innerWidth  - (avatar.offsetWidth||120) - pad;
+      const finalTop  = window.innerHeight - (avatar.offsetHeight||120) - pad;
+
+      root.style.left = finalLeft + 'px';
+      root.style.top  = finalTop  + 'px';
+
+      // amikor megérkezett: állítsuk vissza a dokkolt állapotot és az alap üdvözlést
       setTimeout(()=>{
-        showPointerAt(x, y);
-        const msg = 'Indítsd el a videót!';
-        setBubbleText(msg);
+        // minden inline pozíciót tisztítunk és dokkolunk
+        root.style.left = '';
+        root.style.top  = '';
+        root.style.transition = 'none';
+        root.classList.remove('nb-inflight');
+        root.classList.add('nb-docked');
+
+        // alap üzenet vissza
+        setBubbleText(MSG_WELCOME);
         toggleBubble(true);
-        speak(msg);
-      }, 950);
+        // itt NEM beszéltetjük újra, csak kiírjuk – ha szeretnéd, tedd ide: speak(MSG_WELCOME);
 
-      // 3) dokkolás (fixen látszódjon és maradjon a sarokban)
-      setTimeout(()=>{
-        dockBottomRight();
         sessionStorage.setItem('nb_intro_done', '1');
-      }, 2000);
+      }, 950);
+    }, 950 + 2000); // 950ms utazás + ~2s play prompt után indul lefelé
 
-    }catch(e){ /* no-op */ }
-  }
+  }catch(e){ /* no-op */ }
+}
+
 
   // —— Textarea fókusz hint ————————————————————————————————
   function bindOrderTextarea(){
