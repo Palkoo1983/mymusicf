@@ -21,37 +21,57 @@
 })();
 </script>
 <script>
-/* WEBVIEW + "asztali webhely kérése" detektálás – osztályok az <html>-re */
+/* WEBVIEW + "asztali webhely kérése" – JAVÍTOTT DETEKTÁLÁS
+   - ua-androidwv / ua-ioswv: tényleges WebView
+   - ua-mobilelike: valóban mobil jellegű eszköz
+   - ua-desktopreq: CSAK akkor megy fel, ha mobil eszközön kérnek desktop nézetet
+   => asztali gépen NEM kerül fel!
+*/
 (function () {
   var ua = navigator.userAgent || "";
   var html = document.documentElement;
 
-  // Android WebView: "wv"
-  var isAndroid = /Android/i.test(ua);
+  var isAndroid   = /Android/i.test(ua);
+  var isIOS       = /iPhone|iPad|iPod/i.test(ua);
+  var isSafari    = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
+
+  // Tényleges WebView-k
   var isAndroidWV = isAndroid && /\bwv\b/i.test(ua);
+  var isIOSWV     = isIOS && (!isSafari || !!(window.webkit && window.webkit.messageHandlers));
 
-  // iOS WebView: nincs Safari a UA-ban VAGY van webkit bridge
-  var isIOS = /iPhone|iPad|iPod/i.test(ua);
-  var isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
-  var isIOSWV = isIOS && (!isSafari || !!(window.webkit && window.webkit.messageHandlers));
+  // Mobil jelleg: UA vagy input (coarse pointer) + kis fizikai kijelző
+  var coarsePointer = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  var smallPhysical = Math.min(screen.width, screen.height) <= 900;
+  var mobileLike    = (isAndroid || isIOS || coarsePointer) && smallPhysical;
 
-  // "Asztali webhely kérése" mobilon: kis fizikai kijelző, de széles viewport
-  var physMin = Math.min(screen.width, screen.height);
-  var desktopReqOnMobile = (window.innerWidth >= 900) && (physMin <= 900);
+  // Desktop jelleg: finom pointer + hover (klasszikus egér), és nem mobil UA
+  var desktopLike = window.matchMedia && window.matchMedia("(pointer: fine) and (hover: hover)").matches && !(isAndroid || isIOS);
 
-  if (isAndroidWV) html.classList.add('ua-androidwv');
-  if (isIOSWV)     html.classList.add('ua-ioswv');
-  if (desktopReqOnMobile) html.classList.add('ua-desktopreq');
+  // "Asztali webhely kérése" mobilon: mobil eszközön széles viewport
+  var looksDesktop = window.innerWidth >= 900;
+  var desktopReqOnMobile = mobileLike && looksDesktop;
 
-  // Kompatibilitás: ha korábban body-ra raktunk is-webview-t, pechel se maradjon le:
-  document.addEventListener('DOMContentLoaded', function(){
-    if (document.body && document.body.classList.contains('is-webview')) {
-      // legalább androidwv-nek kezeljük
-      html.classList.add('ua-androidwv');
-    }
-  });
+  // Osztályok felrakása
+  if (isAndroidWV) html.classList.add("ua-androidwv");
+  if (isIOSWV)     html.classList.add("ua-ioswv");
+  if (mobileLike)  html.classList.add("ua-mobilelike");
+  if (desktopReqOnMobile) html.classList.add("ua-desktopreq");
+
+  // Biztonsági szelep: ha desktop gép, biztosan NINCS ua-desktopreq
+  if (desktopLike) html.classList.remove("ua-desktopreq");
+
+  // Ablakméret változásakor újraszámoljuk (pl. ablak átméretezés)
+  function reevaluate(){
+    var looksDesktopNow = window.innerWidth >= 900;
+    if (mobileLike && looksDesktopNow) html.classList.add("ua-desktopreq");
+    else                               html.classList.remove("ua-desktopreq");
+    if (desktopLike) html.classList.remove("ua-desktopreq");
+  }
+  addEventListener("resize", reevaluate, {passive:true});
+  addEventListener("orientationchange", reevaluate);
 })();
 </script>
+
 
   <!-- Ikonok -->
   <link rel="icon" type="image/svg+xml"
