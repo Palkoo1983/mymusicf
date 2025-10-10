@@ -849,8 +849,13 @@ const NB_EXAMPLE_LABELS = [
   { re: /karacsony|unnep|szilveszter/i,   label: "Ünnepre" }
 ];
 
+/* Golden cím a teljes szövegből – ÉKEZETMENTESÍTÉSSEL */
 function nbLabelFrom(fullText, fallback=""){
-  const txt = (fullText || "").toLowerCase();
+  // kisbetű + ékezetek eltávolítása, hogy a regexek stabilan találjanak
+  const txt = (fullText || "")
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // ékezet le
+
   for (const {re, label} of NB_EXAMPLE_LABELS) {
     if (re.test(txt)) return label;
   }
