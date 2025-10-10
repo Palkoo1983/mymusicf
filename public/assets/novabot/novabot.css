@@ -287,3 +287,46 @@
   0%   { box-shadow: 0 0 0 0 rgba(255,255,255,.55); }
   100% { box-shadow: 0 0 0 14px rgba(255,255,255,0); }
 }
+/* === TALK PULSE: pontosan a "száj" alá, könnyen állíthatóval === */
+.novabot-avatar{
+  position: relative;
+  /* állítható paraméterek: ha kicsit lejjebb/feljebb szeretnéd, ezt módosítsd */
+  --novabot-mouth-y: 40%;   /* 40% = a kép magasságának 40%-a (száj környéke) */
+  --novabot-talk-size: 12px;
+}
+
+.novabot-talkWave{
+  position: absolute !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  top: var(--novabot-mouth-y) !important;
+  width: var(--novabot-talk-size) !important;
+  height: var(--novabot-talk-size) !important;
+  opacity: 0;
+}
+
+.novabot-speaking .novabot-talkWave{
+  opacity: 1;
+  animation: nb-talk 0.8s ease-out infinite;
+}
+
+@keyframes nb-talk{
+  0%   { box-shadow: 0 0 0 0 rgba(255,255,255,.55); }
+  100% { box-shadow: 0 0 0 14px rgba(255,255,255,0); }
+}
+
+/* szemfény beszéd közben (ha túl halvány volt) */
+.novabot-eyeGlow{
+  position: absolute; inset: 0; pointer-events: none; border-radius: 18px;
+}
+.novabot-speaking .novabot-eyeGlow{
+  animation: nb-eyes-speaking 0.9s ease-in-out infinite;
+  box-shadow:
+    0 0 28px rgba(255,255,255,.65),
+    0 0 14px rgba(255,255,255,.45) inset;
+}
+@keyframes nb-eyes-speaking{
+  0%   { box-shadow: 0 0 10px rgba(255,255,255,.35), 0 0 6px rgba(255,255,255,.25) inset; }
+  50%  { box-shadow: 0 0 28px rgba(255,255,255,.78), 0 0 14px rgba(255,255,255,.50) inset; }
+  100% { box-shadow: 0 0 10px rgba(255,255,255,.35), 0 0 6px rgba(255,255,255,.25) inset; }
+}
