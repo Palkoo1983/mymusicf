@@ -864,7 +864,11 @@ function nbNormalizeOrderChips(orderRoot){
   const sel = '.example-chip, .example, .chip, .minta, .mintaleiras, [data-example], [data-minta]';
   orderRoot.querySelectorAll(sel).forEach(el=>{
     // ha már normalizált és a felirat stimmel, lépjünk tovább
-    if (el.hasAttribute('data-label') && el.textContent.trim() === el.getAttribute('data-label')) return;
+    // ha már NB-módra állítottuk és a kívánt label megegyezik, lépjünk tovább
+// (a desired kiszámítása lejjebb van, ezért itt csak akkor lépünk ki,
+// ha már korábban beállítottuk a jelzőosztályt)
+if (el.classList.contains('nb-show-label') && el.hasAttribute('data-label')) return;
+
 
     // TELJES forrás (eltároljuk data-example-be, ha még nincs)
     const fullSrc = el.getAttribute('data-example')
@@ -880,11 +884,12 @@ function nbNormalizeOrderChips(orderRoot){
 
     const label = nbLabelFrom(fullSrc, existingLbl || currentSane);
 
-    // Csak a rövid, egységes cím jelenjen meg
-    el.textContent = label;
-    el.setAttribute('data-label', label);
-    el.setAttribute('aria-label', label);
-    el.title = label;
+    // Csak a rövid, egységes cím jelenjen meg – vizuálisan a data-label (CSS ::before)
+el.setAttribute('data-label', label);
+el.setAttribute('aria-label', label);
+el.title = label;
+el.textContent = "";                // belső szöveget kiürítjük
+el.classList.add('nb-show-label');  // CSS pseudo fogja kirajzolni a labelt
   });
 }
 
