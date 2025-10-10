@@ -1,5 +1,5 @@
 
-/* === NovaBot styles === */
+/* === NovaBot styles v2 === */
 #novabot {
   position: fixed;
   right: clamp(10px, 2vw, 18px);
@@ -9,7 +9,7 @@
   grid-template-columns: auto;
   align-items: end;
   gap: 8px;
-  pointer-events: none; /* container ignores, inner handles */
+  pointer-events: none;
 }
 
 .novabot-avatar {
@@ -21,6 +21,7 @@
   animation: nb-float 3.2s ease-in-out infinite;
   pointer-events: auto;
   background: transparent;
+  position: relative;
 }
 
 .novabot-avatar img {
@@ -34,7 +35,6 @@
   50% { transform: translateY(-6px) }
 }
 
-/* eye glow pulse overlay */
 .novabot-eyeGlow {
   position:absolute; inset:0; pointer-events:none;
   border-radius:18px;
@@ -43,8 +43,16 @@
 }
 @keyframes nb-eyes {
   0%,100% { box-shadow: 0 0 0 rgba(255,255,255,0) }
-  50% { box-shadow: 0 0 18px rgba(255, 255, 255, .28) }
+  50% { box-shadow: 0 0 18px rgba(255,255,255,.28) }
 }
+
+/* speaking state */
+.novabot-speaking .novabot-eyeGlow { animation: nb-eyes-speaking 1s ease-in-out infinite; }
+@keyframes nb-eyes-speaking {
+  0%,100% { box-shadow: 0 0 0 rgba(255,255,255,0) }
+  50% { box-shadow: 0 0 26px rgba(255,255,255,.45) }
+}
+.novabot-speaking .novabot-avatar { animation-duration: 2.2s; transform: translateY(-2px); }
 
 /* speech bubble */
 .novabot-bubble {
@@ -78,7 +86,6 @@
   border-top-color: #fff;
 }
 
-/* close button on bubble */
 .novabot-close {
   position:absolute;
   top:6px; right:8px;
@@ -88,7 +95,6 @@
 }
 .novabot-close:hover { opacity: .9 }
 
-/* CTA highlight pulse */
 .novabot-ctaPulse {
   outline: 3px solid rgba(212,175,55, .55);
   outline-offset: 2px;
@@ -100,7 +106,6 @@
   50% { outline-color: rgba(212,175,55, .7) }
 }
 
-/* smaller on really small screens */
 @media (max-width: 420px){
   .novabot-avatar { width: 92px; }
 }

@@ -1,11 +1,18 @@
 
-// === NovaBot Assistant ===
+// === NovaBot Assistant v2 ===
 (function(){
   const state = {
     bubbleOpen: false,
     synth: ('speechSynthesis' in window) ? window.speechSynthesis : null,
-    voice: null,
   };
+
+  function setSpeaking(on){
+    try{
+      const root = document.getElementById('novabot');
+      if(!root) return;
+      root.classList.toggle('novabot-speaking', !!on);
+    }catch(e){}
+  }
 
   function qs(sel, root=document){ return root.querySelector(sel); }
   function qsa(sel, root=document){ return Array.from(root.querySelectorAll(sel)); }
@@ -13,16 +20,17 @@
   function speak(text){
     try{
       if(!state.synth) return;
-      // stop previous
       state.synth.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      // prefer Hungarian if available, else default
       const voices = state.synth.getVoices();
       const hu = voices.find(v => /hu|hungar/i.test(v.lang));
       if(hu) u.voice = hu;
       u.rate = 1.0; u.pitch = 1.0;
+      u.onstart = ()=> setSpeaking(true);
+      u.onend = ()=> setSpeaking(false);
+      u.onerror = ()=> setSpeaking(false);
       state.synth.speak(u);
-    }catch(e){/* noop */}
+    }catch(e){ setSpeaking(false); }
   }
 
   function createUI(){
@@ -30,13 +38,11 @@
     const root = document.createElement('div');
     root.id = 'novabot';
 
-    // bubble
     const bubble = document.createElement('div');
     bubble.className = 'novabot-bubble';
-    bubble.innerHTML = '<span class="novabot-close" aria-label="Bezárás" title="Bezárás">×</span><div class="nb-text">Szia, én vagyok Nova 🤖 – segítek eligazodni! Kattints rám vagy a menükre, és elmondom, mit hol találsz.</div>';
+    bubble.innerHTML = '<span class="novabot-close" aria-label="Bezárás" title="Bezárás">×</span><div class="nb-text">Szia, én vagyok NovaBot 🤖 – segítek eligazodni! Kattints rám vagy a menükre, és elmondom, mit hol találsz.</div>';
     root.appendChild(bubble);
 
-    // avatar
     const avatarWrap = document.createElement('div');
     avatarWrap.className = 'novabot-avatar';
     avatarWrap.style.position = 'relative';
@@ -54,10 +60,11 @@
     root.appendChild(avatarWrap);
     document.body.appendChild(root);
 
-    // interactions
     avatarWrap.addEventListener('click', () => {
       toggleBubble(true);
-      speak('Szia, én vagyok Nova! Itt a jobb alsó sarokban segítek. Próbáld ki a fenti füleket, vagy a Megrendelés részt!');
+      const msg = 'Szia, én vagyok NovaBot! Itt a jobb alsó sarokban segítek. Próbáld ki a füleket, vagy ugorj a Megrendelés részhez.';
+      setBubbleText(msg);
+      speak(msg);
       pointToHowTo();
     });
 
@@ -67,10 +74,12 @@
       if(state.synth) state.synth.cancel();
     });
 
-    // initial gentle greet after user interaction (safer for autoplay)
-    setTimeout(()=>{
-      toggleBubble(true);
-    }, 1200);
+    setTimeout(()=> toggleBubble(true), 1200);
+  }
+
+  function setBubbleText(t){
+    const b = qs('.novabot-bubble .nb-text');
+    if(b){ b.textContent = t; }
   }
 
   function toggleBubble(show){
@@ -81,86 +90,69 @@
   }
 
   function pointToHowTo(){
-    // Try to highlight "Hogyan működik" or similar navigation or CTA
-    const candidates = qsa('a[href*="#how"], [data-target*="how"], .howto, #howto, [href="#howto"]');
+    const candidates = qsa('a[href*=\"#how\" i], [data-target*=\"how\" i], .howto, #howto, [href=\"#howto\"]');
     if(candidates.length){
       candidates[0].classList.add('novabot-ctaPulse');
       setTimeout(()=>candidates[0].classList.remove('novabot-ctaPulse'), 4500);
     }
   }
 
-  // Describe current tab / page section
   function describeTab(name){
-    const b = qs('.novabot-bubble .nb-text');
-    if(!b) return;
     const map = {
-      bemutatkozas: 'Itt megismerheted az EnZenem.hu-t és a személyre szabott dalok ötletét.',
-      arak: 'Itt megtalálod a csomagokat és az árakat. Válaszd ki, ami neked a legjobb!',
-      megrendeles: 'Itt adhatod le a megrendelést. A mintaleírások segítenek a brief megfogalmazásában.',
-      hogyan: 'Itt röviden elmagyarázzuk, hogyan zajlik a folyamat – de a részletes kitöltést a Megrendelés fülön végezd.',
+      bemutatkozas: 'Ez a rész bemutatja, mivel foglalkozik a weboldalunk.',
+      arak: 'Ebben a részben találhatóak választható zenei csomagjaink és ezek árai.',
+      referenciak: 'Itt találhatóak a zenekészítő már elkészült videói, példaként – hogy milyen minőségre számíthatsz.',
+      megrendeles: 'Itt adhatod le a megrendelést. A mintaleírások segítenek a Leírás megfogalmazásában.',
+      hogyan: 'Itt röviden elmagyarázzuk, hogyan zajlik a folyamat – a részletes kitöltést a Megrendelés fülön végezd.',
       kapcsolat: 'Itt tudsz üzenni és kérdezni tőlünk.'
     };
-
-    let text = map[name] || 'Ez a rész segít, hogy gyorsan eligazodj ezen a fülön.';
-    b.textContent = text;
+    const text = map[name] || 'Ez a rész segít, hogy gyorsan eligazodj ezen a fülön.';
+    setBubbleText(text);
     toggleBubble(true);
     speak(text);
   }
 
-  // Listen to vinyl tab clicks (generic)
   function bindTabs(){
     document.addEventListener('click', (e)=>{
-      const tab = e.target.closest('.vinyl-tabs .tab, [data-tab], [data-target]');
+      const tab = e.target.closest('.vinyl-tabs .tab, [data-tab], [data-target], nav a, .nav a, .menu a');
       if(!tab) return;
-      const target = (tab.getAttribute('data-tab') || tab.getAttribute('data-target') || '').toLowerCase();
-      if(target){
-        if(/how/.test(target)) describeTab('hogyan');
-        else if(/ar|price|csomag|arak/.test(target)) describeTab('arak');
-        else if(/order|rendel|megrendel/.test(target)) describeTab('megrendeles');
-        else if(/contact|kapcsol/.test(target)) describeTab('kapcsolat');
-        else if(/bemut|home|fooldal/.test(target)) describeTab('bemutatkozas');
-        else describeTab('');
-      }
+      const target = (tab.getAttribute('data-tab') || tab.getAttribute('data-target') || tab.getAttribute('href') || '').toLowerCase();
+      if(/how/.test(target)) describeTab('hogyan');
+      else if(/ar|price|csomag|arak/.test(target)) describeTab('arak');
+      else if(/order|rendel|megrendel/.test(target)) describeTab('megrendeles');
+      else if(/ref|minta|referenc/.test(target)) describeTab('referenciak');
+      else if(/contact|kapcsol/.test(target)) describeTab('kapcsolat');
+      else if(/bemut|home|fooldal/.test(target)) describeTab('bemutatkozas');
+      else describeTab('');
     }, true);
   }
 
-  // Read out example / brief chips when clicked – only on Megrendelés
   function bindExampleChips(){
     document.addEventListener('click', (e)=>{
-      const chip = e.target.closest('.example-chip, [data-example], .example');
+      const chip = e.target.closest('.example-chip, .example, .chip, .minta, .mintaleiras, [data-example], [data-minta]');
       if(!chip) return;
-      // ensure within order/megrendel section
-      const inOrder = chip.closest('#order, [data-section*="order"], [data-section*="megrendel"], [data-target*="order"]');
+      const inOrder = chip.closest('#order, [id*=\"order\" i], [data-section*=\"order\" i], [data-section*=\"megrendel\" i], [data-target*=\"order\" i], [href*=\"#order\" i]');
       if(!inOrder) return;
-      const txt = chip.getAttribute('data-example') || chip.textContent.trim();
+      const txt = (chip.getAttribute('data-example') || chip.getAttribute('data-minta') || chip.textContent || '').trim();
       if(!txt) return;
-
-      const b = qs('.novabot-bubble .nb-text');
-      if(b){
-        b.textContent = txt;
-        toggleBubble(true);
-      }
+      setBubbleText(txt);
+      toggleBubble(true);
       speak(txt);
     }, true);
   }
 
-  // When user focuses description textarea in order form, guide them
   function bindOrderTextarea(){
     const tryBind = () => {
-      const el = qs('#order textarea, #order [name*="leiras"], #order [name*="description"]');
+      const el = qs('#order textarea, #order [name*=\"leiras\" i], #order [name*=\"description\" i]');
       if(!el) return false;
       el.addEventListener('focus', ()=>{
-        const msg = 'Írd le röviden az alkalmat, a hangulatot és pár kulcsszót. Ha rákattintasz bármelyik mintára, felolvasom neked.';
-        const b = qs('.novabot-bubble .nb-text');
-        if(b){
-          b.textContent = msg;
-          toggleBubble(true);
-        }
+        const msg = 'Írd le röviden az alkalmat, a hangulatot és pár kulcsszót. A mintaleírásokra kattintva felolvasom őket.';
+        setBubbleText(msg);
+        toggleBubble(true);
         speak(msg);
       }, {once:true});
       return true;
     };
-    // retry a few times in case the DOM loads later
     let attempts = 0;
     const iv = setInterval(()=>{
       attempts++;
