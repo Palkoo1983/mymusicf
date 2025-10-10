@@ -1833,3 +1833,100 @@ html.ua-samsung #contact-submit {
   width: 100% !important;
   margin: 8px 0 0 0 !important;
 }
+/* =========================
+   WEBVIEW / DESKTOP-MÓD OVERRIDES
+   - a tegnapi mobil logika kiterjesztése WebView + "Asztali webhely" mobilon
+   ========================= */
+
+/* 1) A videópanel ne legyen abszolút – különben ráül a menüre */
+html.ua-androidwv .video-panel,
+html.ua-ioswv .video-panel,
+html.ua-desktopreq .video-panel{
+  position: static !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 8px 0 0 0 !important;
+  padding: 8px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  z-index: 10 !important;
+}
+
+/* Az iframe ne ússzon felé: */
+html.ua-androidwv iframe,
+html.ua-androidwv video,
+html.ua-ioswv iframe,
+html.ua-ioswv video,
+html.ua-desktopreq iframe,
+html.ua-desktopreq video{
+  display:block !important;
+  max-width:100% !important;
+  width:100% !important;
+  height:auto !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* 2) Menülemezek (vinyl-tabs) – a mobil gridet erőltetjük WebView-ben is */
+html.ua-androidwv .vinyl-tabs,
+html.ua-ioswv .vinyl-tabs,
+html.ua-desktopreq .vinyl-tabs{
+  display:grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap:10px !important;
+  padding:0 8px !important;
+  justify-items:center !important;
+  align-items:center !important;
+}
+
+html.ua-androidwv .vinyl-tabs .tab,
+html.ua-ioswv .vinyl-tabs .tab,
+html.ua-desktopreq .vinyl-tabs .tab{
+  --disc: 92px;
+  width: var(--disc) !important;
+  height: var(--disc) !important;
+  display:grid !important;
+  place-items:center !important;
+  border-radius:50% !important;
+  overflow:hidden !important;
+  transform: translateZ(0); /* Samsung reflow bug */
+  padding:0 !important;
+}
+
+html.ua-androidwv .vinyl-tabs .tab span,
+html.ua-ioswv .vinyl-tabs .tab span,
+html.ua-desktopreq .vinyl-tabs .tab span{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:90% !important;
+  margin:0 auto !important;
+  text-align:center !important;
+  line-height:1.1 !important;
+  font-size: 14px !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+}
+
+/* 3) Rétegezés: a menü legyen a player fölött */
+html.ua-androidwv .vinyl-tabs,
+html.ua-ioswv .vinyl-tabs,
+html.ua-desktopreq .vinyl-tabs,
+html.ua-androidwv .topbar,
+html.ua-ioswv .topbar,
+html.ua-desktopreq .topbar{
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+/* 4) Biztonsági korlát – vízszintes görgetés ne lehessen WebView-ben */
+html.ua-androidwv, html.ua-androidwv body,
+html.ua-ioswv,     html.ua-ioswv body,
+html.ua-desktopreq, html.ua-desktopreq body{
+  width:100% !important;
+  max-width:100% !important;
+  overflow-x:hidden !important;
+}
