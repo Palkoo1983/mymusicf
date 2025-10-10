@@ -20,57 +20,59 @@
   }
 })();
 </script>
+
 <script>
-/* WEBVIEW + "asztali webhely kérése" – JAVÍTOTT DETEKTÁLÁS
-   - ua-androidwv / ua-ioswv: tényleges WebView
-   - ua-mobilelike: valóban mobil jellegű eszköz
-   - ua-desktopreq: CSAK akkor megy fel, ha mobil eszközön kérnek desktop nézetet
-   => asztali gépen NEM kerül fel!
-*/
-(function () {
-  var ua = navigator.userAgent || "";
+/* UA-flag SZINKRON – desktop safe, mobil WebView biztos */
+(function(){
   var html = document.documentElement;
 
-  var isAndroid   = /Android/i.test(ua);
-  var isIOS       = /iPhone|iPad|iPod/i.test(ua);
-  var isSafari    = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
+  function syncFlags(){
+    var ua = navigator.userAgent || "";
+    var body = document.body;
 
-  // Tényleges WebView-k
-  var isAndroidWV = isAndroid && /\bwv\b/i.test(ua);
-  var isIOSWV     = isIOS && (!isSafari || !!(window.webkit && window.webkit.messageHandlers));
+    var isAndroid = /Android/i.test(ua);
+    var isIOS     = /iPhone|iPad|iPod/i.test(ua);
 
-  // Mobil jelleg: UA vagy input (coarse pointer) + kis fizikai kijelző
-  var coarsePointer = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-  var smallPhysical = Math.min(screen.width, screen.height) <= 900;
-  var mobileLike    = (isAndroid || isIOS || coarsePointer) && smallPhysical;
+    // WebView jelek + a korábbi body.is-webview fallback
+    var webviewToken =
+      /\bwv\b/i.test(ua) ||                                        // Android System WebView
+      /(iPhone|iPad|iPod).*AppleWebKit(?!.*Safari)/i.test(ua) ||   // iOS WebView UA
+      !!(window.webkit && window.webkit.messageHandlers) ||         // iOS bridge
+      (body && body.classList.contains("is-webview"));              // TE korábbi scripted
 
-  // Desktop jelleg: finom pointer + hover (klasszikus egér), és nem mobil UA
-  var desktopLike = window.matchMedia && window.matchMedia("(pointer: fine) and (hover: hover)").matches && !(isAndroid || isIOS);
+    // Finom/durva pointer alapján mobil/desktop jelleg
+    var coarse    = matchMedia("(pointer: coarse)").matches;
+    var noHover   = matchMedia("(hover: none)").matches;
+    var mobileLike = isAndroid || isIOS || (coarse && noHover) || (Math.min(screen.width,screen.height) <= 900);
+    var desktopLike = matchMedia("(pointer: fine) and (hover: hover)").matches && !(isAndroid || isIOS);
 
-  // "Asztali webhely kérése" mobilon: mobil eszközön széles viewport
-  var looksDesktop = window.innerWidth >= 900;
-  var desktopReqOnMobile = mobileLike && looksDesktop;
+    // "Asztali webhely" mobilon
+    var looksDesktop = innerWidth >= 900;
+    var desktopReqOnMobile = mobileLike && looksDesktop;
 
-  // Osztályok felrakása
-  if (isAndroidWV) html.classList.add("ua-androidwv");
-  if (isIOSWV)     html.classList.add("ua-ioswv");
-  if (mobileLike)  html.classList.add("ua-mobilelike");
-  if (desktopReqOnMobile) html.classList.add("ua-desktopreq");
+    // Tiszítás, majd felrakás
+    html.classList.remove("ua-webview","ua-androidwv","ua-ioswv","ua-mobilelike","ua-desktopreq");
 
-  // Biztonsági szelep: ha desktop gép, biztosan NINCS ua-desktopreq
-  if (desktopLike) html.classList.remove("ua-desktopreq");
-
-  // Ablakméret változásakor újraszámoljuk (pl. ablak átméretezés)
-  function reevaluate(){
-    var looksDesktopNow = window.innerWidth >= 900;
-    if (mobileLike && looksDesktopNow) html.classList.add("ua-desktopreq");
-    else                               html.classList.remove("ua-desktopreq");
-    if (desktopLike) html.classList.remove("ua-desktopreq");
+    if (webviewToken) html.classList.add("ua-webview");
+    if (isAndroid && /\bwv\b/i.test(ua)) html.classList.add("ua-androidwv");
+    if (isIOS && (/(AppleWebKit)(?!.*Safari)/i.test(ua) || !!(window.webkit && window.webkit.messageHandlers))) {
+      html.classList.add("ua-ioswv");
+    }
+    if (mobileLike) html.classList.add("ua-mobilelike");
+    if (desktopReqOnMobile) html.classList.add("ua-desktopreq");
+    if (desktopLike) html.classList.remove("ua-desktopreq"); // desktopon SOHA
   }
-  addEventListener("resize", reevaluate, {passive:true});
-  addEventListener("orientationchange", reevaluate);
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", syncFlags);
+  } else {
+    syncFlags();
+  }
+  addEventListener("resize", syncFlags, {passive:true});
+  addEventListener("orientationchange", syncFlags);
 })();
 </script>
+
 
 
   <!-- Ikonok -->
