@@ -812,7 +812,9 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 
   <script src="./assets/novabot/novabot.js"></script>
 <script>
-/* ===== GOLDEN – minta gombok csonkamentesítése ===== */
+/* ===== GOLDEN – minta gombok csonkamentesítése (SAFE) ===== */
+
+/* 1) Golden cím-mapping – ezt használjuk minden gombnál */
 const NB_EXAMPLE_LABELS = [
   { re: /szuletesnap/i,                   label: "Születésnapra" },
   { re: /evfordulo/i,                     label: "Évfordulóra" },
@@ -825,17 +827,19 @@ const NB_EXAMPLE_LABELS = [
   { re: /nevnap/i,                        label: "Névnapra" },
   { re: /jobbulas|gyogyul|get well/i,     label: "Jobbulást kívánó dal" },
   { re: /nyugdij|nyugdijba/i,             label: "Nyugdíjba vonuló kollégának" },
-  { re: /karacsony|unnep|szilveszter/i,   label: "Ünnepre" },
+  { re: /karacsony|unnep|szilveszter/i,   label: "Ünnepre" }
 ];
 
 function nbLabelFrom(fullText, fallback=""){
-  const txt = (fullText||"").toLowerCase();
-  for (const {re,label} of NB_EXAMPLE_LABELS) if (re.test(txt)) return label;
+  const txt = (fullText || "").toLowerCase();
+  for (const {re, label} of NB_EXAMPLE_LABELS) {
+    if (re.test(txt)) return label;
+  }
   if (fallback) return fallback.trim();
-  return (fullText||"").split(/[.:!\n]/)[0].trim() || "Minta";
+  return (fullText || "").split(/[.:!\n]/)[0].trim() || "Minta";
 }
 
-// a „… példa” / „ példa” végződések és hasonlók levágása
+/* „… példa” / „ példa” faroklevágás – csak fallback célra */
 function stripPeldaTail(s){
   return (s||"")
     .replace(/\s*…?\s*p[eé]lda\.?$/i, "")   // "… példa" / " pelda"
@@ -843,27 +847,30 @@ function stripPeldaTail(s){
     .trim();
 }
 
-function nbNormalizeOrderChips(root=document){
+/* 2) Normalizálás – CSAK a Megrendelés blokkban dolgozunk */
+function nbNormalizeOrderChips(orderRoot){
+  if (!orderRoot || !orderRoot.querySelectorAll) return;
+
   const sel = '.example-chip, .example, .chip, .minta, .mintaleiras, [data-example], [data-minta]';
-  root.querySelectorAll(sel).forEach(el=>{
-    // eredeti (teljes) szöveg forrása
+  orderRoot.querySelectorAll(sel).forEach(el=>{
+    // ha már normalizált és a felirat stimmel, lépjünk tovább
+    if (el.hasAttribute('data-label') && el.textContent.trim() === el.getAttribute('data-label')) return;
+
+    // TELJES forrás (eltároljuk data-example-be, ha még nincs)
     const fullSrc = el.getAttribute('data-example')
                   || el.getAttribute('data-minta')
                   || el.getAttribute('data-full')
                   || el.getAttribute('title')
                   || el.textContent
                   || "";
-    // mentsük el data-example-be, hogy biztosan meglegyen a teljes verzió
     if (!el.getAttribute('data-example')) el.setAttribute('data-example', fullSrc.trim());
 
-    // ha jelenleg csonka szöveg látszik, azt takarítsuk
-    const current = stripPeldaTail(el.textContent);
+    const currentSane = stripPeldaTail(el.textContent || fullSrc || "");
+    const existingLbl = (el.getAttribute('data-label') || el.getAttribute('aria-label') || "").trim();
 
-    // golden cím előállítása (előnyben a már kiosztott data-label)
-    const existing = (el.getAttribute('data-label') || el.getAttribute('aria-label') || "").trim();
-    const label = nbLabelFrom(fullSrc, existing || current);
+    const label = nbLabelFrom(fullSrc, existingLbl || currentSane);
 
-    // felirat csere + attribútumok
+    // Csak a rövid, egységes cím jelenjen meg
     el.textContent = label;
     el.setAttribute('data-label', label);
     el.setAttribute('aria-label', label);
@@ -871,24 +878,53 @@ function nbNormalizeOrderChips(root=document){
   });
 }
 
+/* 3) Inicializálás – megtaláljuk a Megrendelés blokkot és csak azt figyeljük */
 function initOrderChipPatch(){
-  // 1) azonnal
-  nbNormalizeOrderChips();
-  // 2) későn betöltődő elemekre: figyelő az egész dokumentumon
-  const mo = new MutationObserver(()=> nbNormalizeOrderChips(document));
-  mo.observe(document.documentElement, { childList:true, subtree:true });
-  // 3) biztos ami biztos – pár próbálkozás időzítve (SPA-k miatt)
-  let tries = 0; const iv = setInterval(()=>{
-    nbNormalizeOrderChips();
-    if (++tries >= 10) clearInterval(iv);
-  }, 300);
+  // megtaláljuk az "Order" szekciót több lehetséges jel alapján
+  const findOrder = () =>
+    document.getElementById('order')
+    || document.querySelector('[data-section*="order" i]')
+    || document.querySelector('[data-section*="megrendel" i]')
+    || document.querySelector('#megrendeles, [href="#order"]');
+
+  const boot = ()=>{
+    const order = findOrder();
+    if (!order) { setTimeout(boot, 200); return; }
+
+    // első futás
+    nbNormalizeOrderChips(order);
+
+    // csak az Order blokkra figyelünk (debounce + disconnect/reconnect, hogy ne loopoljon)
+    let ticking = false;
+    const obs = new MutationObserver(()=>{
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(()=>{
+        ticking = false;
+        obs.disconnect();
+        nbNormalizeOrderChips(order);
+        obs.observe(order, { childList:true, subtree:true });
+      });
+    });
+    obs.observe(order, { childList:true, subtree:true });
+
+    // rövid biztonsági ismétlés (3x), nincs végtelen időzítő
+    let n = 0;
+    const iv = setInterval(()=>{
+      nbNormalizeOrderChips(order);
+      if (++n >= 3) clearInterval(iv);
+    }, 250);
+  };
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
 }
 
-if (document.readyState === 'loading'){
-  document.addEventListener('DOMContentLoaded', initOrderChipPatch);
-} else {
-  initOrderChipPatch();
-}
+// indítás
+initOrderChipPatch();
 </script>
 
 </body>
