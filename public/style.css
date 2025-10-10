@@ -1807,3 +1807,29 @@ html.ua-samsung #contact-submit {
   margin: 0 auto;
   display: block;
 }
+/* WebView-specifikus fixek, ugyanaz a logika mint mobilra */
+.is-webview .vinyl-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 0 8px;
+  justify-items: center;
+  align-items: center;
+}
+.is-webview .vinyl-tabs .tab {
+  --disc: 92px;
+  width: var(--disc);
+  height: var(--disc);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.is-webview .sample-player,
+.is-webview .sample-dropdown {
+  position: static !important;
+  transform: none !important;
+  width: 100% !important;
+  margin: 8px 0 0 0 !important;
+}
