@@ -330,3 +330,5 @@
   50%  { box-shadow: 0 0 28px rgba(255,255,255,.78), 0 0 14px rgba(255,255,255,.50) inset; }
   100% { box-shadow: 0 0 10px rgba(255,255,255,.35), 0 0 6px rgba(255,255,255,.25) inset; }
 }
+/* NovaBot talk pulse pozíció – szájhoz közelebb */
+#novabot .novabot-avatar { --novabot-mouth-y: 32%; }
