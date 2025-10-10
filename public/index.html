@@ -20,6 +20,38 @@
   }
 })();
 </script>
+<script>
+/* WEBVIEW + "asztali webhely kérése" detektálás – osztályok az <html>-re */
+(function () {
+  var ua = navigator.userAgent || "";
+  var html = document.documentElement;
+
+  // Android WebView: "wv"
+  var isAndroid = /Android/i.test(ua);
+  var isAndroidWV = isAndroid && /\bwv\b/i.test(ua);
+
+  // iOS WebView: nincs Safari a UA-ban VAGY van webkit bridge
+  var isIOS = /iPhone|iPad|iPod/i.test(ua);
+  var isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
+  var isIOSWV = isIOS && (!isSafari || !!(window.webkit && window.webkit.messageHandlers));
+
+  // "Asztali webhely kérése" mobilon: kis fizikai kijelző, de széles viewport
+  var physMin = Math.min(screen.width, screen.height);
+  var desktopReqOnMobile = (window.innerWidth >= 900) && (physMin <= 900);
+
+  if (isAndroidWV) html.classList.add('ua-androidwv');
+  if (isIOSWV)     html.classList.add('ua-ioswv');
+  if (desktopReqOnMobile) html.classList.add('ua-desktopreq');
+
+  // Kompatibilitás: ha korábban body-ra raktunk is-webview-t, pechel se maradjon le:
+  document.addEventListener('DOMContentLoaded', function(){
+    if (document.body && document.body.classList.contains('is-webview')) {
+      // legalább androidwv-nek kezeljük
+      html.classList.add('ua-androidwv');
+    }
+  });
+})();
+</script>
 
   <!-- Ikonok -->
   <link rel="icon" type="image/svg+xml"
