@@ -1,13 +1,17 @@
-// === NovaBot Assistant v3.2 (stable dock + audio enable + talk visual + full-brief speech) ===
+// === NovaBot Assistant v3.3 (stable dock + Samsung-only audio enable + talk visual + full-brief speech) ===
 (function(){
   const state = {
     bubbleOpen: false,
     synth: ('speechSynthesis' in window) ? window.speechSynthesis : null,
   };
 
-  // ---- audio flags (Samsung Internet / WebView) ----
-  let NB_AUDIO_ENABLED = false;   // felhasználó engedélyezte-e a hangot
-  let NB_VOICES_READY  = false;   // betöltöttek-e a TTS hangok
+  // ---- böngésző detektálás (Samsung Internet) ----
+  const UA = navigator.userAgent || "";
+  const NB_IS_SAMSUNG = /SamsungBrowser/i.test(UA);
+
+  // ---- audio flags ----
+  let NB_AUDIO_ENABLED = !NB_IS_SAMSUNG;  // Chrome/egyéb: induláskor engedélyezett; Samsungon nem
+  let NB_VOICES_READY  = false;           // betöltöttek-e a TTS hangok
 
   // ---- helpers ---------------------------------------------------------
   function qs(sel, root=document){ return root.querySelector(sel); }
@@ -28,7 +32,7 @@
   // ---- TTS (Web Speech API) --------------------------------------------
   function speak(text){
     try{
-      // Samsung Internet / WebView: TTS csak user gesztus után
+      // Samsung Internet: TTS csak felhasználói gesztus után
       if (!state.synth || !NB_AUDIO_ENABLED) {
         setSpeaking(false);
         return;
@@ -105,29 +109,39 @@
     root.appendChild(avatarWrap);
     document.body.appendChild(root);
 
-    // ---- Hang engedélyezése gomb (Samsung/WebView) ----
-    const soundBtn = document.createElement('button');
-    soundBtn.type = 'button';
-    soundBtn.className = 'novabot-sound-btn';
-    soundBtn.textContent = 'Hang engedélyezése';
-    soundBtn.setAttribute('aria-label', 'Hang engedélyezése');
-    root.appendChild(soundBtn);
+    // ---- Hang engedélyezése gomb (CSAK Samsung Interneten) ----
+    if (NB_IS_SAMSUNG) {
+      const soundBtn = document.createElement('button');
+      soundBtn.type = 'button';
+      soundBtn.className = 'novabot-sound-btn';
+      soundBtn.textContent = 'Hang engedélyezése';
+      soundBtn.setAttribute('aria-label', 'Hang engedélyezése');
+      root.appendChild(soundBtn);
 
-    const enableAudio = ()=>{
-      NB_AUDIO_ENABLED = true;
-      try { state.synth?.cancel(); state.synth?.resume?.(); } catch(e){}
-      soundBtn.classList.add('hide');
-    };
-    soundBtn.addEventListener('click', (e)=>{ e.stopPropagation(); enableAudio(); });
+      const enableAudio = ()=>{
+        NB_AUDIO_ENABLED = true;
+        try { state.synth?.cancel(); state.synth?.resume?.(); } catch(e){}
+        soundBtn.classList.add('hide');
+      };
 
-    // első user gesztusra is engedélyezzük (tap/click bárhol)
-    const firstGesture = ()=>{
-      enableAudio();
-      document.removeEventListener('touchstart', firstGesture, {passive:true});
-      document.removeEventListener('click', firstGesture, true);
-    };
-    document.addEventListener('touchstart', firstGesture, {passive:true});
-    document.addEventListener('click', firstGesture, true);
+      // gomb kattintásra engedélyezünk
+      soundBtn.addEventListener('click', (e)=>{
+        if (!e.isTrusted) return; // csak valódi érintés
+        e.stopPropagation();
+        enableAudio();
+      });
+
+      // első user GESZTUSRA is (csak touchstart, és csak Samsungon)
+      const firstGesture = (ev)=>{
+        if (!ev.isTrusted) return;
+        enableAudio();
+        document.removeEventListener('touchstart', firstGesture, {passive:true});
+      };
+      document.addEventListener('touchstart', firstGesture, {passive:true});
+    } else {
+      // nem Samsung → azonnal engedélyezett, gomb sincs
+      // NB_AUDIO_ENABLED már true alapból
+    }
 
     // indulás: dokkolt jobb-alsó sarokban
     root.classList.add('nb-docked');
