@@ -117,10 +117,10 @@
   function describeTab(name){
     const map = {
       bemutatkozas: 'Ez a rész bemutatja, mivel foglalkozik a weboldalunk.',
-      arak: 'Ebben a részben találhatóak választható zenei csomagjaink és ezek árai.',
-      referenciak: 'Itt találhatóak a zenekészítő már elkészült videói, példaként – hogy milyen minőségre számíthatsz.',
-      megrendeles: 'Itt adhatod le a megrendelést. A mintaleírások segítenek a Leírás megfogalmazásában.',
-      hogyan: 'Itt röviden elmagyarázzuk, hogyan zajlik a folyamat – a részletes kitöltést a Megrendelés fülön végezd.',
+      arak: 'Ebben a részben találhatóak választható zenei csomagjaink és ezek árai, díjai.',
+      referenciak: 'Itt találhatóak a weboldal tulajdonosának az eredeti videói, példaként – meghallgathatod hogy milyen minőségre számíthatsz.',
+      megrendeles: 'Itt adhatod le a megrendelést. A mintaleírások segítenek a Leírás megfogalmazásában, görgess a Leírás rész alá és próbáld ki!',
+      hogyan: 'Itt röviden elmagyarázzuk, hogyan zajlik a vásárlási folyamat – vásárlást a rendelés fülön tudod megtenni.',
       kapcsolat: 'Itt tudsz üzenni és kérdezni tőlünk.'
     };
     const text = map[name] || 'Ez a rész segít, hogy gyorsan eligazodj ezen a fülön.';
