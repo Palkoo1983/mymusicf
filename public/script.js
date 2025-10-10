@@ -17,6 +17,31 @@
     console.warn("Samsung detection error:", e);
   }
 })();
+// --- WebView + Desktop mód mobilon detektálás → UA-osztályok, hogy a mobil szabályok WebView-ben is éljenek ---
+(function () {
+  try {
+    var ua = navigator.userAgent || "";
+    var html = document.documentElement;
+
+    // Android WebView: "wv" jelző
+    var isAndroidWV = /\bwv\b/i.test(ua);
+
+    // iOS WebView: Safari nélküli AppleWebKit, vagy webkit bridge elérhető
+    var isIOS = /iPhone|iPad|iPod/i.test(ua);
+    var isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
+    var isIOSWV = isIOS && (!isSafari || !!(window.webkit && window.webkit.messageHandlers));
+
+    // "Asztali webhely kérése" mobilon:
+    // a fizikai képernyő kicsi, de a viewport széles → a mobil @media nem lép életbe
+    var physMin = Math.min(screen.width, screen.height);          // fizikai px
+    var looksDesktop = window.innerWidth >= 900;                  // CSS px
+    var desktopReqOnMobile = looksDesktop && physMin <= 900;
+
+    if (isAndroidWV) html.classList.add("ua-androidwv");
+    if (isIOSWV)     html.classList.add("ua-ioswv");
+    if (desktopReqOnMobile) html.classList.add("ua-desktopreq");
+  } catch (e) {}
+})();
 
 
 /* =========================================================
