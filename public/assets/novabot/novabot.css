@@ -237,3 +237,53 @@
   bottom:clamp(10px,2vw,18px) !important;
   transition:none !important;
 }
+/* ==== FLIGHT LAYER (bal-felsőből → play → jobb-alsó) ==== */
+#novabot.nb-flying{
+  position: fixed;
+  /* kikapcsoljuk a jobb/bal sarkot, és 0,0-hoz rögzítünk */
+  left: 0 !important; top: 0 !important;
+  right: auto !important; bottom: auto !important;
+  /* mozgás mindig transzformmal (nem ütközik a right/bottom stílussal) */
+  transform: translate3d(-160px, -160px, 0);
+  transition: transform 800ms cubic-bezier(.2,.7,.2,1);
+}
+#novabot.nb-flying .novabot-avatar{ animation: none !important; }
+
+/* dokkolt állapot – fix jobb-alsó sarok (változatlan) */
+#novabot.nb-docked{
+  left:auto !important; top:auto !important;
+  right:clamp(10px,2vw,18px) !important;
+  bottom:clamp(10px,2vw,18px) !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* === SPEAKING: szemfény + pulzus a "száj" közelébe === */
+.novabot-eyeGlow{
+  position:absolute; inset:0; pointer-events:none; border-radius:18px;
+}
+.novabot-speaking .novabot-eyeGlow{
+  animation: nb-eyes-speaking 0.9s ease-in-out infinite !important;
+  box-shadow:
+    0 0 28px rgba(255,255,255,.65),
+    0 0 14px rgba(255,255,255,.45) inset;
+}
+@keyframes nb-eyes-speaking{
+  0%   { box-shadow: 0 0 10px rgba(255,255,255,.35), 0 0 6px rgba(255,255,255,.25) inset; }
+  50%  { box-shadow: 0 0 28px rgba(255,255,255,.78), 0 0 14px rgba(255,255,255,.50) inset; }
+  100% { box-shadow: 0 0 10px rgba(255,255,255,.35), 0 0 6px rgba(255,255,255,.25) inset; }
+}
+
+/* talk pulzus: az avatar ~száj vonalán (kb. 58% magasság) középen */
+.novabot-talkWave{
+  position:absolute !important;
+  left:50% !important; transform:translateX(-50%) !important;
+  top:58% !important;  /* ← ez hozza fel a lábak közül a "szájhoz" */
+  width:12px !important; height:12px !important;
+  opacity:0;
+}
+.novabot-speaking .novabot-talkWave{ opacity:1; animation: nb-talk 0.8s ease-out infinite; }
+@keyframes nb-talk{
+  0%   { box-shadow: 0 0 0 0 rgba(255,255,255,.55); }
+  100% { box-shadow: 0 0 0 14px rgba(255,255,255,0); }
+}
