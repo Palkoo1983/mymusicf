@@ -171,3 +171,27 @@
   bottom: clamp(10px, 2vw, 18px) !important;
   transition: none !important;
 }
+/* ==== SPEAKING EYE GLOW + TALK PULSE (POSITION FIX) ==== */
+
+/* erősebb, jól látható szemfény beszéd közben */
+.novabot-speaking .novabot-eyeGlow {
+  animation: nb-eyes-speaking 0.9s ease-in-out infinite !important;
+  box-shadow:
+    0 0 28px rgba(255,255,255,.65),
+    0 0 14px rgba(255,255,255,.45) inset;
+}
+@keyframes nb-eyes-speaking {
+  0%   { box-shadow: 0 0 10px rgba(255,255,255,.35), 0 0 6px rgba(255,255,255,.25) inset; }
+  50%  { box-shadow: 0 0 28px rgba(255,255,255,.75), 0 0 14px rgba(255,255,255,.45) inset; }
+  100% { box-shadow: 0 0 10px rgba(255,255,255,.35), 0 0 6px rgba(255,255,255,.25) inset; }
+}
+
+/* a „talk” pulzus kerüljön az avatar alsó-közép tájához (száj-közelbe), ne a lábhoz */
+.novabot-talkWave {
+  right: auto !important;
+  left: 50% !important;
+  bottom: 10px !important;
+  transform: translateX(-50%) !important;
+  width: 12px !important;
+  height: 12px !important;
+}
