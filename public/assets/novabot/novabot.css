@@ -332,3 +332,21 @@
 }
 /* NovaBot talk pulse pozíció – szájhoz közelebb */
 #novabot .novabot-avatar { --novabot-mouth-y: 26%; }
+/* NovaBot – Hang engedélyezése gomb */
+#novabot .novabot-sound-btn{
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  font: inherit;
+  border-radius: 10px;
+  border: 0;
+  background: rgba(0,0,0,.65);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  cursor: pointer;
+  z-index: 2;
+}
+#novabot .novabot-sound-btn.hide{ display: none; }
+#novabot.nb-docked .novabot-sound-btn{ /* hogy dokkolt állapotban szépen a fej fölött legyen */ }
