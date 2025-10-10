@@ -516,6 +516,15 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     color: inherit;
   }
 </style>
+<style>
+  /* Csak a rövid cím (data-label) jelenjen meg a mintagombokon */
+  #order .nb-show-label { position: relative; }
+  #order .nb-show-label::before {
+    content: attr(data-label);
+    font: inherit;
+    color: inherit;
+  }
+</style>
 </head>
 <body class="gold-theme no-intro">
   <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
