@@ -506,6 +506,16 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 </script>
 
   <link rel="stylesheet" href="./assets/novabot/novabot.css">
+<style>
+  /* Csak a rövid cím (data-label) jelenjen meg a mintagombokon */
+  #order .nb-show-label { position: relative; }
+  #order .nb-show-label::before {
+    content: attr(data-label);
+    /* örökölje a tipót/stílust */
+    font: inherit;
+    color: inherit;
+  }
+</style>
 </head>
 <body class="gold-theme no-intro">
   <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
