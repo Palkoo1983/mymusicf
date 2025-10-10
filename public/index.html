@@ -525,6 +525,18 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     color: inherit;
   }
 </style>
+<script>
+(function(){
+  var ua = navigator.userAgent || "";
+  var isSamsung = /SamsungBrowser/i.test(ua);
+  // Android WebView jel: "; wv" vagy "Version/... Chrome/... Mobile Safari/... wv"
+  var isWebView = /\bwv\b/i.test(ua) || /; wv\)/i.test(ua);
+  var html = document.documentElement;
+  if (isSamsung) html.classList.add('nb-samsung');
+  if (isWebView) html.classList.add('nb-webview');
+})();
+</script>
+
 </head>
 <body class="gold-theme no-intro">
   <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
