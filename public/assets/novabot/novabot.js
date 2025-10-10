@@ -85,7 +85,7 @@
     // interakció
     avatarWrap.addEventListener('click', () => {
       toggleBubble(true);
-      const msg = 'Szia, én vagyok NovaBot! Itt a jobb alsó sarokban segítek. Próbáld ki a füleket, vagy ugorj a Megrendelés részhez.';
+      const msg = 'Szia, én vagyok NovaBot! Itt vagyok lent és segítek Neked. Próbáld ki a bakelit lemez füleket, vagy ugorj a Megrendelés részhez.';
       setBubbleText(msg);
       speak(msg);
       pointToHowTo();
@@ -119,7 +119,7 @@
       bemutatkozas: 'Ez a rész bemutatja, mivel foglalkozik a weboldalunk.',
       arak: 'Ebben a részben találhatóak választható zenei csomagjaink és ezek árai, díjai.',
       referenciak: 'Itt találhatóak a weboldal tulajdonosának az eredeti videói, példaként – meghallgathatod hogy milyen minőségre számíthatsz.',
-      megrendeles: 'Itt adhatod le a megrendelést. A mintaleírások segítenek a Leírás megfogalmazásában, görgess a Leírás rész alá és próbáld ki!',
+      megrendeles: 'Itt adhatod le a megrendelést. A minta leírások segítenek a Leírás megfogalmazásában, görgess a lenti Leírás rész alá és próbáld ki!',
       hogyan: 'Itt röviden elmagyarázzuk, hogyan zajlik a vásárlási folyamat – vásárlást a rendelés fülön tudod megtenni.',
       kapcsolat: 'Itt tudsz üzenni és kérdezni tőlünk.'
     };
