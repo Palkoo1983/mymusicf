@@ -1,24 +1,32 @@
-// === NovaBot Assistant v3 (intro flight + talk visual + full-brief speech) ===
+// === NovaBot Assistant v3.1 (intro flight + dock fix + talk visual + full-brief speech) ===
 (function(){
   const state = {
     bubbleOpen: false,
     synth: ('speechSynthesis' in window) ? window.speechSynthesis : null,
   };
 
-  // --- speaking state (szemfény + talkPulse aktiválás)
-  function setSpeaking(on){
-    try{
-      const root = document.getElementById('novabot');
-      if(!root) return;
-      root.classList.toggle('novabot-speaking', !!on);
-    }catch(e){}
-  }
-
-  // --- helpers
+  // —— helpers ——————————————————————————————————————————————————————
   function qs(sel, root=document){ return root.querySelector(sel); }
   function qsa(sel, root=document){ return Array.from(root.querySelectorAll(sel)); }
 
-  // --- beszéd (Web Speech API, HU hang preferált)
+  // ékezetfüggetlen normálás (tab detektáláshoz)
+  function norm(s){
+    return (s || "")
+      .toString()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+  // —— beszéd (Web Speech API) ————————————————————————————————
+  function setSpeaking(on){
+    const root = document.getElementById('novabot');
+    if(!root) return;
+    root.classList.toggle('novabot-speaking', !!on);
+  }
+
   function speak(text){
     try{
       if(!state.synth) return;
@@ -29,15 +37,16 @@
       if(hu) u.voice = hu;
       u.rate = 1.0; u.pitch = 1.0;
       u.onstart = ()=> setSpeaking(true);
-      u.onend = ()=> setSpeaking(false);
+      u.onend   = ()=> setSpeaking(false);
       u.onerror = ()=> setSpeaking(false);
       state.synth.speak(u);
     }catch(e){ setSpeaking(false); }
   }
 
-  // --- UI építés
+  // —— UI létrehozás ———————————————————————————————————————————————
   function createUI(){
     if(qs('#novabot')) return;
+
     const root = document.createElement('div');
     root.id = 'novabot';
 
@@ -70,6 +79,9 @@
     root.appendChild(avatarWrap);
     document.body.appendChild(root);
 
+    // induláskor legyen dokkolva jobb-alsó sarokban (CSS: #novabot.nb-docked)
+    root.classList.add('nb-docked');
+
     // interakció
     avatarWrap.addEventListener('click', () => {
       toggleBubble(true);
@@ -91,7 +103,7 @@
 
   function setBubbleText(t){
     const b = qs('.novabot-bubble .nb-text');
-    if(b){ b.textContent = t; }
+    if(b) b.textContent = t;
   }
 
   function toggleBubble(show){
@@ -101,16 +113,7 @@
     b.classList.toggle('show', state.bubbleOpen);
   }
 
-  // --- HowTo kiemelés (marad)
-  function pointToHowTo(){
-    const candidates = qsa('a[href*="#how" i], [data-target*="how" i], .howto, #howto, [href="#howto"]');
-    if(candidates.length){
-      candidates[0].classList.add('novabot-ctaPulse');
-      setTimeout(()=>candidates[0].classList.remove('novabot-ctaPulse'), 4500);
-    }
-  }
-
-  // --- Fül leírások (marad, finomítva)
+  // —— fül-leírások (változatlan logika, HU szövegek) ——————————
   function describeTab(name){
     const map = {
       bemutatkozas: 'Ez a rész bemutatja, mivel foglalkozik a weboldalunk.',
@@ -126,18 +129,14 @@
     speak(text);
   }
 
-  // --- Ékezetfüggetlen összehasonlító
-  function norm(s){
-    return (s || "")
-      .toString()
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g,'')
-      .replace(/\s+/g,' ')
-      .trim();
+  function pointToHowTo(){
+    const candidates = qsa('a[href*="#how" i], [data-target*="how" i], .howto, #howto, [href="#howto"]');
+    if(candidates.length){
+      candidates[0].classList.add('novabot-ctaPulse');
+      setTimeout(()=>candidates[0].classList.remove('novabot-ctaPulse'), 4500);
+    }
   }
 
-  // --- Fül-detektálás (marad)
   function bindTabs(){
     document.addEventListener('click', (e)=>{
       const tab = e.target.closest('.vinyl-tabs .tab, [data-tab], [data-target], nav a, .nav a, .menu a, a[href^="#"]');
@@ -150,8 +149,7 @@
       const id    = tab.id || '';
       const label = tab.textContent || tab.getAttribute('aria-label') || '';
 
-      const hintRaw = [href, dt, dtab, aria, id].join(' ');
-      const hint = norm(hintRaw);
+      const hint = norm([href, dt, dtab, aria, id].join(' '));
       const text = norm(label);
 
       if ( /how|hogyan|howto/.test(hint) || /hogyan/.test(text) ){
@@ -178,7 +176,7 @@
     }, true);
   }
 
-  // --- BRIEF placeholder/érték kiolvasása (Megrendelés)
+  // —— BRIEF kiolvasása (Megrendelés) ————————————————————————
   function getOrderBriefText() {
     const cand =
       document.querySelector('#order textarea, #order [name*="leiras" i], #order [name*="description" i]') ||
@@ -193,7 +191,7 @@
     ).trim();
   }
 
-  // --- Mintagombok: TELJES placeholdert mondunk ki; buborékban a rövid cím maradhat
+  // —— Mintagombok: TELJES placeholdert mondunk; buborékban a rövid cím marad ——
   function bindExampleChips(){
     document.addEventListener('click', (e)=>{
       const chip = e.target.closest('.example-chip, .example, .chip, .minta, .mintaleiras, [data-example], [data-minta]');
@@ -204,12 +202,13 @@
 
       let full = (chip.getAttribute('data-example') || chip.getAttribute('data-minta') || chip.getAttribute('data-full') || '').trim();
 
+      // Ha másik script most állít placeholdert, várunk 1 kicsit és újraolvasunk
       setTimeout(()=>{
         const briefNow = getOrderBriefText();
         if (briefNow) full = briefNow;
         if (!full) return;
 
-        // Buborék: a rövid cím látszik, de a hang a TELJES szöveg
+        // Buborék: rövid cím (ha van), hang: TELJES szöveg
         const label = (chip.getAttribute('data-label') || '').trim();
         setBubbleText(label || full);
         toggleBubble(true);
@@ -218,7 +217,7 @@
     }, true);
   }
 
-  // ====== Intro flight: videó play gomb kijelölés + jobb-alsóba állás ======
+  // —— Intro flight a videó lejátszó gombhoz ————————————————
   function getPlayTarget(){
     const sel = [
       '.play-btn', '.video__play', '.video-play', '.hero-video .play',
@@ -235,7 +234,7 @@
 
   function rectCenter(el){
     const r = el.getBoundingClientRect();
-    return { x: r.left + r.width/2, y: r.top + r.height/2, r };
+    return { x: r.left + r.width/2, y: r.top + r.height/2 };
   }
 
   function showPointerAt(x, y){
@@ -247,22 +246,22 @@
     setTimeout(()=> ring.remove(), 2200);
   }
 
-  function positionBottomRight(){
+  // — dokkolás helper: mindig vissza jobb-alsó sarokba ————————
+  function dockBottomRight(){
     const root = document.getElementById('novabot');
     if(!root) return;
-    const avatar = root.querySelector('.novabot-avatar');
-    const w = avatar?.offsetWidth || 120;
-    const h = avatar?.offsetHeight || 120;
-    const pad = 18;
-    root.style.right = 'auto';
-    root.style.bottom = 'auto';
-    root.style.left = (window.innerWidth  - w - pad) + 'px';
-    root.style.top  = (window.innerHeight - h - pad) + 'px';
+    root.style.left = '';
+    root.style.top  = '';
+    root.style.right = '';
+    root.style.bottom = '';
+    root.style.transition = 'none';
+    root.classList.remove('nb-inflight');
+    root.classList.add('nb-docked');
   }
 
   function runIntroFlight(){
     try{
-      // csak egyszer / munkamenet, és ha nem kér kevesebb animációt
+      // csak egyszer / munkamenet, és ha nincs reduced-motion
       if (sessionStorage.getItem('nb_intro_done')) return;
       if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -273,22 +272,23 @@
       const avatar = root?.querySelector('.novabot-avatar');
       if(!root || !avatar) return;
 
-      // kezdőpozíció: balról „berepül”
-      const startTop = Math.round(window.innerHeight * 0.3);
+      // repülés mód: levesszük a dokkolást, abszolút pozik
+      root.classList.remove('nb-docked');
       root.classList.add('nb-inflight');
       root.style.transition = 'left 900ms cubic-bezier(.2,.7,.2,1), top 900ms cubic-bezier(.2,.7,.2,1)';
       root.style.right = 'auto';
       root.style.bottom = 'auto';
+
+      const startTop = Math.round(window.innerHeight * 0.3);
       root.style.left = (- (avatar.offsetWidth || 120) - 40) + 'px';
       root.style.top  = startTop + 'px';
 
-      // fénycsóva
+      // kis fénycsóva
       const trail = document.createElement('div');
       trail.className = 'novabot-fxTrail';
       avatar.appendChild(trail);
       setTimeout(()=> trail.remove(), 1000);
 
-      // cél: play gomb közepe
       const { x, y } = rectCenter(target);
       const toLeft = Math.round(x - (avatar.offsetWidth||120)/2);
       const toTop  = Math.round(y - (avatar.offsetHeight||120)/2 - 8);
@@ -308,25 +308,16 @@
         speak(msg);
       }, 950);
 
-      // 3) jobb-alsó sarokba áll
+      // 3) dokkolás (fixen látszódjon és maradjon a sarokban)
       setTimeout(()=>{
-        const pad = 18;
-        const finalLeft = window.innerWidth  - (avatar.offsetWidth||120) - pad;
-        const finalTop  = window.innerHeight - (avatar.offsetHeight||120) - pad;
-        root.style.left = finalLeft + 'px';
-        root.style.top  = finalTop  + 'px';
-
-        setTimeout(()=>{
-          root.classList.remove('nb-inflight');
-          sessionStorage.setItem('nb_intro_done', '1');
-        }, 900);
+        dockBottomRight();
+        sessionStorage.setItem('nb_intro_done', '1');
       }, 2000);
 
-      window.addEventListener('resize', positionBottomRight);
     }catch(e){ /* no-op */ }
   }
 
-  // --- textarea fókuszhint (marad)
+  // —— Textarea fókusz hint ————————————————————————————————
   function bindOrderTextarea(){
     const tryBind = () => {
       const el = qs('#order textarea, #order [name*="leiras" i], #order [name*="description" i]');
@@ -346,7 +337,7 @@
     }, 300);
   }
 
-  // --- init
+  // —— init ————————————————————————————————————————————————————
   function init(){
     createUI();
     bindTabs();
