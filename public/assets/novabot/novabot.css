@@ -109,3 +109,57 @@
 @media (max-width: 420px){
   .novabot-avatar { width: 92px; }
 }
+/* === NovaBot: beszéd vizuál + intro flight (append) === */
+
+/* beszéd-hullám – kis pulzáló „hang” ikon az avatar sarkában */
+.novabot-talkWave {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(255,255,255,.65);
+  opacity: 0;
+}
+.novabot-speaking .novabot-talkWave {
+  animation: nb-talk 0.8s ease-out infinite;
+  opacity: 1;
+}
+@keyframes nb-talk {
+  0%   { box-shadow: 0 0 0 0 rgba(255,255,255,.55); }
+  100% { box-shadow: 0 0 0 12px rgba(255,255,255,0); }
+}
+
+/* repülés közben: pointer-events tiltva, egyszerű trail-effekt */
+#novabot.nb-inflight { pointer-events: none; }
+.novabot-fxTrail {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255,255,255,.35), rgba(255,255,255,0) 70%);
+  filter: blur(8px);
+  opacity: 0;
+  animation: nb-trail .9s ease-out forwards;
+  border-radius: 18px;
+}
+@keyframes nb-trail {
+  0%   { transform: scale(.6); opacity: .0; }
+  40%  { opacity: .6; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+/* célkijelölő gyűrű a play gombnál */
+.nb-pointer {
+  position: fixed;
+  width: 56px; height: 56px;
+  border: 3px solid rgba(212,175,55,.9);
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 20px rgba(212,175,55,.6);
+  animation: nb-pointer 1.2s ease-out 2;
+  z-index: 99999;
+}
+@keyframes nb-pointer {
+  0%   { transform: scale(.6); opacity: .0; }
+  40%  { opacity: 1; }
+  100% { transform: scale(1.2); opacity: 0; }
+}
