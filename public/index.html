@@ -25,25 +25,8 @@
 <link rel="preconnect" href="https://www.youtube-nocookie.com" crossorigin>
 <link rel="preconnect" href="https://i.ytimg.com" crossorigin>
 
-<script>
-  try {
-    if (/SamsungBrowser/i.test(navigator.userAgent)) {
-      document.documentElement.classList.add('ua-samsung');
-      console.log('✅ Samsung detektálva');
-    }
-  } catch(e) { console.warn(e); }
-</script>
-<script>
-(function(){
-  // Itt most csak annyit adunk hozzá, hogy az iOS WebView-t és más WebView-kat is felismerjük.
-  const ua = navigator.userAgent || "";
-  const isWebView = /(iPhone|iPod|iPad).*AppleWebKit(?!.*Safari)/i.test(ua) || /\bwv\b/i.test(ua);
-
-  if(isWebView) {
-    document.body.classList.add('is-webview');
-  }
-})();
-</script>
+<!-- removed inline UA-flag block -->
+<!-- removed inline UA-flag block -->
 
 <script>
 /* UA-flag SZINKRON – desktop safe, mobil WebView biztos */
@@ -525,17 +508,7 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     color: inherit;
   }
 </style>
-<script>
-(function(){
-  var ua = navigator.userAgent || "";
-  var isSamsung = /SamsungBrowser/i.test(ua);
-  // Android WebView jel: "; wv" vagy "Version/... Chrome/... Mobile Safari/... wv"
-  var isWebView = /\bwv\b/i.test(ua) || /; wv\)/i.test(ua);
-  var html = document.documentElement;
-  if (isSamsung) html.classList.add('nb-samsung');
-  if (isWebView) html.classList.add('nb-webview');
-})();
-</script>
+<!-- removed inline UA-flag block -->
 
 </head>
 <body class="gold-theme no-intro">
