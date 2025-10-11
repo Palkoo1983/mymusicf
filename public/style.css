@@ -2294,3 +2294,60 @@ html.ua-ioswv .topbar{
   backdrop-filter: none !important;
   background: rgba(13,27,42,0.72) !important;
 }
+/* ==== Samsung + WebView: GOLD lemezek réteg-mentes kényszere ==== */
+/* 1) Bármilyen overlay/pszeudo-réteg, blend, filter KI a lemezeken */
+html.ua-samsung .vinyl-tabs .tab,
+html.ua-androidwv .vinyl-tabs .tab,
+html.ua-ioswv .vinyl-tabs .tab{
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  background: none !important;            /* töröljük az összes korábbi réteget */
+  background-color: #0b0b0b !important;   /* alap fekete test */
+}
+
+/* 1/b) Pseudo-elemek lekapcsolása (ne tegyenek „fátylat”) */
+html.ua-samsung .vinyl-tabs .tab::before,
+html.ua-samsung .vinyl-tabs .tab::after,
+html.ua-androidwv .vinyl-tabs .tab::before,
+html.ua-androidwv .vinyl-tabs .tab::after,
+html.ua-ioswv .vinyl-tabs .tab::before,
+html.ua-ioswv .vinyl-tabs .tab::after{
+  content: none !important;
+  display: none !important;
+}
+
+/* 2) Kényszerített arany lemez barázdákkal – ugyanaz minden Samsung/WebView nézetben */
+html.ua-samsung .vinyl-tabs .tab,
+html.ua-androidwv .vinyl-tabs .tab,
+html.ua-ioswv .vinyl-tabs .tab{
+  background-image: url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>\
+  <defs>\
+    <radialGradient id='gold' cx='50%' cy='50%' r='60%'>\
+      <stop offset='0%'  stop-color='%23f3e0a8'/>\
+      <stop offset='35%' stop-color='%23e7c86d'/>\
+      <stop offset='65%' stop-color='%23d4af37'/>\
+      <stop offset='100%' stop-color='%23b48c25'/>\
+    </radialGradient>\
+  </defs>\
+  <!-- arany test -->\
+  <circle cx='50' cy='50' r='50' fill='url(%23gold)'/>\
+  <!-- belső fekete címke + vékony perem -->\
+  <circle cx='50' cy='50' r='18' fill='%230b0b0b'/>\
+  <circle cx='50' cy='50' r='19.5' fill='none' stroke='%232a2a2a' stroke-width='1'/>\
+  <!-- barázdák vastagabban, hogy biztosan látszódjanak -->\
+  <g stroke='%23ffffff' stroke-opacity='0.10' fill='none'>\
+    <circle cx='50' cy='50' r='48'/>\
+    <circle cx='50' cy='50' r='46'/>\
+    <circle cx='50' cy='50' r='44'/>\
+    <circle cx='50' cy='50' r='42'/>\
+    <circle cx='50' cy='50' r='40'/>\
+    <circle cx='50' cy='50' r='38'/>\
+    <circle cx='50' cy='50' r='36'/>\
+    <circle cx='50' cy='50' r='34'/>\
+  </g>\
+</svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 100% 100% !important;
+}
