@@ -58,15 +58,7 @@
     addEventListener("resize", applyFlags, {passive:true});
     addEventListener("orientationchange", applyFlags);
   } catch(e) {}
-})(
-      // If needed classes already present (primed early in <head>), skip initial mutation
-      (function(){
-        try{
-          var needAllPresent = need.every(function(c){ return document.documentElement.classList.contains(c); });
-          if (needAllPresent && !lastSig){ lastSig = need.join("|"); return; }
-        }catch(e){}
-      })();
-);
+})();
 
 
 
@@ -727,4 +719,3 @@ document.addEventListener('DOMContentLoaded', () => {
     init();
   }
 })();
-
