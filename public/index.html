@@ -958,6 +958,51 @@ initOrderChipPatch();
   });
 })();
 </script>
+<style id="samsung-wv-hotfix">
+/* 1) PSEUDO visszakapcsolása – engedjük a GLOW-t (felülírjuk a korábbi content:none !important-ot) */
+html.ua-samsung .vinyl-tabs .tab::after,
+html.ua-androidwv .vinyl-tabs .tab::after{
+  content: "" !important;
+  position: absolute;
+  inset: -6%;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .18s ease, transform .18s ease;
+  box-shadow:
+    0 0 10px rgba(212,175,55,.35),
+    0 0 22px rgba(212,175,55,.35),
+    0 0 36px rgba(212,175,55,.25);
+  z-index: 2; /* a felirat fölé ne menjen, de látszódjon */
+}
+
+/* 2) GLOW csak Samsung (böngésző) + WebView interakciónál */
+html.ua-samsung .vinyl-tabs .tab:is(:hover, :focus-visible, :active)::after,
+html.ua-androidwv .vinyl-tabs .tab:is(:hover, :focus-visible, :active)::after{
+  opacity: 1 !important;
+}
+
+/* 3) WEBVIEW MÉRET +50% – ez felülírja az inline @supports blokk 92px !important-ját is, mert később jön */
+html.ua-androidwv .vinyl-tabs .tab{
+  /* ha vannak változóid: skálázunk… */
+  --disc: calc( (var(--disc, 92px)) * 1.5 ) !important;
+  width: var(--disc) !important;
+  height: var(--disc) !important;
+  /* és biztos, ami biztos: közvetlen override is */
+  width: calc(92px * 1.5) !important;
+  height: calc(92px * 1.5) !important;
+}
+
+/* (opcionális) iOS WebView-ra is ugyanez – ha kell, vedd ki a kommentet
+html.ua-ioswv .vinyl-tabs .tab{
+  --disc: calc( (var(--disc, 92px)) * 1.5 ) !important;
+  width: var(--disc) !important;
+  height: var(--disc) !important;
+  width: calc(92px * 1.5) !important;
+  height: calc(92px * 1.5) !important;
+}
+*/
+</style>
 
 </body>
 </html>
