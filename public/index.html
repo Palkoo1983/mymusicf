@@ -957,6 +957,27 @@ initOrderChipPatch();
     });
   });
 })();
+<script>
+  (function() {
+    const isSamsung = /SamsungBrowser/i.test(navigator.userAgent);
+    const isWebView = /\bwv\b/.test(navigator.userAgent);
+
+    if (isSamsung || isWebView) {
+      const unlockAudio = () => {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume().then(() => {
+            // Itt "feloldjuk" a hangtiltást, hogy a TTS működjön.
+          });
+        }
+        // Távolítsuk el ezt az event listener-t, hogy csak egyszer fusson.
+        window.removeEventListener('pointerdown', unlockAudio);
+      };
+
+      window.addEventListener('pointerdown', unlockAudio, { once: true });
+    }
+  })();
+</script>
 
 </body>
 </html>
