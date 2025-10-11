@@ -3,18 +3,21 @@
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
   }
-  // WebView-ban ne scrollTo, mert pislákolhat
-  try{
-    var ua = navigator.userAgent || "";
-    var isAndroidWV = /\bwv\b/i.test(ua);
-    var isIOSWV = !!(window.webkit && window.webkit.messageHandlers);
-    if (!(isAndroidWV || isIOSWV)) {
-      window.scrollTo(0, 0);
-    }
-  }catch(e){ window.scrollTo(0, 0); }
+  // azonnali (nem "smooth") felgörgetés a tetejére
+  window.scrollTo(0, 0);
 })();
 // Samsung Internet detektálás – biztosan lefut
-(funct// --- WebView + "Asztali webhely kérése" – DESKTOP‑SAFE + THROTTLE + NO‑OP ---
+(function () {
+  try {
+    var ua = navigator.userAgent || "";
+    if (ua.includes("SamsungBrowser")) {
+      document.documentElement.classList.add("ua-samsung");
+    }
+  } catch (e) {
+    console.warn("Samsung detection error:", e);
+  }
+})();
+// --- WebView + "Asztali webhely kérése" – DESKTOP‑SAFE + THROTTLE + NO‑OP ---
 (function () {
   try {
     var html = document.documentElement;
@@ -77,15 +80,7 @@
     addEventListener("orientationchange", applyFlagsCore);
   } catch(e) {}
 })();
-p, TILTSD le
-      if (isDesktopLike) html.classList.remove("ua-desktopreq");
-    }
-
-    applyFlags();
-    addEventListener("resize", applyFlags, {passive:true});
-    addEventListener("orientationchange", applyFlags);
-  } catch(e) {}
-})();
+;
 
 
 
