@@ -1,54 +1,24 @@
 <!DOCTYPE html>
 <html lang="hu" class="no-intro">
 <head>
-<!-- Vizuális konzisztencia: a site csak világos színrendszert használ -->
-<meta name="color-scheme" content="light">
-<meta name="supported-color-schemes" content="light"> <!-- iOS/WebKit tiszteletben tartja -->
-<meta name="theme-color" content="#0d1b2a"> <!-- maradhat, ez a felső sáv színe Androidon -->
 
-<!-- [GOLDEN WV PATCH v2] Anti-blink base (WebView-safe) -->
+<!-- [GOLDEN WV PATCH v2] Anti-blink base -->
 <meta name="theme-color" content="#0d1b2a">
 <style>
   :root{ --bg:#0d1b2a; }
   html, body { background:#0d1b2a; }
-
-  /* Csak NEM-WebView esetén használjuk a "booting" módszert */
-  html.booting *{
-    transition:none !important;
-    animation:none !important;
-  }
+  html.booting *{ transition:none !important; animation:none !important; }
   html.booting .video-panel iframe,
-  html.booting .video-panel video{
-    visibility:hidden !important;
-  }
+  html.booting .video-panel video{ visibility:hidden !important; }
 </style>
 <script>
   (function(){
-    var d = document.documentElement;
-    var ua = navigator.userAgent || "";
-    var isAndroidWV = /\bwv\b/i.test(ua);
-    var isIOSWV = !!(window.webkit && window.webkit.messageHandlers) && !/Safari/i.test(ua);
-    var isWV = isAndroidWV || isIOSWV;
-
-    // dinamikus 1% viewport magasság (jó marad WebView-ban is)
     var svh = window.innerHeight * 0.01;
-    d.style.setProperty('--svh', svh + 'px');
+    document.documentElement.style.setProperty('--svh', svh+'px');
+    document.documentElement.classList.add('booting');
     addEventListener('resize', function(){
-      d.style.setProperty('--svh', (window.innerHeight*0.01) + 'px');
+      document.documentElement.style.setProperty('--svh', (window.innerHeight*0.01)+'px');
     }, {passive:true});
-
-    // Csak NEM-WebView esetén tegyük fel a "booting" osztályt
-    if (!isWV) {
-      d.classList.add('booting');
-      // és NEM WebView-ban vegyük is le hamar
-      if (document.readyState === 'complete') {
-        requestAnimationFrame(function(){ d.classList.remove('booting'); });
-      } else {
-        addEventListener('load', function(){
-          requestAnimationFrame(function(){ d.classList.remove('booting'); });
-        }, { once:true });
-      }
-    }
   })();
 </script>
 
@@ -538,6 +508,8 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     color: inherit;
   }
 </style>
+<!-- removed inline UA-flag block -->
+
 </head>
 <body class="gold-theme no-intro">
   <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
