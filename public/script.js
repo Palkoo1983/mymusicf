@@ -6,6 +6,21 @@
   // azonnali (nem "smooth") felgörgetés a tetejére
   window.scrollTo(0, 0);
 })();
+
+// === NovaBot hooks (SAFE, no-op ha nincs NovaBot) ==========================
+(function(){
+  function nbSay(text){
+    try { if (window.novaBotSay) { window.novaBotSay(text); } } catch(_) {}
+  }
+  window.novaOrderSuccess = function(){
+    nbSay('Éljen, megrendelésedet elküldted, 48 órán belül megkapod a dalodat.');
+  };
+  window.novaOrderFail = function(){
+    nbSay('Oh :(, megrendelésed nem sikerült, kérlek próbáld újra');
+  };
+})();
+// ==========================================================================
+
 // Samsung Internet detektálás – biztosan lefut
 (function () {
   try {
@@ -17,7 +32,7 @@
     console.warn("Samsung detection error:", e);
   }
 })();
-// --- WebView + "Asztali webhely kérése" – DESKTOP‑SAFE + THROTTLE + NO‑OP ---
+// --- WebView + "Asztali webhely kérése" – DESKTOP-SAFE + THROTTLE + NO-OP ---
 (function () {
   try {
     var html = document.documentElement;
@@ -387,6 +402,8 @@ function initOrderForm() {
       const json = await postJSON('/api/order', data);
       if (orderStatus) orderStatus.textContent = json.message || 'Köszönjük! Válasz e-mailt küldtünk.';
       orderForm.reset();
+      // ✅ NOVABOT: SIKER
+      try { window.novaOrderSuccess && window.novaOrderSuccess(); } catch(_){}
       setTimeout(() => {
         const desc = qs('#order textarea[name="brief"]');
         if (desc) desc.dispatchEvent(new Event('input', { bubbles: true }));
@@ -394,6 +411,8 @@ function initOrderForm() {
     } catch (err) {
       if (orderStatus) orderStatus.textContent = 'Nem sikerült elküldeni. Próbáld újra később.';
       console.error(err);
+      // ✅ NOVABOT: HIBA
+      try { window.novaOrderFail && window.novaOrderFail(); } catch(_){}
     }
   }
 
@@ -418,6 +437,8 @@ function initOrderForm() {
       if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
       acceptBtn?.removeEventListener('click', onAccept);
       cancelBtn?.removeEventListener('click', onCancel);
+      // ✅ NOVABOT: FELTÉTEL ELUTASÍTVA → HIBA üzenet
+      try { window.novaOrderFail && window.novaOrderFail(); } catch(_){}
     };
 
     acceptBtn?.addEventListener('click', onAccept, { once:true });
@@ -741,79 +762,3 @@ document.addEventListener('DOMContentLoaded', () => {
     init();
   }
 })();
-// === NovaBot TTS unlock – csak Samsung Internet / Android WebView ===
-(() => {
-  const ua = navigator.userAgent || "";
-  const isSamsung = /SamsungBrowser/i.test(ua);
-  const isAndroidWV = /\bwv\b/i.test(ua) || /\b; wv\)/i.test(ua);
-  const isInApp = /(FBAN|FBAV|Instagram)/i.test(ua); // Messenger/FB/IG WebView-ok
-  const isTarget = isSamsung || isAndroidWV || isInApp;
-  if (!isTarget) return;
-
-  const KEY = "nv-tts-unlocked";
-  if (sessionStorage.getItem(KEY) === "1") return;
-
-  let audioCtx;
-
-  async function unlock() {
-    try {
-      // 1) WebAudio "ébresztés" – sok mobil böngészőnél ez kell
-      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === "suspended") await audioCtx.resume();
-      const buf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
-      const src = audioCtx.createBufferSource();
-      src.buffer = buf; src.connect(audioCtx.destination); src.start(0);
-    } catch (_) {}
-
-    try {
-      // 2) TTS (SpeechSynthesis) "feloldása": egy minimális, halk utterance
-      if ("speechSynthesis" in window && typeof window.SpeechSynthesisUtterance !== "undefined") {
-        const speakTiny = () => {
-          const u = new SpeechSynthesisUtterance(".");
-          u.volume = 0.001;          // gyakorlatilag néma
-          u.rate = 1;
-          const voices = speechSynthesis.getVoices();
-          const v = voices.find(v => /hu/i.test(v.lang))
-                  || voices.find(v => /Google/i.test(v.name))
-                  || voices[0];
-          if (v) u.voice = v;
-          speechSynthesis.speak(u);
-          done();
-        };
-
-        if (speechSynthesis.getVoices().length === 0) {
-          const once = () => { speakTiny(); speechSynthesis.removeEventListener("voiceschanged", once); };
-          speechSynthesis.addEventListener("voiceschanged", once, { once: true });
-          setTimeout(speakTiny, 1000); // fallback, ha nem jön voiceschanged
-        } else {
-          speakTiny();
-        }
-      } else {
-        // Ha a WebView egyáltalán nem támogat TTS-t, csendben kilépünk.
-        done();
-      }
-    } catch (_) {
-      done();
-    }
-  }
-
-  function done() {
-    sessionStorage.setItem(KEY, "1");
-    window.removeEventListener("pointerdown", onFirst, true);
-    window.removeEventListener("touchend", onFirst, true);
-    window.removeEventListener("keydown", onFirst, true);
-  }
-
-  function onFirst() { unlock(); }
-
-  // Első felhasználói gesztusra oldjuk (Samsungon ez a legstabilabb)
-  window.addEventListener("pointerdown", onFirst, { capture: true, passive: true });
-  window.addEventListener("touchend",   onFirst, { capture: true, passive: true });
-  window.addEventListener("keydown",    onFirst, { capture: true, passive: true });
-
-  // Ha háttérből visszajön az oldal, próbáljuk újra egyszer
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && sessionStorage.getItem(KEY) !== "1") unlock();
-  });
-})();
-
