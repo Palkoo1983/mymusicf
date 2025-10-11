@@ -957,6 +957,83 @@ initOrderChipPatch();
     });
   });
 })();
+<style>
+  .nv-tts-bar{
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 9999;
+    display: none; gap: 8px; align-items: center; justify-content: center;
+    padding: 10px 12px; background: rgba(0,0,0,.85); color:#ffd666; font-size:14px
+  }
+  .nv-tts-bar button, .nv-tts-bar a{
+    border:0; border-radius:999px; padding:8px 14px; text-decoration:none;
+    background:#d4af37; color:#0b0b0b; font-weight:600
+  }
+  .nv-tts-bar button.secondary{ background:#2b2b2b; color:#fff; }
+</style>
+
+<div id="nv-tts-fallback" class="nv-tts-bar" role="alert">
+  NovaBot hang nem elérhető itt.
+  <a id="nv-open-browser" href="#" rel="noopener" target="_blank">Megnyitás böngészőben</a>
+  <button id="nv-silent" class="secondary">Néma mód</button>
+</div>
+
+<script>
+(() => {
+  const ua = navigator.userAgent || "";
+  const isSamsung = /SamsungBrowser/i.test(ua);
+  const isWV = /\bwv\b/i.test(ua) || /\b; wv\)/i.test(ua);
+  const isInApp = /(FBAN|FBAV|Instagram|FB_IAB)/i.test(ua);
+  const isTarget = isSamsung || isWV || isInApp;
+
+  // Gyors TTS-próba: ha sikerül beszélni, onend lefut; ha tiltott, onerror/timeout
+  function canTTSSpeak(timeoutMs = 1200){
+    return new Promise(res => {
+      if (!('speechSynthesis' in window) || typeof window.SpeechSynthesisUtterance==='undefined'){
+        return res(false);
+      }
+      let done = false;
+      const u = new SpeechSynthesisUtterance(".");
+      u.volume = 0.001; // gyakorlatilag néma
+      u.onend = () => { if(!done){ done=true; res(true);} };
+      u.onerror = () => { if(!done){ done=true; res(false);} };
+      try{
+        const voices = speechSynthesis.getVoices();
+        if (voices.length) u.voice = voices.find(v=>/hu/i.test(v.lang)) || voices[0];
+        const t = setTimeout(()=>{ if(!done){ done=true; res(false);} }, timeoutMs);
+        speechSynthesis.speak(u);
+        u.onend = () => { if(!done){ done=true; clearTimeout(t); res(true);} };
+        u.onerror= () => { if(!done){ done=true; clearTimeout(t); res(false);} };
+      }catch{ res(false); }
+    });
+  }
+
+  async function probeAndShow(){
+    if (!isTarget) return;                 // csak Samsung/WebView/in-app alatt vizsgálunk
+    const ok = await canTTSSpeak();
+    if (ok) return;                        // TTS megy → nincs dolgunk
+
+    // TTS nem megy → felkínáljuk a két opciót
+    const bar = document.getElementById('nv-tts-fallback');
+    if (!bar) return;
+    bar.style.display = 'flex';
+
+    // Megnyitás külső böngészőben (Chrome/Samsung Internet app)
+    const a = document.getElementById('nv-open-browser');
+    const here = location.href;
+    // Egyszerű target=_blank elég — in-app nézetből rendszeresen külön appban nyit
+    a.href = here;
+
+    // Néma mód: elrejtjük a sávot és nem zaklatjuk tovább
+    const silent = document.getElementById('nv-silent');
+    silent.addEventListener('click', () => { bar.style.display='none'; }, {once:true});
+  }
+
+  // Első interakció után mérünk (egyes motorok csak ekkor engedik a voices-t)
+  const run = () => { probeAndShow(); window.removeEventListener('pointerdown', run, true); };
+  window.addEventListener('pointerdown', run, {capture:true, passive:true});
+  // Biztos, ami biztos: ha már volt interakció, mérjünk rögtön
+  document.readyState !== 'loading' && probeAndShow();
+})();
+</script>
 
 </body>
 </html>
