@@ -1,3 +1,16 @@
+/* Baseline: ne skálázza/átfesse a UA a megjelenést */
+html{
+  /* Opt-out az automatikus „force dark”/repaint trükkökből */
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Apró normalize, hogy minden UA ugyanolyan alapokról induljon */
+body{ margin:0 }
+img, svg{ display:block; max-width:100% }
+button, input, select{ font: inherit }
+
 /* =========================================
    EnZenem – TELJES style.css (BLUE THEME)
    – Kék háttér, arany akcentus
