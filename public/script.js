@@ -17,70 +17,56 @@
     console.warn("Samsung detection error:", e);
   }
 })();
-// --- WebView + "Asztali webhely kérése" – DESKTOP‑SAFE + THROTTLE + NO‑OP ---
+// --- WebView + "Asztali webhely kérése" – JAVÍTOTT, DESKTOP-SAFE DETEKTÁLÁS ---
 (function () {
   try {
-    var html = document.documentElement;
     var ua   = navigator.userAgent || "";
+    var html = document.documentElement;
 
+    // Mobil jelleg: tényleges Android/iOS VAGY "coarse" pointer + nincs hover
     var isAndroid = /Android/i.test(ua);
     var isIOS     = /iPhone|iPad|iPod/i.test(ua);
+    var coarse    = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    var noHover   = window.matchMedia && window.matchMedia("(hover: none)").matches;
+    var isMobileLike = (isAndroid || isIOS || (coarse && noHover));
 
+    // Tényleges WebView-k
     var isAndroidWV = isAndroid && /\bwv\b/i.test(ua);
     var isSafari    = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
     var isIOSWV     = isIOS && (!isSafari || !!(window.webkit && window.webkit.messageHandlers));
 
-    function isMobileLike(){
-      try{
-        var coarse  = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-        var noHover = window.matchMedia && window.matchMedia("(hover: none)").matches;
-        return (isAndroid || isIOS || (coarse && noHover));
-      }catch(_){ return (isAndroid || isIOS); }
-    }
-    function isDesktopLike(){
-      try{
-        return (window.matchMedia && window.matchMedia("(pointer: fine) and (hover: hover)").matches) && !(isAndroid || isIOS);
-      }catch(_){ return !(isAndroid || isIOS); }
-    }
+    // Desktop jelleg (klasszikus egér + hover) – ez biztosan NEM mobil
+    var isDesktopLike = window.matchMedia && window.matchMedia("(pointer: fine) and (hover: hover)").matches && !(isAndroid || isIOS);
 
-    var lastSig = "";
+    function applyFlags(){
+      // tisztítás
+      html.classList.remove("ua-androidwv","ua-ioswv","ua-mobilelike","ua-desktopreq");
 
-    function applyFlagsCore(){
-      var mobileLike   = isMobileLike();
-      var desktopLike  = isDesktopLike();
+      if (isAndroidWV) html.classList.add("ua-androidwv");
+      if (isIOSWV)     html.classList.add("ua-ioswv");
+      if (isMobileLike) html.classList.add("ua-mobilelike");
+
+      // "Asztali webhely kérése" CSAK mobil eszközön kapcsoljon
       var looksDesktop = window.innerWidth >= 900;
+      if (isMobileLike && looksDesktop) html.classList.add("ua-desktopreq");
 
-      var need = [];
-      if (isAndroidWV) need.push("ua-androidwv");
-      if (isIOSWV)     need.push("ua-ioswv");
-      if (isAndroidWV || isIOSWV) need.push("ua-webview");
-      if (mobileLike)  need.push("ua-mobilelike");
-      if (mobileLike && looksDesktop && !desktopLike) need.push("ua-desktopreq");
-
-      var sig = need.join("|");
-      if (sig === lastSig) return; // NO-OP ha nincs változás
-
-      html.classList.remove("ua-androidwv","ua-ioswv","ua-mobilelike","ua-desktopreq","ua-webview");
-      need.forEach(function(c){ html.classList.add(c); });
-      lastSig = sig;
+      // Biztonsági szelep: ha desktop, TILTSD le
+      if (isDesktopLike) html.classList.remove("ua-desktopreq");
     }
 
-    applyFlagsCore();
-
-    function throttle(fn, ms){
-      var t=null, pend=false;
-      return function(){
-        if(t){ pend=true; return; }
-        var args=arguments;
-        t=setTimeout(function(){ t=null; fn.apply(null,args); if(pend){ pend=false; fn.apply(null,args);} }, ms);
-      }
-    }
-    var onResize = throttle(applyFlagsCore, 250);
-    addEventListener("resize", onResize, {passive:true});
-    addEventListener("orientationchange", applyFlagsCore);
+    applyFlags();
+    addEventListener("resize", applyFlags, {passive:true});
+    addEventListener("orientationchange", applyFlags);
   } catch(e) {}
-})();
-;
+})(
+      // If needed classes already present (primed early in <head>), skip initial mutation
+      (function(){
+        try{
+          var needAllPresent = need.every(function(c){ return document.documentElement.classList.contains(c); });
+          if (needAllPresent && !lastSig){ lastSig = need.join("|"); return; }
+        }catch(e){}
+      })();
+);
 
 
 
