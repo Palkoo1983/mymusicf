@@ -2387,3 +2387,16 @@ html.ua-ioswv .vinyl-tabs .tab:is(:hover, :focus-visible, :active)::before,
 html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab:is(:hover, :focus-visible, :active)::before {
   filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.45));
 }
+/* Samsung fix – erőltetett háttérkép, teljes felülírással */
+html.ua-samsung .vinyl-tabs .tab,
+html.ua-androidwv .vinyl-tabs .tab,
+html.ua-ioswv .vinyl-tabs .tab {
+  background-image: url("assets/vinyl_samsung_fix.png") !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  /* Törlünk minden mást, ami eltakarhatná */
+  box-shadow: none !important;
+  border: none !important;
+  overflow: hidden !important; /* ha esetleg valami kilógna */
+}
