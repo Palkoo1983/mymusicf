@@ -2287,3 +2287,35 @@ html.ua-webview .video-panel.yt-smooth { will-change: opacity, transform; }
 }
 
 /* Ha van konkrét lemez konténer, ide még egyedi szelektor mehet */
+
+
+/* ====== WebView/Samsung consistency block (Golden WebView Patch v1.1) ====== */
+html.nb-samsung .topbar,
+html.nb-webview .topbar{
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: rgba(0,0,0,0.55) !important;
+}
+
+/* Stronger, simpler grooves for Samsung/WebView */
+html.nb-samsung .vinyl-tabs .tab,
+html.nb-webview .vinyl-tabs .tab{
+  background:
+    /* grooves: thicker lines to avoid subpixel wash-out */
+    repeating-radial-gradient(circle at 50% 50%,
+      rgba(255,255,255,.09) 0 2px,
+      rgba(255,255,255,0)   2px 5px) !important,
+    radial-gradient(circle at 50% 50%,
+      #1a1a1a 0 34%,
+      #2a2a2a 34% 36%,
+      #0b0b0b 36% 100%) !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+/* Avoid fancy blends on the hero vinyl too */
+html.nb-samsung .bg-vinyl,
+html.nb-webview .bg-vinyl{
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}

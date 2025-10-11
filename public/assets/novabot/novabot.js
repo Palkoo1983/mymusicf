@@ -10,7 +10,7 @@
   const NB_IS_SAMSUNG = /SamsungBrowser/i.test(UA);
 
   // ---- audio flags ----
-  let NB_AUDIO_ENABLED = !NB_IS_SAMSUNG;  // Chrome/egyéb: induláskor engedélyezett; Samsungon nem
+  let NB_AUDIO_ENABLED = true;  // always enabled; resume on first user gesture if needed  // Chrome/egyéb: induláskor engedélyezett; Samsungon nem
   let NB_VOICES_READY  = false;           // betöltöttek-e a TTS hangok
 
   // ---- helpers ---------------------------------------------------------
@@ -110,7 +110,7 @@
     document.body.appendChild(root);
 
     // ---- Hang engedélyezése gomb (CSAK Samsung Interneten) ----
-    if (NB_IS_SAMSUNG) {
+    if (false && NB_IS_SAMSUNG) {  // sound button removed
       const soundBtn = document.createElement('button');
       soundBtn.type = 'button';
       soundBtn.className = 'novabot-sound-btn';
@@ -145,6 +145,26 @@
 
     // indulás: dokkolt jobb-alsó sarokban
     root.classList.add('nb-docked');
+
+    // global first-interaction resume for WebView/Samsung/Messenger
+    (function(){
+      const resume = ()=>{
+        try { state.synth?.resume?.(); } catch(e){}
+        NB_AUDIO_ENABLED = true;
+        document.removeEventListener('pointerdown', resume, true);
+        document.removeEventListener('touchstart', resume, true);
+        document.removeEventListener('click', resume, true);
+      };
+      document.addEventListener('pointerdown', resume, true);
+      document.addEventListener('touchstart', resume, true);
+      document.addEventListener('click', resume, true);
+    })();
+ick', resume, true);
+      };
+      document.addEventListener('pointerdown', resume, true);
+      document.addEventListener('touchstart', resume, true);
+      document.addEventListener('click', resume, true);
+    })();
 
     // interakciók
     avatarWrap.addEventListener('click', () => {
@@ -303,6 +323,26 @@
     if (!root) return;
     root.classList.remove('nb-flying', 'nb-inflight');
     root.classList.add('nb-docked');
+
+    // global first-interaction resume for WebView/Samsung/Messenger
+    (function(){
+      const resume = ()=>{
+        try { state.synth?.resume?.(); } catch(e){}
+        NB_AUDIO_ENABLED = true;
+        document.removeEventListener('pointerdown', resume, true);
+        document.removeEventListener('touchstart', resume, true);
+        document.removeEventListener('click', resume, true);
+      };
+      document.addEventListener('pointerdown', resume, true);
+      document.addEventListener('touchstart', resume, true);
+      document.addEventListener('click', resume, true);
+    })();
+ick', resume, true);
+      };
+      document.addEventListener('pointerdown', resume, true);
+      document.addEventListener('touchstart', resume, true);
+      document.addEventListener('click', resume, true);
+    })();
     root.style.transform  = 'none';
     root.style.transition = 'none';
     root.style.left = ''; root.style.top = ''; root.style.right = ''; root.style.bottom = '';
