@@ -343,4 +343,24 @@ if (false && NB_IS_SAMSUNG) {
   } else {
     init();
   }
+// === PUBLIC API – rendelés visszajelzések, buborékkal + TTS (ha elérhető) ===
+window.novaBotSay = function(text){
+  try {
+    setBubbleText(text);     // meglévő buborék szöveg
+    toggleBubble(true);      // buborék megjelenítése
+    speak(text);             // TTS (Chrome-ban szól, Samsungon csendben marad)
+  } catch (e) {
+    // ha bármiért nem érhető el a belső függvény, ne dobjunk hibát
+    console && console.warn && console.warn('NovaBotSay fallback:', e);
+  }
+};
+
+// Rövidített hívások a megrendelés siker/hiba ághoz
+window.novaOrderSuccess = function(){
+  window.novaBotSay('Éljen, megrendelésedet elküldted, 48 órán belül megkapod a dalodat.');
+};
+window.novaOrderFail = function(){
+  window.novaBotSay('Oh :(, megrendelésed nem sikerült, kérlek próbáld újra');
+};
+
 })();
