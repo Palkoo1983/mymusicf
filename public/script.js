@@ -3,54 +3,81 @@
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
   }
-  // azonnali (nem "smooth") felgörgetés a tetejére
-  window.scrollTo(0, 0);
+  // WebView-ban ne scrollTo, mert pislákolhat
+  try{
+    var ua = navigator.userAgent || "";
+    var isAndroidWV = /\bwv\b/i.test(ua);
+    var isIOSWV = !!(window.webkit && window.webkit.messageHandlers);
+    if (!(isAndroidWV || isIOSWV)) {
+      window.scrollTo(0, 0);
+    }
+  }catch(e){ window.scrollTo(0, 0); }
 })();
 // Samsung Internet detektálás – biztosan lefut
+(funct// --- WebView + "Asztali webhely kérése" – DESKTOP‑SAFE + THROTTLE + NO‑OP ---
 (function () {
   try {
-    var ua = navigator.userAgent || "";
-    if (ua.includes("SamsungBrowser")) {
-      document.documentElement.classList.add("ua-samsung");
-    }
-  } catch (e) {
-    console.warn("Samsung detection error:", e);
-  }
-})();
-// --- WebView + "Asztali webhely kérése" – JAVÍTOTT, DESKTOP-SAFE DETEKTÁLÁS ---
-(function () {
-  try {
-    var ua   = navigator.userAgent || "";
     var html = document.documentElement;
+    var ua   = navigator.userAgent || "";
 
-    // Mobil jelleg: tényleges Android/iOS VAGY "coarse" pointer + nincs hover
     var isAndroid = /Android/i.test(ua);
     var isIOS     = /iPhone|iPad|iPod/i.test(ua);
-    var coarse    = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-    var noHover   = window.matchMedia && window.matchMedia("(hover: none)").matches;
-    var isMobileLike = (isAndroid || isIOS || (coarse && noHover));
 
-    // Tényleges WebView-k
     var isAndroidWV = isAndroid && /\bwv\b/i.test(ua);
     var isSafari    = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
     var isIOSWV     = isIOS && (!isSafari || !!(window.webkit && window.webkit.messageHandlers));
 
-    // Desktop jelleg (klasszikus egér + hover) – ez biztosan NEM mobil
-    var isDesktopLike = window.matchMedia && window.matchMedia("(pointer: fine) and (hover: hover)").matches && !(isAndroid || isIOS);
+    function isMobileLike(){
+      try{
+        var coarse  = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+        var noHover = window.matchMedia && window.matchMedia("(hover: none)").matches;
+        return (isAndroid || isIOS || (coarse && noHover));
+      }catch(_){ return (isAndroid || isIOS); }
+    }
+    function isDesktopLike(){
+      try{
+        return (window.matchMedia && window.matchMedia("(pointer: fine) and (hover: hover)").matches) && !(isAndroid || isIOS);
+      }catch(_){ return !(isAndroid || isIOS); }
+    }
 
-    function applyFlags(){
-      // tisztítás
-      html.classList.remove("ua-androidwv","ua-ioswv","ua-mobilelike","ua-desktopreq");
+    var lastSig = "";
 
-      if (isAndroidWV) html.classList.add("ua-androidwv");
-      if (isIOSWV)     html.classList.add("ua-ioswv");
-      if (isMobileLike) html.classList.add("ua-mobilelike");
-
-      // "Asztali webhely kérése" CSAK mobil eszközön kapcsoljon
+    function applyFlagsCore(){
+      var mobileLike   = isMobileLike();
+      var desktopLike  = isDesktopLike();
       var looksDesktop = window.innerWidth >= 900;
-      if (isMobileLike && looksDesktop) html.classList.add("ua-desktopreq");
 
-      // Biztonsági szelep: ha desktop, TILTSD le
+      var need = [];
+      if (isAndroidWV) need.push("ua-androidwv");
+      if (isIOSWV)     need.push("ua-ioswv");
+      if (isAndroidWV || isIOSWV) need.push("ua-webview");
+      if (mobileLike)  need.push("ua-mobilelike");
+      if (mobileLike && looksDesktop && !desktopLike) need.push("ua-desktopreq");
+
+      var sig = need.join("|");
+      if (sig === lastSig) return; // NO-OP ha nincs változás
+
+      html.classList.remove("ua-androidwv","ua-ioswv","ua-mobilelike","ua-desktopreq","ua-webview");
+      need.forEach(function(c){ html.classList.add(c); });
+      lastSig = sig;
+    }
+
+    applyFlagsCore();
+
+    function throttle(fn, ms){
+      var t=null, pend=false;
+      return function(){
+        if(t){ pend=true; return; }
+        var args=arguments;
+        t=setTimeout(function(){ t=null; fn.apply(null,args); if(pend){ pend=false; fn.apply(null,args);} }, ms);
+      }
+    }
+    var onResize = throttle(applyFlagsCore, 250);
+    addEventListener("resize", onResize, {passive:true});
+    addEventListener("orientationchange", applyFlagsCore);
+  } catch(e) {}
+})();
+p, TILTSD le
       if (isDesktopLike) html.classList.remove("ua-desktopreq");
     }
 
