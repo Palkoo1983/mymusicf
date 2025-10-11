@@ -2293,3 +2293,56 @@ html.ua-ioswv .topbar{
   backdrop-filter: none !important;
   background: rgba(13,27,42,0.72) !important; /* kicsit erősebb háttér */
 }
+/* === CONSISTENCY: Samsung Internet + WebView menü lemezek = DESKTOP kinézet === */
+/* Cél: minden UA-specifikus (ua-samsung/ua-androidwv/ua-ioswv/nb-*) felülírás letiltása
+   csak a menü lemezeken, és a desktopos alap recept kényszerítése. */
+
+html.ua-samsung .vinyl-tabs .tab,
+html.ua-androidwv .vinyl-tabs .tab,
+html.ua-ioswv .vinyl-tabs .tab,
+.nb-samsung .vinyl-tabs .tab,
+.nb-webview .vinyl-tabs .tab{
+  /* desktop ALAP (a file elején lévő, fekete vinyl recept) */
+  background:
+    radial-gradient(circle at center, #2a2a2a 0 35%, transparent 35% 37%, #111 37% 100%) !important,
+    conic-gradient(from 0deg, #1a1a1a, #0f0f0f 60%, #1a1a1a) !important;
+  background-color: #0b0b0b !important;     /* védőalap, ha bármelyik réteg nem rajzolna */
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 100% 100% !important;
+
+  box-shadow:
+    inset 0 0 0 3px #000,
+    inset 0 0 0 6px #121212,
+    var(--shadow) !important;
+
+  /* bármely korábbi „fátyol/keverés” off, hogy szín ugyanaz legyen mint desktopon */
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  transform: none !important;
+}
+
+/* bármilyen UA-specifikus pszeudo-overlay kikapcsolása a lemezeken */
+html.ua-samsung .vinyl-tabs .tab::before,
+html.ua-samsung .vinyl-tabs .tab::after,
+html.ua-androidwv .vinyl-tabs .tab::before,
+html.ua-androidwv .vinyl-tabs .tab::after,
+html.ua-ioswv .vinyl-tabs .tab::before,
+html.ua-ioswv .vinyl-tabs .tab::after,
+.nb-samsung .vinyl-tabs .tab::before,
+.nb-samsung .vinyl-tabs .tab::after,
+.nb-webview .vinyl-tabs .tab::before,
+.nb-webview .vinyl-tabs .tab::after{
+  content: none !important;
+  display: none !important;
+}
+
+/* felirat maradjon desktoposan olvasható */
+html.ua-samsung .vinyl-tabs .tab span,
+html.ua-androidwv .vinyl-tabs .tab span,
+html.ua-ioswv .vinyl-tabs .tab span,
+.nb-samsung .vinyl-tabs .tab span,
+.nb-webview .vinyl-tabs .tab span{
+  color: #eef4fb !important;
+  text-shadow: 0 1px 1px rgba(0,0,0,.7) !important;
+}
