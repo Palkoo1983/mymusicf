@@ -2400,3 +2400,51 @@ html.ua-ioswv .vinyl-tabs .tab {
   border: none !important;
   overflow: hidden !important; /* ha esetleg valami kilógna */
 }
+/* ===== Samsung / WebView: SVG vinyl háttér, 100% kitöltés ===== */
+html.ua-samsung .vinyl-tabs .tab,
+html.ua-androidwv .vinyl-tabs .tab,
+html.ua-ioswv .vinyl-tabs .tab,
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab{
+  background-image:
+    url("/assets/vinyl_samsung_fix.svg#v=1"),
+    url("assets/vinyl_samsung_fix.svg#v=1") !important;
+  background-size: 100% 100% !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  border: none !important;
+  box-shadow: none !important;
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+/* Minden pszeudo-réteg OFF, hogy semmi ne takarja */
+html.ua-samsung .vinyl-tabs .tab::before,
+html.ua-samsung .vinyl-tabs .tab::after,
+html.ua-androidwv .vinyl-tabs .tab::before,
+html.ua-androidwv .vinyl-tabs .tab::after,
+html.ua-ioswv .vinyl-tabs .tab::before,
+html.ua-ioswv .vinyl-tabs .tab::after,
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab::before,
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab::after{
+  content: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+/* Feliratok továbbra is a kép fölött maradnak */
+html.ua-samsung .vinyl-tabs .tab > *,
+html.ua-androidwv .vinyl-tabs .tab > *,
+html.ua-ioswv .vinyl-tabs .tab > *,
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab > *{
+  position: relative;
+  z-index: 1;
+}
+
+/* Érintés/hover feedback megmarad */
+html.ua-samsung .vinyl-tabs .tab:is(:hover,:focus-visible,:active),
+html.ua-androidwv .vinyl-tabs .tab:is(:hover,:focus-visible,:active),
+html.ua-ioswv .vinyl-tabs .tab:is(:hover,:focus-visible,:active),
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab:is(:hover,:focus-visible,:active){
+  filter: drop-shadow(0 0 12px rgba(212,175,55,.45));
+}
