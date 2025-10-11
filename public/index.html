@@ -540,7 +540,6 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 </head>
 <body class="gold-theme no-intro">
   <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
-  
   <div class="video-panel">
     <select id="videoSelect" aria-label="Videó választó">
       <option value="Crf1xVh4BYA">Minta – Esküvő (Shorts)</option>
@@ -553,62 +552,36 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
       <option value="TGLKIQEjiQM">Angol – Romantikus</option>
       <option value="YF-Onq_-F4g">Magyar – Romantikus</option>
       <option value="yJkzbC4PWy4">Angol – Ars Poetica</option>
+      <option value="Z78APd89pW8">Magyar – Életút</option>
       <option value="K489XbDIAmo">Pop – Biztató (angol)</option>
       <option value="hkc58uSEosc">Pop – Biztató (magyar)</option>
     </select>
-    <div id="videoPlayer" style="width:100%; aspect-ratio:9/16;"></div>
+    <iframe id="videoFrame" src="https://www.youtube.com/embed/2RY5bwiSR00" allow="autoplay; encrypted-media" allowfullscreen></iframe>
     <div style="display:flex; gap:8px; justify-content:space-between;">
-      <button id="btnPlay"><span class="gold-text">Lejátszás</span></button>
-      <button id="btnPause"><span class="gold-text">Megállít</span></button>
-    </div>
+    <button onclick="playVideo()"><span class="gold-text">Lejátszás</span></button>
+    <button onclick="stopVideo()"><span class="gold-text">Megállít</span></button>
+</div>
   </div>
 
-  <!-- YouTube Iframe API for reliable play in WebViews/Messenger -->
-  <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    var ytPlayer = null;
-    function onYouTubeIframeAPIReady(){
-      ytPlayer = new YT.Player('videoPlayer', {
-        width: '100%',
-        videoId: document.getElementById('videoSelect').value,
-        playerVars: { 'playsinline': 1, 'rel': 0, 'modestbranding': 1 },
-        events: {
-          'onReady': function(){ /* no auto-play to satisfy policies */ }
-        }
-      });
-    }
-
-    // direct user-gesture controls (works in Messenger WebView too)
-    document.addEventListener('click', function(e){
-      if(e.target && e.target.id === 'btnPlay' && ytPlayer){ ytPlayer.playVideo(); }
-      if(e.target && e.target.id === 'btnPause' && ytPlayer){ ytPlayer.pauseVideo(); }
-    }, true);
-
-    // selection change -> cue the chosen video
-    document.addEventListener('change', function(e){
-      if(e.target && e.target.id === 'videoSelect' && ytPlayer){
-        ytPlayer.cueVideoById(e.target.value);
-      }
-    }, true);
-
-    /* Pozicionálás: félúton a lap teteje és a menüsáv alja között (meglévő logika kompatibilis) */
+    function playVideo(){ const id=document.getElementById("videoSelect").value; document.getElementById("videoFrame").src=`https://www.youtube.com/embed/${id}?autoplay=1`; }
+    function stopVideo(){ document.getElementById("videoFrame").src=""; }
+    /* Pozicionálás: félúton a lap teteje és a menüsáv alja között */
     (function positionVideoPanel(){
       function place(){
-        try{
-          var vp = document.querySelector('.video-panel');
-          var topbar = document.querySelector('.topbar');
-          if(!vp || !topbar) return;
-          var rect = topbar.getBoundingClientRect();
-          var y = Math.max(16, rect.bottom + 12);
-          vp.style.marginTop = y + 'px';
-        }catch(e){}
+        const panel=document.querySelector('.video-panel');
+        const menu=document.querySelector('.vinyl-tabs');
+        if(!panel||!menu) return;
+        const menuBottom=menu.offsetTop+menu.offsetHeight;
+        const panelH=panel.offsetHeight||0;
+        const desiredTop=Math.max(8,(menuBottom-panelH)/2);
+        panel.style.top=desiredTop+'px';
       }
-      place();
-      window.addEventListener('resize', place);
-      window.addEventListener('scroll', place, {passive:true});
+      window.addEventListener('load',place);
+      window.addEventListener('resize',place);
+      document.addEventListener('DOMContentLoaded',place);
     })();
   </script>
-
 
   <div class="bg-vinyl"></div>
 
