@@ -2351,3 +2351,50 @@ html.ua-ioswv .vinyl-tabs .tab{
   background-position: center !important;
   background-size: 100% 100% !important;
 }
+/* === 1) Samsung/WebView: vinyl kinézet = Chrome-verzió (szürke+fekete + barázdák) === */
+html.ua-samsung .vinyl-tabs .tab,
+html.ua-androidwv .vinyl-tabs .tab,
+html.ua-ioswv .vinyl-tabs .tab{
+  /* pontosan ugyanaz a 2 réteg, mint Chrome-ban */
+  background:
+    /* barázdák (vastagabbra véve, hogy biztosan látszódjon) */
+    repeating-radial-gradient(circle at 50% 50%,
+      rgba(255,255,255,.08) 0 1px,
+      rgba(255,255,255,0)   1px 3px) !important,
+    /* test: belső szürke címke + vékony világos perem + fekete külső */
+    radial-gradient(circle at 50% 50%,
+      #1a1a1a 0 34%,   /* belső címke – sötétszürke */
+      #2a2a2a 34% 36%, /* vékony világosabb perem */
+      #0b0b0b 36% 100% /* külső fekete test */
+    ) !important;
+
+  background-color:#0b0b0b !important;   /* biztonsági alap */
+  background-repeat:no-repeat !important;
+  background-position:center !important;
+  background-size:100% 100% !important;
+
+  /* minden „fátyol”/kompozit réteg ki, ami torzíthatja a színt */
+  filter:none !important;
+  mix-blend-mode:normal !important;
+  transform:none !important; /* ne erőltessünk translateZ(0)-t, ez is okozhat eltérést */
+}
+
+/* pszeudo rétegek letiltása, hogy semmi se színezze felül */
+html.ua-samsung .vinyl-tabs .tab::before,
+html.ua-samsung .vinyl-tabs .tab::after,
+html.ua-androidwv .vinyl-tabs .tab::before,
+html.ua-androidwv .vinyl-tabs .tab::after,
+html.ua-ioswv .vinyl-tabs .tab::before,
+html.ua-ioswv .vinyl-tabs .tab::after{
+  content:none !important;
+  display:none !important;
+}
+
+/* === 2) WebView villanás STOP a topbaron (újra, erősebb specifikációval) === */
+html.ua-androidwv .topbar, html.ua-ioswv .topbar{
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+  background:rgba(13,27,42,0.72) !important;
+  transition:none !important;   /* semmilyen átmenet, hogy ne „pislantsa” */
+  animation:none !important;    /* biztonság kedvéért az animációt is off */
+}
