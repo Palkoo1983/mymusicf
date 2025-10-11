@@ -958,7 +958,16 @@ initOrderChipPatch();
   });
 })();
 </script>
+<!-- NovaBot audio + engedély gomb -->
+<button id="nv-audio-unlock" style="display:none;position:fixed;inset:auto 16px 16px auto;z-index:9999;padding:10px 14px;border-radius:999px;border:0;box-shadow:0 2px 10px rgba(0,0,0,.2)">🔊 Hang engedélyezése</button>
+
+<audio id="novabot-audio"
+       src="assets/novabot_welcome.mp3"
+       preload="auto"
+       playsinline
+       webkit-playsinline
+       crossorigin="anonymous">
+</audio>
 
 </body>
 </html>
-
