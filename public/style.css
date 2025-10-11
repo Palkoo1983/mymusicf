@@ -2287,3 +2287,10 @@ html.ua-webview .video-panel.yt-smooth { will-change: opacity, transform; }
 }
 
 /* Ha van konkrét lemez konténer, ide még egyedi szelektor mehet */
+/* WebView flicker stop a topbaron */
+html.ua-androidwv .topbar,
+html.ua-ioswv .topbar{
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: rgba(13,27,42,0.72) !important;
+}
