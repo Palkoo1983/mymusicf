@@ -2346,3 +2346,44 @@ html.ua-ioswv .vinyl-tabs .tab span,
   color: #eef4fb !important;
   text-shadow: 0 1px 1px rgba(0,0,0,.7) !important;
 }
+/* ===== Samsung Internet & WebView – univerzális vinyl PNG a menülemezekhez ===== */
+html.ua-samsung .vinyl-tabs .tab,
+html.ua-androidwv .vinyl-tabs .tab,
+html.ua-ioswv .vinyl-tabs .tab,
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab {
+  position: relative;
+  background: none !important;                 /* a régi gradient/rajzolt lemez kikapcs */
+  background-color: transparent !important;    /* biztos ami biztos */
+  border: none !important;
+  box-shadow: none !important;                 /* a keret ne torzítson */
+}
+
+/* A PNG-t pszeudo-elemmel tesszük be, hogy a felirat és a kattintás megmaradjon */
+html.ua-samsung .vinyl-tabs .tab::before,
+html.ua-androidwv .vinyl-tabs .tab::before,
+html.ua-ioswv .vinyl-tabs .tab::before,
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab::before {
+  content: "";
+  position: absolute;
+  inset: 0;                                    /* pontosan kitölti a .tab méretét */
+  background: center/contain no-repeat url("assets/vinyl_samsung_fix.png");
+  pointer-events: none;                        /* a kattintás/érintés a .tab-ra menjen */
+  transform: translateZ(0);                    /* WebView rendering stabilizálás */
+}
+
+/* A felirat és minden interaktív elem a kép fölött legyen */
+html.ua-samsung .vinyl-tabs .tab > *,
+html.ua-androidwv .vinyl-tabs .tab > *,
+html.ua-ioswv .vinyl-tabs .tab > *,
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Érintés/hover glow – megmarad a vizuális visszajelzés */
+html.ua-samsung .vinyl-tabs .tab:is(:hover, :focus-visible, :active)::before,
+html.ua-androidwv .vinyl-tabs .tab:is(:hover, :focus-visible, :active)::before,
+html.ua-ioswv .vinyl-tabs .tab:is(:hover, :focus-visible, :active)::before,
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab:is(:hover, :focus-visible, :active)::before {
+  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.45));
+}
