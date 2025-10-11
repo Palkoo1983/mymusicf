@@ -2448,3 +2448,43 @@ html.ua-ioswv .vinyl-tabs .tab:is(:hover,:focus-visible,:active),
 html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab:is(:hover,:focus-visible,:active){
   filter: drop-shadow(0 0 12px rgba(212,175,55,.45));
 }
+(() => {
+  const ua = navigator.userAgent || "";
+  const isSamsung = /SamsungBrowser/i.test(ua);
+  const isAndroidWV = /\bwv\b/i.test(ua) || /; wv\)/i.test(ua);
+  const isTarget = isSamsung || isAndroidWV; // csak Samsung Internet + Android WebView
+  const audio = document.getElementById('novabot-audio');
+  if (!isTarget || !audio) return;
+
+  const KEY = 'nv-audio-ok';
+  if (sessionStorage.getItem(KEY) === '1') return;
+
+  let ctx;
+  async function unlock() {
+    try {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') await ctx.resume();
+      // néma buffer – ez “feloldja” az audio engedélyt
+      const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+      const src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination); src.start(0);
+
+      audio.muted = false; audio.volume = 1.0;
+      try { await audio.play(); } catch (_) { /* nem baj, ha nem indul azonnal */ }
+      sessionStorage.setItem(KEY, '1');
+    } catch (_) { /* csendben elnyeljük */ }
+    // csak egyszer kell megpróbálni
+    window.removeEventListener('pointerup', unlock, {passive:true});
+    window.removeEventListener('touchend', unlock, {passive:true});
+    window.removeEventListener('keydown', unlock, {passive:true});
+  }
+
+  // első user-gesztusra oldjuk
+  window.addEventListener('pointerup', unlock, {passive:true});
+  window.addEventListener('touchend', unlock, {passive:true});
+  window.addEventListener('keydown', unlock, {passive:true});
+
+  // néha tab-váltás után már engedélyezett lesz
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && sessionStorage.getItem(KEY) !== '1') unlock();
+  });
+})();
