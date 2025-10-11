@@ -509,6 +509,37 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   }
 </style>
 <!-- removed inline UA-flag block -->
+<!-- WebView booting removal tuner: remove 'booting' a beat later only in WebView to avoid first-paint blink -->
+<script>
+(function(){
+  var html = document.documentElement;
+  function isWV(){
+    try{
+      var ua = navigator.userAgent || "";
+      var isAndroidWV = /\bwv\b/i.test(ua);
+      var isIOSWV = !!(window.webkit && window.webkit.messageHandlers) && !/Safari/i.test(ua);
+      return isAndroidWV || isIOSWV;
+    }catch(e){ return false; }
+  }
+  function removeBooting(){ html.classList.remove('booting'); }
+
+  function schedule(){
+    if (isWV()){
+      // WebView: adjunk egy leheletnyi időt az első paintnek
+      requestAnimationFrame(function(){ setTimeout(removeBooting, 180); });
+    } else {
+      // máshol: két frame után azonnal le
+      requestAnimationFrame(function(){ requestAnimationFrame(removeBooting); });
+    }
+  }
+
+  if (document.readyState === 'complete'){
+    schedule();
+  } else {
+    window.addEventListener('load', schedule, { once:true });
+  }
+})();
+</script>
 
 </head>
 <body class="gold-theme no-intro">
