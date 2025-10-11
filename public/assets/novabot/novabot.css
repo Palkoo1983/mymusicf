@@ -350,3 +350,7 @@
 }
 #novabot .novabot-sound-btn.hide{ display: none; }
 #novabot.nb-docked .novabot-sound-btn{ /* hogy dokkolt állapotban szépen a fej fölött legyen */ }
+
+
+/* Safety: sound button teljes elrejtése (ha valahová még bekerülne) */
+.novabot-sound-btn{ display:none !important; }

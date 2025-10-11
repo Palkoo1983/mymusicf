@@ -110,7 +110,8 @@
     document.body.appendChild(root);
 
     // ---- Hang engedélyezése gomb (CSAK Samsung Interneten) ----
-    if (NB_IS_SAMSUNG) {
+    /* Samsung hang gomb eltávolítva */
+if (false && NB_IS_SAMSUNG) {
       const soundBtn = document.createElement('button');
       soundBtn.type = 'button';
       soundBtn.className = 'novabot-sound-btn';
