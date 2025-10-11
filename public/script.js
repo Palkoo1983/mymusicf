@@ -3,8 +3,13 @@
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
   }
-  // azonnali (nem "smooth") felgörgetés a tetejére
-  window.scrollTo(0, 0);
+  // WebView-ban hagyjuk békén a pozíciót, mert ez villanást hozhat
+  var ua = navigator.userAgent || "";
+  var isAndroidWV = /\bwv\b/i.test(ua);
+  var isIOSWV = !!(window.webkit && window.webkit.messageHandlers) && !/Safari/i.test(ua);
+  if (!(isAndroidWV || isIOSWV)) {
+    window.scrollTo(0, 0);
+  }
 })();
 // Samsung Internet detektálás – biztosan lefut
 (function () {
