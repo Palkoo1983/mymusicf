@@ -418,8 +418,8 @@ All numerals must be fully spelled out in words (no digits).`;
       `Client styles (primary, do NOT override): ${styles}`,
       `Vocal: ${vocal}`,
       `Brief (secondary only): ${brief}`
-    ].join('
-');
+    ].join('\\n');
+
 
     const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
       method:'POST',
