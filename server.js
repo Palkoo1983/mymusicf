@@ -137,7 +137,7 @@ app.post('/api/order', (req, res) => {
       <li><b>Ének:</b> ${o.vocal || ''}</li>
       <li><b>Nyelv:</b> ${o.language || ''}</li>
     </ul>
-    <p><b>Brief:</b><br/>${(o.brief || '').replace(/\\n/g, '<br/>')}</p>
+    <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
   `;
 
   // e-mailek háttérben
@@ -168,7 +168,7 @@ app.post('/api/contact', (req, res) => {
       <li><b>Név:</b> ${c.name || ''}</li>
       <li><b>E-mail:</b> ${c.email || ''}</li>
     </ul>
-    <p>${(c.message || '').replace(/\\n/g, '<br/>')}</p>
+    <p>${(c.message || '').replace(/\n/g, '<br/>')}</p>
   `;
 
   const jobs = [
@@ -208,7 +208,7 @@ app.post('/api/checkout', async (req, res) => {
     const lineItem = {
       price_data: {
         currency: CURRENCY,
-        unit_amount: Math.max(200, amount) * (CURRENCY==='huf' ? 1 : 1), // Stripe expects integer minor units
+        unit_amount: Math.max(200, amount) * (CURRENCY==='huf' ? 1 : 1),
         product_data: { name: `EnZenem – ${pack} csomag` }
       },
       quantity: 1
@@ -246,7 +246,7 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
     if(process.env.STRIPE_WEBHOOK_SECRET){
       event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } else {
-      event = JSON.parse(req.body.toString('utf8')); // not recommended, but dev fallback
+      event = JSON.parse(req.body.toString('utf8'));
     }
   } catch (err) {
     console.error('[WEBHOOK VERIFY FAIL]', err.message);
@@ -288,6 +288,25 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
 
 app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
 
+/* ======================== SUNO START RETRY HELPER ===================== */
+async function sunoStartWithRetry(url, headers, body){
+  for (let i=0; i<6; i++){ // max 6 próbálkozás, exponenciális várakozással
+    const r = await fetch(url, { method:'POST', headers, body: JSON.stringify(body) });
+    const txt = await r.text();
+    if (r.ok){
+      try { return { ok:true, json: JSON.parse(txt) }; }
+      catch { return { ok:true, json:{} }; }
+    }
+    console.warn('[SUNO:START_FAIL]', r.status, txt.slice(0,200));
+    if (r.status === 503 || r.status === 502 || r.status === 429){
+      await new Promise(res => setTimeout(res, 2000 * (i+1)));
+      continue;
+    }
+    return { ok:false, status:r.status, text:txt };
+  }
+  return { ok:false, status:503, text:'start_unavailable_after_retries' };
+}
+/* ===================================================================== */
 
 // === EnZenem: GPT→Suno generate_song API ===============================
 app.post('/api/generate_song', async (req, res) => {
@@ -330,27 +349,26 @@ app.post('/api/generate_song', async (req, res) => {
     const oiJson = await oi.json();
     const lyrics = (oiJson?.choices?.[0]?.message?.content || '').trim();
 
-    // 2) Suno – start job (custom/v5)
-    const start = await fetch(`${SUNO_BASE_URL}/api/generate`, {
-      method:'POST',
-      headers:{ 'Authorization': `Bearer ${SUNO_API_KEY}`, 'Content-Type':'application/json' },
-      body: JSON.stringify({
-        model: 'custmod-v5',
-        custom: true,
-        title,
-        style_of_music: styleForSuno,
-        lyrics
-      })
+    // 2) Suno – start job (custom/v5) RETRY-OS
+    const startRes = await sunoStartWithRetry(`${SUNO_BASE_URL}/api/generate`, {
+      'Authorization': `Bearer ${SUNO_API_KEY}`,
+      'Content-Type': 'application/json'
+    }, {
+      model: 'custmod-v5',
+      custom: true,
+      title,
+      style_of_music: styleForSuno,
+      lyrics
     });
-    if(!start.ok){
-      const t = await start.text();
-      return res.status(502).json({ ok:false, message:'Suno start error', detail:t });
-    }
-    const sj = await start.json();
-    let jobId = sj.job_id || sj.id || sj.jobId;
-    let tracks = Array.isArray(sj.tracks) ? sj.tracks : [];
 
-    // 3) Poll if needed
+    if (!startRes.ok){
+      return res.status(502).json({ ok:false, message:'Suno start error', detail:startRes.text, status:startRes.status });
+    }
+    const sj = startRes.json;
+    let jobId = sj?.job_id || sj?.id || sj?.jobId;
+    let tracks = Array.isArray(sj?.tracks) ? sj.tracks : [];
+
+    // 3) Poll (ha kell)
     const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 120);
     const intervalMs = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 1.5) * 1000);
     let attempts = 0;
@@ -374,14 +392,15 @@ app.post('/api/generate_song', async (req, res) => {
     }
 
     if (!tracks.length) return res.status(502).json({ ok:false, message:'Suno did not return tracks in time.' });
-
     return res.json({ lyrics, tracks });
+
   } catch (e) {
     console.error('[generate_song]', e);
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
   }
 });
 // ======================================================================
+
 // DIAG: környezet ping
 app.get('/api/generate_song/ping', (req, res) => {
   res.json({ ok:true, diag:{
