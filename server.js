@@ -259,7 +259,19 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
   }
 });
 
-// ================== SUNO V1 – START & POLL =================
+// ================== SUNO V1 – START, POLL, CALLBACK =================
+
+// Suno callback – a Suno ide POST-ol készültségi/eredmény infókat
+app.post('/api/suno/callback', async (req, res) => {
+  try {
+    console.log('[SUNO CALLBACK] body:', req.body);
+    // Ide írhatsz DB mentést / e-mailt, ha szükséges
+    res.json({ ok:true });
+  } catch (e) {
+    console.error('[SUNO CALLBACK ERROR]', e);
+    res.status(500).json({ ok:false });
+  }
+});
 
 // GPT → Suno generate (Suno V1: api.sunoapi.org)
 app.post('/api/generate_song', async (req, res) => {
@@ -275,6 +287,7 @@ app.post('/api/generate_song', async (req, res) => {
     const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
     const SUNO_API_KEY   = process.env.SUNO_API_KEY;
     const SUNO_BASE_URL  = process.env.SUNO_BASE_URL || 'https://api.sunoapi.org';
+    const PUBLIC_URL     = process.env.PUBLIC_URL || 'https://www.enzenem.hu';
 
     if (!OPENAI_API_KEY) return res.status(500).json({ ok:false, message:'OPENAI_API_KEY hiányzik' });
     if (!SUNO_API_KEY)   return res.status(500).json({ ok:false, message:'SUNO_API_KEY hiányzik' });
@@ -306,18 +319,19 @@ app.post('/api/generate_song', async (req, res) => {
     const oiJson = await oi.json();
     const lyrics = (oiJson?.choices?.[0]?.message?.content || '').trim();
 
-    // ==== Suno V1 – START
+    // ==== Suno V1 – START (kötelező callBackUrl)
     console.log('[GEN] Suno V1 start', { base: SUNO_BASE_URL, title, styleForSuno, lyrics_len: lyrics.length });
     const startRes = await fetch(`${SUNO_BASE_URL}/api/v1/generate`, {
       method:'POST',
       headers:{ 'Authorization': `Bearer ${SUNO_API_KEY}`, 'Content-Type':'application/json' },
       body: JSON.stringify({
-        customMode: true,             // custom mód
-        model: 'V5',                  // v5 modell
-        instrumental: (vocal === 'instrumental'),
+        customMode: true,                          // custom mód
+        model: 'V5',                               // v5 modell
+        instrumental: (vocal === 'instrumental'),  // ha nincs ének
         title,
-        style: styleForSuno,          // angol style + vocal
-        prompt: lyrics                // GPT dalszöveg (kért nyelven)
+        style: styleForSuno,                       // angol style + vocal
+        prompt: lyrics,                            // GPT dalszöveg (kért nyelven)
+        callBackUrl: `${PUBLIC_URL}/api/suno/callback` // KÖTELEZŐ a V1-ben
       })
     });
 
@@ -357,13 +371,11 @@ app.post('/api/generate_song', async (req, res) => {
           image_url: d.imageUrl || d.coverUrl
         }))
         .filter(x => !!x.audio_url);
-
-      if (tracks.length >= 2) break;
     }
 
     if (!tracks.length) return res.status(502).json({ ok:false, message:'Suno did not return tracks in time.' });
 
-    // (Ha később kell: itt küldhetsz e-mailt a linkekkel a megrendelőnek is.)
+    // (igény esetén: itt e-mail a linkekkel)
     return res.json({ lyrics, tracks });
 
   } catch (e) {
@@ -377,7 +389,8 @@ app.get('/api/generate_song/ping', (req, res) => {
   res.json({ ok:true, diag:{
     node: process.version, fetch_defined: typeof fetch!=='undefined',
     has_OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
-    has_SUNO_API_KEY: !!process.env.SUNO_API_KEY, SUNO_BASE_URL: process.env.SUNO_BASE_URL||null
+    has_SUNO_API_KEY: !!process.env.SUNO_API_KEY, SUNO_BASE_URL: process.env.SUNO_BASE_URL||null,
+    public_url: process.env.PUBLIC_URL || null
   }});
 });
 
