@@ -410,6 +410,34 @@ app.get('/api/suno/ping', async (req, res) => {
     return res.status(500).json({ ok:false, error: (e && e.message) || e });
   }
 });
+// --- EGYSZERŰ TESZT VÉGPONT ---
+app.get('/api/generate_song/test', async (req, res) => {
+  try{
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+    const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
+    if (!OPENAI_API_KEY) return res.status(500).json({ ok:false, message:'OPENAI_API_KEY hiányzik' });
+
+    const title='Teszt dal', styles='pop, dance', vocal='male', brief='rövid teszt';
+    const system="You are a concise hit-song lyricist. Always return ONLY the final lyrics, no commentary. Structure: Verse 1 (4 lines), Chorus (4 lines), Verse 2 (4), Chorus (same/varied 4), Verse 3 (4).";
+    const prompt=`Nyelv: magyar.\nCím: ${title}\nHangulat/stílus: ${styles}\nLeírás: ${brief}\n\nÍrj 3 versszakot és 2 refrént a fenti szerkezetben.`;
+
+    const oi = await fetch('https://api.openai.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${OPENAI_API_KEY}`,'Content-Type':'application/json'},
+      body: JSON.stringify({ model: OPENAI_MODEL, messages:[{role:'system',content:system},{role:'user',content:prompt}], max_tokens:350, temperature:0.8 })
+    });
+    if(!oi.ok){ return res.status(502).json({ ok:false, message:'OpenAI error', detail: await oi.text() }); }
+    const lyrics = (await oi.json())?.choices?.[0]?.message?.content?.trim() || '';
+
+    // Suno ideiglenesen kihagyva → 2 demo link
+    res.json({ ok:true, test:true, lyrics,
+      tracks:[
+        { title, audio_url:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+        { title, audio_url:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' }
+      ]
+    });
+  }catch(e){ res.status(500).json({ ok:false, message:'Hiba történt', error:e?.message||e }); }
+});
 
 // ================== Start server ==========================
 app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
