@@ -340,9 +340,10 @@ async function sunoStartV1(url, headers, body){
   return { ok:false, status:503, text:'start_unavailable_after_retries' };
 }
 
-/* ============ GPT → Suno generate (4V+2C, rhyme, numbers→words, style-fit) ============ */
-/* ============ GPT → Suno generate (style-fit, rhythm+tone, pronunciation-safety, extended vocals) ============ */
-/* ============ GPT → Suno generate (style-fit, rhythm+tone, pronunciation-safety, keyword-enforce, dedupe) ============ */
+// === PATCH BLOCK START ===
+// Replace the existing app.post('/api/generate_song', ...) with this whole block:
+
+/* ============ GPT → Suno generate (style-fit, rhythm+tone, pronunciation-safety, keyword-enforce, dedupe, sanitize) ============ */
 app.post('/api/generate_song', async (req, res) => {
   try {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
@@ -385,7 +386,7 @@ app.post('/api/generate_song', async (req, res) => {
     const PUBLIC_URL     = (process.env.PUBLIC_URL || '').replace(/\/+$/,'');
 
     if (!OPENAI_API_KEY) return res.status(500).json({ ok:false, message:'OPENAI_API_KEY hiányzik' });
-    if (!SUNO_API_KEY)   return res.status(500).json({ ok:false, message:'SUNO_API_KEY hiányzik' });
+    if (!SUNO_API_KEY)   return res.status(500).json({ ok:false, message:'Suno API key hiányzik' });
     if (!SUNO_BASE_URL)  return res.status(500).json({ ok:false, message:'SUNO_BASE_URL hiányzik' });
 
     // ---- idempotency ----
@@ -407,29 +408,50 @@ app.post('/api/generate_song', async (req, res) => {
       rhythmHint = 'energetic, uplifting, 4–6 word lines, catchy and repetitive';
     }
     let toneHint = 'use a natural tone matching the described genre.';
-    if (/lírikus|poetic|ballad|ballada/.test(st)) toneHint = 'use a poetic, lyrical tone with rich imagery, gentle rhymes and emotional depth.';
+    if (/lírikus|poetic|ballad|ballada|romantik/.test(st)) toneHint = 'use a poetic, lyrical tone with rich imagery, gentle rhymes and emotional depth.';
     else if (/k[- ]?pop/.test(st)) toneHint = 'use catchy K-pop phrasing, easy singalong hooks, some light English loanwords allowed if natural.';
     else if (/trap|drill|rap/.test(st)) toneHint = 'use expressive attitude, internal rhymes and punchy imagery typical for rap.';
+
+    const isLyrical = /lírikus|poetic|ballad|ballada|romantik/.test(st);
+    const isPopRockMusical = /pop|rock|musical/.test(st);
+
+    const chorusHint = (isLyrical || isPopRockMusical)
+      ? 'Chorus should be 2–4 short, memorable lines with one clear hook (do not over-explain).'
+      : 'Keep chorus concise and catchy.';
+    const rhymeHint = (isLyrical || isPopRockMusical)
+      ? 'Use clear end-rhymes (ABAB/ABCB) in verses; chorus may use AAXA or AAAA, but stay natural.'
+      : 'Gentle end-rhymes are preferred; never force meaning.';
 
     // ---- pronunciation safety (Hungarian singing) ----
     const pronunciationSafety =
       "Avoid Hungarian words that AI models sometimes mispronounce when sung (e.g. 'oson', 'mélybe', 'elcsendesült', 'céges', 'üdvözlet', 'hajnali', 'zengjen'). " +
       "These are NOT banned; only use them if they fit perfectly and pronounce clearly in context. Prefer smoother phonetics for singing.";
 
+    // ---- awkward phrase list (magyarosítás) ----
+    const awkwardHU = [
+      'örök éltet', 'közös dal', 'minden út nyitva áll', 'szívünk mindig szabad'
+    ];
+    const awkwardNote = `Avoid unidiomatic or cliched Hungarian phrases such as: ${awkwardHU.join(', ')}. Prefer natural alternatives like: "örökké szeretlek", "közös történetünk", "nyitva a világ", "szívünk szabadon dobban".`;
+
     // ---- GPT #1: JSON (lyrics_draft + style_en) ----
-    const sys1 = `
-You write Hungarian song lyrics and also output an ENGLISH style descriptor (style_en) for a music model.
-Write lyrics that MATCH the client's chosen musical style **in rhythm and tone**.
-Rhythm rule: ${rhythmHint}
-Tone rule: ${toneHint}
-${pronunciationSafety}
-MANDATORY: Naturally include ALL of these keywords verbatim at least once if present: ${mandatoryKeywords.length ? mandatoryKeywords.join(', ') : '(no mandatory keywords)'}
-Return STRICT JSON ONLY: {"lyrics_draft":"...","style_en":"..."}
-STRUCTURE for default/pop styles: Verse 1 (4) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4).
-For techno/minimal/house you may use shorter lines and more repetition but keep the section headings.
-Do NOT override already-English genre tags (e.g., 'minimal techno', 'house', 'pop').
-If vocal is male/female/unisex/both/instrumental, append that as 'male vocals'/'female vocals'/'unisex vocals'/'both vocals' or omit for instrumental.
-All numerals must be fully spelled out in words (no digits).`.trim();
+    const sys1 = [
+      "You write Hungarian song lyrics and also output an ENGLISH style descriptor (style_en) for a music model.",
+      "Write lyrics that MATCH the client's chosen musical style **in rhythm and tone**.",
+      `Rhythm rule: ${rhythmHint}`,
+      `Tone rule: ${toneHint}`,
+      `Rhyme rule: ${rhymeHint}`,
+      `Chorus rule: ${chorusHint}`,
+      pronunciationSafety,
+      awkwardNote,
+      `MANDATORY: Naturally include ALL of these keywords verbatim at least once if present: ${mandatoryKeywords.length ? mandatoryKeywords.join(', ') : '(no mandatory keywords)'}`,
+      `Use Hungarian typographic quotes („ … ”) if quotes appear.`,
+      'Return STRICT JSON ONLY: {"lyrics_draft":"...","style_en":"..."}',
+      'STRUCTURE for default/pop styles: Verse 1 (4) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4).',
+      'For techno/minimal/house you may use shorter lines and more repetition but keep the section headings.',
+      "Do NOT override already-English genre tags (e.g., 'minimal techno', 'house', 'pop').",
+      "If vocal is male/female/unisex/both/instrumental, append that as 'male vocals'/'female vocals'/'unisex vocals'/'both vocals' or omit for instrumental.",
+      "All numerals must be fully spelled out in words (no digits)."
+    ].join('\n');
 
     const usr1 = [
       `Mandatory keywords: ${mandatoryKeywords.join(', ')}`,
@@ -438,7 +460,7 @@ All numerals must be fully spelled out in words (no digits).`.trim();
       `Client styles (primary, do NOT override): ${styles}`,
       `Vocal: ${vocal}`,
       `Brief (secondary only): ${brief}`
-    ].join('\\n');
+    ].join('\n');
 
     const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
       method:'POST',
@@ -448,7 +470,7 @@ All numerals must be fully spelled out in words (no digits).`.trim();
         messages:[{role:'system', content: sys1},{role:'user', content: usr1}],
         temperature:0.7,
         response_format:{ type:'json_object' },
-        max_tokens: 700
+        max_tokens: 750
       })
     });
     if(!oi1.ok){
@@ -488,15 +510,20 @@ All numerals must be fully spelled out in words (no digits).`.trim();
     const styleFinal = buildStyleEN(styles, vocal, gptStyle);
 
     // ---- GPT #2: refine to enforce tone/rhythm + pronunciation safety ----
-    const sys2 = `
-You are a native Hungarian lyric editor.
-Keep EXACT section headings (Verse 1/Verse 2/Chorus/Verse 3/Verse 4/Chorus).
-Enforce rhythm rule: ${rhythmHint}
-Enforce tone rule: ${toneHint}
-${pronunciationSafety}
-Prefer gentle end-rhymes but NEVER force nonsense.
-All numerals must be words (no digits).
-Output ONLY the final lyrics.`.trim();
+    const sys2 = [
+      "You are a native Hungarian lyric editor.",
+      "Keep EXACT section headings (Verse 1/Verse 2/Chorus/Verse 3/Verse 4/Chorus).",
+      `Enforce rhythm rule: ${rhythmHint}`,
+      `Enforce tone rule: ${toneHint}`,
+      `Apply: ${rhymeHint}`,
+      `Apply: ${chorusHint}`,
+      pronunciationSafety,
+      awkwardNote,
+      "Prefer gentle end-rhymes but NEVER force nonsense.",
+      "All numerals must be words (no digits).",
+      "Use Hungarian typographic quotes („ … ”) if quotes appear.",
+      "Output ONLY the final lyrics."
+    ].join('\n');
 
     const usr2 = `Language: ${language}\nTitle: ${title}\nStyles: ${styles}\nVocal: ${vocal}\n\n${lyricsDraft}`;
 
@@ -507,13 +534,35 @@ Output ONLY the final lyrics.`.trim();
         model: OPENAI_MODEL,
         messages:[{role:'system', content: sys2},{role:'user', content: usr2}],
         temperature:0.6,
-        max_tokens: 750
+        max_tokens: 800
       })
     });
     let lyrics = lyricsDraft;
     if (oi2.ok){
       const j2 = await oi2.json();
       lyrics = (j2?.choices?.[0]?.message?.content || lyricsDraft).trim();
+    }
+
+    // Lyrical/pop-rock polish pass: refrén tömörítése 2–4 sorra, csere természetes szinonimákra
+    if (isLyrical || isPopRockMusical) {
+      const sysPol = `Polish the Hungarian lyrics for poetic quality: keep headings; verses with ${rhymeHint}.
+${chorusHint}
+Replace awkward or cliched phrases (${awkwardHU.join(', ')}) with natural, idiomatic alternatives.
+Preserve all mandatory keywords, keep numbers in words, and do not add English unless natural.`;
+      const pol = await fetch('https://api.openai.com/v1/chat/completions', {
+        method:'POST',
+        headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          messages:[{role:'system', content: sysPol},{role:'user', content: lyrics}],
+          temperature:0.5,
+          max_tokens: 800
+        })
+      });
+      if (pol.ok) {
+        const jp = await pol.json();
+        lyrics = (jp?.choices?.[0]?.message?.content || lyrics).trim();
+      }
     }
 
     // ---- Ensure Verse 4 is not identical to Verse 1 or Chorus (paraphrase if needed) ----
@@ -573,6 +622,26 @@ Output ONLY the final lyrics.`.trim();
       }
     }catch{}
 
+    // ---- Lyrics sanitize – remove stray tag/genre lines
+    (function(){
+      const tagWords = new Set([
+        'male vocals','female vocals','unisex vocals','both vocals',
+        'instrumental','minimal techno','techno','house','trance','edm','k-pop','kpop',
+        'pop','rock','hip hop','hip-hop','trap','drill'
+      ]);
+      const cleaned = [];
+      for (const line of lyrics.split('\n')) {
+        const L = line.trim().toLowerCase();
+        if (!L) { cleaned.push(line); continue; }
+        if (tagWords.has(L)) continue;
+        const parts = L.split(/[,\s]+/).filter(Boolean);
+        const allTags = parts.length && parts.every(p => tagWords.has(p));
+        if (allTags) continue;
+        cleaned.push(line);
+      }
+      lyrics = cleaned.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    })();
+
     // ---- Suno call ----
     const startRes = await sunoStartV1(`${SUNO_BASE_URL}/api/v1/generate`, {
       'Authorization': `Bearer ${SUNO_API_KEY}`,
@@ -631,6 +700,8 @@ Output ONLY the final lyrics.`.trim();
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
   }
 });
+
+// === PATCH BLOCK END ===
 
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
