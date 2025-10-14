@@ -1,14 +1,14 @@
-// ESM server.js – FULL PATCH
+// ESM server.js – FULL PATCH (style-preserve only; minden más változatlan elv)
 // Suno V1 (customMode + V5 + callBackUrl) + GPT JSON (lyrics + style_en)
-// + Duplicate guard (idempotency) + 2-track cap + style-preserve + rhyme + numbers->words
+// + Duplicate guard (idempotency) + 2-track cap + rhyme refine + numbers→words + V1≠V4
 //
-// Required envs (Render -> Environment):
+// ⚙️ Szükséges env-k (Render -> Environment):
 // OPENAI_API_KEY=sk-...
 // OPENAI_MODEL=gpt-4.1-mini
 // SUNO_API_KEY=su-...
-// SUNO_BASE_URL=https://sunoapi.org
+// SUNO_BASE_URL=<NÁLAD JÓL MŰKÖDŐ URL!>  // NEM változtatom meg!!!
 // PUBLIC_URL=https://www.enzenem.hu
-// (Mail/Stripe envs optional – maradhatnak)
+// (Mail/Stripe env-ek maradhatnak)
 
 import express from 'express';
 import cors from 'cors';
@@ -295,30 +295,64 @@ app.post('/api/suno/callback', async (req, res) => {
   }
 });
 
-/* ================== STYLE PRESERVE helper ================= */
-function preserveClientGenres(styles, style_en, vocalTag){
-  const protectedGenres = [
-    'minimal techno','pop','rock','house','techno','trance','drum and bass','dnb','hip hop','hip-hop',
+/* ================== STYLE PRESERVE / buildStyleEN ================= */
+/**
+ * buildStyleEN:
+ * 1) a kliens által megadott műfajok (pl. "minimal techno, house, pop") VÁLTOZATLANUL
+ * 2) max 2 rövid hangulatcímke jöhet a GPT-től (ha nem ütközik a műfajokkal)
+ * 3) "male vocals"/"female vocals" hozzáadás, ha kell
+ * 4) semmi "modern pop", "electronic" általánosítás, ha a kliens konkrét műfajokat adott meg
+ */
+function buildStyleEN(clientStylesRaw, vocal, gptStyleEn){
+  const EXACT_GENRES = new Set([
+    'minimal techno','house','pop','rock','techno','trance','drum and bass','dnb','hip hop','hip-hop',
     'r&b','rnb','soul','funk','jazz','blues','edm','electronic','ambient','lo-fi','lofi','metal','punk',
     'indie','folk','country','reggaeton','reggae','synthwave','vaporwave','trap','drill','hardstyle',
     'progressive house','deep house','electro house','future bass','dubstep','garage','uk garage','breakbeat','phonk'
-  ];
-  let out = (style_en || '').toLowerCase();
-  const src = (styles || '').toLowerCase();
+  ]);
+  const HU_TO_EN = new Map([
+    ['minimál technó','minimal techno'],
+    ['minimal technó','minimal techno'],
+    ['minimal techno','minimal techno'],
+    ['techno','techno'],
+    ['háusz','house'],
+    ['house','house'],
+    ['pop','pop'],
+    ['rok','rock'],
+    ['rock','rock']
+  ]);
+  function normalizeClientStyles(raw) {
+    const out = [];
+    const seen = new Set();
+    const items = (raw||'').split(/[,\|\/]+/).map(s => s.trim()).filter(Boolean);
+    for (let it of items){
+      let low = it.toLowerCase();
+      if (HU_TO_EN.has(low)) low = HU_TO_EN.get(low);
+      if (EXACT_GENRES.has(low) && !seen.has(low)) {
+        seen.add(low); out.push(low);
+      }
+    }
+    return out; // kisbetűs, deduplikált, csak konkrét műfajok
+  }
 
-  const toKeep = [];
-  for (const g of protectedGenres){
-    if (src.includes(g) && !out.includes(g)){
-      toKeep.push(g);
+  const primary = normalizeClientStyles(clientStylesRaw);
+  const vocalTag = (vocal==='male') ? 'male vocals' : (vocal==='female') ? 'female vocals' : '';
+  const final = [...primary];
+
+  // GPT extrák (csak nem-műfaj/mood tag-ek, max 2)
+  const extras = (gptStyleEn||'').toLowerCase().split(/[,\|\/]+/)
+    .map(s => s.trim())
+    .filter(Boolean)
+    .filter(tag => !EXACT_GENRES.has(tag))
+    .filter(tag => tag!=='male vocals' && tag!=='female vocals');
+
+  for (const x of extras){
+    if (!final.includes(x) && (final.length - primary.length) < 2){
+      final.push(x);
     }
   }
-  if (toKeep.length){
-    out = (out ? out + ', ' : '') + toKeep.join(', ');
-  }
-  if (vocalTag && !out.includes(vocalTag)){
-    out = (out ? out + ', ' : '') + vocalTag;
-  }
-  return out.replace(/\s+/g,' ').trim();
+  if (vocalTag && !final.includes(vocalTag)) final.push(vocalTag);
+  return final.join(', ');
 }
 
 /* ================== SUNO START helper (retry) ============= */
@@ -352,12 +386,13 @@ app.post('/api/generate_song', async (req, res) => {
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
     const SUNO_API_KEY   = process.env.SUNO_API_KEY;
-    const SUNO_BASE_URL  = (process.env.SUNO_BASE_URL || 'https://sunoapi.org').replace(/\/+$/,'');
+    // ⚠️ Nem állítok be defaultot: azt az URL-t használjuk, ami NÁLAD működik (env-ből jön)!
+    const SUNO_BASE_URL  = (process.env.SUNO_BASE_URL || '').replace(/\/+$/,'');
     const PUBLIC_URL     = (process.env.PUBLIC_URL || '').replace(/\/+$/,'');
 
     if (!OPENAI_API_KEY) return res.status(500).json({ ok:false, message:'OPENAI_API_KEY hiányzik' });
     if (!SUNO_API_KEY)   return res.status(500).json({ ok:false, message:'SUNO_API_KEY hiányzik' });
-    if (!PUBLIC_URL)     console.warn('[WARN] PUBLIC_URL nincs beállítva – callback működhet anélkül is, de jobb, ha van.');
+    if (!SUNO_BASE_URL)  return res.status(500).json({ ok:false, message:'SUNO_BASE_URL hiányzik (nem változtatom a korábbi jó értéket, env-ből jön).' });
 
     // --- idempotency guard (dupla kattintás ellen, 20s ablak)
     const key = makeKey({ title, styles, vocal, language, brief });
@@ -369,32 +404,27 @@ app.post('/api/generate_song', async (req, res) => {
     activeStarts.set(key, now);
     setTimeout(()=> activeStarts.delete(key), 60000);
 
-    // ==== OpenAI – JSON (lyrics + style_en) STRICT 4V+2C + RHYME + UNIQUE + NUMBERS + STYLE-FIT ====
-    // 1) STYLE-FOCUSED JSON PASS (lyrics_draft + style_en)
+    // 1) STYLE-FOCUSED JSON PASS (lyrics_draft + style_en a GPT-től)
     const sys1 =
       "You write singable song lyrics and produce an ENGLISH style descriptor for music generation. " +
       "Return STRICT JSON only. The lyrics must be natural and coherent in the requested language. " +
       "Metaphors allowed if coherent; avoid awkward or nonsensical lines. " +
       "STRUCTURE EXACTLY: Verse 1 (4 lines) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4). " +
-      "Each line 6–10 words, light punctuation. Prefer gentle end-rhymes (AABB or ABAB) per section; " +
-      "never sacrifice meaning for rhyme. Do not reuse lines across verses; repeating a hook is allowed in Chorus only. " +
-      "FIT THE CLIENT'S CHOSEN GENRE(S) IN FEEL/IMAGERY/RHYTHM so the music model can render that style better. " +
-      "For style_en: PRIORITIZE the client's CHOSEN MUSIC STYLE(S) exactly. Translate only clearly non-English genre words. " +
-      "Do NOT replace already-English genres (e.g., 'minimal techno', 'house', 'pop', 'rock'). " +
-      "Append 'male vocals' or 'female vocals' if applicable; if instrumental, omit vocals. " +
-      "You MAY add up to 2 mood adjectives ONLY if they do not conflict with the chosen style. " +
+      "Each line 6–10 words, light punctuation. Prefer gentle end-rhymes (AABB or ABAB) per section; never sacrifice meaning. " +
+      "Do not reuse lines across verses; repeating a hook is allowed in Chorus only. " +
+      "For style_en: DO NOT replace already-English genres supplied by the user (e.g., 'minimal techno', 'house', 'pop'). " +
+      "You may add up to 2 short mood tags that do not conflict with the user's genres. " +
       "All numerals must be written fully in words in the requested language (no digits).";
 
     const usr1 = [
       `Language for lyrics: ${language}`,
       `Title: ${title}`,
-      `Chosen music style(s) (client): ${styles}`,
+      `Chosen music style(s) (client): ${styles}`,    // <-- EZ AZ ELSŐDLEGES, ehhez igazodjon a szöveg/ritmus
       `Vocal: ${vocal} (male|female|instrumental)`,
       `Brief (secondary info): ${brief}`,
       "",
       "Return JSON ONLY in this exact shape:",
-      `{"lyrics_draft":"...","style_en":"..."}`,
-      "style_en must be concise English tags, comma-separated, e.g. 'minimal techno, male vocals' or 'ambient piano'."
+      `{"lyrics_draft":"...","style_en":"..."}`
     ].join("\n");
 
     let oi1 = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -419,15 +449,15 @@ app.post('/api/generate_song', async (req, res) => {
     let payload = {};
     try { payload = JSON.parse(j1?.choices?.[0]?.message?.content || "{}"); } catch {}
     let lyricsDraft = (payload.lyrics_draft || payload.lyrics || "").trim();
-    let style_en = (payload.style_en || "").trim();
+    let styleFromGPT = (payload.style_en || "").trim();
 
     // Vokál-tag
     const vocalTag = (vocal === "male") ? "male vocals" : (vocal === "female") ? "female vocals" : "";
 
-    // STYLE PRESERVE
-    style_en = preserveClientGenres(styles, style_en, vocalTag);
+    // STYLE PRESERVE – a kliens műfajai maradnak első helyen, max 2 extra mood
+    const style_en = buildStyleEN(styles, vocal, styleFromGPT);
 
-    // 2) REFINE PASS
+    // 2) REFINE PASS – rím finomítás, koherencia, 4V+2C, számok szavak
     const sys2 =
       "You are a native-speaker lyric editor. Fix awkward or nonsensical lines without changing meaning. " +
       "Metaphors allowed if coherent. Keep the requested language EXACTLY. " +
@@ -441,7 +471,7 @@ app.post('/api/generate_song', async (req, res) => {
     const usr2 = [
       `Language: ${language}`,
       `Title: ${title}`,
-      `Chosen style (must remain primary): ${styles}`,
+      `Chosen style (must remain primary): ${styles}`, // <-- direkt rögzítjük
       `Vocal: ${vocal}`,
       "",
       "DRAFT:",
@@ -560,7 +590,7 @@ app.post('/api/generate_song', async (req, res) => {
       }
     }
 
-    // ==== Suno V1 – START
+    // ==== Suno V1 – START (URL a saját env-ből; NEM módosítom)
     console.log('[GEN] Suno V1 start', { base: SUNO_BASE_URL, title, instrumental:(vocal==='instrumental') });
     const startRes = await sunoStartV1(`${SUNO_BASE_URL}/api/v1/generate`, {
       'Authorization': `Bearer ${SUNO_API_KEY}`,
@@ -570,9 +600,9 @@ app.post('/api/generate_song', async (req, res) => {
       model: 'V5',
       instrumental: (vocal === 'instrumental'),
       title,
-      style: style_en,
-      prompt: lyrics,
-      callBackUrl: PUBLIC_URL ? `${PUBLIC_URL}/api/suno/callback` : undefined
+      style: style_en,   // <-- ITT most már a kliens műfajai mennek be változatlanul (max 2 mood)
+      prompt: lyrics,    // 4V+2C, számok betűvel, koherens rímek
+      callBackUrl: (PUBLIC_URL ? `${PUBLIC_URL}/api/suno/callback` : undefined)
     });
 
     if (!startRes.ok) {
@@ -647,7 +677,8 @@ app.get('/api/generate_song/ping', (req, res) => {
 
 app.get('/api/suno/ping', async (req, res) => {
   try{
-    const BASE = (process.env.SUNO_BASE_URL || 'https://sunoapi.org').replace(/\/+$/,'');
+    const BASE = (process.env.SUNO_BASE_URL || '').replace(/\/+$/,'');
+    if (!BASE) return res.status(500).json({ ok:false, message:'SUNO_BASE_URL hiányzik' });
     const H = { 'Authorization': `Bearer ${process.env.SUNO_API_KEY||''}`, 'Content-Type':'application/json' };
     const r1 = await fetch(`${BASE}/api/v1/generate`, { method:'POST', headers:H, body: JSON.stringify({ invalid:true }) });
     const t1 = await r1.text();
