@@ -14,6 +14,7 @@ import express from 'express';
 import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 import Stripe from 'stripe';
 
 dotenv.config();
@@ -296,62 +297,28 @@ app.post('/api/suno/callback', async (req, res) => {
 
 /* ================== STYLE PRESERVE helper ================= */
 function preserveClientGenres(styles, style_en, vocalTag){
-  // --- STYLE: pontos megőrzés + okos kiegészítés ---
-  const EXACT_GENRES = new Set([
-    'minimal techno','house','pop','rock','techno','trance','drum and bass','dnb','hip hop','hip-hop',
+  const protectedGenres = [
+    'minimal techno','pop','rock','house','techno','trance','drum and bass','dnb','hip hop','hip-hop',
     'r&b','rnb','soul','funk','jazz','blues','edm','electronic','ambient','lo-fi','lofi','metal','punk',
     'indie','folk','country','reggaeton','reggae','synthwave','vaporwave','trap','drill','hardstyle',
     'progressive house','deep house','electro house','future bass','dubstep','garage','uk garage','breakbeat','phonk'
-  ]);
+  ];
+  let out = (style_en || '').toLowerCase();
+  const src = (styles || '').toLowerCase();
 
-  // HU -> EN normalizálás (csak amire biztosan szükség van; nem általánosítunk "electronic"-ra)
-  const HU_TO_EN = new Map([
-    ['minimál technó','minimal techno'],
-    ['minimal technó','minimal techno'],
-    ['minimal techno','minimal techno'],
-    ['techno','techno'],
-    ['háusz','house'],
-    ['house','house'],
-    ['pop','pop'],
-    ['rok','rock'],
-    ['rock','rock']
-  ]);
-
-  function normalizeClientStyles(raw) {
-    const out = [];
-    const seen = new Set();
-    const items = (raw||'').split(/[,\|\/]+/).map(s => s.trim()).filter(Boolean);
-    for (let it of items){
-      let low = it.toLowerCase();
-      if (HU_TO_EN.has(low)) low = HU_TO_EN.get(low);
-      if (EXACT_GENRES.has(low) && !seen.has(low)) {
-        seen.add(low); out.push(low);
-      } else if (HU_TO_EN.has(low) && !seen.has(HU_TO_EN.get(low))) {
-        const norm = HU_TO_EN.get(low);
-        seen.add(norm); out.push(norm);
-      }
+  const toKeep = [];
+  for (const g of protectedGenres){
+    if (src.includes(g) && !out.includes(g)){
+      toKeep.push(g);
     }
-    return out;
   }
-
-  function buildFinal(clientStylesRaw, vocal, gptStyleEn){
-    const primary = normalizeClientStyles(clientStylesRaw);
-    const vTag = (vocal==='male') ? 'male vocals' : (vocal==='female') ? 'female vocals' : '';
-    const final = [...primary];
-    const extras = (gptStyleEn||'').toLowerCase().split(/[,\|\/]+/)
-      .map(s => s.trim()).filter(Boolean)
-      .filter(tag => !EXACT_GENRES.has(tag))
-      .filter(tag => tag!=='male vocals' && tag!=='female vocals');
-    for (const x of extras){
-      if (!final.includes(x) && final.length - primary.length < 2){
-        final.push(x);
-      }
-    }
-    if (vTag && !final.includes(vTag)) final.push(vTag);
-    return final.join(', ');
+  if (toKeep.length){
+    out = (out ? out + ', ' : '') + toKeep.join(', ');
   }
-
-  return buildFinal(styles, '', style_en || (styles||''));
+  if (vocalTag && !out.includes(vocalTag)){
+    out = (out ? out + ', ' : '') + vocalTag;
+  }
+  return out.replace(/\s+/g,' ').trim();
 }
 
 /* ================== SUNO START helper (retry) ============= */
@@ -390,8 +357,9 @@ app.post('/api/generate_song', async (req, res) => {
 
     if (!OPENAI_API_KEY) return res.status(500).json({ ok:false, message:'OPENAI_API_KEY hiányzik' });
     if (!SUNO_API_KEY)   return res.status(500).json({ ok:false, message:'SUNO_API_KEY hiányzik' });
+    if (!PUBLIC_URL)     console.warn('[WARN] PUBLIC_URL nincs beállítva – callback működhet anélkül is, de jobb, ha van.');
 
-    // idempotency guard (dupla kattintás ellen, 20s ablak)
+    // --- idempotency guard (dupla kattintás ellen, 20s ablak)
     const key = makeKey({ title, styles, vocal, language, brief });
     const now = Date.now();
     const last = activeStarts.get(key) || 0;
@@ -401,7 +369,8 @@ app.post('/api/generate_song', async (req, res) => {
     activeStarts.set(key, now);
     setTimeout(()=> activeStarts.delete(key), 60000);
 
-    // 1) STYLE-FOCUSED JSON PASS
+    // ==== OpenAI – JSON (lyrics + style_en) STRICT 4V+2C + RHYME + UNIQUE + NUMBERS + STYLE-FIT ====
+    // 1) STYLE-FOCUSED JSON PASS (lyrics_draft + style_en)
     const sys1 =
       "You write singable song lyrics and produce an ENGLISH style descriptor for music generation. " +
       "Return STRICT JSON only. The lyrics must be natural and coherent in the requested language. " +
@@ -452,45 +421,11 @@ app.post('/api/generate_song', async (req, res) => {
     let lyricsDraft = (payload.lyrics_draft || payload.lyrics || "").trim();
     let style_en = (payload.style_en || "").trim();
 
+    // Vokál-tag
     const vocalTag = (vocal === "male") ? "male vocals" : (vocal === "female") ? "female vocals" : "";
 
     // STYLE PRESERVE
-    style_en = (function(styles, style_en, vocalTag){
-      const EXACT_GENRES = new Set([
-        'minimal techno','house','pop','rock','techno','trance','drum and bass','dnb','hip hop','hip-hop',
-        'r&b','rnb','soul','funk','jazz','blues','edm','electronic','ambient','lo-fi','lofi','metal','punk',
-        'indie','folk','country','reggaeton','reggae','synthwave','vaporwave','trap','drill','hardstyle',
-        'progressive house','deep house','electro house','future bass','dubstep','garage','uk garage','breakbeat','phonk'
-      ]);
-      const HU_TO_EN = new Map([
-        ['minimál technó','minimal techno'],
-        ['minimal technó','minimal techno'],
-        ['minimal techno','minimal techno'],
-        ['techno','techno'],
-        ['háusz','house'],
-        ['house','house'],
-        ['pop','pop'],
-        ['rok','rock'],
-        ['rock','rock']
-      ]);
-      const items = (styles||'').split(/[,\|\/]+/).map(s => s.trim()).filter(Boolean);
-      const primary = [];
-      const seen = new Set();
-      for (let it of items){
-        let low = it.toLowerCase();
-        if (HU_TO_EN.has(low)) low = HU_TO_EN.get(low);
-        if (EXACT_GENRES.has(low) && !seen.has(low)){ seen.add(low); primary.push(low); }
-      }
-      const final = [...primary];
-      const extras = (style_en||'').toLowerCase().split(/[,\|\/]+/).map(s=>s.trim()).filter(Boolean)
-        .filter(tag => !EXACT_GENRES.has(tag))
-        .filter(tag => tag!=='male vocals' && tag!=='female vocals');
-      for (const x of extras){
-        if (!final.includes(x) && final.length - primary.length < 2) final.push(x);
-      }
-      if (vocalTag && !final.includes(vocalTag)) final.push(vocalTag);
-      return final.join(', ');
-    })(styles, style_en, vocalTag);
+    style_en = preserveClientGenres(styles, style_en, vocalTag);
 
     // 2) REFINE PASS
     const sys2 =
@@ -564,7 +499,7 @@ app.post('/api/generate_song', async (req, res) => {
 
     // 3) UNIQUENESS FIX (V1 vs V4)
     function getSection(text, name){
-      const rx = new RegExp(`(^|\n)\s*${name}\s*\n([\s\S]*?)(?=\n\s*(Verse 1|Verse 2|Verse 3|Verse 4|Chorus)\s*\n|$)`, 'i');
+      const rx = new RegExp(`(^|\\n)\\s*${name}\\s*\\n([\\s\\S]*?)(?=\\n\\s*(Verse 1|Verse 2|Verse 3|Verse 4|Chorus)\\s*\\n|$)`, 'i');
       const m = text.match(rx);
       return m ? (m[2] || '').trim() : '';
     }
@@ -626,6 +561,7 @@ app.post('/api/generate_song', async (req, res) => {
     }
 
     // ==== Suno V1 – START
+    console.log('[GEN] Suno V1 start', { base: SUNO_BASE_URL, title, instrumental:(vocal==='instrumental') });
     const startRes = await sunoStartV1(`${SUNO_BASE_URL}/api/v1/generate`, {
       'Authorization': `Bearer ${SUNO_API_KEY}`,
       'Content-Type': 'application/json'
@@ -640,6 +576,7 @@ app.post('/api/generate_song', async (req, res) => {
     });
 
     if (!startRes.ok) {
+      // fallback: demo linkek, ha a szolgáltatás 503/502
       if (startRes.status === 503 || startRes.status === 502) {
         return res.json({
           ok:true,
