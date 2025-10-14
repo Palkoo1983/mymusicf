@@ -308,11 +308,13 @@ async function sunoStartWithRetry(url, headers, body){
 }
 /* ===================================================================== */
 
-// === EnZenem: GPT→Suno generate_song API ===============================
+// === EnZenem: GPT→Suno generate_song API (retry + 503 mock) ===========
 app.post('/api/generate_song', async (req, res) => {
   try {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
-    if (!rateLimit('gen:'+ip, 45000, 5)) return res.status(429).json({ok:false, message:'Túl sok kérés. Próbáld később.'});
+    if (!rateLimit('gen:'+ip, 45000, 5)) {
+      return res.status(429).json({ ok:false, message:'Túl sok kérés. Próbáld később.' });
+    }
 
     const { title='', styles='', vocal='instrumental', language='hu', brief='' } = req.body || {};
 
@@ -360,24 +362,23 @@ app.post('/api/generate_song', async (req, res) => {
       style_of_music: styleForSuno,
       lyrics
     });
-if (!startRes.ok){
-  return res.status(502).json({ ok:false, message:'Suno start error', detail:startRes.text, status:startRes.status });
-}
-    if (!startRes.ok){
-  // TEMP: ha a Suno 503-at dob, adjunk vissza 2 teszt-linket (mock),
-  // hogy lásd: a GPT→front→e-mail flow működik.
-  if (startRes.status === 503){
-    return res.json({
-      lyrics,
-      tracks: [
-        { title, audio_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-        { title, audio_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' }
-      ]
-    });
-  }
-  return res.status(502).json({ ok:false, message:'Suno start error', detail:startRes.text, status:startRes.status });
-}
 
+    // ha nem oké a start
+    if (!startRes.ok) {
+      // TEMP: 503 esetén mock linkek, hogy a teljes flow-t tesztelni tudd
+      if (startRes.status === 503) {
+        return res.json({
+          lyrics,
+          tracks: [
+            { title, audio_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+            { title, audio_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' }
+          ]
+        });
+      }
+      return res.status(502).json({ ok:false, message:'Suno start error', detail:startRes.text, status:startRes.status });
+    }
+
+    // 2/b folytatás – ha a start sikerült
     const sj = startRes.json;
     let jobId = sj?.job_id || sj?.id || sj?.jobId;
     let tracks = Array.isArray(sj?.tracks) ? sj.tracks : [];
@@ -413,6 +414,7 @@ if (!startRes.ok){
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
   }
 });
+
 // ======================================================================
 
 // DIAG: környezet ping
