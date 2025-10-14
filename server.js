@@ -582,28 +582,93 @@ Preserve all mandatory keywords, keep numbers in words, and do not add English u
       }
     }
 
-    // ---- Proposal/Name chorus enforce (ha 1 név) ----
-    if (isProposal && names.length === 1) {
-      const person = names[0];
-      const sysCh = `Rewrite ONLY the Chorus of the following lyrics to include a direct poetic question
-addressing "${person}" by name, using Hungarian quotes („ … ”) and a question mark.
-Keep Chorus 2–4 short, memorable lines; keep the rest of the lyrics unchanged.`;
-      const chFix = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
-        body: JSON.stringify({
-          model: OPENAI_MODEL,
-          messages: [{role:'system', content: sysCh},{role:'user', content: lyrics}],
-          temperature: 0.5,
-          max_tokens: 400
-        })
-      });
-      if (chFix.ok) {
-        const jC = await chFix.json();
-        const out = (jC?.choices?.[0]?.message?.content || '').trim();
-        if (out) lyrics = out;
+// ---- Proposal/Name chorus enforce (ha 1 név) – ROBUSZTUS MERGE ----
+if (isProposal && names.length === 1) {
+  const person = names[0];
+
+  // segédfüggvények a szekció kezeléshez
+  function extractSection(text, name){
+    const rx = new RegExp(`(^|\\n)\\s*${name}\\s*\\n([\\s\\S]*?)(?=\\n\\s*(Verse 1|Verse 2|Verse 3|Verse 4|Chorus)\\s*\\n|$)`, 'i');
+    const m = text.match(rx);
+    return m ? (m[2] || '').trim() : '';
+  }
+  function replaceAllChorus(full, chorusBody){
+    // minden Chorus szekció törzsének cseréje ugyanarra a tartalomra
+    const rxG = new RegExp(`(^|\\n)(\\s*Chorus\\s*\\n)([\\s\\S]*?)(?=\\n\\s*(Verse 1|Verse 2|Verse 3|Verse 4|Chorus)\\s*\\n|$)`, 'gi');
+    return full.replace(rxG, (_m, p1, heading) => `${p1}${heading}${chorusBody}\n`);
+  }
+
+  const sysCh =
+    `Rewrite ONLY the Chorus of the following lyrics to include a direct poetic question ` +
+    `addressing "${person}" by name, using Hungarian quotes („ … ”) and a question mark. ` +
+    `Keep Chorus 2–4 short, memorable lines; keep the rest of the lyrics unchanged. ` +
+    `Return FULL lyrics with ALL original sections if you can; otherwise return the Chorus section only.`;
+
+  const chFix = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      messages: [{role:'system', content: sysCh},{role:'user', content: lyrics}],
+      temperature: 0.5,
+      max_tokens: 500
+    })
+  });
+
+  if (chFix.ok) {
+    const jC = await chFix.json();
+    const out = (jC?.choices?.[0]?.message?.content || '').trim();
+
+    if (out) {
+      const hasFullStructure =
+        /Verse 1/i.test(out) &&
+        /Verse 2/i.test(out) &&
+        /Chorus/i.test(out) &&
+        /Verse 3/i.test(out) &&
+        /Verse 4/i.test(out);
+
+      if (hasFullStructure) {
+        // a modell teljes dalt adott – elfogadjuk
+        lyrics = out;
+      } else {
+        // valószínűleg csak Chorus érkezett → kivágjuk belőle és visszaillesztjük mindkét helyre
+        let newChorusBody = '';
+        if (/Chorus/i.test(out)) {
+          newChorusBody = extractSection(out, 'Chorus');
+        }
+        if (!newChorusBody) {
+          // se heading, se szerkezet – kezeljük úgy, mintha maga a törzs jött volna
+          newChorusBody = out.replace(/^Chorus\s*:?/i, '').trim();
+        }
+        if (newChorusBody) {
+          lyrics = replaceAllChorus(lyrics, newChorusBody);
+        }
       }
     }
+  }
+
+  // Biztonsági szerkezet-ellenőrzés: ha bármi hiányzik, formázzuk újra a vázat
+  const needed = ["Verse 1","Verse 2","Chorus","Verse 3","Verse 4","Chorus"];
+  const hasAll = needed.every(h => lyrics.includes(h));
+  if (!hasAll) {
+    const sysFmt = "Reformat to EXACTLY this structure: Verse 1 (4) / Verse 2 (4) / Chorus (2–4) / Verse 3 (4) / Verse 4 (4) / Chorus (2–4). Keep the content and Hungarian language.";
+    const fmt = await fetch('https://api.openai.com/v1/chat/completions', {
+      method:'POST',
+      headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        messages:[{role:'system', content: sysFmt},{role:'user', content: lyrics}],
+        temperature: 0.0,
+        max_tokens: 800
+      })
+    });
+    if (fmt.ok) {
+      const jf = await fmt.json();
+      lyrics = (jf?.choices?.[0]?.message?.content || lyrics).trim();
+    }
+  }
+}
+
 
     // ---- Ensure Verse 4 is not identical to Verse 1 or Chorus (paraphrase if needed) ----
     function sectionOf(text, name){
