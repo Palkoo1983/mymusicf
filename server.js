@@ -341,9 +341,7 @@ async function sunoStartV1(url, headers, body){
 }
 
 // === PATCH BLOCK START ===
-// Replace the existing app.post('/api/generate_song', ...) with this whole block:
-
-/* ============ GPT → Suno generate (style-fit, rhythm+tone, pronunciation-safety, keyword-enforce, dedupe, sanitize) ============ */
+/* ============ GPT → Suno generate (style-fit, rhythm+tone, pronunciation-safety, keyword-enforce, names+proposal, coherence, dedupe, sanitize) ============ */
 app.post('/api/generate_song', async (req, res) => {
   try {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
@@ -362,12 +360,24 @@ app.post('/api/generate_song', async (req, res) => {
       if (m && m[1]) {
         m[1].split(/[;,]/).map(s => s.trim()).filter(Boolean).forEach(k => arr.push(k));
       }
-      // Heurisztikus entitások
+      // Heurisztikák
       if (/évzáró/i.test(b)) arr.push('évzáró');
       if (/hackathon/i.test(b)) arr.push('hackathon');
       if (/\b2025\b/.test(b) || /kétezer\s+huszonöt/i.test(b)) arr.push('kétezer huszonöt');
       return Array.from(new Set(arr));
     })();
+
+    // ---- személynevek és eljegyzés detektálása ----
+    const names = (() => {
+      const b = (brief || '');
+      const raw = b.match(/\b[A-ZÁÉÍÓÖŐÚÜŰ][a-záéíóöőúüű]+\b/g) || [];
+      const stop = new Set(['Szerelmem','Verse','Chorus','Margitszigeten','Margitsziget','Erdély','Tenerife','Madeira','Horvátország','Magyarország','Erdélyi','Horvát','Magyar']);
+      return raw.filter(w => !stop.has(w));
+    })();
+    if (names.length) {
+      for (const nm of names) if (!mandatoryKeywords.includes(nm)) mandatoryKeywords.push(nm);
+    }
+    const isProposal = /eljegyz|megkérés|kér(?:i|em).*kezét|kér.*hozzám|kérdés.*igen/i.test(brief || '');
 
     // ---- vocal normalization (HU/EN + extended) ----
     const v = (vocal || '').toString().trim().toLowerCase();
@@ -429,7 +439,8 @@ app.post('/api/generate_song', async (req, res) => {
 
     // ---- awkward phrase list (magyarosítás) ----
     const awkwardHU = [
-      'örök éltet', 'közös dal', 'minden út nyitva áll', 'szívünk mindig szabad'
+      'örök éltet', 'közös dal', 'minden út nyitva áll', 'szívünk mindig szabad',
+      'él a szó','örök zene','út nyitva áll','szívünkben él a nagy remény'
     ];
     const awkwardNote = `Avoid unidiomatic or cliched Hungarian phrases such as: ${awkwardHU.join(', ')}. Prefer natural alternatives like: "örökké szeretlek", "közös történetünk", "nyitva a világ", "szívünk szabadon dobban".`;
 
@@ -441,6 +452,9 @@ app.post('/api/generate_song', async (req, res) => {
       `Tone rule: ${toneHint}`,
       `Rhyme rule: ${rhymeHint}`,
       `Chorus rule: ${chorusHint}`,
+      "Coherence rule: build a clear narrative arc (meeting → shared years → travels → proposal). In each verse, lines must connect by a shared image/topic (no filler lines).",
+      `Personal names found: ${names.join(', ') || '(none)'} — personal names MUST appear verbatim at least once; if exactly one name is present, include it in the Chorus.`,
+      (isProposal ? `Proposal rule: Chorus MUST contain a direct poetic question using Hungarian quotes and a question mark (e.g., „${names[0] || 'Kedvesem'} , leszel-e a párom?”).` : ' '),
       pronunciationSafety,
       awkwardNote,
       `MANDATORY: Naturally include ALL of these keywords verbatim at least once if present: ${mandatoryKeywords.length ? mandatoryKeywords.join(', ') : '(no mandatory keywords)'}`,
@@ -470,7 +484,7 @@ app.post('/api/generate_song', async (req, res) => {
         messages:[{role:'system', content: sys1},{role:'user', content: usr1}],
         temperature:0.7,
         response_format:{ type:'json_object' },
-        max_tokens: 750
+        max_tokens: 800
       })
     });
     if(!oi1.ok){
@@ -517,6 +531,9 @@ app.post('/api/generate_song', async (req, res) => {
       `Enforce tone rule: ${toneHint}`,
       `Apply: ${rhymeHint}`,
       `Apply: ${chorusHint}`,
+      "Ensure narrative coherence: connect images across lines in each verse (no generic filler).",
+      `Names: ${names.join(', ') || '(none)'} MUST remain; if one name exists, keep it in the Chorus.`,
+      (isProposal ? 'Chorus must ask the partner directly by name with Hungarian quotes and a question mark.' : ' '),
       pronunciationSafety,
       awkwardNote,
       "Prefer gentle end-rhymes but NEVER force nonsense.",
@@ -534,7 +551,7 @@ app.post('/api/generate_song', async (req, res) => {
         model: OPENAI_MODEL,
         messages:[{role:'system', content: sys2},{role:'user', content: usr2}],
         temperature:0.6,
-        max_tokens: 800
+        max_tokens: 900
       })
     });
     let lyrics = lyricsDraft;
@@ -562,6 +579,29 @@ Preserve all mandatory keywords, keep numbers in words, and do not add English u
       if (pol.ok) {
         const jp = await pol.json();
         lyrics = (jp?.choices?.[0]?.message?.content || lyrics).trim();
+      }
+    }
+
+    // ---- Proposal/Name chorus enforce (ha 1 név) ----
+    if (isProposal && names.length === 1) {
+      const person = names[0];
+      const sysCh = `Rewrite ONLY the Chorus of the following lyrics to include a direct poetic question
+addressing "${person}" by name, using Hungarian quotes („ … ”) and a question mark.
+Keep Chorus 2–4 short, memorable lines; keep the rest of the lyrics unchanged.`;
+      const chFix = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          messages: [{role:'system', content: sysCh},{role:'user', content: lyrics}],
+          temperature: 0.5,
+          max_tokens: 400
+        })
+      });
+      if (chFix.ok) {
+        const jC = await chFix.json();
+        const out = (jC?.choices?.[0]?.message?.content || '').trim();
+        if (out) lyrics = out;
       }
     }
 
