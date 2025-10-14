@@ -287,6 +287,13 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
 });
 
 app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
+console.log('Suno request:', {
+  url: `${SUNO_BASE_URL}/api/generate`,
+  headers: { 'Authorization': `Bearer ${SUNO_API_KEY}` },
+  body: {
+    model: 'custmod-v5', custom: true, title, style_of_music: styleForSuno, lyrics
+  }
+});
 
 /* ======================== SUNO START RETRY HELPER ===================== */
 async function sunoStartWithRetry(url, headers, body){
