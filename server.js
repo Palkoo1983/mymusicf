@@ -362,8 +362,20 @@ app.post('/api/generate_song', async (req, res) => {
     });
 
     if (!startRes.ok){
-      return res.status(502).json({ ok:false, message:'Suno start error', detail:startRes.text, status:startRes.status });
-    }
+  // TEMP: ha a Suno 503-at dob, adjunk vissza 2 teszt-linket (mock),
+  // hogy lásd: a GPT→front→e-mail flow működik.
+  if (startRes.status === 503){
+    return res.json({
+      lyrics,
+      tracks: [
+        { title, audio_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+        { title, audio_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' }
+      ]
+    });
+  }
+  return res.status(502).json({ ok:false, message:'Suno start error', detail:startRes.text, status:startRes.status });
+}
+
     const sj = startRes.json;
     let jobId = sj?.job_id || sj?.id || sj?.jobId;
     let tracks = Array.isArray(sj?.tracks) ? sj.tracks : [];
