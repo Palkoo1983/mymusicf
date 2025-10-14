@@ -360,7 +360,9 @@ app.post('/api/generate_song', async (req, res) => {
       style_of_music: styleForSuno,
       lyrics
     });
-
+if (!startRes.ok){
+  return res.status(502).json({ ok:false, message:'Suno start error', detail:startRes.text, status:startRes.status });
+}
     if (!startRes.ok){
   // TEMP: ha a Suno 503-at dob, adjunk vissza 2 teszt-linket (mock),
   // hogy lásd: a GPT→front→e-mail flow működik.
