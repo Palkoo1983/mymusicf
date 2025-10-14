@@ -413,17 +413,17 @@ If vocal is male/female/unisex/both/instrumental, append that as 'male vocals'/'
 All numerals must be fully spelled out in words (no digits).`;
 
     const usr1 = [
-      \`Language for lyrics: \${language}\`,
-      \`Title: \${title}\`,
-      \`Client styles (primary, do NOT override): \${styles}\`,
-      \`Vocal: \${vocal}\`,
-      \`Brief (secondary only): \${brief}\`
+      `Language for lyrics: ${language}`,
+      `Title: ${title}`,
+      `Client styles (primary, do NOT override): ${styles}`,
+      `Vocal: ${vocal}`,
+      `Brief (secondary only): ${brief}`
     ].join('
 ');
 
     const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
       method:'POST',
-      headers:{ 'Authorization': \`Bearer \${OPENAI_API_KEY}\`, 'Content-Type':'application/json' },
+      headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages:[{role:'system', content: sys1},{role:'user', content: usr1}],
@@ -486,16 +486,16 @@ Prefer gentle end-rhymes but NEVER force nonsense.
 All numerals must be words (no digits).
 Output ONLY the final lyrics.`;
 
-    const usr2 = \`Language: \${language}
-Title: \${title}
-Styles: \${styles}
-Vocal: \${vocal}
+    const usr2 = `Language: ${language}
+Title: ${title}
+Styles: ${styles}
+Vocal: ${vocal}
 
-\${lyricsDraft}\`;
+${lyricsDraft}`;
 
     let oi2 = await fetch('https://api.openai.com/v1/chat/completions', {
       method:'POST',
-      headers:{ 'Authorization': \`Bearer \${OPENAI_API_KEY}\`, 'Content-Type':'application/json' },
+      headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages:[{role:'system', content: sys2},{role:'user', content: usr2}],
@@ -510,8 +510,8 @@ Vocal: \${vocal}
     }
 
     // ---- Suno call ----
-    const startRes = await sunoStartV1(\`\${SUNO_BASE_URL}/api/v1/generate\`, {
-      'Authorization': \`Bearer \${SUNO_API_KEY}\`,
+    const startRes = await sunoStartV1(`${SUNO_BASE_URL}/api/v1/generate`, {
+      'Authorization': `Bearer ${SUNO_API_KEY}`,
       'Content-Type': 'application/json'
     }, {
       customMode: true,
@@ -520,7 +520,7 @@ Vocal: \${vocal}
       title,
       style: styleFinal,
       prompt: lyrics,
-      callBackUrl: PUBLIC_URL ? \`\${PUBLIC_URL}/api/suno/callback\` : undefined
+      callBackUrl: PUBLIC_URL ? `${PUBLIC_URL}/api/suno/callback` : undefined
     });
 
     if (!startRes.ok) {
@@ -540,9 +540,9 @@ Vocal: \${vocal}
     while (tracks.length < 2 && attempts < maxAttempts) {
       attempts++;
       await new Promise(r => setTimeout(r, intervalMs));
-      const pr = await fetch(\`\${SUNO_BASE_URL}/api/v1/generate/record-info?taskId=\${encodeURIComponent(taskId)}\`, {
+      const pr = await fetch(`${SUNO_BASE_URL}/api/v1/generate/record-info?taskId=${encodeURIComponent(taskId)}`, {
         method:'GET',
-        headers:{ 'Authorization': \`Bearer \${SUNO_API_KEY}\` }
+        headers:{ 'Authorization': `Bearer ${SUNO_API_KEY}` }
       });
       if (!pr.ok) continue;
       const st = await pr.json();
