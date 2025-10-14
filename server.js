@@ -287,3 +287,98 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
 });
 
 app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
+
+
+// === EnZenem: GPT→Suno generate_song API ===============================
+app.post('/api/generate_song', async (req, res) => {
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
+    if (!rateLimit('gen:'+ip, 45000, 5)) return res.status(429).json({ok:false, message:'Túl sok kérés. Próbáld később.'});
+
+    const { title='', styles='', vocal='instrumental', language='hu', brief='' } = req.body || {};
+
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+    const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
+    const SUNO_API_KEY   = process.env.SUNO_API_KEY;
+    const SUNO_BASE_URL  = process.env.SUNO_BASE_URL || 'https://api.suno.ai';
+
+    if (!OPENAI_API_KEY) return res.status(500).json({ ok:false, message:'OPENAI_API_KEY hiányzik' });
+    if (!SUNO_API_KEY)   return res.status(500).json({ ok:false, message:'SUNO_API_KEY hiányzik' });
+
+    const vocalTag = vocal === 'male' ? 'male vocals' : (vocal === 'female' ? 'female vocals' : 'instrumental');
+    const styleForSuno = vocal === 'instrumental' ? styles : `${styles}, ${vocalTag}`;
+
+    const system = "You are a concise hit-song lyricist. Always return ONLY the final lyrics, no commentary. Structure: Verse 1 (4 lines), Chorus (4 lines), Verse 2 (4), Chorus (same/varied 4), Verse 3 (4). Rhyme optional, keep lines singable and 5–9 words.";
+    const userPrompt = language === 'hu'
+      ? `Nyelv: magyar.\nCím: ${title}\nHangulat/stílus: ${styles}\nLeírás: ${brief}\n\nÍrj 3 versszakot és 2 refrént a fenti szerkezetben. Adj egyszerű, énekelhető sorokat, központozás mértékkel.`
+      : `Language: English.\nTitle: ${title}\nMood/style: ${styles}\nBrief: ${brief}\n\nWrite 3 verses and 2 choruses (structure above). Keep it catchy and singable.`;
+
+    // 1) OpenAI – lyrics
+    const oi = await fetch('https://api.openai.com/v1/chat/completions', {
+      method:'POST',
+      headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        messages:[{role:'system', content: system},{role:'user', content:userPrompt}],
+        temperature:0.8
+      })
+    });
+    if(!oi.ok){
+      const t = await oi.text();
+      return res.status(502).json({ ok:false, message:'OpenAI error', detail:t });
+    }
+    const oiJson = await oi.json();
+    const lyrics = (oiJson?.choices?.[0]?.message?.content || '').trim();
+
+    // 2) Suno – start job (custom/v5)
+    const start = await fetch(`${SUNO_BASE_URL}/api/generate`, {
+      method:'POST',
+      headers:{ 'Authorization': `Bearer ${SUNO_API_KEY}`, 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        model: 'custmod-v5',
+        custom: true,
+        title,
+        style_of_music: styleForSuno,
+        lyrics
+      })
+    });
+    if(!start.ok){
+      const t = await start.text();
+      return res.status(502).json({ ok:false, message:'Suno start error', detail:t });
+    }
+    const sj = await start.json();
+    let jobId = sj.job_id || sj.id || sj.jobId;
+    let tracks = Array.isArray(sj.tracks) ? sj.tracks : [];
+
+    // 3) Poll if needed
+    const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 120);
+    const intervalMs = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 1.5) * 1000);
+    let attempts = 0;
+
+    while (tracks.length < 2 && jobId && attempts < maxAttempts){
+      attempts++;
+      await new Promise(r => setTimeout(r, intervalMs));
+      const pr = await fetch(`${SUNO_BASE_URL}/api/generate/${jobId}`, {
+        headers:{ 'Authorization': `Bearer ${SUNO_API_KEY}` }
+      });
+      if(!pr.ok) continue;
+      const st = await pr.json();
+      const items = st.tracks || st.result || st.items || [];
+      tracks = [];
+      for (const it of items){
+        const audio = it.audio_url || it.audioUrl || it.url;
+        const image = it.image_url || it.imageUrl;
+        const ttitle = it.title || title;
+        if(audio) tracks.push({ title: ttitle, audio_url: audio, image_url: image });
+      }
+    }
+
+    if (!tracks.length) return res.status(502).json({ ok:false, message:'Suno did not return tracks in time.' });
+
+    return res.json({ lyrics, tracks });
+  } catch (e) {
+    console.error('[generate_song]', e);
+    return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
+  }
+});
+// ======================================================================

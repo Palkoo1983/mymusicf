@@ -12,5 +12,8 @@
     "express": "^4.19.2",
     "nodemailer": "^6.9.13",
     "stripe": "^16.6.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

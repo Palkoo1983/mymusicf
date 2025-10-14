@@ -778,7 +778,13 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     </div>
   </main>
 
-  <footer>
+  
+  <!-- EnZenem – GPT→Suno eredmény-blokk -->
+  <div id="song-result" class="song-result" hidden style="margin:16px 0;">
+    <p>Elkészült! Itt a két dal:</p>
+    <ol id="song-links"></ol>
+  </div>
+<footer>
     <div class="footer-links">
       <a href="aszf.html" target="_blank" class="gold-text">ÁSZF</a>
       <a href="adatkezeles.html" target="_blank" class="gold-text">Adatkezelés</a>
@@ -1035,5 +1041,5 @@ initOrderChipPatch();
 })();
 </script>
 
-</body>
-</html>
+  <script src="/js/enzenem-generate.js" defer></script>
+</body></html>
