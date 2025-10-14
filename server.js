@@ -409,3 +409,29 @@ app.get('/api/generate_song/ping', (req, res) => {
     has_SUNO_API_KEY: !!process.env.SUNO_API_KEY, SUNO_BASE_URL: process.env.SUNO_BASE_URL||null
   }});
 });
+// DIAG: Suno elérés tesztje
+app.get('/api/suno/ping', async (req, res) => {
+  try{
+    const BASE = process.env.SUNO_BASE_URL || 'https://api.suno.ai';
+    const H = { 'Authorization': `Bearer ${process.env.SUNO_API_KEY||''}`, 'Content-Type':'application/json' };
+
+    const r1 = await fetch(`${BASE}/api/generate`, { method:'POST', headers:H, body: JSON.stringify({}) });
+    const t1 = await r1.text();
+
+    const r2 = await fetch(`${BASE}/`, { method:'GET', headers:{Accept:'text/html'} });
+    const t2 = await r2.text();
+
+    const r3 = await fetch(`${BASE}/playground`, { method:'GET', headers:{Accept:'text/html'} });
+    const t3 = await r3.text();
+
+    return res.json({
+      ok:true,
+      base: BASE,
+      post_generate: { status:r1.status, len:t1.length, head:t1.slice(0,160) },
+      get_root:       { status:r2.status, len:t2.length, head:t2.slice(0,160) },
+      get_playground: { status:r3.status, len:t3.length, head:t3.slice(0,160) }
+    });
+  }catch(e){
+    return res.status(500).json({ ok:false, error: (e && e.message) || e });
+  }
+});
