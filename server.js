@@ -1,15 +1,18 @@
-const express = require('express');
-const cors = require('cors');
-const nodemailer = require('nodemailer');
-require('dotenv').config();
-const crypto = require('crypto');
-let stripe = null;
-try { stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || ''); } catch(e) { stripe = null; }
+// ESM server.js – kompatibilis Node 18+ / Render környezetben
+
+import express from 'express';
+import cors from 'cors';
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+import crypto from 'crypto';
+import Stripe from 'stripe';
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// Env aliasok + Resend támogatás + stratégiák
+// ============== ENV / Mail beállítások ===================
 const ENV = {
   SMTP_HOST: process.env.SMTP_HOST,
   SMTP_PORT: process.env.SMTP_PORT,
@@ -22,9 +25,14 @@ const ENV = {
   RESEND_ONLY: (process.env.RESEND_ONLY || '').toString().toLowerCase() === 'true'
 };
 
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+
+// ================== Middleware / statikus =================
 app.use(cors());
 app.use(express.json());
-// --- Simple rate limit (per IP) ---
+app.use(express.static('public'));
+
+// ----------------- Egyszerű rate-limit --------------------
 const hitMap = new Map();
 function rateLimit(key, windowMs=10000, max=5){
   const now = Date.now();
@@ -36,14 +44,12 @@ function rateLimit(key, windowMs=10000, max=5){
   return true;
 }
 
-app.use(express.static('public'));
-
-// Health
+// =================== Healthcheck ==========================
 app.get('/healthz', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
-// ---------- Mail helpers ----------
+// =================== Mail helpers =========================
 function buildTransport() {
-  if (ENV.RESEND_ONLY) return null; // kifejezetten tiltsuk az SMTP-t
+  if (ENV.RESEND_ONLY) return null;
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = ENV;
   if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) return null;
   return nodemailer.createTransport({
@@ -51,7 +57,6 @@ function buildTransport() {
     port: Number(SMTP_PORT),
     secure: ENV.SMTP_SECURE || Number(SMTP_PORT) === 465,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
-    // rövid timeoutok, hogy ne lassítson
     connectionTimeout: 4000,
     greetingTimeout: 4000,
     socketTimeout: 5000,
@@ -74,7 +79,7 @@ async function sendViaResend({ to, subject, html, replyTo }) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      'Authorization': 'Bearer ' + ENV.RESEND_API_KEY,
+      'Authorization': `Bearer ${ENV.RESEND_API_KEY}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ from, to, subject, html, reply_to: replyTo || undefined })
@@ -88,17 +93,14 @@ async function sendViaResend({ to, subject, html, replyTo }) {
   return { id: json.id };
 }
 
-// Gyors stratégia: ha van RESEND_API_KEY, először Resend-et próbálunk, utána SMTP-t.
-// (a korábbi fordított sorrend lassított, ha az SMTP blokkolt)
+// Elsőnek Resend, ha nincs, SMTP; végül "simulated"
 async function sendMailFast(args) {
-  // 1) Resend first (ha van kulcs)
   try {
     const r = await sendViaResend(args);
     if (!r.skipped) return r;
   } catch (e) {
     console.warn('[MAIL:RESEND_FAIL]', e?.message || e);
   }
-  // 2) SMTP second (ha engedélyezett)
   try {
     const s = await sendViaSMTP(args);
     if (!s.skipped) return s;
@@ -109,25 +111,23 @@ async function sendMailFast(args) {
   return { simulated: true };
 }
 
-// "fire-and-forget": gyors válasz az API-nak, a küldés háttérben fut
 function queueEmails(tasks) {
   setImmediate(async () => {
     await Promise.allSettled(tasks.map(t => sendMailFast(t)));
   });
 }
 
-// Teszt végpont
+// =================== Teszt mail végpont ===================
 app.get('/api/test-mail', (req, res) => {
   const to = ENV.TO_EMAIL || ENV.SMTP_USER;
   queueEmails([{ to, subject: 'EnZenem – gyors teszt', html: '<p>Gyors tesztlevél.</p>' }]);
   res.json({ ok: true, message: 'Teszt e-mail ütemezve: ' + to });
 });
 
-// --------- API: Megrendelés (instant válasz, háttérküldés) ----------
+// =================== Megrendelés / Kapcsolat ===============
 app.post('/api/order', (req, res) => {
   const o = req.body || {};
   const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
-
   const orderHtml = `
     <h2>Új megrendelés</h2>
     <ul>
@@ -139,11 +139,7 @@ app.post('/api/order', (req, res) => {
     </ul>
     <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
   `;
-
-  // e-mailek háttérben
-  const jobs = [
-    { to: owner, subject: 'Új dal megrendelés', html: orderHtml, replyTo: o.email || undefined }
-  ];
+  const jobs = [{ to: owner, subject: 'Új dal megrendelés', html: orderHtml, replyTo: o.email || undefined }];
   if (o.email) {
     jobs.push({
       to: o.email,
@@ -153,12 +149,9 @@ Ha bármilyen kérdése merül fel, szívesen segítünk!</p><p>Üdv,<br/>EnZene
     });
   }
   queueEmails(jobs);
-
-  // azonnali válasz
   res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett. Hamarosan kapsz visszaigazolást e-mailben.' });
 });
 
-// --------- API: Kapcsolat (instant válasz, háttérküldés) ----------
 app.post('/api/contact', (req, res) => {
   const c = req.body || {};
   const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
@@ -170,57 +163,40 @@ app.post('/api/contact', (req, res) => {
     </ul>
     <p>${(c.message || '').replace(/\n/g, '<br/>')}</p>
   `;
-
-  const jobs = [
-    { to: owner, subject: 'EnZenem – Üzenet', html, replyTo: c.email || undefined }
-  ];
-  if (c.email) {
-    jobs.push({ to: c.email, subject: 'EnZenem – Üzenet fogadva', html: '<p>Köszönjük az üzenetet, hamarosan válaszolunk.</p>' });
-  }
+  const jobs = [{ to: owner, subject: 'EnZenem – Üzenet', html, replyTo: c.email || undefined }];
+  if (c.email) jobs.push({ to: c.email, subject: 'EnZenem – Üzenet fogadva', html: '<p>Köszönjük az üzenetet, hamarosan válaszolunk.</p>' });
   queueEmails(jobs);
-
   res.json({ ok: true, message: 'Üzeneted elküldve. Köszönjük a megkeresést!' });
 });
 
-
-// --- Stripe price defaults via ENV or fallback (HUF) ---
+// =================== Stripe (opcionális) ===================
 const PRICE = {
-  basic:  Number(process.env.PRICE_BASIC || 19900),   // Ft
-  premium:Number(process.env.PRICE_PREMIUM || 34900), // Ft
-  video:  Number(process.env.PRICE_VIDEO || 49900)    // Ft
+  basic:  Number(process.env.PRICE_BASIC || 19900),
+  premium:Number(process.env.PRICE_PREMIUM || 34900),
+  video:  Number(process.env.PRICE_VIDEO || 49900)
 };
 const CURRENCY = (process.env.CURRENCY || 'huf').toLowerCase();
 
-// --- Checkout: create Stripe session, carry order data in metadata ---
 app.post('/api/checkout', async (req, res) => {
   try{
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
     if(!rateLimit('checkout:'+ip, 60000, 10)) return res.status(429).json({ok:false, message:'Túl sok kérés. Próbáld később.'});
-
     const o = req.body || {};
     if(o._hp) return res.status(400).json({ ok:false, message:'Hiba.' });
-
-    if(!stripe || !process.env.STRIPE_SECRET_KEY){
-      return res.status(503).json({ ok:false, message:'Fizetés ideiglenesen nem elérhető.' });
-    }
+    if(!stripe){ return res.status(503).json({ ok:false, message:'Fizetés ideiglenesen nem elérhető.' }); }
     const pack = (o.package || 'basic').toLowerCase();
     const amount = PRICE[pack] || PRICE.basic;
     const lineItem = {
       price_data: {
         currency: CURRENCY,
-        unit_amount: Math.max(200, amount) * (CURRENCY==='huf' ? 1 : 1),
+        unit_amount: Math.max(200, amount),
         product_data: { name: `EnZenem – ${pack} csomag` }
       },
       quantity: 1
     };
     const metadata = {
-      email: o.email || '',
-      event_type: o.event_type || '',
-      style: o.style || '',
-      vocal: o.vocal || '',
-      language: o.language || '',
-      brief: (o.brief || '').slice(0, 1500),
-      package: pack
+      email: o.email || '', event_type: o.event_type || '', style: o.style || '',
+      vocal: o.vocal || '', language: o.language || '', brief: (o.brief || '').slice(0, 1500), package: pack
     };
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -237,7 +213,6 @@ app.post('/api/checkout', async (req, res) => {
   }
 });
 
-// --- Stripe webhook: payment success -> send emails with metadata ---
 app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   if(!stripe){ return res.status(400).end(); }
@@ -252,14 +227,12 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
     console.error('[WEBHOOK VERIFY FAIL]', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-
   try{
     if(event.type === 'checkout.session.completed'){
       const s = event.data.object;
       const md = s.metadata || {};
       const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
       const email = md.email || s.customer_details?.email;
-
       const orderHtml = `
         <h2>Fizetett megrendelés</h2>
         <ul>
@@ -286,30 +259,9 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
   }
 });
 
-app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
-// LOG: mit küldünk a Suno felé (kulcs nélkül)
-console.log('[GEN] Suno start payload', {
-  url: `${SUNO_BASE_URL}/api/generate`,
-  hasApiKey: !!SUNO_API_KEY,
-  body: { model:'custmod-v5', custom:true, title, style_of_music: styleForSuno, lyrics_len: (lyrics||'').length }
-});
-
-// 2) Suno – start job (custom/v5) RETRY-OS
-const startRes = await sunoStartWithRetry(`${SUNO_BASE_URL}/api/generate`, {
-  'Authorization': `Bearer ${SUNO_API_KEY}`,
-  'Content-Type': 'application/json'
-}, {
-  model: 'custmod-v5',
-  custom: true,
-  title,
-  style_of_music: styleForSuno,
-  lyrics
-});
-
-
-/* ======================== SUNO START RETRY HELPER ===================== */
+// ================== Suno helper (retry) ====================
 async function sunoStartWithRetry(url, headers, body){
-  for (let i=0; i<6; i++){ // max 6 próbálkozás, exponenciális várakozással
+  for (let i=0; i<6; i++){
     const r = await fetch(url, { method:'POST', headers, body: JSON.stringify(body) });
     const txt = await r.text();
     if (r.ok){
@@ -325,9 +277,8 @@ async function sunoStartWithRetry(url, headers, body){
   }
   return { ok:false, status:503, text:'start_unavailable_after_retries' };
 }
-/* ===================================================================== */
 
-// === EnZenem: GPT→Suno generate_song API (retry + 503 mock) ===========
+// ============ GPT → Suno generate (retry + 503 mock) ==============
 app.post('/api/generate_song', async (req, res) => {
   try {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
@@ -353,14 +304,15 @@ app.post('/api/generate_song', async (req, res) => {
       ? `Nyelv: magyar.\nCím: ${title}\nHangulat/stílus: ${styles}\nLeírás: ${brief}\n\nÍrj 3 versszakot és 2 refrént a fenti szerkezetben. Adj egyszerű, énekelhető sorokat, központozás mértékkel.`
       : `Language: English.\nTitle: ${title}\nMood/style: ${styles}\nBrief: ${brief}\n\nWrite 3 verses and 2 choruses (structure above). Keep it catchy and singable.`;
 
-    // 1) OpenAI – lyrics
+    // OpenAI – lyrics
     const oi = await fetch('https://api.openai.com/v1/chat/completions', {
       method:'POST',
       headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages:[{role:'system', content: system},{role:'user', content:userPrompt}],
-        temperature:0.8
+        temperature:0.8,
+        max_tokens: 350
       })
     });
     if(!oi.ok){
@@ -370,7 +322,14 @@ app.post('/api/generate_song', async (req, res) => {
     const oiJson = await oi.json();
     const lyrics = (oiJson?.choices?.[0]?.message?.content || '').trim();
 
-    // 2) Suno – start job (custom/v5) RETRY-OS
+    // LOG: mit küldünk a Suno felé (kulcs nélkül)
+    console.log('[GEN] Suno start payload', {
+      url: `${SUNO_BASE_URL}/api/generate`,
+      hasApiKey: !!SUNO_API_KEY,
+      body: { model:'custmod-v5', custom:true, title, style_of_music: styleForSuno, lyrics_len: (lyrics||'').length }
+    });
+
+    // Suno – start (retry)
     const startRes = await sunoStartWithRetry(`${SUNO_BASE_URL}/api/generate`, {
       'Authorization': `Bearer ${SUNO_API_KEY}`,
       'Content-Type': 'application/json'
@@ -382,10 +341,9 @@ app.post('/api/generate_song', async (req, res) => {
       lyrics
     });
 
-    // ha nem oké a start
     if (!startRes.ok) {
-      // TEMP: 503 esetén mock linkek, hogy a teljes flow-t tesztelni tudd
       if (startRes.status === 503) {
+        // TEMP mock, hogy a teljes flow-t látni tudd
         return res.json({
           lyrics,
           tracks: [
@@ -397,12 +355,10 @@ app.post('/api/generate_song', async (req, res) => {
       return res.status(502).json({ ok:false, message:'Suno start error', detail:startRes.text, status:startRes.status });
     }
 
-    // 2/b folytatás – ha a start sikerült
+    // Poll
     const sj = startRes.json;
     let jobId = sj?.job_id || sj?.id || sj?.jobId;
     let tracks = Array.isArray(sj?.tracks) ? sj.tracks : [];
-
-    // 3) Poll (ha kell)
     const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 120);
     const intervalMs = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 1.5) * 1000);
     let attempts = 0;
@@ -434,9 +390,7 @@ app.post('/api/generate_song', async (req, res) => {
   }
 });
 
-// ======================================================================
-
-// DIAG: környezet ping
+// ================== DIAG végpontok ========================
 app.get('/api/generate_song/ping', (req, res) => {
   res.json({ ok:true, diag:{
     node: process.version, fetch_defined: typeof fetch!=='undefined',
@@ -444,29 +398,18 @@ app.get('/api/generate_song/ping', (req, res) => {
     has_SUNO_API_KEY: !!process.env.SUNO_API_KEY, SUNO_BASE_URL: process.env.SUNO_BASE_URL||null
   }});
 });
-// DIAG: Suno elérés tesztje
+
 app.get('/api/suno/ping', async (req, res) => {
   try{
     const BASE = process.env.SUNO_BASE_URL || 'https://api.suno.ai';
     const H = { 'Authorization': `Bearer ${process.env.SUNO_API_KEY||''}`, 'Content-Type':'application/json' };
-
     const r1 = await fetch(`${BASE}/api/generate`, { method:'POST', headers:H, body: JSON.stringify({}) });
     const t1 = await r1.text();
-
-    const r2 = await fetch(`${BASE}/`, { method:'GET', headers:{Accept:'text/html'} });
-    const t2 = await r2.text();
-
-    const r3 = await fetch(`${BASE}/playground`, { method:'GET', headers:{Accept:'text/html'} });
-    const t3 = await r3.text();
-
-    return res.json({
-      ok:true,
-      base: BASE,
-      post_generate: { status:r1.status, len:t1.length, head:t1.slice(0,160) },
-      get_root:       { status:r2.status, len:t2.length, head:t2.slice(0,160) },
-      get_playground: { status:r3.status, len:t3.length, head:t3.slice(0,160) }
-    });
+    return res.json({ ok:true, base: BASE, post_generate: { status:r1.status, len:t1.length, head:t1.slice(0,160) } });
   }catch(e){
     return res.status(500).json({ ok:false, error: (e && e.message) || e });
   }
 });
+
+// ================== Start server ==========================
+app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
