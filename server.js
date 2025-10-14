@@ -328,28 +328,32 @@ app.post('/api/generate_song', async (req, res) => {
     if (!OPENAI_API_KEY) return res.status(500).json({ ok:false, message:'OPENAI_API_KEY hiányzik' });
     if (!SUNO_API_KEY)   return res.status(500).json({ ok:false, message:'SUNO_API_KEY hiányzik' });
 
-  // ==== OpenAI – JSON (lyrics + style_en) with REFINE, strict 4V+2C structure ====
-// CÉL: 4 versszak + 2 refrén (V1,V2,Chorus,V3,V4,Chorus), koherens metaforák, a kért nyelven
+// ==== OpenAI – JSON (lyrics + style_en) STRICT 4V+2C + REFINE ====
+// CÉL: 4 versszak + 2 refrén (V1,V2,Chorus,V3,V4,Chorus), koherens metaforák,
+// és a style_en az ÜGYFÉL "zenei stílus" mezőjéből készüljön angolul (elsődlegesen).
 
-// 1) Első passz: szöveg + angol style_en JSON-ben
+// --------- 1) STYLE-FOCUSED JSON PASS (lyrics_draft + style_en) ----------
 const sys1 =
-  "You write catchy, singable song lyrics AND an English style descriptor for music generation. " +
+  "You write singable song lyrics and produce an ENGLISH style descriptor for music generation. " +
   "Return STRICT JSON only. The lyrics must be natural and coherent in the requested language. " +
-  "Metaphors are allowed, but avoid nonsensical or awkward lines or sexist tropes. " +
-  "Keep imagery concrete and relatable. " +
+  "Metaphors allowed if coherent; avoid awkward/nonsensical lines. " +
   "STRUCTURE EXACTLY: Verse 1 (4 lines) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4). " +
-  "Each line 6–10 words. Light punctuation.";
+  "Each line 6–10 words, light punctuation. " +
+  "For style_en: PRIORITIZE the client's CHOSEN MUSIC STYLE(S) exactly. Translate them to concise English genre tags. " +
+  "Append 'male vocals' or 'female vocals' if applicable; if instrumental, omit vocals. " +
+  "You MAY add up to 2 mood adjectives ONLY if they do not conflict with the chosen style. " +
+  "Do NOT let the brief override the main style.";
 
 const usr1 = [
-  `Language for lyrics: ${language}`, // HU → marad magyarul
+  `Language for lyrics: ${language}`,   // HU → marad magyarul
   `Title: ${title}`,
-  `Client style (free text, may be HU): ${styles}`,
+  `Chosen music style(s) (client): ${styles}`,
   `Vocal: ${vocal} (male|female|instrumental)`,
-  `Brief: ${brief}`,
+  `Brief (secondary info): ${brief}`,
   "",
   "Return JSON ONLY in this exact shape:",
   `{"lyrics_draft":"...","style_en":"..."}`,
-  "style_en must be ENGLISH. If vocals present add 'male vocals' or 'female vocals'. If instrumental, no vocals tag."
+  "style_en must be concise English tags, comma-separated, e.g. 'pop, minimal techno, male vocals' or 'ambient piano'."
 ].join("\n");
 
 const oi1 = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -360,9 +364,10 @@ const oi1 = await fetch("https://api.openai.com/v1/chat/completions", {
     messages: [{ role: "system", content: sys1 }, { role: "user", content: usr1 }],
     temperature: 0.7,
     top_p: 0.9,
-    presence_penalty: 0.2,
+    presence_penalty: 0.1,
+    frequency_penalty: 0.1,
     response_format: { type: "json_object" },
-    max_tokens: 550
+    max_tokens: 600
   })
 });
 if (!oi1.ok) {
@@ -370,29 +375,29 @@ if (!oi1.ok) {
   return res.status(502).json({ ok:false, message:"OpenAI error", detail:t });
 }
 const j1 = await oi1.json();
-let jpayload = {};
-try { jpayload = JSON.parse(j1?.choices?.[0]?.message?.content || "{}"); } catch {}
-let lyricsDraft = (jpayload.lyrics_draft || jpayload.lyrics || "").trim();
-let style_en = (jpayload.style_en || "").trim();
+let payload = {};
+try { payload = JSON.parse(j1?.choices?.[0]?.message?.content || "{}"); } catch {}
+let lyricsDraft = (payload.lyrics_draft || payload.lyrics || "").trim();
+let style_en = (payload.style_en || "").trim();
 
-// Fallback a style_en-re + vocals tag
+// Fallback style_en + vocals (biztonsági háló – de főként a styles mezőből!)
 const vocalTag = (vocal === "male") ? "male vocals" : (vocal === "female") ? "female vocals" : "";
 if (!style_en) {
-  style_en = (styles || "pop").toString();
-  if (vocalTag) style_en += `, ${vocalTag}`;
+  style_en = (styles || "pop").toString().trim();
+  if (vocalTag) style_en += (style_en ? `, ${vocalTag}` : vocalTag);
 }
 
-// 2) Második passz: lektorálás – KOherencia + PONTOS 4V+2C szerkezet
+// --------- 2) REFINE PASS (csak a dalszöveghez) ----------
 const sys2 =
-  "You are a native-speaker lyric editor. Fix awkward, ungrammatical, or nonsensical lines without changing meaning. " +
-  "Metaphors allowed if coherent. KEEP the requested language EXACTLY. " +
-  "KEEP EXACT STRUCTURE: Verse 1 (4 lines) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4). " +
+  "You are a native-speaker lyric editor. Fix awkward or nonsensical lines without changing meaning. " +
+  "Metaphors allowed if coherent. Keep the requested language EXACTLY. " +
+  "KEEP EXACT STRUCTURE: Verse 1 (4) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4). " +
   "Each line 6–10 words. Output ONLY the final lyrics (no JSON, no extra commentary).";
 
 const usr2 = [
   `Language: ${language}`,
   `Title: ${title}`,
-  `Context style: ${styles}`,
+  `Chosen style (must remain primary): ${styles}`,
   `Vocal: ${vocal}`,
   "",
   "DRAFT:",
@@ -407,7 +412,7 @@ const oi2 = await fetch("https://api.openai.com/v1/chat/completions", {
     messages: [{ role: "system", content: sys2 }, { role: "user", content: usr2 }],
     temperature: 0.6,
     top_p: 0.9,
-    max_tokens: 600
+    max_tokens: 700
   })
 });
 let lyrics = lyricsDraft;
@@ -418,11 +423,11 @@ if (oi2.ok) {
   console.warn("[REFINE FAIL] using draft");
 }
 
-// 3) Extra formázó fallback: ha hiányzik bármelyik heading, igazítsa (szöveget ne változtassa)
+// --------- 3) Minimális forma-ellenőrzés: 4V+2C fejlécek legyenek meg ----------
 const needed = ["Verse 1","Verse 2","Chorus","Verse 3","Verse 4","Chorus"];
 const hasAll = needed.every(h => lyrics.includes(h));
 if (!hasAll) {
-  const sys3 = "Format the provided lyrics to EXACTLY this heading order and counts without changing wording: " +
+  const sys3 = "Format the provided lyrics to EXACTLY this heading order and counts WITHOUT changing wording: " +
                "Verse 1 (4 lines) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4). " +
                "Output ONLY the formatted lyrics.";
   const oi3 = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -441,7 +446,7 @@ if (!hasAll) {
   }
 }
 
-// >>> innen mehet tovább a meglévő Suno-hívás (style_en ENGLISH, lyrics a kért nyelven) <<<
+// >>> a további kódod változatlanul mehet tovább (Suno-hívás), és itt elérhető: lyrics, style_en
 
 
     // ==== Suno V1 – START
