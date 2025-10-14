@@ -382,3 +382,11 @@ app.post('/api/generate_song', async (req, res) => {
   }
 });
 // ======================================================================
+// DIAG: környezet ping
+app.get('/api/generate_song/ping', (req, res) => {
+  res.json({ ok:true, diag:{
+    node: process.version, fetch_defined: typeof fetch!=='undefined',
+    has_OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
+    has_SUNO_API_KEY: !!process.env.SUNO_API_KEY, SUNO_BASE_URL: process.env.SUNO_BASE_URL||null
+  }});
+});
