@@ -29,7 +29,7 @@
     };
 
     try{
-      const data = await postJSON('/api/generate_song', payload);
+     const data = await postJSON(location.origin + '/api/generate_song', payload);
       if(linksList){
         linksList.innerHTML='';
         (data.tracks||[]).slice(0,2).forEach((t,i)=>{
