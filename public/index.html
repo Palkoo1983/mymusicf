@@ -668,12 +668,7 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
       <form class="form" id="orderForm">
         <input autocomplete="off" name="_hp" style="display:none" tabindex="-1" type="text"/>
         <div class="grid">
-          <label class="gold-text">Csomag (fizetés bankkártyával: Visa vagy MasterCard)
-            <select name="package" required="">
-              <option value="basic">Alap (MP3)</option>
-              <option value="video">Videó csomag (MP4)</option>
-              <option value="premium">Prémium (WAV)</option>
-            </select>
+          <input name="title" placeholder="Dal címe (opcionális)" type="text">
           </label>
           <label class="gold-text">E-mail (ahová a linket küldjük)
             <input name="email" placeholder="pelda@domain.hu" required="" type="email"/>
@@ -688,16 +683,19 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
             </select>
           </label>
           <label class="gold-text">Zenei stílus (írható is)
-            <input list="style-list" name="style" placeholder="pl. pop / rock / opera / saját megjelölés" required="" type="text"/>
+           <input list="style-list" name="styles" placeholder="pl. minimal techno / house / saját megjelölés" required type="text">
             <datalist id="style-list">
               <option value="Pop"><option value="Rock"><option value="Opera"><option value="Akusztikus"><option value="Filmzene"><option value="Lo-fi">
             </datalist>
           </label>
           <label class="gold-text">Ének
-            <select name="vocal" required="">
-              <option>Női</option>
-              <option>Férfi</option>
-            </select>
+           <select name="vocal" required>
+  <option value="female">Női</option>
+  <option value="male">Férfi</option>
+  <option value="instrumental">Instrumentális</option>
+  <option value="unisex">Unisex</option>
+  <option value="both">Mindkettő</option>
+</select>
           </label>
           <label class="gold-text">Nyelv (pl. magyar, angol, német, holland, stb..)
             <input name="language" placeholder="pl. magyar / angol / német / holland / stb.." type="text"/>
