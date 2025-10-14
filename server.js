@@ -259,26 +259,9 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
   }
 });
 
-// ================== Suno helper (retry) ====================
-async function sunoStartWithRetry(url, headers, body){
-  for (let i=0; i<6; i++){
-    const r = await fetch(url, { method:'POST', headers, body: JSON.stringify(body) });
-    const txt = await r.text();
-    if (r.ok){
-      try { return { ok:true, json: JSON.parse(txt) }; }
-      catch { return { ok:true, json:{} }; }
-    }
-    console.warn('[SUNO:START_FAIL]', r.status, txt.slice(0,200));
-    if (r.status === 503 || r.status === 502 || r.status === 429){
-      await new Promise(res => setTimeout(res, 2000 * (i+1)));
-      continue;
-    }
-    return { ok:false, status:r.status, text:txt };
-  }
-  return { ok:false, status:503, text:'start_unavailable_after_retries' };
-}
+// ================== SUNO V1 – START & POLL =================
 
-// ============ GPT → Suno generate (retry + 503 mock) ==============
+// GPT → Suno generate (Suno V1: api.sunoapi.org)
 app.post('/api/generate_song', async (req, res) => {
   try {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
@@ -291,20 +274,21 @@ app.post('/api/generate_song', async (req, res) => {
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
     const SUNO_API_KEY   = process.env.SUNO_API_KEY;
-    const SUNO_BASE_URL  = process.env.SUNO_BASE_URL || 'https://api.suno.ai';
+    const SUNO_BASE_URL  = process.env.SUNO_BASE_URL || 'https://api.sunoapi.org';
 
     if (!OPENAI_API_KEY) return res.status(500).json({ ok:false, message:'OPENAI_API_KEY hiányzik' });
     if (!SUNO_API_KEY)   return res.status(500).json({ ok:false, message:'SUNO_API_KEY hiányzik' });
 
+    // style + vocal angolul a Sunónak
     const vocalTag = vocal === 'male' ? 'male vocals' : (vocal === 'female' ? 'female vocals' : 'instrumental');
     const styleForSuno = vocal === 'instrumental' ? styles : `${styles}, ${vocalTag}`;
 
+    // ==== OpenAI – lyrics
     const system = "You are a concise hit-song lyricist. Always return ONLY the final lyrics, no commentary. Structure: Verse 1 (4 lines), Chorus (4 lines), Verse 2 (4), Chorus (same/varied 4), Verse 3 (4). Rhyme optional, keep lines singable and 5–9 words.";
     const userPrompt = language === 'hu'
       ? `Nyelv: magyar.\nCím: ${title}\nHangulat/stílus: ${styles}\nLeírás: ${brief}\n\nÍrj 3 versszakot és 2 refrént a fenti szerkezetben. Adj egyszerű, énekelhető sorokat, központozás mértékkel.`
       : `Language: English.\nTitle: ${title}\nMood/style: ${styles}\nBrief: ${brief}\n\nWrite 3 verses and 2 choruses (structure above). Keep it catchy and singable.`;
 
-    // OpenAI – lyrics
     const oi = await fetch('https://api.openai.com/v1/chat/completions', {
       method:'POST',
       headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
@@ -322,66 +306,64 @@ app.post('/api/generate_song', async (req, res) => {
     const oiJson = await oi.json();
     const lyrics = (oiJson?.choices?.[0]?.message?.content || '').trim();
 
-    // LOG: mit küldünk a Suno felé (kulcs nélkül)
-    console.log('[GEN] Suno start payload', {
-      url: `${SUNO_BASE_URL}/api/generate`,
-      hasApiKey: !!SUNO_API_KEY,
-      body: { model:'custmod-v5', custom:true, title, style_of_music: styleForSuno, lyrics_len: (lyrics||'').length }
+    // ==== Suno V1 – START
+    console.log('[GEN] Suno V1 start', { base: SUNO_BASE_URL, title, styleForSuno, lyrics_len: lyrics.length });
+    const startRes = await fetch(`${SUNO_BASE_URL}/api/v1/generate`, {
+      method:'POST',
+      headers:{ 'Authorization': `Bearer ${SUNO_API_KEY}`, 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        customMode: true,             // custom mód
+        model: 'V5',                  // v5 modell
+        instrumental: (vocal === 'instrumental'),
+        title,
+        style: styleForSuno,          // angol style + vocal
+        prompt: lyrics                // GPT dalszöveg (kért nyelven)
+      })
     });
 
-    // Suno – start (retry)
-    const startRes = await sunoStartWithRetry(`${SUNO_BASE_URL}/api/generate`, {
-      'Authorization': `Bearer ${SUNO_API_KEY}`,
-      'Content-Type': 'application/json'
-    }, {
-      model: 'custmod-v5',
-      custom: true,
-      title,
-      style_of_music: styleForSuno,
-      lyrics
-    });
-
-    if (!startRes.ok) {
-      if (startRes.status === 503) {
-        // TEMP mock, hogy a teljes flow-t látni tudd
-        return res.json({
-          lyrics,
-          tracks: [
-            { title, audio_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-            { title, audio_url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' }
-          ]
-        });
-      }
-      return res.status(502).json({ ok:false, message:'Suno start error', detail:startRes.text, status:startRes.status });
+    const startTxt = await startRes.text();
+    let startJson = {};
+    try { startJson = JSON.parse(startTxt); } catch {}
+    if (!startRes.ok || startJson?.code !== 200) {
+      return res.status(502).json({ ok:false, message:'Suno start error', detail: startTxt });
+    }
+    const taskId = startJson?.data?.taskId;
+    if (!taskId) {
+      return res.status(502).json({ ok:false, message:'Suno start error – no taskId', detail: startTxt });
     }
 
-    // Poll
-    const sj = startRes.json;
-    let jobId = sj?.job_id || sj?.id || sj?.jobId;
-    let tracks = Array.isArray(sj?.tracks) ? sj.tracks : [];
+    // ==== Suno V1 – POLL
     const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 120);
-    const intervalMs = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 1.5) * 1000);
+    const intervalMs  = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 1500));
     let attempts = 0;
+    let tracks = [];
 
-    while (tracks.length < 2 && jobId && attempts < maxAttempts){
+    while (tracks.length < 2 && attempts < maxAttempts) {
       attempts++;
       await new Promise(r => setTimeout(r, intervalMs));
-      const pr = await fetch(`${SUNO_BASE_URL}/api/generate/${jobId}`, {
+      const pr = await fetch(`${SUNO_BASE_URL}/api/v1/generate/record-info?taskId=${encodeURIComponent(taskId)}`, {
+        method:'GET',
         headers:{ 'Authorization': `Bearer ${SUNO_API_KEY}` }
       });
-      if(!pr.ok) continue;
+      if (!pr.ok) continue;
       const st = await pr.json();
-      const items = st.tracks || st.result || st.items || [];
-      tracks = [];
-      for (const it of items){
-        const audio = it.audio_url || it.audioUrl || it.url;
-        const image = it.image_url || it.imageUrl;
-        const ttitle = it.title || title;
-        if(audio) tracks.push({ title: ttitle, audio_url: audio, image_url: image });
-      }
+      if (st?.code !== 200) continue;
+
+      const items = st?.data?.response?.sunoData || [];
+      tracks = items
+        .map(d => ({
+          title: d.title || title,
+          audio_url: d.audioUrl || d.url,
+          image_url: d.imageUrl || d.coverUrl
+        }))
+        .filter(x => !!x.audio_url);
+
+      if (tracks.length >= 2) break;
     }
 
     if (!tracks.length) return res.status(502).json({ ok:false, message:'Suno did not return tracks in time.' });
+
+    // (Ha később kell: itt küldhetsz e-mailt a linkekkel a megrendelőnek is.)
     return res.json({ lyrics, tracks });
 
   } catch (e) {
@@ -401,23 +383,24 @@ app.get('/api/generate_song/ping', (req, res) => {
 
 app.get('/api/suno/ping', async (req, res) => {
   try{
-    const BASE = process.env.SUNO_BASE_URL || 'https://api.suno.ai';
+    const BASE = process.env.SUNO_BASE_URL || 'https://api.sunoapi.org';
     const H = { 'Authorization': `Bearer ${process.env.SUNO_API_KEY||''}`, 'Content-Type':'application/json' };
-    const r1 = await fetch(`${BASE}/api/generate`, { method:'POST', headers:H, body: JSON.stringify({}) });
+    const r1 = await fetch(`${BASE}/api/v1/generate`, { method:'POST', headers:H, body: JSON.stringify({ invalid:true }) });
     const t1 = await r1.text();
     return res.json({ ok:true, base: BASE, post_generate: { status:r1.status, len:t1.length, head:t1.slice(0,160) } });
   }catch(e){
     return res.status(500).json({ ok:false, error: (e && e.message) || e });
   }
 });
-// --- EGYSZERŰ TESZT VÉGPONT ---
+
+// --- EGYSZERŰ TESZT VÉGPONT (GPT + 2 demo link) ---
 app.get('/api/generate_song/test', async (req, res) => {
   try{
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
     if (!OPENAI_API_KEY) return res.status(500).json({ ok:false, message:'OPENAI_API_KEY hiányzik' });
 
-    const title='Teszt dal', styles='pop, dance', vocal='male', brief='rövid teszt';
+    const title='Teszt dal', styles='pop, dance', brief='rövid teszt';
     const system="You are a concise hit-song lyricist. Always return ONLY the final lyrics, no commentary. Structure: Verse 1 (4 lines), Chorus (4 lines), Verse 2 (4), Chorus (same/varied 4), Verse 3 (4).";
     const prompt=`Nyelv: magyar.\nCím: ${title}\nHangulat/stílus: ${styles}\nLeírás: ${brief}\n\nÍrj 3 versszakot és 2 refrént a fenti szerkezetben.`;
 
@@ -429,7 +412,6 @@ app.get('/api/generate_song/test', async (req, res) => {
     if(!oi.ok){ return res.status(502).json({ ok:false, message:'OpenAI error', detail: await oi.text() }); }
     const lyrics = (await oi.json())?.choices?.[0]?.message?.content?.trim() || '';
 
-    // Suno ideiglenesen kihagyva → 2 demo link
     res.json({ ok:true, test:true, lyrics,
       tracks:[
         { title, audio_url:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
@@ -441,51 +423,3 @@ app.get('/api/generate_song/test', async (req, res) => {
 
 // ================== Start server ==========================
 app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
-// --- EGYSZERŰ TESZT VÉGPONT (Console nélkül) ---
-app.get('/api/generate_song/test', async (req, res) => {
-  try{
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
-    if (!OPENAI_API_KEY) return res.status(500).json({ ok:false, message:'OPENAI_API_KEY hiányzik' });
-
-    const title   = 'Teszt dal';
-    const styles  = 'pop, dance';
-    const vocal   = 'male';
-    const lang    = 'hu';
-    const brief   = 'rövid teszt';
-
-    const system = "You are a concise hit-song lyricist. Always return ONLY the final lyrics, no commentary. Structure: Verse 1 (4 lines), Chorus (4 lines), Verse 2 (4), Chorus (same/varied 4), Verse 3 (4). Rhyme optional, keep lines singable and 5–9 words.";
-    const prompt = `Nyelv: magyar.\nCím: ${title}\nHangulat/stílus: ${styles}\nLeírás: ${brief}\n\nÍrj 3 versszakot és 2 refrént a fenti szerkezetben. Adj egyszerű, énekelhető sorokat.`;
-
-    const oi = await fetch('https://api.openai.com/v1/chat/completions', {
-      method:'POST',
-      headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
-      body: JSON.stringify({
-        model: OPENAI_MODEL,
-        messages:[{role:'system', content: system},{role:'user', content: prompt}],
-        temperature:0.8,
-        max_tokens: 350
-      })
-    });
-    if(!oi.ok){
-      const t = await oi.text();
-      return res.status(502).json({ ok:false, message:'OpenAI error', detail:t });
-    }
-    const oiJson = await oi.json();
-    const lyrics = (oiJson?.choices?.[0]?.message?.content || '').trim();
-
-    // Suno most 503 → adjunk vissza 2 demo linket, hogy lásd a teljes flow-t
-    return res.json({
-      ok:true,
-      test:true,
-      lyrics,
-      tracks:[
-        { title, audio_url:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-        { title, audio_url:'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' }
-      ]
-    });
-  }catch(e){
-    console.error('[TEST ENDPOINT ERROR]', e);
-    res.status(500).json({ ok:false, message:'Hiba történt', error: e?.message || e });
-  }
-});
