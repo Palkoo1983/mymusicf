@@ -328,57 +328,121 @@ app.post('/api/generate_song', async (req, res) => {
     if (!OPENAI_API_KEY) return res.status(500).json({ ok:false, message:'OPENAI_API_KEY hiányzik' });
     if (!SUNO_API_KEY)   return res.status(500).json({ ok:false, message:'SUNO_API_KEY hiányzik' });
 
-    // ==== OpenAI – JSON (lyrics + style_en)
-    const sys = "You write catchy, singable song lyrics and produce English style descriptors for music generation. Always return STRICT JSON.";
-    const usr = [
-      `Language for lyrics: ${language}`,
-      `Title: ${title}`,
-      `Client style (free text, may be HU): ${styles}`,
-      `Vocal: ${vocal} (male|female|instrumental)`,
-      `Brief: ${brief}`,
-      "",
-      "Tasks:",
-      "1) Write lyrics in the exact language requested. Structure:",
-      "- Verse 1 (4 lines)",
-      "- Chorus (4 lines)",
-      "- Verse 2 (4 lines)",
-      "- Chorus (repeat/variant, 4 lines)",
-      "- Verse 3 (4 lines)",
-      "Keep lines 5–9 words, easy to sing.",
-      "2) Build style_en in ENGLISH for Suno 'Style of Music'.",
-      "   Include genre/mood + 'male vocals' or 'female vocals' if vocal present.",
-      "   If instrumental, no vocals tag.",
-      "",
-      "Return JSON only: {\"lyrics\":\"...\",\"style_en\":\"...\"}"
-    ].join('\n');
+  // ==== OpenAI – JSON (lyrics + style_en) with REFINE, strict 4V+2C structure ====
+// CÉL: 4 versszak + 2 refrén (V1,V2,Chorus,V3,V4,Chorus), koherens metaforák, a kért nyelven
 
-    const oi = await fetch('https://api.openai.com/v1/chat/completions', {
-      method:'POST',
-      headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
-      body: JSON.stringify({
-        model: OPENAI_MODEL,
-        messages:[{role:'system', content: sys},{role:'user', content: usr}],
-        temperature:0.8,
-        response_format: { type: "json_object" }
-      })
-    });
-    if(!oi.ok){
-      const t = await oi.text();
-      return res.status(502).json({ ok:false, message:'OpenAI error', detail:t });
-    }
-    const oiJson = await oi.json();
-    let payload = {};
-    try { payload = JSON.parse(oiJson?.choices?.[0]?.message?.content || '{}'); }
-    catch { payload = { lyrics: (oiJson?.choices?.[0]?.message?.content||'').trim(), style_en: '' }; }
+// 1) Első passz: szöveg + angol style_en JSON-ben
+const sys1 =
+  "You write catchy, singable song lyrics AND an English style descriptor for music generation. " +
+  "Return STRICT JSON only. The lyrics must be natural and coherent in the requested language. " +
+  "Metaphors are allowed, but avoid nonsensical or awkward lines or sexist tropes. " +
+  "Keep imagery concrete and relatable. " +
+  "STRUCTURE EXACTLY: Verse 1 (4 lines) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4). " +
+  "Each line 6–10 words. Light punctuation.";
 
-    const lyrics = (payload.lyrics || '').trim();
-    let style_en = (payload.style_en || '').trim();
+const usr1 = [
+  `Language for lyrics: ${language}`, // HU → marad magyarul
+  `Title: ${title}`,
+  `Client style (free text, may be HU): ${styles}`,
+  `Vocal: ${vocal} (male|female|instrumental)`,
+  `Brief: ${brief}`,
+  "",
+  "Return JSON ONLY in this exact shape:",
+  `{"lyrics_draft":"...","style_en":"..."}`,
+  "style_en must be ENGLISH. If vocals present add 'male vocals' or 'female vocals'. If instrumental, no vocals tag."
+].join("\n");
 
-    const vocalTag = (vocal === 'male') ? 'male vocals' : (vocal === 'female') ? 'female vocals' : '';
-    if(!style_en){
-      style_en = styles || 'pop';
-      if (vocalTag) style_en += `, ${vocalTag}`;
-    }
+const oi1 = await fetch("https://api.openai.com/v1/chat/completions", {
+  method: "POST",
+  headers: { "Authorization": `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+  body: JSON.stringify({
+    model: OPENAI_MODEL,
+    messages: [{ role: "system", content: sys1 }, { role: "user", content: usr1 }],
+    temperature: 0.7,
+    top_p: 0.9,
+    presence_penalty: 0.2,
+    response_format: { type: "json_object" },
+    max_tokens: 550
+  })
+});
+if (!oi1.ok) {
+  const t = await oi1.text();
+  return res.status(502).json({ ok:false, message:"OpenAI error", detail:t });
+}
+const j1 = await oi1.json();
+let jpayload = {};
+try { jpayload = JSON.parse(j1?.choices?.[0]?.message?.content || "{}"); } catch {}
+let lyricsDraft = (jpayload.lyrics_draft || jpayload.lyrics || "").trim();
+let style_en = (jpayload.style_en || "").trim();
+
+// Fallback a style_en-re + vocals tag
+const vocalTag = (vocal === "male") ? "male vocals" : (vocal === "female") ? "female vocals" : "";
+if (!style_en) {
+  style_en = (styles || "pop").toString();
+  if (vocalTag) style_en += `, ${vocalTag}`;
+}
+
+// 2) Második passz: lektorálás – KOherencia + PONTOS 4V+2C szerkezet
+const sys2 =
+  "You are a native-speaker lyric editor. Fix awkward, ungrammatical, or nonsensical lines without changing meaning. " +
+  "Metaphors allowed if coherent. KEEP the requested language EXACTLY. " +
+  "KEEP EXACT STRUCTURE: Verse 1 (4 lines) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4). " +
+  "Each line 6–10 words. Output ONLY the final lyrics (no JSON, no extra commentary).";
+
+const usr2 = [
+  `Language: ${language}`,
+  `Title: ${title}`,
+  `Context style: ${styles}`,
+  `Vocal: ${vocal}`,
+  "",
+  "DRAFT:",
+  lyricsDraft
+].join("\n");
+
+const oi2 = await fetch("https://api.openai.com/v1/chat/completions", {
+  method: "POST",
+  headers: { "Authorization": `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+  body: JSON.stringify({
+    model: OPENAI_MODEL,
+    messages: [{ role: "system", content: sys2 }, { role: "user", content: usr2 }],
+    temperature: 0.6,
+    top_p: 0.9,
+    max_tokens: 600
+  })
+});
+let lyrics = lyricsDraft;
+if (oi2.ok) {
+  const j2 = await oi2.json();
+  lyrics = (j2?.choices?.[0]?.message?.content || lyricsDraft).trim();
+} else {
+  console.warn("[REFINE FAIL] using draft");
+}
+
+// 3) Extra formázó fallback: ha hiányzik bármelyik heading, igazítsa (szöveget ne változtassa)
+const needed = ["Verse 1","Verse 2","Chorus","Verse 3","Verse 4","Chorus"];
+const hasAll = needed.every(h => lyrics.includes(h));
+if (!hasAll) {
+  const sys3 = "Format the provided lyrics to EXACTLY this heading order and counts without changing wording: " +
+               "Verse 1 (4 lines) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4). " +
+               "Output ONLY the formatted lyrics.";
+  const oi3 = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      messages: [{ role: "system", content: sys3 }, { role: "user", content: lyrics }],
+      temperature: 0.0,
+      max_tokens: 600
+    })
+  });
+  if (oi3.ok) {
+    const j3 = await oi3.json();
+    lyrics = (j3?.choices?.[0]?.message?.content || lyrics).trim();
+  }
+}
+
+// >>> innen mehet tovább a meglévő Suno-hívás (style_en ENGLISH, lyrics a kért nyelven) <<<
+
 
     // ==== Suno V1 – START
     console.log('[GEN] Suno V1 start', { base: SUNO_BASE_URL, title, instrumental:(vocal==='instrumental') });
