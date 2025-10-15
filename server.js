@@ -465,19 +465,18 @@ app.post('/api/generate_song', async (req, res) => {
 
     // ---- pronunciation safety (Hungarian singing) ----
     const pronunciationSafety =
-      "Avoid Hungarian words that AI models sometimes mispronounce when sung (e.g. 'oson', 'mélybe', 'elcsendesült', 'céges', 'üdvözlet', 'hajnali', 'zengjen'). " +
-      "These are NOT banned; only use them if they fit perfectly and pronounce clearly in context. Prefer smoother phonetics for singing.";
+      "Avoid Hungarian words that AI models sometimes mispronounce when sung (e.g. 'oson', 'mélybe', 'elcsendesült', 'céges', 'üdvözlet', 'hajnali', 'zengjen'). These are NOT banned; only use them if they fit perfectly and pronounce clearly in context.";
 
     // ---- awkward phrase / non-word lists ----
     const awkwardHU = [
       'örök éltet','közös dal','minden út nyitva áll','szívünk mindig szabad',
       'él a szó','örök zene','út nyitva áll','szívünkben él a nagy remény','mánusz'
     ];
-    const awkwardNote = `Avoid unidiomatic or cliched Hungarian phrases such as: ${awkwardHU.join(', ')}. Prefer natural alternatives like: "örökké szeretlek", "közös történetünk", "nyitva a világ", "szívünk szabadon dobban".`;
+    const awkwardNote = 'Avoid unidiomatic or cliched Hungarian phrases such as: ' + awkwardHU.join(', ') + '. Prefer natural alternatives like: "örökké szeretlek", "közös történetünk", "nyitva a világ", "szívünk szabadon dobban".';
 
     // ---- GPT #1: JSON (lyrics_draft + style_en) ----
     const sys1 = [
-      "You write song lyrics in the requested language and also output an ENGLISH style descriptor (style_en) for a music model.",
+      'You write song lyrics in the requested language and also output an ENGLISH style descriptor (style_en) for a music model.',
       "Write lyrics that MATCH the client's chosen musical style **in rhythm and tone**.",
       'LANGUAGE LOCK: write the lyrics STRICTLY in ' + language + ' (no mixing).',
       'Do NOT invent or coin nonsense words; only real, idiomatic words.',
@@ -486,7 +485,7 @@ app.post('/api/generate_song', async (req, res) => {
       'Tone rule: ' + toneHint,
       'Rhyme rule: ' + rhymeHint,
       'Chorus rule: ' + chorusHint,
-      "Coherence rule: build a clear narrative arc as per brief. In each verse, lines must connect by a shared image/topic (no filler lines).",
+      'Coherence rule: build a clear narrative arc as per brief. In each verse, lines must connect by a shared image/topic (no filler lines).',
       'Personal names found: ' + (names.join(', ') || '(none)') + ' — personal names MUST appear verbatim at least once; if exactly one name is present and this is a proposal theme, include it in the Chorus.',
       (isProposal ? 'Proposal rule: Chorus MUST contain a direct poetic question using typographic quotes and a question mark addressing the partner by name.' : ' '),
       pronunciationSafety,
@@ -497,7 +496,7 @@ app.post('/api/generate_song', async (req, res) => {
       'STRUCTURE: Verse 1 (4) / Verse 2 (4) / Chorus (2–4) / Verse 3 (4) / Verse 4 (4) / Chorus (2–4).',
       "Do NOT override already-English genre tags (e.g., 'minimal techno', 'house', 'pop').",
       "If vocal is male/female/instrumental, append that as 'male vocals'/'female vocals' or omit for instrumental.",
-      "All numerals must be fully spelled out in words (no digits)."
+      'All numerals must be fully spelled out in words (no digits).'
     ].filter(Boolean).join('\n');
 
     const usr1 = [
@@ -654,7 +653,7 @@ app.post('/api/generate_song', async (req, res) => {
         if (rN.ok) { const j = await rN.json(); lyrics = (j?.choices?.[0]?.message?.content || lyrics).trim(); }
       }
       if (isKidSong) {
-        // biztosítsd, hogy a Chorusban is benne legyen egyszer
+        // biztosítsd, hogy a Chorusban is szerepeljen
         const sectionOf = (text, name) => {
           const rx = new RegExp('(^|\\n)\\s*' + name + '\\s*\\n([\\s\\S]*?)(?=\\n\\s*(Verse 1|Verse 2|Verse 3|Verse 4|Chorus)\\s*\\n|$)','i');
           const m = text.match(rx); return m ? (m[2] || '').trim() : '';
@@ -677,8 +676,6 @@ app.post('/api/generate_song', async (req, res) => {
             const jC = await rC.json();
             const out = (jC?.choices?.[0]?.message?.content || '').trim();
             if (out) {
-              // ha teljes dalt adott – elfogadjuk; ha csak refrén jött, alább a proposal-merge blokk mintájára lehetne visszailleszteni,
-              // de mivel most teljes szöveget kérünk, tipikusan teljeset fog adni. Ha mégsem, a szerkezet-check majd korrigál.
               lyrics = out;
             }
           }
@@ -799,8 +796,7 @@ app.post('/api/generate_song', async (req, res) => {
         'pop','rock','hip hop','hip-hop','trap','drill'
       ]);
       const cleaned = [];
-      for (const line of lyrics.split('\n')) {
-        const raw = line;
+      for (const raw of lyrics.split('\n')) {
         const L = raw.trim().toLowerCase();
         if (!L) { cleaned.push(raw); continue; }
         if (tagWords.has(L)) continue;
@@ -814,24 +810,24 @@ app.post('/api/generate_song', async (req, res) => {
     })();
 
     // ---- Suno call ----
-    const startRes = await sunoStartV1(`${SUNO_BASE_URL}/api/v1/generate`, {
-      'Authorization': `Bearer ${SUNO_API_KEY}`,
+    const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
+      'Authorization': 'Bearer ' + SUNO_API_KEY,
       'Content-Type': 'application/json'
     }, {
       customMode: true,
       model: 'V5',
       instrumental: (vocal === 'instrumental'),
-      title,
+      title: title,
       style: styleFinal,
       prompt: lyrics,
-      callBackUrl: PUBLIC_URL ? `${PUBLIC_URL}/api/suno/callback` : undefined
+      callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
     });
 
     if (!startRes.ok) {
       return res.status(502).json({ ok:false, message:'Suno start error', detail:startRes.text, status:startRes.status });
     }
     const sj = startRes.json;
-    if (sj?.code !== 200 || !sj?.data?.taskId) {
+    if (!sj || sj.code !== 200 || !sj.data || !sj.data.taskId) {
       return res.status(502).json({ ok:false, message:'Suno start error – bad response', detail: JSON.stringify(sj) });
     }
     const taskId = sj.data.taskId;
@@ -844,15 +840,15 @@ app.post('/api/generate_song', async (req, res) => {
     while (tracks.length < 2 && attempts < maxAttempts) {
       attempts++;
       await new Promise(r => setTimeout(r, intervalMs));
-      const pr = await fetch(`${SUNO_BASE_URL}/api/v1/generate/record-info?taskId=${encodeURIComponent(taskId)}`, {
+      const pr = await fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
         method:'GET',
-        headers:{ 'Authorization': `Bearer ${SUNO_API_KEY}` }
+        headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY }
       });
       if (!pr.ok) continue;
       const st = await pr.json();
-      if (st?.code !== 200) continue;
+      if (!st || st.code !== 200) continue;
 
-      const items = st?.data?.response?.sunoData || [];
+      const items = (st.data && st.data.response && st.data.response.sunoData) || [];
       tracks = items
         .map(d => ({
           title: d.title || title,
@@ -871,9 +867,8 @@ app.post('/api/generate_song', async (req, res) => {
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
   }
 });
-
-
 // === PATCH BLOCK END ===
+
 
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
