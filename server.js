@@ -383,6 +383,95 @@ async function polishHungarianLyrics({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, man
 }
 /* ===================== /HU POLISH HELPER (TOP-LEVEL) ======================= */
 
+/* ===== Kulcsszó-lista jellegű sor-kezdetek természetesítés ===== */
+async function rewriteKeywordListOpeners({ OPENAI_API_KEY, OPENAI_MODEL, lyrics }) {
+  // Lista-szerű sorkezdet detektálása (Pl. „Céges, Tempó, Emlék, …”)
+  const looksListy = /(^|\n)\s*[A-ZÁÉÍÓÖŐÚÜŰ][^,\n]+(?:\s*,\s*[A-ZÁÉÍÓÖŐÚÜŰ][^,\n]+){1,}\s*,?\s+[a-záéíóöőúüű]/;
+  if (!looksListy.test(lyrics)) return lyrics;
+
+  const sys = [
+    "Magyar dalszöveg-szerkesztő vagy.",
+    "Feladat: ha bármely sor kulcsszó-felsorolással KEZDŐDIK (pl. „Céges, Tempó, Emlék, …”), azt fogalmazd át természetes, énekelhető sorra,",
+    "beépítve a kulcsszavakat, de ne maradjon csupasz lista. A rím és a ritmus maradjon.",
+    "A szakaszcímek (Verse 1/2/3/4, Chorus) maradjanak változatlanul. A sor- és versszakszám maradjon.",
+    "Csak a kész dalszöveget add vissza."
+  ].join('\n');
+
+  const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      messages: [{ role: 'system', content: sys }, { role: 'user', content: lyrics }],
+      temperature: 0.5,
+      max_tokens: 900
+    })
+  });
+  if (!r.ok) return lyrics;
+  const j = await r.json();
+  return (j?.choices?.[0]?.message?.content || '').trim() || lyrics;
+}
+
+/* ===== HU NUMBERS → WORDS (digits, -os/-ban, %, stb.) ===== */
+function huNumberWord(n) {
+  // 0–9999 alap; bővíthető igény szerint
+  const ones = ['nulla','egy','kettő','három','négy','öt','hat','hét','nyolc','kilenc'];
+  const tens = ['','tíz','húsz','harminc','negyven','ötven','hatvan','hetven','nyolcvan','kilencven'];
+  const teens = ['tíz','tizenegy','tizenkettő','tizenhárom','tizennégy','tizenöt','tizenhat','tizenhét','tizennyolc','tizenkilenc'];
+  n = Number(n);
+  if (!Number.isFinite(n)) return String(n);
+
+  if (n < 10) return ones[n];
+  if (n < 20) return teens[n-10];
+  if (n < 100) {
+    const t = Math.floor(n/10), r = n%10;
+    return r ? tens[t] + (t===2 ? '' : '') + '-' + ones[r] : tens[t];
+  }
+  if (n < 1000) {
+    const h = Math.floor(n/100), r = n%100;
+    const head = (h===1 ? 'száz' : ones[h] + 'száz');
+    if (!r) return head;
+    return head + (r < 10 ? ones[r] : (r < 20 ? teens[r-10] : (function(){
+      const t = Math.floor(r/10), u = r%10;
+      return tens[t] + (u? '-'+ones[u] : '');
+    })()));
+  }
+  if (n < 10000) {
+    const th = Math.floor(n/1000), r = n%1000;
+    const head = (th===1 ? 'ezer' : ones[th] + 'ezer');
+    if (!r) return head;
+    const tail = r < 100 ? (r < 10 ? ones[r] : (r<20? teens[r-10] : (function(){
+      const t = Math.floor(r/10), u = r%10;
+      return tens[t] + (u? '-'+ones[u] : '');
+    })())) : (function(){
+      const h = Math.floor(r/100), rr = r%100;
+      const head2 = (h===1 ? 'száz' : ones[h] + 'száz');
+      if (!rr) return head2;
+      if (rr < 10) return head2 + ones[rr];
+      if (rr < 20) return head2 + teens[rr-10];
+      const t = Math.floor(rr/10), u = rr%10;
+      return head2 + tens[t] + (u? '-'+ones[u] : '');
+    })();
+    return head + '-' + tail;
+  }
+  return String(n);
+}
+
+function normalizeNumbersHU(text) {
+  // 1) % → “százalék”
+  text = text.replace(/(\d+)\s*%/g, (_m, d) => {
+    const w = huNumberWord(d);
+    return w + ' százalék';
+  });
+  // 2) szám + rag (pl. 2026-os, 25-ben)
+  text = text.replace(/(\d+)(-|\s)?(os|ös|ban|ben|ból|ből|ra|re|hoz|hez|höz|nál|nél|tól|től|val|vel|ként|ig|nak|nek|ról|ről|ba|be|on|en|ön|n|kor)\b/gi,
+    (_m, d, _sep, rag) => huNumberWord(d) + (rag ? ' ' + rag.toLowerCase() : '')
+  );
+  // 3) sima számok
+  text = text.replace(/\b\d+\b/g, (m)=> huNumberWord(m));
+  return text;
+}
+
 /* ============ GPT → Suno generate (style-fit, language-lock, kid-mode, pronunciation-safety, names+proposal, coherence, keywords, dedupe, sanitize) ============ */
 app.post('/api/generate_song', async (req, res) => {
   try {
@@ -620,7 +709,7 @@ app.post('/api/generate_song', async (req, res) => {
 
     let oi2 = await fetch('https://api.openai.com/v1/chat/completions', {
       method:'POST',
-      headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
+      headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages:[{role:'system', content: sys2},{role:'user', content: usr2}],
@@ -634,7 +723,7 @@ app.post('/api/generate_song', async (req, res) => {
       lyrics = (j2?.choices?.[0]?.message?.content || lyricsDraft).trim();
     }
 
-    /* ---- HU POLISH CALL: természetes ragozás/szórend/poétika (oi2 után, numbers előtt) ---- */
+    /* ---- HU POLISH CALL: természetes ragozás/szórend/poétika (oi2 után) ---- */
     {
       const lang = String(language || 'hu').toLowerCase();
       const isHU = /^(hu|hungarian|magyar)$/.test(lang);
@@ -649,6 +738,19 @@ app.post('/api/generate_song', async (req, res) => {
         } catch (e) {
           console.warn('[HU_POLISH_FAIL]', e?.message || e);
         }
+      }
+    }
+
+    /* ---- LISTÁS sor-kezdetek természetesítése (HU polish után) ---- */
+    {
+      try {
+        lyrics = await rewriteKeywordListOpeners({
+          OPENAI_API_KEY,
+          OPENAI_MODEL,
+          lyrics
+        });
+      } catch(e) {
+        console.warn('[LISTY_FIX_FAIL]', e?.message || e);
       }
     }
 
@@ -676,7 +778,16 @@ app.post('/api/generate_song', async (req, res) => {
       }
     }
 
-    // ---- numbers→words safety (ha maradt számjegy) ----
+    /* ---- NUMBERS → WORDS (HU) – determinisztikus normalizálás ---- */
+    {
+      const lang = String(language || 'hu').toLowerCase();
+      const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+      if (isHU) {
+        lyrics = normalizeNumbersHU(lyrics);
+      }
+    }
+
+    // ---- numbers→words safety GPT fallback (ha maradt számjegy) ----
     if (/\d/.test(lyrics)) {
       const sysNum = 'Rewrite ALL numerals as fully spelled-out words in the requested language. Keep section headings and line counts. No digits.';
       const numR = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -713,7 +824,6 @@ app.post('/api/generate_song', async (req, res) => {
         if (rN.ok) { const j = await rN.json(); lyrics = (j?.choices?.[0]?.message?.content || lyrics).trim(); }
       }
       if (isKidSong) {
-        // biztosítsd, hogy a Chorusban is szerepeljen
         const sectionOf = (text, name) => {
           const rx = new RegExp('(^|\\n)\\s*' + name + '\\s*\\n([\\s\\S]*?)(?=\\n\\s*(Verse 1|Verse 2|Verse 3|Verse 4|Chorus)\\s*\\n|$)','i');
           const m = text.match(rx); return m ? (m[2] || '').trim() : '';
@@ -860,7 +970,7 @@ app.post('/api/generate_song', async (req, res) => {
         const L = raw.trim().toLowerCase();
         if (!L) { cleaned.push(raw); continue; }
         if (tagWords.has(L)) continue;
-        if (/^\s*kulcsszavak\s*:/i.test(raw)) continue; // ne kerüljön a szövegbe
+        if (/^\s*kulcsszavak\s*:/i.test(raw)) continue;
         const parts = L.split(/[,\s]+/).filter(Boolean);
         const allTags = parts.length && parts.every(p => tagWords.has(p));
         if (allTags) continue;
@@ -929,6 +1039,7 @@ app.post('/api/generate_song', async (req, res) => {
 });
 
 // === PATCH BLOCK END ===
+
 
 
 
