@@ -55,7 +55,7 @@ const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SEC
 /* ================== Middleware / static ================= */
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')));
+app.use(express.static('public'));
 
 /* ----------------- Simple rate-limit -------------------- */
 const hitMap = new Map();
