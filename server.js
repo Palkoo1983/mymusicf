@@ -487,14 +487,14 @@ function softHungarianAwkwardFilter(text) {
 async function enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, names = [], mandatoryKeywords = [] }) {
   const target = String(language || 'hu').toLowerCase();
   const isHU = /^(hu|hungarian|magyar)$/.test(target);
-  // detect Hungarian even if plain ASCII words like 'ceges', 'evzaro' appear
-const looksHU = /[áéíóöőúüűÁÉÍÓÖŐÚÜŰ]/.test(lyrics)
-  || /\b(ceges|evzaro|szeretet|csapat|baratsag|hazank|unnep|sziv)\b/i.test(lyrics);
-if (isHU) return lyrics;
-if (!looksHU) return lyrics;
+  const looksHU = /[áéíóöőúüűÁÉÍÓÖŐÚÜŰ]/.test(lyrics);
+  if (isHU) return lyrics;
+  if (!looksHU) return lyrics;
 
-
-  const preserveList = [...new Set([...(names || []), ...(mandatoryKeywords || [])].filter(Boolean))];
+  // Csak neveket és ASCII/angol-szerű tokeneket őrzünk meg idegen nyelvnél
+let preserveList = [...new Set([...(names || [])].filter(Boolean))];
+const asciiOnly = (mandatoryKeywords || []).filter(k => /^[A-Za-z0-9 .,'"\-\&\(\)]+$/.test(k || ''));
+preserveList = [...new Set([...preserveList, ...asciiOnly])];
   const sys = [
     `Rewrite the lyrics fully into ${target}.`,
     'Preserve ALL section headings (Verse 1/Verse 2/Verse 3/Verse 4/Chorus).',
@@ -565,6 +565,22 @@ app.post('/api/generate_song', async (req, res) => {
       if (/\b2025\b/.test(b) || /kétezer\s+huszonöt/i.test(b)) arr.push('kétezer huszonöt');
       return Array.from(new Set(arr));
     })();
+
+// --- FILTER MANDATORY KEYWORDS FOR NON-HU TARGETS ---
+(function(){
+  const lang = String(language || 'hu').toLowerCase();
+  const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+  if (!isHU) {
+    const asciiRx = /^[A-Za-z0-9 .,'"\-\&\(\)]+$/;
+    for (let i = mandatoryKeywords.length - 1; i >= 0; i--) {
+      const kw = mandatoryKeywords[i] || '';
+      if (!asciiRx.test(kw)) {
+        mandatoryKeywords.splice(i, 1);
+      }
+    }
+  }
+})();
+
 
     // names + proposal
     const names = (() => {
@@ -774,7 +790,18 @@ app.post('/api/generate_song', async (req, res) => {
       lyrics = await enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, names, mandatoryKeywords });
     } catch(e) { console.warn('[LANG_ENFORCE_FAIL]', e?.message || e); }
 
-    // HU numbers→words deterministic (only HU)
+    
+// --- POST-ENFORCE CLEANUP FOR NON-HU TARGETS ---
+(function(){
+  const lang = String(language || 'hu').toLowerCase();
+  const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+  if (!isHU) {
+    lyrics = lyrics.replace(/(^|\n)\s*(céges|évzáró)(\s*\d+)?\s*$(?=\n|$)/gim, '$1');
+    lyrics = lyrics.replace(/([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű])(\d+)/g, '$1 $2');
+    lyrics = lyrics.replace(/\n{3,}/g, '\n\n').trim();
+  }
+})();
+// HU numbers→words deterministic (only HU)
     {
       const lang = String(language || 'hu').toLowerCase();
       if (/^(hu|hungarian|magyar)$/.test(lang)) {
