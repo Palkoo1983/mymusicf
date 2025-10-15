@@ -341,6 +341,48 @@ async function sunoStartV1(url, headers, body){
 }
 
 // === PATCH BLOCK START ===
+
+/* ======================= HU POLISH HELPER (TOP-LEVEL) ======================= */
+/* Magyar nyelvi utópolírozás: ragozás, természetes szórend, költői folyás.
+   - Megőrzi a Verse/Chorus fejléceket és a sor/verszakszámot.
+   - Kötelező kulcsszavakhoz nem nyúl.
+   - Kerüli a magyartalan/tükörfordítás-ízű szerkezeteket.
+   - Megszólításnál természetes alakot preferál (pl. „Bence,”; érzelmes birtokosnál „Bencém”),
+     kerüli a tárgyesetet („Bencét”), kivéve ha tényleg tárgy.
+*/
+async function polishHungarianLyrics({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, mandatoryKeywords=[] }) {
+  const sys = [
+    "Te magyar anyanyelvű dalszöveg-szerkesztő vagy.",
+    "Javítsd a MAGYAR ragozást, a természetes szórendet és a költői folyamatosságot,",
+    "úgy, hogy a jelentés NE változzon, a ritmus és a rímek maradjanak, a szakaszfejlécek érintetlenek.",
+    "TILOS új fejezetcímeket kitalálni vagy a meglévőket átírni.",
+    "Kerüld a tükörfordítás-ízű, magyartalan szerkezeteket.",
+    "Pl. „<főnév> fest aranyra a táj” helyett természetesebb: „Arany naplemente nyugszik a tájon” / „A tájat aranyra festi a naplemente”.",
+    "Megszólításnál természetes alakot használj (pl. „Bence,”; érzelmes birtokosnál „Bencém”), a tárgyesetet („Bencét”) csak indokolt szerkezetben.",
+    "A sorok maradjanak rövidek, énekelhetők; a rímek legyenek gyengédek (ne kényszeríts értelmetlenséget).",
+    "Kötelező kulcsszavak maradjanak verbatim: " + (mandatoryKeywords.length ? mandatoryKeywords.join(', ') : '(nincs)'),
+    "FORMÁTUM: Verse 1 / Verse 2 / Chorus / Verse 3 / Verse 4 / Chorus – és versszakonként ugyanannyi sor maradjon.",
+    "Csak a végleges dalszöveget add vissza (fejlécekkel), extra komment NÉLKÜL."
+  ].join('\n');
+
+  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      messages: [{ role: 'system', content: sys }, { role: 'user', content: lyrics }],
+      temperature: 0.5,
+      max_tokens: 900
+    })
+  });
+
+  if (!resp.ok) return lyrics;
+  const j = await resp.json();
+  const out = (j?.choices?.[0]?.message?.content || '').trim();
+  return out || lyrics;
+}
+/* ===================== /HU POLISH HELPER (TOP-LEVEL) ======================= */
+
 /* ============ GPT → Suno generate (style-fit, language-lock, kid-mode, pronunciation-safety, names+proposal, coherence, keywords, dedupe, sanitize) ============ */
 app.post('/api/generate_song', async (req, res) => {
   try {
@@ -590,6 +632,24 @@ app.post('/api/generate_song', async (req, res) => {
     if (oi2.ok){
       const j2 = await oi2.json();
       lyrics = (j2?.choices?.[0]?.message?.content || lyricsDraft).trim();
+    }
+
+    /* ---- HU POLISH CALL: természetes ragozás/szórend/poétika (oi2 után, numbers előtt) ---- */
+    {
+      const lang = String(language || 'hu').toLowerCase();
+      const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+      if (isHU) {
+        try {
+          lyrics = await polishHungarianLyrics({
+            OPENAI_API_KEY,
+            OPENAI_MODEL,
+            lyrics,
+            mandatoryKeywords
+          });
+        } catch (e) {
+          console.warn('[HU_POLISH_FAIL]', e?.message || e);
+        }
+      }
     }
 
     // ---- language enforcement post-check: if target is not HU but text looks HU → translate keeping structure ----
@@ -867,7 +927,9 @@ app.post('/api/generate_song', async (req, res) => {
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
   }
 });
+
 // === PATCH BLOCK END ===
+
 
 
 /* ================== DIAG endpoints ======================== */
