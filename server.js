@@ -958,26 +958,48 @@ app.post('/api/generate_song', async (req, res) => {
       }
     }catch{}
 
-    // ---- Lyrics sanitize – remove stray tag/genre lines and "Kulcsszavak:" artifacts ----
-    (function(){
-      const tagWords = new Set([
-        'male vocals','female vocals',
-        'instrumental','minimal techno','techno','house','trance','edm','k-pop','kpop',
-        'pop','rock','hip hop','hip-hop','trap','drill'
-      ]);
-      const cleaned = [];
-      for (const raw of lyrics.split('\n')) {
-        const L = raw.trim().toLowerCase();
-        if (!L) { cleaned.push(raw); continue; }
-        if (tagWords.has(L)) continue;
-        if (/^\s*kulcsszavak\s*:/i.test(raw)) continue;
-        const parts = L.split(/[,\s]+/).filter(Boolean);
-        const allTags = parts.length && parts.every(p => tagWords.has(p));
-        if (allTags) continue;
-        cleaned.push(raw);
-      }
-      lyrics = cleaned.join('\n').replace(/\n{3,}/g, '\n\n').trim();
-    })();
+   // ---- Lyrics sanitize – remove stray tag/genre lines and listy artifacts ----
+(function () {
+  const tagWords = new Set([
+    'male vocals','female vocals',
+    'instrumental','minimal techno','techno','house','trance','edm','k-pop','kpop',
+    'pop','rock','hip hop','hip-hop','trap','drill'
+  ]);
+
+  const dropLineStarts = [
+    /^\s*(style|stílus|hangulat|mood|vocal|ének)\s*[:\-]/i,  // pl. "Style: pop, house"
+    /^\s*kulcsszavak\s*[:\-]/i                               // pl. "Kulcsszavak: ..."
+  ];
+
+  const cleaned = [];
+  for (const raw of lyrics.split('\n')) {
+    const line = raw;
+    const L = line.trim();
+
+    // üres sor mehet
+    if (!L) { cleaned.push(line); continue; }
+
+    // meta-sorok (style:, kulcsszavak:, vocal:) kukázása
+    if (dropLineStarts.some(rx => rx.test(line))) continue;
+
+    // tiszta tag-sorok (csak ismert tagek, vesszőkkel/szóközökkel)
+    const lower = L.toLowerCase();
+    const parts = lower.split(/[,\s]+/).filter(Boolean);
+    const looksLikeOnlyTags = parts.length > 0 && parts.every(p => tagWords.has(p));
+    if (looksLikeOnlyTags) continue;
+
+    // ha a teljes sor *pontosan* egy tag
+    if (tagWords.has(lower)) continue;
+
+    cleaned.push(line);
+  }
+
+  // többszörös üres sor → dupla újsor
+  lyrics = cleaned.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+})();
+
+// ---- HU soft awkward/profane filter (finom utó-simítás magyarra) ----
+lyrics = softHungarianAwkwardFilter(lyrics);
 
     // ---- Suno call ----
     const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
