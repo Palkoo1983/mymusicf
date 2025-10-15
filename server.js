@@ -486,6 +486,23 @@ function softHungarianAwkwardFilter(text) {
     [/\bszívünk mindig szabad\b/gi, 'szívünk szabadon dobban'],
     [/\bmánusz\b/gi, 'manó'],                  // félrehallásból született fura szó
   ];
+  const replacements = [
+    // … a meglévő elemek maradnak …
+
+    // 1) Tárgyesetes névpár → alanyeset + természetes állítmány
+    [/^\s*Nórit és Otit erős gyökérként állnak\b/mi, 'Nóri és Oti erős gyökérként állnak mellettünk'],
+
+    // 2) Rossz, félbe maradt hasonlat
+    [/\bÁlmok lassan fonódnak,?\s*mint a fények ég\.?/gi, 'Álmok lassan fonódnak, mint fény az égen'],
+
+    // 3) „Szerepeljen…” – rideg, listás hang
+    [/^\s*Szerepeljen minden érzés, mi él\b/mi, 'Minden érzésünk él, ami bennünk él'],
+    [/\bSzerepeljen\b/gi, 'Szóljon'],
+
+    // 4) Apróbb stiláris simítások, ha felbukkannak
+    [/\besküvői szívekben\b/gi, 'esküvői szívünkben'],
+    [/\bgyökérként állnak\b/gi, 'tartó erőként állnak'],
+  ];
 
   for (const [rx, to] of replacements) out = out.replace(rx, to);
 
