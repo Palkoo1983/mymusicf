@@ -487,9 +487,12 @@ function softHungarianAwkwardFilter(text) {
 async function enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, names = [], mandatoryKeywords = [] }) {
   const target = String(language || 'hu').toLowerCase();
   const isHU = /^(hu|hungarian|magyar)$/.test(target);
-  const looksHU = /[áéíóöőúüűÁÉÍÓÖŐÚÜŰ]/.test(lyrics);
-  if (isHU) return lyrics;
-  if (!looksHU) return lyrics;
+  // detect Hungarian even if plain ASCII words like 'ceges', 'evzaro' appear
+const looksHU = /[áéíóöőúüűÁÉÍÓÖŐÚÜŰ]/.test(lyrics)
+  || /\b(ceges|evzaro|szeretet|csapat|baratsag|hazank|unnep|sziv)\b/i.test(lyrics);
+if (isHU) return lyrics;
+if (!looksHU) return lyrics;
+
 
   const preserveList = [...new Set([...(names || []), ...(mandatoryKeywords || [])].filter(Boolean))];
   const sys = [
