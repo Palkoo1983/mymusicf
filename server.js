@@ -70,6 +70,7 @@ function rateLimit(key, windowMs=10000, max=5){
 }
 
 /* =================== Healthcheck ========================== */
+app.get('/', (req, res) => res.status(200).send('OK'));
 app.get('/healthz', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
 /* =================== Mail helpers ========================= */
@@ -501,7 +502,8 @@ preserveList = [...new Set([...preserveList, ...asciiOnly])];
     'Keep rhythm and gentle rhymes.',
     (preserveList.length ? 'Keep these tokens verbatim if they are proper names or must-stay words: ' + preserveList.join(', ')
                          : 'Preserve proper names verbatim.'),
-    'Do NOT mix languages; remove any stray Hungarian words.',
+    \1
+'If you encounter Hungarian words such as \"céges\" (or \"ceges\"), they are NOT proper names. Translate them naturally to the target language (e.g., corporate/company).',
     'Return ONLY the final lyrics text.'
   ].join('\n');
 
@@ -555,17 +557,18 @@ app.post('/api/generate_song', async (req, res) => {
     })();
 
     // mandatory keywords
-    const mandatoryKeywords = (() => {
-      const b = (brief || '').toString();
-      const arr = [];
-      const m = b.match(/Kulcsszavak\s*:\s*([^\n\.]+)/i);
-      if (m && m[1]) m[1].split(/[;,]/).map(s => s.trim()).filter(Boolean).forEach(k => arr.push(k));
-      if (/évzáró/i.test(b)) arr.push('évzáró');
-      if (/hackathon/i.test(b)) arr.push('hackathon');
-      if (/\b2025\b/.test(b) || /kétezer\s+huszonöt/i.test(b)) arr.push('kétezer huszonöt');
-      return Array.from(new Set(arr));
-    })();
-
+    \1
+//\ explicit\ black\-list\ non\-HU:\ drop\ 'céges/ceges'\
+\(function\(\)\{\
+\ \ const\ lang\ =\ String\(language\ \|\|\ 'hu'\)\.toLowerCase\(\);\
+\ \ const\ isHU\ =\ /\^\(hu\|hungarian\|magyar\)\$/\.test\(lang\);\
+\ \ if\ \(!isHU\ \&\&\ Array\.isArray\(mandatoryKeywords\)\)\ \{\
+\ \ \ \ for\ \(let\ i\ =\ mandatoryKeywords\.length\ \-\ 1;\ i\ >=\ 0;\ i\-\-\)\ \{\
+\ \ \ \ \ \ const\ kw\ =\ \(mandatoryKeywords\[i\]\ \|\|\ ''\)\.toLowerCase\(\);\
+\ \ \ \ \ \ if\ \(kw\ ===\ 'céges'\ \|\|\ kw\ ===\ 'ceges'\)\ mandatoryKeywords\.splice\(i,\ 1\);\
+\ \ \ \ \}\
+\ \ \}\
+\}\)\(\);\
 // --- FILTER MANDATORY KEYWORDS FOR NON-HU TARGETS ---
 (function(){
   const lang = String(language || 'hu').toLowerCase();
@@ -583,13 +586,17 @@ app.post('/api/generate_song', async (req, res) => {
 
 
     // names + proposal
-    const names = (() => {
-      const b = (brief || '');
-      const raw = b.match(/\b[A-ZÁÉÍÓÖŐÚÜŰ][a-záéíóöőúüű]+\b/g) || [];
-      const stop = new Set(['Szerelmem','Verse','Chorus','Margitszigeten','Margitsziget','Erdély','Tenerife','Madeira','Horvátország','Magyarország','Erdélyi','Horvát','Magyar']);
-      return raw.filter(w => !stop.has(w));
-    })();
-    if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) mandatoryKeywords.push(nm);
+    \1
+//\ names\ cleanup:\ remove\ 'Céges'\ from\ names\ if\ any\
+\{\
+\ \ if\ \(Array\.isArray\(names\)\)\ \{\
+\ \ \ \ for\ \(let\ i\ =\ names\.length\ \-\ 1;\ i\ >=\ 0;\ i\-\-\)\ \{\
+\ \ \ \ \ \ const\ nm\ =\ \(names\[i\]\ \|\|\ ''\)\.toLowerCase\(\);\
+\ \ \ \ \ \ if\ \(nm\ ===\ 'céges'\ \|\|\ nm\ ===\ 'ceges'\)\ names\.splice\(i,\ 1\);\
+\ \ \ \ \}\
+\ \ \}\
+\}\
+if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) mandatoryKeywords.push(nm);
     const isProposal = /eljegyz|megkérés|kér(?:i|em).*kezét|kér.*hozzám|kérdés.*igen/i.test(brief || '');
 
     // kid mode
@@ -669,8 +676,8 @@ app.post('/api/generate_song', async (req, res) => {
       'Coherence rule: build a clear narrative arc as per brief. In each verse, lines must connect by a shared image/topic (no filler lines).',
       'Personal names found: ' + (names.join(', ') || '(none)') + ' — personal names MUST appear verbatim at least once; if exactly one name is present and this is a proposal theme, include it in the Chorus.',
       (isProposal ? 'Proposal rule: Chorus MUST contain a direct poetic question using typographic quotes and a question mark addressing the partner by name.' : ' '),
-      pronunciationSafety,
-      awkwardNote,
+(/^(hu|hungarian|magyar)$/.test(String(language||'hu').toLowerCase()) ? pronunciationSafety : ''),
+(/^(hu|hungarian|magyar)$/.test(String(language||'hu').toLowerCase()) ? awkwardNote : ''),
       'MANDATORY: Naturally include ALL of these keywords verbatim at least once if present: ' + (mandatoryKeywords.length ? mandatoryKeywords.join(', ') : '(no mandatory keywords)'),
       'Use typographic quotes if quotes appear.',
       'Return STRICT JSON ONLY: {"lyrics_draft":"...","style_en":"..."}',
@@ -746,7 +753,7 @@ app.post('/api/generate_song', async (req, res) => {
       'Ensure narrative coherence: connect images across lines in each verse (no generic filler).',
       'Names: ' + (names.join(', ') || '(none)') + ' MUST remain.',
       (isProposal ? 'Chorus must ask the partner directly by name with typographic quotes and a question mark.' : ' '),
-      pronunciationSafety,
+(/^(hu|hungarian|magyar)$/.test(String(language||'hu').toLowerCase()) ? pronunciationSafety : ''),
       'Prefer gentle end-rhymes but NEVER force nonsense.',
       'All numerals must be words (no digits).',
       'Use typographic quotes if quotes appear.',
@@ -786,6 +793,15 @@ app.post('/api/generate_song', async (req, res) => {
     catch(e){ console.warn('[LISTY_FIX_FAIL]', e?.message || e); }
 
     // target language enforce (e.g., EN track: remove stray HU words)
+    // --- PRE-ENFORCE sanitize for non-HU: kill "céges"
+{
+  const lang = String(language||'hu').toLowerCase();
+  const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+  if (!isHU) {
+    lyrics = lyrics.replace(/[Cc][eé]ges/g, 'corporate');
+  }
+}
+
     try {
       lyrics = await enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, names, mandatoryKeywords });
     } catch(e) { console.warn('[LANG_ENFORCE_FAIL]', e?.message || e); }
@@ -798,8 +814,9 @@ app.post('/api/generate_song', async (req, res) => {
   if (!isHU) {
     lyrics = lyrics.replace(/(^|\n)\s*(céges|évzáró)(\s*\d+)?\s*$(?=\n|$)/gim, '$1');
     lyrics = lyrics.replace(/([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű])(\d+)/g, '$1 $2');
-    lyrics = lyrics.replace(/\n{3,}/g, '\n\n').trim();
-  }
+    \1
+    lyrics = lyrics.replace(/\b[Cc][eé]ges\b/g, 'corporate');
+}
 })();
 // HU numbers→words deterministic (only HU)
     {
