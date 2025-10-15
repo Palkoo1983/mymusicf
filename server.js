@@ -471,6 +471,32 @@ function normalizeNumbersHU(text) {
   text = text.replace(/\b\d+\b/g, (m)=> huNumberWord(m));
   return text;
 }
+// ---- HU soft awkward/profane filter (finom utó-simítás magyarra) ----
+function softHungarianAwkwardFilter(text) {
+  if (!text) return text;
+  let out = String(text);
+
+  // Kellemetlen / félreérthető vagy magyartalan kifejezések cseréje
+  const replacements = [
+    [/\bközösen dúgja\b/gi, 'közösen dúdolja'],
+    [/\bdúgja\b/gi, 'dúdolja'],                // techno-s kontextusban is jobb
+    [/\bél a szó\b/gi, 'száll a szó'],
+    [/\börök éltet\b/gi, 'örökké éltet'],
+    [/\bút nyitva áll\b/gi, 'nyitva a világ'],
+    [/\bszívünk mindig szabad\b/gi, 'szívünk szabadon dobban'],
+    [/\bmánusz\b/gi, 'manó'],                  // félrehallásból született fura szó
+  ];
+
+  for (const [rx, to] of replacements) out = out.replace(rx, to);
+
+  // Végső takarítás
+  out = out
+    .replace(/[ \t]+$/gm, '')     // sorvégi szóközök
+    .replace(/\n{3,}/g, '\n\n')   // 3+ üres sor → 1 üres sor
+    .trim();
+
+  return out;
+}
 
 /* ============ GPT → Suno generate (style-fit, language-lock, kid-mode, pronunciation-safety, names+proposal, coherence, keywords, dedupe, sanitize) ============ */
 app.post('/api/generate_song', async (req, res) => {
