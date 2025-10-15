@@ -302,16 +302,16 @@ function initBriefHelper() {
     exWrap.style.marginTop = '8px';
 
     const examples = [
-      'Születésnapra készül a dal a nővéremnek, Nóra 46 éves. Szereti a minimál techno és house zenét. Kulcsszavak: kitartás, logika, barátság, újrakezdés. Emlék: amikor együtt túráztunk a Csóványosra.',
-      'Esküvőre készül a dal, Kata és Máté számára. Stílus: romantikus pop, lassú tempó. Kulcsszavak: hűség, közös jövő, naplemente. Emlék: első közös balatoni nyaralás.',
-      'Évfordulónkra szeretném meglepni a páromat. Közepes tempójú rock-pop, pozitív hangulat. Kulcsszavak: humor, közös főzés, macskánk Mázli. Emlék: amikor megkaptuk az első közös lakás kulcsát.',
-      'Búcsúztatóra készül a dal. Méltóságteljes, nyugodt hangulat, kevés dob. Kulcsszavak: hála, fény, emlékek. Emlék: gyerekkori közös zongorázás a nappaliban.',
-      'Céges évzáróra kérek dalt. Tempó: lendületes, modern pop/elektronikus. Kulcsszavak: csapatmunka, innováció, 2025 célok, humor. Emlék: a tavaszi hackathon győzelmünk.',
-      'Gyerekdal 6 éves kislánynak, Lilinek. Vidám, egyszerű dallam, könnyen énekelhető refrén. Kulcsszavak: unikornis, szivárvány, ovi-barátok. Emlék: közös biciklizés a parkban.',
-      'Nyugdíjba vonuló kollégának. Hangulat: nosztalgikus, felemelő, akusztikus gitár+zongora. Kulcsszavak: segítőkészség, humor, 25 év, csapat. Emlék: a legendás hétfő reggeli kávék.',
-      'Jobbulást kívánó dal. Lassan építkező, reményt adó hangulat. Kulcsszavak: kitartás, gyógyulás, melletted állunk. Emlék: nyári tábortűz melletti beszélgetések.',
-      'Lánykéréshez készülő dal. Romantikus pop ballada, meleg hangzás. Kulcsszavak: közös jövő, „igen” pillanat, összetartozás. Emlék: első csók a Margitszigeten.',
-      'Ballagásra/diplomához kérünk dalt. Tempó: közepes, motiváló. Kulcsszavak: álom, kitartás, új kezdet. Emlék: éjszakai tanulások és a záróvizsga napja.'
+      'Születésnapi dalt szeretnék a nővéremnek, Nórának. Pali vagyok, a legjobb barátja. A minimal techno és a house áll hozzá közel. Jó lenne, ha megjelenne benne a kitartás, a logika, a barátság és az újrakezdés motívuma. Idézzük meg a közös túráinkat, a 2014-es szardíniai utat, Portugáliát és a közös techno bulikat. A munkahelyi százszázalékos tervteljesítések is rólunk szólnak.',
+      'Esküvői dalt kérünk Katának és Máténak, lassú, romantikus pop hangulatban. Szerepeljen benne a hűség, a közös jövő és a naplemente képe. Jó lenne felidézni az első közös balatoni nyaralást, a margitszigeti csókot, és említeni a legjobb barátokat, Nórit és Otit. Az utazásaink közül Dominika is fontos emlék.',
+      'Évfordulóra lepnék meg a párommal egy dallal. Közepes tempójú, pozitív rock-popra gondolok. Legyen benne a humor, a közös főzéseink és a macskánk, Mázli. Jó lenne megemlíteni azt a pillanatot is, amikor megkaptuk az első közös lakásunk kulcsát.',
+      'Búcsúztató dal készül. Szeretném, ha méltóságteljes és nyugodt lenne, visszafogott dobbal. A hála, a fény és az emlékek témája fontos. Gyerekkori közös zongorázásaink a nappaliban különösen kedvesek.',
+      'Céges évzáróra kérek dalt lendületes, modern pop/elektronikus hangzással. Jó lenne, ha a csapatmunka, az innováció, a kétezer-huszonötös célok és egy kis humor is beleférne. A tavaszi hackathon-győzelmünk legyen benne.',
+      'Gyerekdalt szeretnék egy hatéves kislánynak, Lilinek, ma van a születésnapja. Vidám, egyszerű dallamra és könnyen énekelhető refrénre vágyunk. Szerepeljen benne az unikornis, a szivárvány és az ovis barátok. Jó lenne megemlíteni a közös biciklizést a parkban és a legjobb barátját, Sanyikát.',
+      'Nyugdíjba vonuló kollégának kérünk dalt. Legyen nosztalgikus és felemelő, akusztikus gitár és zongora kísérettel. Fontos témák: segítőkészség, humor, huszonöt év közös munka, és a csapat. A legendás hétfő reggeli kávézások mindenképp kerüljenek bele.',
+      'Jobbulást kívánó dalt szeretnénk. Lassan építkező, reményt adó hangulatban gondolkodunk. A kitartás, a gyógyulás és az, hogy mellette állunk, mind jelenjen meg. A nyári tábortűz melletti beszélgetéseink szép emlékek.',
+      'Lánykéréshez kérek dalt romantikus pop ballada hangzásban, meleg tónusokkal. A közös jövő, az „igen” pillanat és az összetartozás legyen benne. Az első csókunk a Margitszigeten különösen fontos és a Budai vár, ahol megkértem Éva kezét.',
+      'Ballagásra/diplomához kérünk dalt a fiamnak, Tamásnak. Közepes tempójú, motiváló darabot szeretnénk. Az álom, a kitartás és az új kezdet témája jelenjen meg. Jó lenne felidézni az éjszakai tanulásokat és a záróvizsga napját.'
     ];
 
     const exTitle = document.createElement('div');
