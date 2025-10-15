@@ -162,7 +162,7 @@ app.post('/api/order', (req, res) => {
       <li><b>Ének:</b> ${o.vocal || ''}</li>
       <li><b>Nyelv:</b> ${o.language || ''}</li>
     </ul>
-    <p><b>Brief:</b><br/>${(o.brief || '').replace(/\\n/g, '<br/>')}</p>
+    <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
   `;
   const jobs = [{ to: owner, subject: 'Új dal megrendelés', html: orderHtml, replyTo: o.email || undefined }];
   if (o.email) {
@@ -186,7 +186,7 @@ app.post('/api/contact', (req, res) => {
       <li><b>Név:</b> ${c.name || ''}</li>
       <li><b>E-mail:</b> ${c.email || ''}</li>
     </ul>
-    <p>${(c.message || '').replace(/\\n/g, '<br/>')}</p>
+    <p>${(c.message || '').replace(/\n/g, '<br/>')}</p>
   `;
   const jobs = [{ to: owner, subject: 'EnZenem – Üzenet', html, replyTo: c.email || undefined }];
   if (c.email) jobs.push({ to: c.email, subject: 'EnZenem – Üzenet fogadva', html: '<p>Köszönjük az üzenetet, hamarosan válaszolunk.</p>' });
@@ -269,7 +269,7 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
           <li><b>Csomag:</b> ${md.package || ''}</li>
           <li><b>Összeg:</b> ${(s.amount_total/100).toFixed(0)} ${s.currency?.toUpperCase()}</li>
         </ul>
-        <p><b>Brief:</b><br/>${(md.brief || '').replace(/\\n/g,'<br/>')}</p>
+        <p><b>Brief:</b><br/>${(md.brief || '').replace(/\n/g,'<br/>')}</p>
         <p><i>Stripe session: ${s.id}</i></p>
       `;
       await sendMailFast({ to: owner, subject: 'EnZenem – Fizetett megrendelés', html: orderHtml, replyTo: email || undefined });
@@ -357,19 +357,19 @@ app.post('/api/generate_song', async (req, res) => {
       const b = (brief || '').toLowerCase();
       const cur = String(language||'').toLowerCase().trim();
       const map = [
-        { re: /\\bholland\\b|\\bdutch\\b|\\bnémetalföldi\\b/, code: 'nl' },
-        { re: /\\bangol\\b|\\benglish\\b/, code: 'en' },
-        { re: /\\bnémet\\b|\\bgerman\\b/, code: 'de' },
-        { re: /\\bfrancia\\b|\\bfrench\\b/, code: 'fr' },
-        { re: /\\bolasz\\b|\\bitalian\\b/, code: 'it' },
-        { re: /\\bspanyol\\b|\\bspanish\\b/, code: 'es' },
-        { re: /\\bportugál\\b|\\bportuguese\\b/, code: 'pt' },
-        { re: /\\blengyel\\b|\\bpolish\\b/, code: 'pl' },
-        { re: /\\bcseh\\b|\\bczech\\b/, code: 'cs' },
-        { re: /\\bromán\\b|\\bromanian\\b/, code: 'ro' },
-        { re: /\\bszlovák\\b|\\bslovak\\b/, code: 'sk' },
-        { re: /\\bszerb\\b|\\bserbian\\b/, code: 'sr' },
-        { re: /\\bkínai\\b|\\bchinese\\b/, code: 'zh' }
+        { re: /\bholland\b|\bdutch\b|\bnémetalföldi\b/, code: 'nl' },
+        { re: /\bangol\b|\benglish\b/, code: 'en' },
+        { re: /\bnémet\b|\bgerman\b/, code: 'de' },
+        { re: /\bfrancia\b|\bfrench\b/, code: 'fr' },
+        { re: /\bolasz\b|\bitalian\b/, code: 'it' },
+        { re: /\bspanyol\b|\bspanish\b/, code: 'es' },
+        { re: /\bportugál\b|\bportuguese\b/, code: 'pt' },
+        { re: /\blengyel\b|\bpolish\b/, code: 'pl' },
+        { re: /\bcseh\b|\bczech\b/, code: 'cs' },
+        { re: /\bromán\b|\bromanian\b/, code: 'ro' },
+        { re: /\bszlovák\b|\bslovak\b/, code: 'sk' },
+        { re: /\bszerb\b|\bserbian\b/, code: 'sr' },
+        { re: /\bkínai\b|\bchinese\b/, code: 'zh' }
       ];
       if (!cur || cur === 'hu' || cur === 'hungarian') {
         for (const m of map) { if (m.re.test(b)) { language = m.code; break; } }
@@ -380,20 +380,20 @@ app.post('/api/generate_song', async (req, res) => {
     const mandatoryKeywords = (() => {
       const b = (brief || '').toString();
       const arr = [];
-      const m = b.match(/Kulcsszavak\\s*:\\s*([^\\n\\.]+)/i);
+      const m = b.match(/Kulcsszavak\s*:\s*([^\n\.]+)/i);
       if (m && m[1]) {
         m[1].split(/[;,]/).map(s => s.trim()).filter(Boolean).forEach(k => arr.push(k));
       }
       if (/évzáró/i.test(b)) arr.push('évzáró');
       if (/hackathon/i.test(b)) arr.push('hackathon');
-      if (/\\b2025\\b/.test(b) || /kétezer\\s+huszonöt/i.test(b)) arr.push('kétezer huszonöt');
+      if (/\b2025\b/.test(b) || /kétezer\s+huszonöt/i.test(b)) arr.push('kétezer huszonöt');
       return Array.from(new Set(arr));
     })();
 
     // ---- names + proposal detect ----
     const names = (() => {
       const b = (brief || '');
-      const raw = b.match(/\\b[A-ZÁÉÍÓÖŐÚÜŰ][a-záéíóöőúüű]+\\b/g) || [];
+      const raw = b.match(/\b[A-ZÁÉÍÓÖŐÚÜŰ][a-záéíóöőúüű]+\b/g) || [];
       const stop = new Set(['Szerelmem','Verse','Chorus','Margitszigeten','Margitsziget','Erdély','Tenerife','Madeira','Horvátország','Magyarország','Erdélyi','Horvát','Magyar']);
       return raw.filter(w => !stop.has(w));
     })();
@@ -403,7 +403,7 @@ app.post('/api/generate_song', async (req, res) => {
     const isProposal = /eljegyz|megkérés|kér(?:i|em).*kezét|kér.*hozzám|kérdés.*igen/i.test(brief || '');
 
     // ---- kid-song mode detect ----
-    const isKidSong = /gyerekdal|óvoda|ovi|nursery|kids?\\b|children\\b/i.test((brief||'') + ' ' + (styles||''));
+    const isKidSong = /gyerekdal|óvoda|ovi|nursery|kids?\b|children\b/i.test((brief||'') + ' ' + (styles||''));
 
     // ---- vocal normalization (HU/EN + conservative) ----
     const v = (vocal || '').toString().trim().toLowerCase();
@@ -416,8 +416,8 @@ app.post('/api/generate_song', async (req, res) => {
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
     const SUNO_API_KEY   = process.env.SUNO_API_KEY;
-    const SUNO_BASE_URL  = (process.env.SUNO_BASE_URL || '').replace(/\\/+$/,''); // ENV only
-    const PUBLIC_URL     = (process.env.PUBLIC_URL || '').replace(/\\/+$/,'');
+    const SUNO_BASE_URL  = (process.env.SUNO_BASE_URL || '').replace(/\/+$/,''); // ENV only
+    const PUBLIC_URL     = (process.env.PUBLIC_URL || '').replace(/\/+$/,'');
 
     if (!OPENAI_API_KEY) return res.status(500).json({ ok:false, message:'OPENAI_API_KEY hiányzik' });
     if (!SUNO_API_KEY)   return res.status(500).json({ ok:false, message:'Suno API key hiányzik' });
@@ -498,7 +498,7 @@ app.post('/api/generate_song', async (req, res) => {
       "Do NOT override already-English genre tags (e.g., 'minimal techno', 'house', 'pop').",
       "If vocal is male/female/instrumental, append that as 'male vocals'/'female vocals' or omit for instrumental.",
       "All numerals must be fully spelled out in words (no digits)."
-    ].filter(Boolean).join('\\n');
+    ].filter(Boolean).join('\n');
 
     const usr1 = [
       'Mandatory keywords: ' + mandatoryKeywords.join(', '),
@@ -507,7 +507,7 @@ app.post('/api/generate_song', async (req, res) => {
       'Client styles (primary, do NOT override): ' + styles,
       'Vocal: ' + vocal,
       'Brief (secondary only): ' + brief
-    ].join('\\n');
+    ].join('\n');
 
     const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
       method:'POST',
@@ -538,8 +538,8 @@ app.post('/api/generate_song', async (req, res) => {
         'indie','folk','country','reggaeton','reggae','synthwave','vaporwave','trap','drill','hardstyle',
         'progressive house','deep house','electro house','future bass','dubstep','garage','uk garage','breakbeat','phonk','k-pop','kpop'
       ]);
-      const base = (styleEN||'').toLowerCase().split(/[,\|\\/]+/).map(s=>s.trim()).filter(Boolean);
-      const cli  = (client||'').toLowerCase().split(/[,\|\\/]+/).map(s=>s.trim()).filter(Boolean);
+      const base = (styleEN||'').toLowerCase().split(/[,\|\/]+/).map(s=>s.trim()).filter(Boolean);
+      const cli  = (client||'').toLowerCase().split(/[,\|\/]+/).map(s=>s.trim()).filter(Boolean);
       const out = [];
       const seen = new Set();
       for(const g of cli){ if (protectedGenres.has(g) && !seen.has(g)){ out.push(g); seen.add(g); } }
@@ -573,9 +573,9 @@ app.post('/api/generate_song', async (req, res) => {
       'All numerals must be words (no digits).',
       'Use typographic quotes if quotes appear.',
       'Output ONLY the final lyrics.'
-    ].filter(Boolean).join('\\n');
+    ].filter(Boolean).join('\n');
 
-    const usr2 = 'Language: ' + language + '\\nTitle: ' + title + '\\nStyles: ' + styles + '\\nVocal: ' + vocal + '\\n\\n' + lyricsDraft;
+    const usr2 = 'Language: ' + language + '\nTitle: ' + title + '\nStyles: ' + styles + '\nVocal: ' + vocal + '\n\n' + lyricsDraft;
 
     let oi2 = await fetch('https://api.openai.com/v1/chat/completions', {
       method:'POST',
@@ -618,7 +618,7 @@ app.post('/api/generate_song', async (req, res) => {
     }
 
     // ---- numbers→words safety (ha maradt számjegy) ----
-    if (/\\d/.test(lyrics)) {
+    if (/\d/.test(lyrics)) {
       const sysNum = 'Rewrite ALL numerals as fully spelled-out words in the requested language. Keep section headings and line counts. No digits.';
       const numR = await fetch('https://api.openai.com/v1/chat/completions', {
         method:'POST',
@@ -639,7 +639,7 @@ app.post('/api/generate_song', async (req, res) => {
     // ---- Name presence minimal enforce (always once; kid-mode: in Chorus too) ----
     if (names && names.length) {
       const primaryName = names[0];
-      if (!new RegExp('\\\\b' + primaryName + '\\\\b','i').test(lyrics)) {
+      if (!new RegExp('\\b' + primaryName + '\\b','i').test(lyrics)) {
         const sysName = 'Insert the personal name "' + primaryName + '" naturally at least once without breaking rhythm or rhyme. Keep all headings.';
         const rN = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -660,7 +660,7 @@ app.post('/api/generate_song', async (req, res) => {
           const m = text.match(rx); return m ? (m[2] || '').trim() : '';
         };
         const chorusBody = sectionOf(lyrics, 'Chorus');
-        const hasNameInChorus = chorusBody ? new RegExp('\\\\b' + primaryName + '\\\\b','i').test(chorusBody) : false;
+        const hasNameInChorus = chorusBody ? new RegExp('\\b' + primaryName + '\\b','i').test(chorusBody) : false;
         if (!hasNameInChorus) {
           const sysNC = 'Rewrite ONLY the Chorus to include the name "' + primaryName + '" once in a catchy hook (2–4 short lines). Keep everything else unchanged.';
           const rC = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -677,6 +677,8 @@ app.post('/api/generate_song', async (req, res) => {
             const jC = await rC.json();
             const out = (jC?.choices?.[0]?.message?.content || '').trim();
             if (out) {
+              // ha teljes dalt adott – elfogadjuk; ha csak refrén jött, alább a proposal-merge blokk mintájára lehetne visszailleszteni,
+              // de mivel most teljes szöveget kérünk, tipikusan teljeset fog adni. Ha mégsem, a szerkezet-check majd korrigál.
               lyrics = out;
             }
           }
@@ -694,7 +696,7 @@ app.post('/api/generate_song', async (req, res) => {
       }
       function replaceAllChorus(full, chorusBody){
         const rxG = new RegExp('(^|\\n)(\\s*Chorus\\s*\\n)([\\s\\S]*?)(?=\\n\\s*(Verse 1|Verse 2|Verse 3|Verse 4|Chorus)\\s*\\n|$)', 'gi');
-        return full.replace(rxG, (_m, p1, heading) => p1 + heading + chorusBody + '\\n');
+        return full.replace(rxG, (_m, p1, heading) => p1 + heading + chorusBody + '\n');
       }
       const sysCh =
         'Rewrite ONLY the Chorus of the following lyrics to include a direct poetic question addressing "' + person + '" by name, using typographic quotes and a question mark. ' +
@@ -725,39 +727,12 @@ app.post('/api/generate_song', async (req, res) => {
           } else {
             let newChorusBody = '';
             if (/Chorus/i.test(out)) newChorusBody = extractSection(out, 'Chorus');
-            if (!newChorusBody) newChorusBody = out.replace(/^Chorus\\s*:?/i, '').trim();
+            if (!newChorusBody) newChorusBody = out.replace(/^Chorus\s*:?/i, '').trim();
             if (newChorusBody) lyrics = replaceAllChorus(lyrics, newChorusBody);
           }
         }
       }
     }
-
-    // ---- HU name inflection polish (vocative/accusative/possessive) ----
-    try {
-      if ((language || '').toLowerCase().startsWith('hu') && names.length) {
-        const sysMorph =
-          "You are a Hungarian lyric editor. Review ONLY personal name forms in the lyrics. " +
-          "Choose the correct Hungarian case per context: direct address → 'Bence,' (no -t), " +
-          "object → 'Bencét', first-person possessive → 'Bencém', etc. " +
-          "Fix unnatural or mismatched inflections while keeping rhythm, rhyme and meaning. " +
-          "Return the FULL lyrics with section headings unchanged.";
-        const mFix = await fetch('https://api.openai.com/v1/chat/completions', {
-          method:'POST',
-          headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
-          body: JSON.stringify({
-            model: OPENAI_MODEL,
-            messages:[{role:'system', content: sysMorph},{role:'user', content: lyrics}],
-            temperature: 0.3,
-            max_tokens: 700
-          })
-        });
-        if (mFix.ok) {
-          const jM = await mFix.json();
-          const out = (jM?.choices?.[0]?.message?.content || '').trim();
-          if (out) lyrics = out;
-        }
-      }
-    } catch {}
 
     // ---- Ensure Verse 4 is not identical to Verse 1 or Chorus (paraphrase if needed) ----
     function sectionOf(text, name){
@@ -769,7 +744,7 @@ app.post('/api/generate_song', async (req, res) => {
       const v1 = sectionOf(lyrics, 'Verse 1');
       const v4 = sectionOf(lyrics, 'Verse 4');
       const ch = sectionOf(lyrics, 'Chorus');
-      const toSet = s => new Set(s.split('\\n').map(x => x.trim().toLowerCase()).filter(Boolean));
+      const toSet = s => new Set(s.split('\n').map(x => x.trim().toLowerCase()).filter(Boolean));
       const overlap = (a,b) => { const A=toSet(a), B=toSet(b); let c=0; A.forEach(x=>{if(B.has(x)) c++;}); return c; };
       let need = false;
       if (v1 && v4 && overlap(v1,v4) >= 2) need = true;
@@ -795,10 +770,10 @@ app.post('/api/generate_song', async (req, res) => {
 
     // ---- Ensure mandatory keywords are present; if missing, minimal edit pass ----
     try{
-      const missing = (mandatoryKeywords||[]).filter(k => !new RegExp(k.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'i').test(lyrics));
+      const missing = (mandatoryKeywords||[]).filter(k => !new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(lyrics));
       if (missing.length){
         const sysK = 'Insert the following keywords verbatim at least once into the lyrics, with minimal edits, keeping headings and rhythm intact.';
-        const usrK = 'Missing keywords: ' + missing.join(', ') + '\\n\\n' + lyrics;
+        const usrK = 'Missing keywords: ' + missing.join(', ') + '\n\n' + lyrics;
         const oiK = await fetch('https://api.openai.com/v1/chat/completions', {
           method:'POST',
           headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
@@ -824,18 +799,18 @@ app.post('/api/generate_song', async (req, res) => {
         'pop','rock','hip hop','hip-hop','trap','drill'
       ]);
       const cleaned = [];
-      for (const line of lyrics.split('\\n')) {
+      for (const line of lyrics.split('\n')) {
         const raw = line;
         const L = raw.trim().toLowerCase();
         if (!L) { cleaned.push(raw); continue; }
         if (tagWords.has(L)) continue;
-        if (/^\\s*kulcsszavak\\s*:/i.test(raw)) continue; // ne kerüljön a szövegbe
+        if (/^\s*kulcsszavak\s*:/i.test(raw)) continue; // ne kerüljön a szövegbe
         const parts = L.split(/[,\s]+/).filter(Boolean);
         const allTags = parts.length && parts.every(p => tagWords.has(p));
         if (allTags) continue;
         cleaned.push(raw);
       }
-      lyrics = cleaned.join('\\n').replace(/\\n{3,}/g, '\\n\\n').trim();
+      lyrics = cleaned.join('\n').replace(/\n{3,}/g, '\n\n').trim();
     })();
 
     // ---- Suno call ----
@@ -913,7 +888,7 @@ app.get('/api/generate_song/ping', (req, res) => {
 
 app.get('/api/suno/ping', async (req, res) => {
   try{
-    const BASE = (process.env.SUNO_BASE_URL || 'https://sunoapi.org').replace(/\\/+$/,'');
+    const BASE = (process.env.SUNO_BASE_URL || 'https://sunoapi.org').replace(/\/+$/,'');
     const H = { 'Authorization': `Bearer ${process.env.SUNO_API_KEY||''}`, 'Content-Type':'application/json' };
     const r1 = await fetch(`${BASE}/api/v1/generate`, { method:'POST', headers:H, body: JSON.stringify({ invalid:true }) });
     const t1 = await r1.text();
