@@ -1104,7 +1104,7 @@ app.post('/api/generate_song', async (req, res) => {
           title: d.title || title,
           audio_url: d.audioUrl || d.url,
           image_url: d.imageUrl || d.coverUrl
-        })))
+        }))
         .filter(x => !!x.audio_url)
         .slice(0, 2);
     }
