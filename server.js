@@ -909,6 +909,7 @@ app.post('/api/generate_song', async (req, res) => {
     lyrics = applyRefrainAlt(lyrics);
 lyrics = applyFinalTinyFixesHU(lyrics, { language });
 lyrics = normalizeSectionHeadingsSafe(lyrics);
+lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
 
 
     const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
