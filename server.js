@@ -1,4 +1,4 @@
-// ESM server.js – FULL PATCH
+// ESM server.js – FINAL SAFE BUILD
 // Suno V1 (customMode + V5 + callBackUrl) + GPT JSON (lyrics + style_en)
 // + Duplicate guard (idempotency) + 2-track cap + style-preserve + rhyme + numbers->words
 //
@@ -8,7 +8,7 @@
 // SUNO_API_KEY=su-...
 // SUNO_BASE_URL=https://sunoapi.org
 // PUBLIC_URL=https://www.enzenem.hu
-// (Mail/Stripe envs optional – maradhatnak)
+// (Mail/Stripe envs optional)
 
 import express from 'express';
 import cors from 'cors';
@@ -346,18 +346,18 @@ async function sunoStartV1(url, headers, body){
 /* ======================= HU POLISH HELPER (TOP-LEVEL) ======================= */
 async function polishHungarianLyrics({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, mandatoryKeywords = [] }) {
   const sys = [
-    'Te magyar anyanyelvű dalszöveg-szerkesztő vagy.',
-    'Javítsd a MAGYAR ragozást, a természetes szórendet és a költői folyamatosságot,',
-    'úgy, hogy a jelentés NE változzon, a ritmus és a rímek maradjanak, a szakaszfejlécek érintetlenek.',
-    'TILOS új fejezetcímeket kitalálni vagy a meglévőket átírni.',
-    'Kerüld a tükörfordítás-ízű, magyartalan szerkezeteket.',
-    'Pl. „<főnév> fest aranyra a táj” helyett természetesebb: „Arany naplemente nyugszik a tájon” / „A tájat aranyra festi a naplemente”.',
-    'Megszólításnál természetes alakot használj (pl. „Bence,”; érzelmes birtokosnál „Bencém”), a tárgyesetet („Bencét”) csak indokolt szerkezetben.',
-    'A sorok maradjanak rövidek, énekelhetők; a rímek legyenek gyengédek (ne kényszeríts értelmetlenséget).',
-    'Kötelező kulcsszavak maradjanak verbatim: ' + (mandatoryKeywords.length ? mandatoryKeywords.join(', ') : '(nincs)'),
-    'FORMÁTUM: Verse 1 / Verse 2 / Chorus / Verse 3 / Verse 4 / Chorus – és versszakonként ugyanannyi sor maradjon.',
-    'Csak a végleges dalszöveget add vissza (fejlécekkel), extra komment NÉLKÜL.'
-  ].join('\n');
+    "Te magyar anyanyelvű dalszöveg-szerkesztő vagy.",
+    "Javítsd a MAGYAR ragozást, a természetes szórendet és a költői folyamatosságot,",
+    "úgy, hogy a jelentés NE változzon, a ritmus és a rímek maradjanak, a szakaszfejlécek érintetlenek.",
+    "TILOS új fejezetcímeket kitalálni vagy a meglévőket átírni.",
+    "Kerüld a tükörfordítás-ízű, magyartalan szerkezeteket.",
+    "Pl. „<főnév> fest aranyra a táj” helyett természetesebb: „Arany naplemente nyugszik a tájon” / „A tájat aranyra festi a naplemente”.",
+    "Megszólításnál természetes alakot használj (pl. „Bence,”; érzelmes birtokosnál „Bencém”), a tárgyesetet („Bencét”) csak indokolt szerkezetben.",
+    "A sorok maradjanak rövidek, énekelhetők; a rímek legyenek gyengédek (ne kényszeríts értelmetlenséget).",
+    "Kötelező kulcsszavak maradjanak verbatim: " + (mandatoryKeywords.length ? mandatoryKeywords.join(", ") : "(nincs)"),
+    "FORMÁTUM: Verse 1 / Verse 2 / Chorus / Verse 3 / Verse 4 / Chorus – és versszakonként ugyanannyi sor maradjon.",
+    "Csak a végleges dalszöveget add vissza (fejlécekkel), extra komment NÉLKÜL."
+  ].join("\n");
 
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -382,12 +382,12 @@ async function rewriteKeywordListOpeners({ OPENAI_API_KEY, OPENAI_MODEL, lyrics 
   if (!looksListy.test(lyrics)) return lyrics;
 
   const sys = [
-    'Magyar dalszöveg-szerkesztő vagy.',
-    'Ha bármely sor kulcsszó-felsorolással KEZDŐDIK (pl. „Céges, Tempó, Emlék, …”), fogalmazd át természetes, énekelhető sorra,',
-    'a kulcsszavak maradjanak, de ne legyen csupasz lista. Rím/ritmus maradjon.',
-    'A szakaszcímek (Verse 1/2/3/4, Chorus) maradjanak változatlanok. A sor- és versszakszám maradjon.',
-    'Csak a kész dalszöveget add vissza.'
-  ].join('\n');
+    "Magyar dalszöveg-szerkesztő vagy.",
+    "Ha bármely sor kulcsszó-felsorolással KEZDŐDIK (pl. „Céges, Tempó, Emlék, …”), fogalmazd át természetes, énekelhető sorra,",
+    "a kulcsszavak maradjanak, de ne legyen csupasz lista. Rím/ritmus maradjon.",
+    "A szakaszcímek (Verse 1/2/3/4, Chorus) maradjanak változatlanok. A sor- és versszakszám maradjon.",
+    "Csak a kész dalszöveget add vissza."
+  ].join("\n");
 
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -488,30 +488,27 @@ function softHungarianAwkwardFilter(text) {
 async function enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, names = [], mandatoryKeywords = [] }) {
   const target = String(language || 'hu').toLowerCase();
   const isHU = /^(hu|hungarian|magyar)$/.test(target);
-
-  // Only enforce if Hungarian characters appear (prevents unnecessary calls)
   const looksHU = /[áéíóöőúüűÁÉÍÓÖŐÚÜŰ]/.test(lyrics);
   if (isHU) return lyrics;
   if (!looksHU) return lyrics;
 
-  // Preserve only names + ASCII-like keywords
+  // Preserve only names + ASCII-like tokens from mandatoryKeywords
   let preserveList = [...new Set([...(names || [])].filter(Boolean))];
   const asciiOnly = (mandatoryKeywords || []).filter(k => /^[A-Za-z0-9 .,'"\-\&\(\)]+$/.test(k || ''));
   preserveList = [...new Set([...preserveList, ...asciiOnly])];
 
   const sys = [
-    `Rewrite the lyrics fully into ${target}.`,
-    'Preserve ALL section headings (Verse 1/Verse 2/Verse 3/Verse 4/Chorus).',
-    'Keep rhythm and gentle rhymes.',
+    "Rewrite the lyrics fully into " + target + ".",
+    "Preserve ALL section headings (Verse 1/Verse 2/Verse 3/Verse 4/Chorus).",
+    "Keep rhythm and gentle rhymes.",
     (preserveList.length
-      ? 'Keep these tokens verbatim if they are proper names or must-stay words: ' + preserveList.join(', ')
-      : 'Preserve proper names verbatim.'),
-    'Do NOT mix languages; remove any stray Hungarian words.
-Any Hungarian words are not proper names; translate them to the target language.
-If a personal name appears with a Hungarian case suffix (nak/nek/ban/ben/hoz/hez/höz/ra/re/tól/től/nál/nél), do not keep the suffix; render it naturally in the target language.',
-    'If you encounter Hungarian words such as "céges" (or "ceges"), they are NOT proper names. Translate them naturally to the target language (e.g., corporate/company).',
-    'Return ONLY the final lyrics text.'
-  ].join('\n');
+      ? "Keep these tokens verbatim if they are proper names or must-stay words: " + preserveList.join(", ")
+      : "Preserve proper names verbatim."),
+    "Do NOT mix languages; remove any stray Hungarian words.",
+    "Any Hungarian words are not proper names; translate them to the target language.",
+    "If a personal name appears with a Hungarian case suffix (nak/nek/ban/ben/hoz/hez/höz/ra/re/tól/től/nál/nél), do not keep the suffix; render it naturally in the target language.",
+    "Return ONLY the final lyrics text."
+  ].join("\n");
 
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -574,68 +571,55 @@ app.post('/api/generate_song', async (req, res) => {
       return Array.from(new Set(arr));
     })();
 
-
-// explicit black-list non-HU: drop 'céges/ceges'
-(function(){
-  const lang = String(language || 'hu').toLowerCase();
-  const isHU = /^(hu|hungarian|magyar)$/.test(lang);
-  if (!isHU && Array.isArray(mandatoryKeywords)) {
-    for (let i = mandatoryKeywords.length - 1; i >= 0; i--) {
-      const kw = (mandatoryKeywords[i] || '').toLowerCase();
-      if (kw === 'céges' || kw === 'ceges') mandatoryKeywords.splice(i, 1);
-    }
-  }
-})();
-// --- FILTER MANDATORY KEYWORDS FOR NON-HU TARGETS ---
-(function(){
-  const lang = String(language || 'hu').toLowerCase();
-  const isHU = /^(hu|hungarian|magyar)$/.test(lang);
-  if (!isHU) {
-    const asciiRx = /^[A-Za-z0-9 .,'"\-\&\(\)]+$/;
-    for (let i = mandatoryKeywords.length - 1; i >= 0; i--) {
-      const kw = mandatoryKeywords[i] || '';
-      if (!asciiRx.test(kw)) {
-        mandatoryKeywords.splice(i, 1);
+    // --- FILTER MANDATORY KEYWORDS FOR NON-HU TARGETS ---
+    (function(){
+      const lang = String(language || 'hu').toLowerCase();
+      const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+      if (!isHU) {
+        const asciiRx = /^[A-Za-z0-9 .,'"\-\&\(\)]+$/;
+        for (let i = mandatoryKeywords.length - 1; i >= 0; i--) {
+          const kw = mandatoryKeywords[i] || '';
+          if (!asciiRx.test(kw)) {
+            mandatoryKeywords.splice(i, 1);
+          }
+        }
       }
-    }
-  }
-})();
-
+    })();
 
     // names + proposal
-    const names = (() => {
+    let names = (() => {
       const b = (brief || '');
       const raw = b.match(/\b[A-ZÁÉÍÓÖŐÚÜŰ][a-záéíóöőúüű]+\b/g) || [];
       const stop = new Set(['Szerelmem','Verse','Chorus','Margitszigeten','Margitsziget','Erdély','Tenerife','Madeira','Horvátország','Magyarország','Erdélyi','Horvát','Magyar']);
       return raw.filter(w => !stop.has(w));
     })();
-    
 
-// --- NAMES: strip Hungarian case suffixes for non-HU targets ---
-{
-  const lang = String(language||'hu').toLowerCase();
-  const isHU = /^(hu|hungarian|magyar)$/.test(lang);
-  if (!isHU && Array.isArray(names)) {
-    const base = names.map(nm => {
-      const s = String(nm||'');
-      const mm = s.match(/^([A-ZÁÉÍÓÖŐÚÜŰ][\wÁÉÍÓÖŐÚÜŰáéíóöőúüű\-']+?)(?:nak|nek|val|vel|ba|be|ban|ben|ra|re|ról|ről|hoz|hez|höz|tól|től|nál|nél)?$/i);
-      return mm ? mm[1] : s;
-    });
-    const seen = new Set(); const clean = [];
-    for (const b of base) { const k = b.normalize('NFC'); if (!seen.has(k)) { seen.add(k); clean.push(b); } }
-    names = clean;
-  }
-}
-// names cleanup: remove 'Céges' if it sneaks in
-{
-  if (Array.isArray(names)) {
-    for (let i = names.length - 1; i >= 0; i--) {
-      const nm = (names[i] || '').toLowerCase();
-      if (nm === 'céges' || nm === 'ceges') names.splice(i, 1);
+    // names cleanup: remove 'Céges'
+    {
+      if (Array.isArray(names)) {
+        for (let i = names.length - 1; i >= 0; i--) {
+          const nm = (names[i] || '').toLowerCase();
+          if (nm === 'céges' || nm === 'ceges') names.splice(i, 1);
+        }
+      }
     }
-  }
-}
-if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) mandatoryKeywords.push(nm);
+
+    // --- NAMES: strip Hungarian case suffixes for non-HU targets ---
+    {
+      const lang = String(language || "hu").toLowerCase();
+      const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+      if (!isHU && Array.isArray(names)) {
+        const base = names.map(nm => {
+          const s = String(nm || "");
+          const mm = s.match(/^([A-ZÁÉÍÓÖŐÚÜŰ][\wÁÉÍÓÖŐÚÜŰáéíóöőúüű\-']+?)(?:nak|nek|val|vel|ba|be|ban|ben|ra|re|ról|ről|hoz|hez|höz|tól|től|nál|nél)?$/i);
+          return mm ? mm[1] : s;
+        });
+        const seen = new Set(); const clean = [];
+        for (const b of base) { const k = b.normalize("NFC"); if (!seen.has(k)) { seen.add(k); clean.push(b); } }
+        names = clean;
+      }
+    }
+
     const isProposal = /eljegyz|megkérés|kér(?:i|em).*kezét|kér.*hozzám|kérdés.*igen/i.test(brief || '');
 
     // kid mode
@@ -694,7 +678,6 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
 
     const pronunciationSafety =
       "Avoid Hungarian words that AI models sometimes mispronounce when sung (e.g. 'oson', 'mélybe', 'elcsendesült', 'céges', 'üdvözlet', 'hajnali', 'zengjen'). These are NOT banned; only use them if they fit perfectly and pronounce clearly in context.";
-
     const awkwardHU = [
       'örök éltet','közös dal','minden út nyitva áll','szívünk mindig szabad',
       'él a szó','örök zene','út nyitva áll','szívünkben él a nagy remény','mánusz'
@@ -793,6 +776,7 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
       'Names: ' + (names.join(', ') || '(none)') + ' MUST remain.',
       (isProposal ? 'Chorus must ask the partner directly by name with typographic quotes and a question mark.' : ' '),
       (/^(hu|hungarian|magyar)$/.test(String(language||'hu').toLowerCase()) ? pronunciationSafety : ''),
+      (/^(hu|hungarian|magyar)$/.test(String(language||'hu').toLowerCase()) ? awkwardNote : ''),
       'Prefer gentle end-rhymes but NEVER force nonsense.',
       'All numerals must be words (no digits).',
       'Use typographic quotes if quotes appear.',
@@ -807,8 +791,8 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages:[{role:'system', content: sys2},{role:'user', content: usr2}],
-        temperature:0.6,
-        max_tokens: 900
+      temperature:0.6,
+      max_tokens: 900
       })
     });
     let lyrics = lyricsDraft;
@@ -831,42 +815,36 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
     try { lyrics = await rewriteKeywordListOpeners({ OPENAI_API_KEY, OPENAI_MODEL, lyrics }); }
     catch(e){ console.warn('[LISTY_FIX_FAIL]', e?.message || e); }
 
-    // target language enforce (e.g., EN track: remove stray HU words)
-    // --- PRE-ENFORCE sanitize for non-HU: kill "céges"
-{
-  const lang = String(language||'hu').toLowerCase();
-  const isHU = /^(hu|hungarian|magyar)$/.test(lang);
-  if (!isHU) {
-    lyrics = lyrics.replace(/[Cc][eé]ges/g, 'corporate');
-  }
-}
-    
-// --- PRE-ENFORCE: soften Hungarian name case endings for non-HU targets ---
-{
-  const lang = String(language||'hu').toLowerCase();
-  const isHU = /^(hu|hungarian|magyar)$/.test(lang);
-  if (!isHU) {
-    lyrics = lyrics.replace(/\b([A-ZÁÉÍÓÖŐÚÜŰ][\wÁÉÍÓÖŐÚÜŰáéíóöőúüű\-']+?)(?:nak|nek|val|vel|ba|be|ban|ben|ra|re|ról|ről|hoz|hez|höz|tól|től|nál|nél)\b/g, '$1');
-  }
-}
+    // --- PRE-ENFORCE: soften Hungarian name case endings for non-HU targets ---
+    {
+      const lang = String(language || "hu").toLowerCase();
+      const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+      if (!isHU) {
+        lyrics = lyrics.replace(/\b([A-ZÁÉÍÓÖŐÚÜŰ][\wÁÉÍÓÖŐÚÜŰáéíóöőúüű\-']+?)(?:nak|nek|val|vel|ba|be|ban|ben|ra|re|ról|ről|hoz|hez|höz|tól|től|nál|nél)\b/g, "$1");
+      }
+    }
 
+    // target language enforce (e.g., EN/FR track: remove stray HU words)
     try {
       lyrics = await enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, names, mandatoryKeywords });
     } catch(e) { console.warn('[LANG_ENFORCE_FAIL]', e?.message || e); }
 
-    
-// --- POST-ENFORCE CLEANUP FOR NON-HU TARGETS ---
-(function(){
-  const lang = String(language || 'hu').toLowerCase();
-  const isHU = /^(hu|hungarian|magyar)$/.test(lang);
-  if (!isHU) {
-    lyrics = lyrics.replace(/(^|\n)\s*(céges|évzáró)(\s*\d+)?\s*$(?=\n|$)/gim, '$1');
-    lyrics = lyrics.replace(/([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű])(\d+)/g, '$1 $2');
-    lyrics = lyrics.replace(/\n{3,}/g, '\n\n').trim();
-    lyrics = lyrics.replace(/[Cc][eé]ges/g, 'corporate');
-  }
-})();
-// HU numbers→words deterministic (only HU)
+    // --- POST-ENFORCE CLEANUP FOR NON-HU TARGETS ---
+    {
+      const lang = String(language || 'hu').toLowerCase();
+      const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+      if (!isHU) {
+        // remove stray standalone lines with typical HU words
+        lyrics = lyrics.replace(/(^|\n)\s*(céges|évzáró)(\s*\d+)?\s*$(?=\n|$)/gim, '$1');
+        // add space before digits if any
+        lyrics = lyrics.replace(/([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű])(\d+)/g, '$1 $2');
+        lyrics = lyrics.replace(/\n{3,}/g, '\n\n').trim();
+        // reinforce céges fix
+        lyrics = lyrics.replace(/\b[Cc][eé]ges\b/g, 'corporate');
+      }
+    }
+
+    // HU numbers→words deterministic (only HU)
     {
       const lang = String(language || 'hu').toLowerCase();
       if (/^(hu|hungarian|magyar)$/.test(lang)) {
@@ -910,8 +888,8 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
         });
         if (rN.ok) { const j = await rN.json(); lyrics = (j?.choices?.[0]?.message?.content || lyrics).trim(); }
       }
-      const isKidSong = /(^|\b)(gyerekdal|óvoda|ovi|nursery|kids?|children)(\b|$)/i.test((brief||'') + ' ' + (styles||''));
-      if (isKidSong) {
+      const isKidSongX = /(^|\b)(gyerekdal|óvoda|ovi|nursery|kids?|children)(\b|$)/i.test((brief||'') + ' ' + (styles||''));
+      if (isKidSongX) {
         const sectionOf = (text, name) => {
           const rx = new RegExp('(^|\\n)\\s*' + name + '\\s*\\n([\\s\\S]*?)(?=\\n\\s*(Verse 1|Verse 2|Verse 3|Verse 4|Chorus)\\s*\\n|$)','i');
           const m = text.match(rx); return m ? (m[2] || '').trim() : '';
@@ -960,7 +938,7 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
         headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
         body: JSON.stringify({
           model: OPENAI_MODEL,
-          messages: [{role:'system', content: sysCh},{role:'user', content: lyrics}],
+          messages: [{role: 'system', content: sysCh},{role:'user', content: lyrics}],
           temperature: 0.5,
           max_tokens: 500
         })
@@ -1129,7 +1107,6 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
 });
 
 // === PATCH BLOCK END ===
-
 
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
