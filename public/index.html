@@ -668,21 +668,18 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
       <form class="form" id="orderForm">
         <input autocomplete="off" name="_hp" style="display:none" tabindex="-1" type="text"/>
         <div class="grid">
+        <label class="gold-text">Csomag (fizetés bankkártyával: Visa vagy MasterCard)
+            <select name="package" required="">
+              <option value="basic">Alap (MP3)</option>
+              <option value="video">Videó csomag (MP4)</option>
+              <option value="premium">Prémium (WAV)</option>
+            </select>
         <label class="gold-text">
          Dal címe (opcionális)
         <input name="title" type="text" placeholder="pl. Budai csillag">
         </label>
           <label class="gold-text">E-mail (ahová a linket küldjük)
             <input name="email" placeholder="pelda@domain.hu" required="" type="email"/>
-          </label>
-          <label class="gold-text">Esemény típusa
-            <select name="event_type" required="">
-              <option value="Esküvő">Esküvő</option>
-              <option value="Búcsúztatás">Búcsúztatás</option>
-              <option value="Születésnap">Születésnap</option>
-              <option value="Céges rendezvény">Céges rendezvény</option>
-              <option value="Egyéb">Egyéb</option>
-            </select>
           </label>
           <label class="gold-text">Zenei stílus (írható is)
            <input list="style-list" name="styles" placeholder="pl. pop / rock / musical / minimal techno / house / saját megjelölés" required type="text">
@@ -694,7 +691,6 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
            <select name="vocal" required>
   <option value="female">Női</option>
   <option value="male">Férfi</option>
-  <option value="instrumental">Instrumentális</option>
 </select>
           </label>
           <label class="gold-text">Nyelv (pl. magyar, angol, német, holland, stb..)
