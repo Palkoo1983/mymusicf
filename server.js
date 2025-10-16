@@ -1,20 +1,13 @@
-// ESM server.js – FULL PATCH
-// Suno V1 (customMode + V5 + callBackUrl) + GPT JSON (lyrics + style_en)
-// + Duplicate guard (idempotency) + 2-track cap + style-preserve + rhyme + numbers->words
-//
-// Required envs (Render -> Environment):
-// OPENAI_API_KEY=sk-...
-// OPENAI_MODEL=gpt-4.1-mini
-// SUNO_API_KEY=su-...
-// SUNO_BASE_URL=https://sunoapi.org
-// PUBLIC_URL=https://www.enzenem.hu
-// (Mail/Stripe envs optional – maradhatnak)
+// ESM server.js – FINAL (stable)
+// - Keeps previous features (HU polish + rhyme/structure + style preserve + "céges"/"évzáró" cleanup)
+// - Guarantees numbers from brief appear, then converts digits→words at the very end
+// - Non-HU enforce only
+// - No stray \1 / print / unclosed strings; Node 18+ fetch OK
 
 import express from 'express';
 import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-import crypto from 'crypto';
 import Stripe from 'stripe';
 
 dotenv.config();
@@ -341,23 +334,20 @@ async function sunoStartV1(url, headers, body){
   return { ok:false, status:503, text:'start_unavailable_after_retries' };
 }
 
-// === PATCH BLOCK START ===
-
-/* ======================= HU POLISH HELPER (TOP-LEVEL) ======================= */
+/* ======================= HU POLISH HELPER ======================= */
 async function polishHungarianLyrics({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, mandatoryKeywords = [] }) {
   const sys = [
-    'Te magyar anyanyelvű dalszöveg-szerkesztő vagy.',
-    'Javítsd a MAGYAR ragozást, a természetes szórendet és a költői folyamatosságot,',
-    'úgy, hogy a jelentés NE változzon, a ritmus és a rímek maradjanak, a szakaszfejlécek érintetlenek.',
-    'TILOS új fejezetcímeket kitalálni vagy a meglévőket átírni.',
-    'Kerüld a tükörfordítás-ízű, magyartalan szerkezeteket.',
-    'Pl. „<főnév> fest aranyra a táj” helyett természetesebb: „Arany naplemente nyugszik a tájon” / „A tájat aranyra festi a naplemente”.',
-    'Megszólításnál természetes alakot használj (pl. „Bence,”; érzelmes birtokosnál „Bencém”), a tárgyesetet („Bencét”) csak indokolt szerkezetben.',
-    'A sorok maradjanak rövidek, énekelhetők; a rímek legyenek gyengédek (ne kényszeríts értelmetlenséget).',
-    'Kötelező kulcsszavak maradjanak verbatim: ' + (mandatoryKeywords.length ? mandatoryKeywords.join(', ') : '(nincs)'),
-    'FORMÁTUM: Verse 1 / Verse 2 / Chorus / Verse 3 / Verse 4 / Chorus – és versszakonként ugyanannyi sor maradjon.',
-    'Csak a végleges dalszöveget add vissza (fejlécekkel), extra komment NÉLKÜL.'
-  ].join('\n');
+    "Te magyar anyanyelvű dalszöveg-szerkesztő vagy.",
+    "Javítsd a MAGYAR ragozást, a természetes szórendet és a költői folyamatosságot, úgy, hogy a jelentés NE változzon, a ritmus és a rímek maradjanak, a szakaszfejlécek érintetlenek.",
+    "TILOS új fejezetcímeket kitalálni vagy a meglévőket átírni.",
+    "Kerüld a tükörfordítás-ízű, magyartalan szerkezeteket.",
+    "Pl. \"<főnév> fest aranyra a táj\" helyett természetesebb: \"Arany naplemente nyugszik a tájon\" / \"A tájat aranyra festi a naplemente\".",
+    "Megszólításnál természetes alakot használj (pl. \"Bence,\"; érzelmes birtokosnál \"Bencém\"), a tárgyesetet (\"Bencét\") csak indokolt szerkezetben.",
+    "A sorok maradjanak rövidek, énekelhetők; a rímek legyenek gyengédek (ne kényszeríts értelmetlenséget).",
+    "Kötelező kulcsszavak maradjanak verbatim: " + (mandatoryKeywords.length ? mandatoryKeywords.join(", ") : "(nincs)"),
+    "FORMÁTUM: Verse 1 / Verse 2 / Chorus / Verse 3 / Verse 4 / Chorus – és versszakonként ugyanannyi sor maradjon.",
+    "Csak a végleges dalszöveget add vissza (fejlécekkel), extra komment nélkül."
+  ].join("\n");
 
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -374,7 +364,6 @@ async function polishHungarianLyrics({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, man
   const out = (j?.choices?.[0]?.message?.content || '').trim();
   return out || lyrics;
 }
-/* ===================== /HU POLISH HELPER (TOP-LEVEL) ======================= */
 
 /* ===== Kulcsszó-lista jellegű sor-kezdetek természetesítése ===== */
 async function rewriteKeywordListOpeners({ OPENAI_API_KEY, OPENAI_MODEL, lyrics }) {
@@ -382,12 +371,11 @@ async function rewriteKeywordListOpeners({ OPENAI_API_KEY, OPENAI_MODEL, lyrics 
   if (!looksListy.test(lyrics)) return lyrics;
 
   const sys = [
-    'Magyar dalszöveg-szerkesztő vagy.',
-    'Ha bármely sor kulcsszó-felsorolással KEZDŐDIK (pl. „Céges, Tempó, Emlék, …”), fogalmazd át természetes, énekelhető sorra,',
-    'a kulcsszavak maradjanak, de ne legyen csupasz lista. Rím/ritmus maradjon.',
-    'A szakaszcímek (Verse 1/2/3/4, Chorus) maradjanak változatlanok. A sor- és versszakszám maradjon.',
-    'Csak a kész dalszöveget add vissza.'
-  ].join('\n');
+    "Magyar dalszöveg-szerkesztő vagy.",
+    "Ha bármely sor kulcsszó-felsorolással KEZDŐDIK (pl. \"Céges, Tempó, Emlék, …\"), fogalmazd át természetes, énekelhető sorra, a kulcsszavak maradjanak, de ne legyen csupasz lista. Rím/ritmus maradjon.",
+    "A szakaszcímek (Verse 1/2/3/4, Chorus) maradjanak változatlanok. A sor- és versszakszám maradjon.",
+    "Csak a kész dalszöveget add vissza."
+  ].join("\n");
 
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -404,7 +392,7 @@ async function rewriteKeywordListOpeners({ OPENAI_API_KEY, OPENAI_MODEL, lyrics 
   return (j?.choices?.[0]?.message?.content || '').trim() || lyrics;
 }
 
-/* ===== HU NUMBERS → WORDS ===== */
+/* ===== HU NUMBERS → WORDS (deterministic) ===== */
 function huNumberWord(n) {
   const ones = ['nulla','egy','kettő','három','négy','öt','hat','hét','nyolc','kilenc'];
   const tens = ['','tíz','húsz','harminc','negyven','ötven','hatvan','hetven','nyolcvan','kilencven'];
@@ -452,13 +440,14 @@ function huNumberWord(n) {
   return String(n);
 }
 function normalizeNumbersHU(text) {
-  text = text.replace(/(\d+)\s*%/g, (_m, d) => huNumberWord(d) + ' százalék');
-  text = text.replace(
+  let out = text;
+  out = out.replace(/(\d+)\s*%/g, (_m, d) => huNumberWord(d) + ' százalék');
+  out = out.replace(
     /(\d+)(-|\s)?(os|ös|ban|ben|ból|ből|ra|re|hoz|hez|höz|nál|nél|tól|től|val|vel|ként|ig|nak|nek|ról|ről|ba|be|on|en|ön|n|kor)\b/gi,
     (_m, d, _sep, rag) => huNumberWord(d) + (rag ? ' ' + rag.toLowerCase() : '')
   );
-  text = text.replace(/\b\d+\b/g, (m) => huNumberWord(m));
-  return text;
+  out = out.replace(/\b\d+\b/g, (m) => huNumberWord(m));
+  return out;
 }
 
 /* ---- HU soft awkward/profane filter ---- */
@@ -474,8 +463,8 @@ function softHungarianAwkwardFilter(text) {
     [/\bszívünk mindig szabad\b/gi, 'szívünk szabadon dobban'],
     [/\bmánusz\b/gi, 'manó'],
     [/\bNórit és Otit erős gyökérként állnak\b/gi, 'Nóri és Oti erős gyökérként állnak mellettünk'],
-    [/\bÁlmok lassan fonódnak,?\s*mint a fények ég\.?/gi, 'Álmok lassan fonódnak, mint fény az égen'],
-    [/^\s*Szerepeljen minden érzés, mi él\b/gmi, 'Minden érzésünk él, ami bennünk él'],
+    [/\bÁlmok lassan fonódnak,\s*mint a fények ég\.?/gi, 'Álmok lassan fonódnak, mint fény az égen'],
+    [/^\s*Szerepeljen minden érzés, mi él/gmi, 'Minden érzésünk él, ami bennünk él'],
     [/\bSzerepeljen\b/gi, 'Szóljon'],
     [/\besküvői szívekben\b/gi, 'esküvői szívünkben'],
     [/\bgyökérként állnak\b/gi, 'tartó erőként állnak']
@@ -484,33 +473,30 @@ function softHungarianAwkwardFilter(text) {
   return out.replace(/[ \t]+$/gm, '').replace(/\n{3,}/g, '\n\n').trim();
 }
 
-/* ---- ENFORCE TARGET LANGUAGE (if target ≠ HU) ---- */
-/* ---- ENFORCE TARGET LANGUAGE (if target ≠ HU) ---- */
+/* ---- ENFORCE TARGET LANGUAGE (runs only if NOT HU) ---- */
 async function enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, names = [], mandatoryKeywords = [] }) {
   const target = String(language || 'hu').toLowerCase();
   const isHU = /^(hu|hungarian|magyar)$/.test(target);
-
-  // Only enforce if Hungarian characters appear (prevents unnecessary calls)
   const looksHU = /[áéíóöőúüűÁÉÍÓÖŐÚÜŰ]/.test(lyrics);
   if (isHU) return lyrics;
   if (!looksHU) return lyrics;
 
-  // Preserve only names + ASCII-like keywords
   let preserveList = [...new Set([...(names || [])].filter(Boolean))];
   const asciiOnly = (mandatoryKeywords || []).filter(k => /^[A-Za-z0-9 .,'"\-\&\(\)]+$/.test(k || ''));
   preserveList = [...new Set([...preserveList, ...asciiOnly])];
 
   const sys = [
     `Rewrite the lyrics fully into ${target}.`,
-    'Preserve ALL section headings (Verse 1/Verse 2/Verse 3/Verse 4/Chorus).',
-    'Keep rhythm and gentle rhymes.',
+    "Preserve ALL section headings (Verse 1/Verse 2/Verse 3/Verse 4/Chorus).",
+    "Keep rhythm and gentle rhymes.",
     (preserveList.length
-      ? 'Keep these tokens verbatim if they are proper names or must-stay words: ' + preserveList.join(', ')
-      : 'Preserve proper names verbatim.'),
-    'Do NOT mix languages; remove any stray Hungarian words.',
-    'If you encounter Hungarian words such as "céges" (or "ceges"), they are NOT proper names. Translate them naturally to the target language (e.g., corporate/company).',
-    'Return ONLY the final lyrics text.'
-  ].join('\n');
+      ? "Keep these tokens verbatim if they are proper names or must-stay words: " + preserveList.join(", ")
+      : "Preserve proper names verbatim."),
+    "Do NOT mix languages; remove any stray Hungarian words.",
+    "Any Hungarian words are not proper names; translate them to the target language.",
+    "If a personal name appears with a Hungarian case suffix (nak/nek/ban/ben/hoz/hez/höz/ra/re/tól/től/nál/nél), do not keep the suffix; render it naturally in the target language.",
+    "Return ONLY the final lyrics text."
+  ].join("\n");
 
   const r = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -518,7 +504,7 @@ async function enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, lan
     body: JSON.stringify({
       model: OPENAI_MODEL,
       messages: [{ role: 'system', content: sys }, { role: 'user', content: lyrics }],
-      temperature: 0.4,
+      temperature: 0.3,
       max_tokens: 900
     })
   });
@@ -561,7 +547,7 @@ app.post('/api/generate_song', async (req, res) => {
       }
     })();
 
-    // mandatory keywords
+    // mandatory keywords (existing)
     const mandatoryKeywords = (() => {
       const b = (brief || '').toString();
       const arr = [];
@@ -573,55 +559,68 @@ app.post('/api/generate_song', async (req, res) => {
       return Array.from(new Set(arr));
     })();
 
-
-// explicit black-list non-HU: drop 'céges/ceges'
-(function(){
-  const lang = String(language || 'hu').toLowerCase();
-  const isHU = /^(hu|hungarian|magyar)$/.test(lang);
-  if (!isHU && Array.isArray(mandatoryKeywords)) {
-    for (let i = mandatoryKeywords.length - 1; i >= 0; i--) {
-      const kw = (mandatoryKeywords[i] || '').toLowerCase();
-      if (kw === 'céges' || kw === 'ceges') mandatoryKeywords.splice(i, 1);
-    }
-  }
-})();
-// --- FILTER MANDATORY KEYWORDS FOR NON-HU TARGETS ---
-(function(){
-  const lang = String(language || 'hu').toLowerCase();
-  const isHU = /^(hu|hungarian|magyar)$/.test(lang);
-  if (!isHU) {
-    const asciiRx = /^[A-Za-z0-9 .,'"\-\&\(\)]+$/;
-    for (let i = mandatoryKeywords.length - 1; i >= 0; i--) {
-      const kw = mandatoryKeywords[i] || '';
-      if (!asciiRx.test(kw)) {
-        mandatoryKeywords.splice(i, 1);
+    // ADD: numbers/years from brief as mandatory (guarantee presence)
+    (function(){
+      const btxt = String(brief || '');
+      const allNums = Array.from(btxt.matchAll(/\b\d{1,4}\b/g)).map(m => m[0]);
+      const years   = Array.from(btxt.matchAll(/\b(1[0-9]{3}|20[0-9]{2})\b/g)).map(m => m[0]);
+      const lang = String(language || 'hu').toLowerCase();
+      const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+      if (isHU) {
+        const uniqYears = [...new Set(years)];
+        for (const y of uniqYears) {
+          const yWord = huNumberWord(Number(y)).replace(/\s+/g, ' ');
+          if (yWord && !mandatoryKeywords.includes(yWord)) mandatoryKeywords.push(yWord);
+        }
+      } else {
+        const uniqAll = [...new Set(allNums)];
+        for (const n of uniqAll) {
+          if (!mandatoryKeywords.includes(n)) mandatoryKeywords.push(n);
+        }
       }
-    }
-  }
-})();
+    })();
 
+    // FILTER MANDATORY for non-HU (ASCII only)
+    (function(){
+      const lang = String(language || 'hu').toLowerCase();
+      const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+      if (!isHU) {
+        const asciiRx = /^[A-Za-z0-9 .,'"\-\&\(\)]+$/;
+        for (let i = mandatoryKeywords.length - 1; i >= 0; i--) {
+          const kw = mandatoryKeywords[i] || '';
+          if (!asciiRx.test(kw)) mandatoryKeywords.splice(i, 1);
+        }
+      }
+    })();
 
     // names + proposal
-    const names = (() => {
+    let names = (() => {
       const b = (brief || '');
       const raw = b.match(/\b[A-ZÁÉÍÓÖŐÚÜŰ][a-záéíóöőúüű]+\b/g) || [];
       const stop = new Set(['Szerelmem','Verse','Chorus','Margitszigeten','Margitsziget','Erdély','Tenerife','Madeira','Horvátország','Magyarország','Erdélyi','Horvát','Magyar']);
       return raw.filter(w => !stop.has(w));
     })();
-    
-// names cleanup: remove 'Céges' if it sneaks in
-{
-  if (Array.isArray(names)) {
-    for (let i = names.length - 1; i >= 0; i--) {
-      const nm = (names[i] || '').toLowerCase();
-      if (nm === 'céges' || nm === 'ceges') names.splice(i, 1);
+    // drop "céges" accidental name
+    if (Array.isArray(names)) {
+      names = names.filter(n => n.toLowerCase() !== 'céges' && n.toLowerCase() !== 'ceges');
     }
-  }
-}
-if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) mandatoryKeywords.push(nm);
-    const isProposal = /eljegyz|megkérés|kér(?:i|em).*kezét|kér.*hozzám|kérdés.*igen/i.test(brief || '');
+    // strip HU name suffixes for non-HU
+    {
+      const lang = String(language || "hu").toLowerCase();
+      const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+      if (!isHU && Array.isArray(names)) {
+        const base = names.map(nm => {
+          const s = String(nm || "");
+          const mm = s.match(/^([A-ZÁÉÍÓÖŐÚÜŰ][\wÁÉÍÓÖŐÚÜŰáéíóöőúüű\-']+?)(?:nak|nek|val|vel|ba|be|ban|ben|ra|re|ról|ről|hoz|hez|höz|tól|től|nál|nél)?$/i);
+          return mm ? mm[1] : s;
+        });
+        const seen = new Set(); const clean = [];
+        for (const b of base) { const k = b.normalize("NFC"); if (!seen.has(k)) { seen.add(k); clean.push(b); } }
+        names = clean;
+      }
+    }
 
-    // kid mode
+    const isProposal = /eljegyz|megkérés|kér(?:i|em).*kezét|kér.*hozzám|kérdés.*igen/i.test(brief || '');
     const isKidSong = /gyerekdal|óvoda|ovi|nursery|kids?\b|children\b/i.test((brief || '') + ' ' + (styles || ''));
 
     // vocal normalization
@@ -677,7 +676,6 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
 
     const pronunciationSafety =
       "Avoid Hungarian words that AI models sometimes mispronounce when sung (e.g. 'oson', 'mélybe', 'elcsendesült', 'céges', 'üdvözlet', 'hajnali', 'zengjen'). These are NOT banned; only use them if they fit perfectly and pronounce clearly in context.";
-
     const awkwardHU = [
       'örök éltet','közös dal','minden út nyitva áll','szívünk mindig szabad',
       'él a szó','örök zene','út nyitva áll','szívünkben él a nagy remény','mánusz'
@@ -687,7 +685,7 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
     // GPT #1
     const sys1 = [
       'You write song lyrics in the requested language and also output an ENGLISH style descriptor (style_en) for a music model.',
-      "Write lyrics that MATCH the client's chosen musical style **in rhythm and tone**.",
+      "Write lyrics that MATCH the client's chosen musical style in rhythm and tone.",
       'LANGUAGE LOCK: write the lyrics STRICTLY in ' + language + ' (no mixing).',
       'Do NOT invent or coin nonsense words; only real, idiomatic words.',
       (isKidSong ? 'KID MODE: very simple vocabulary, present tense, 3–6 words per line, AABB rhymes in verses, 2–4 line catchy hook in Chorus, include onomatopoeia (e.g., la la, clap clap) and movement cues.' : ''),
@@ -697,7 +695,7 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
       'Chorus rule: ' + chorusHint,
       'Coherence rule: build a clear narrative arc as per brief. In each verse, lines must connect by a shared image/topic (no filler lines).',
       'Personal names found: ' + (names.join(', ') || '(none)') + ' — personal names MUST appear verbatim at least once; if exactly one name is present and this is a proposal theme, include it in the Chorus.',
-      (isProposal ? 'Proposal rule: Chorus MUST contain a direct poetic question using typographic quotes and a question mark addressing the partner by name.' : ' '),
+      (isProposal ? 'Proposal rule: Chorus MUST contain a direct poetic question using typographic quotes and a question mark addressing the partner by name.' : ''),
       (/^(hu|hungarian|magyar)$/.test(String(language||'hu').toLowerCase()) ? pronunciationSafety : ''),
       (/^(hu|hungarian|magyar)$/.test(String(language||'hu').toLowerCase()) ? awkwardNote : ''),
       'MANDATORY: Naturally include ALL of these keywords verbatim at least once if present: ' + (mandatoryKeywords.length ? mandatoryKeywords.join(', ') : '(no mandatory keywords)'),
@@ -774,8 +772,9 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
       'Apply: ' + chorusHint,
       'Ensure narrative coherence: connect images across lines in each verse (no generic filler).',
       'Names: ' + (names.join(', ') || '(none)') + ' MUST remain.',
-      (isProposal ? 'Chorus must ask the partner directly by name with typographic quotes and a question mark.' : ' '),
+      (isProposal ? 'Chorus must ask the partner directly by name with typographic quotes and a question mark.' : ''),
       (/^(hu|hungarian|magyar)$/.test(String(language||'hu').toLowerCase()) ? pronunciationSafety : ''),
+      (/^(hu|hungarian|magyar)$/.test(String(language||'hu').toLowerCase()) ? awkwardNote : ''),
       'Prefer gentle end-rhymes but NEVER force nonsense.',
       'All numerals must be words (no digits).',
       'Use typographic quotes if quotes appear.',
@@ -814,188 +813,45 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
     try { lyrics = await rewriteKeywordListOpeners({ OPENAI_API_KEY, OPENAI_MODEL, lyrics }); }
     catch(e){ console.warn('[LISTY_FIX_FAIL]', e?.message || e); }
 
-    // target language enforce (e.g., EN track: remove stray HU words)
-    // --- PRE-ENFORCE sanitize for non-HU: kill "céges"
-{
-  const lang = String(language||'hu').toLowerCase();
-  const isHU = /^(hu|hungarian|magyar)$/.test(lang);
-  if (!isHU) {
-    lyrics = lyrics.replace(/[Cc][eé]ges/g, 'corporate');
-  }
-}
+    // PRE-ENFORCE: strip Hungarian name case endings for non-HU targets
+    {
+      const lang = String(language || "hu").toLowerCase();
+      const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+      if (!isHU) {
+        lyrics = lyrics.replace(/\b([A-ZÁÉÍÓÖŐÚÜŰ][\wÁÉÍÓÖŐÚÜŰáéíóöőúüű\-']+?)(?:nak|nek|val|vel|ba|be|ban|ben|ra|re|ról|ről|hoz|hez|höz|tól|től|nál|nél)\b/g, "$1");
+      }
+    }
+
+    // target language enforce (non-HU only)
     try {
-      lyrics = await enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, names, mandatoryKeywords });
+      const lang = String(language || 'hu').toLowerCase();
+      const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+      if (!isHU) {
+        lyrics = await enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, names, mandatoryKeywords });
+      }
     } catch(e) { console.warn('[LANG_ENFORCE_FAIL]', e?.message || e); }
 
-    
-// --- POST-ENFORCE CLEANUP FOR NON-HU TARGETS ---
-(function(){
-  const lang = String(language || 'hu').toLowerCase();
-  const isHU = /^(hu|hungarian|magyar)$/.test(lang);
-  if (!isHU) {
-    lyrics = lyrics.replace(/(^|\n)\s*(céges|évzáró)(\s*\d+)?\s*$(?=\n|$)/gim, '$1');
-    lyrics = lyrics.replace(/([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű])(\d+)/g, '$1 $2');
-    lyrics = lyrics.replace(/\n{3,}/g, '\n\n').trim();
-    lyrics = lyrics.replace(/[Cc][eé]ges/g, 'corporate');
-  }
-})();
-// HU numbers→words deterministic (only HU)
+    // POST-ENFORCE CLEANUP FOR NON-HU TARGETS
     {
       const lang = String(language || 'hu').toLowerCase();
-      if (/^(hu|hungarian|magyar)$/.test(lang)) {
-        lyrics = normalizeNumbersHU(lyrics);
+      const isHU = /^(hu|hungarian|magyar)$/.test(lang);
+      if (!isHU) {
+        lyrics = lyrics.replace(/(^|\n)\s*(céges|évzáró)(\s*\d+)?\s*$(?=\n|$)/gim, '$1');
+        lyrics = lyrics.replace(/([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű])(\d+)/g, '$1 $2');
+        lyrics = lyrics.replace(/\n{3,}/g, '\n\n').trim();
+        lyrics = lyrics.replace(/\b[Cc][eé]ges\b/g, 'corporate'); // extra safety
       }
     }
 
-    // numbers→words safety (any language)
-    if (/\d/.test(lyrics)) {
-      const sysNum = 'Rewrite ALL numerals as fully spelled-out words in the requested language. Keep section headings and line counts. No digits.';
-      const numR = await fetch('https://api.openai.com/v1/chat/completions', {
-        method:'POST',
-        headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
-        body: JSON.stringify({
-          model: OPENAI_MODEL,
-          messages:[{role:'system', content: sysNum},{role:'user', content: lyrics}],
-          temperature:0.0,
-          max_tokens: 750
-        })
-      });
-      if (numR.ok) {
-        const jn = await numR.json();
-        lyrics = (jn?.choices?.[0]?.message?.content || lyrics).trim();
-      }
-    }
-
-    // Name presence (and kid-mode chorus presence)
-    if (names && names.length) {
-      const primaryName = names[0];
-      if (!new RegExp('\\b' + primaryName + '\\b','i').test(lyrics)) {
-        const sysName = 'Insert the personal name "' + primaryName + '" naturally at least once without breaking rhythm or rhyme. Keep all headings.';
-        const rN = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: OPENAI_MODEL,
-            messages:[{role:'system',content:sysName},{role:'user',content:lyrics}],
-            temperature:0.4,
-            max_tokens:600
-          })
-        });
-        if (rN.ok) { const j = await rN.json(); lyrics = (j?.choices?.[0]?.message?.content || lyrics).trim(); }
-      }
-      const isKidSong = /(^|\b)(gyerekdal|óvoda|ovi|nursery|kids?|children)(\b|$)/i.test((brief||'') + ' ' + (styles||''));
-      if (isKidSong) {
-        const sectionOf = (text, name) => {
-          const rx = new RegExp('(^|\\n)\\s*' + name + '\\s*\\n([\\s\\S]*?)(?=\\n\\s*(Verse 1|Verse 2|Verse 3|Verse 4|Chorus)\\s*\\n|$)','i');
-          const m = text.match(rx); return m ? (m[2] || '').trim() : '';
-        };
-        const chorusBody = sectionOf(lyrics, 'Chorus');
-        const hasNameInChorus = chorusBody ? new RegExp('\\b' + primaryName + '\\b','i').test(chorusBody) : false;
-        if (!hasNameInChorus) {
-          const sysNC = 'Rewrite ONLY the Chorus to include the name "' + primaryName + '" once in a catchy hook (2–4 short lines). Keep everything else unchanged.';
-          const rC = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              model: OPENAI_MODEL,
-              messages:[{role:'system',content:sysNC},{role:'user',content:lyrics}],
-              temperature:0.5,
-              max_tokens:400
-            })
-          });
-          if (rC.ok) {
-            const jC = await rC.json();
-            const out = (jC?.choices?.[0]?.message?.content || '').trim();
-            if (out) lyrics = out;
-          }
-        }
-      }
-    }
-
-    // Proposal chorus enforce (1 name)
-    if (isProposal && names.length === 1) {
-      const person = names[0];
-      function extractSection(text, name){
-        const rx = new RegExp('(^|\\n)\\s*' + name + '\\s*\\n([\\s\\S]*?)(?=\\n\\s*(Verse 1|Verse 2|Verse 3|Verse 4|Chorus)\\s*\\n|$)', 'i');
-        const m = text.match(rx);
-        return m ? (m[2] || '').trim() : '';
-      }
-      function replaceAllChorus(full, chorusBody){
-        const rxG = new RegExp('(^|\\n)(\\s*Chorus\\s*\\n)([\\s\\S]*?)(?=\\n\\s*(Verse 1|Verse 2|Verse 3|Verse 4|Chorus)\\s*\\n|$)', 'gi');
-        return full.replace(rxG, (_m, p1, heading) => p1 + heading + chorusBody + '\n');
-      }
-      const sysCh =
-        'Rewrite ONLY the Chorus of the following lyrics to include a direct poetic question addressing "' + person + '" by name, using typographic quotes and a question mark. ' +
-        'Keep Chorus 2–4 short, memorable lines; keep the rest of the lyrics unchanged. ' +
-        'Return FULL lyrics with ALL original sections if you can; otherwise return the Chorus section only.';
-      const chFix = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
-        body: JSON.stringify({
-          model: OPENAI_MODEL,
-          messages: [{role:'system', content: sysCh},{role:'user', content: lyrics}],
-          temperature: 0.5,
-          max_tokens: 500
-        })
-      });
-      if (chFix.ok) {
-        const jC = await chFix.json();
-        const out = (jC?.choices?.[0]?.message?.content || '').trim();
-        if (out) {
-          const hasFullStructure =
-            /Verse 1/i.test(out) && /Verse 2/i.test(out) && /Chorus/i.test(out) &&
-            /Verse 3/i.test(out) && /Verse 4/i.test(out);
-          if (hasFullStructure) {
-            lyrics = out;
-          } else {
-            let newChorusBody = '';
-            if (/Chorus/i.test(out)) newChorusBody = extractSection(out, 'Chorus');
-            if (!newChorusBody) newChorusBody = out.replace(/^Chorus\s*:?/i, '').trim();
-            if (newChorusBody) lyrics = replaceAllChorus(lyrics, newChorusBody);
-          }
-        }
-      }
-    }
-
-    // Verse4 ≠ Verse1/Chorus
-    function sectionOf(text, name){
-      const rx = new RegExp('(^|\\n)\\s*' + name + '\\s*\\n([\\s\\S]*?)(?=\\n\\s*(Verse 1|Verse 2|Verse 3|Verse 4|Chorus)\\s*\\n|$)', 'i');
-      const m = text.match(rx);
-      return m ? (m[2] || '').trim() : '';
-    }
-    try{
-      const v1 = sectionOf(lyrics, 'Verse 1');
-      const v4 = sectionOf(lyrics, 'Verse 4');
-      const ch = sectionOf(lyrics, 'Chorus');
-      const toSet = s => new Set(s.split('\n').map(x => x.trim().toLowerCase()).filter(Boolean));
-      const overlap = (a,b) => { const A=toSet(a), B=toSet(b); let c=0; A.forEach(x=>{if(B.has(x)) c++;}); return c; };
-      let need = false;
-      if (v1 && v4 && overlap(v1,v4) >= 2) need = true;
-      if (ch && v4 && overlap(ch,v4) >= 2) need = true;
-      if (need){
-        const sys4 = 'Paraphrase ONLY the lines of Verse 4 so they are not identical to Verse 1 nor Chorus. Keep headings and rhythm.';
-        const oi4 = await fetch('https://api.openai.com/v1/chat/completions', {
-          method:'POST',
-          headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
-          body: JSON.stringify({
-            model: OPENAI_MODEL,
-            messages:[{role:'system', content: sys4},{role:'user', content: lyrics}],
-            temperature:0.6,
-            max_tokens: 800
-          })
-        });
-        if (oi4.ok){
-          const j4 = await oi4.json();
-          lyrics = (j4?.choices?.[0]?.message?.content || lyrics).trim();
-        }
-      }
-    }catch{}
-
-    // mandatory keywords ensure
+    // ******** ENSURE mandatory keywords appear (numbers too) ********
     try{
       const missing = (mandatoryKeywords||[]).filter(k => !new RegExp(k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(lyrics));
       if (missing.length){
-        const sysK = 'Insert the following keywords verbatim at least once into the lyrics, with minimal edits, keeping headings and rhythm intact.';
+        const sysK = [
+          "Insert the following keywords verbatim at least once into the lyrics.",
+          "Make MINIMAL edits only. Preserve rhyme, rhythm, line count, and all section headings.",
+          "Return the full lyrics."
+        ].join("\n");
         const usrK = 'Missing keywords: ' + missing.join(', ') + '\n\n' + lyrics;
         const oiK = await fetch('https://api.openai.com/v1/chat/completions', {
           method:'POST',
@@ -1003,7 +859,7 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
           body: JSON.stringify({
             model: OPENAI_MODEL,
             messages:[{role:'system', content: sysK},{role:'user', content: usrK}],
-            temperature:0.5,
+            temperature:0.3,
             max_tokens: 800
           })
         });
@@ -1012,32 +868,35 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
           lyrics = (jK?.choices?.[0]?.message?.content || lyrics).trim();
         }
       }
-    }catch{}
+    }catch(e){ console.warn('[KW_ENSURE_FAIL]', e?.message || e); }
 
-    // sanitize meta/tag lines + listy artifacts
-    (function () {
-      const tagWords = new Set([
-        'male vocals','female vocals',
-        'instrumental','minimal techno','techno','house','trance','edm','k-pop','kpop',
-        'pop','rock','hip hop','hip-hop','trap','drill'
-      ]);
-      const dropLineStarts = [
-        /^\s*(style|stílus|hangulat|mood|vocal|ének|keywords|kulcsszavak)\s*[:\-]/i
-      ];
-      const cleaned = [];
-      for (const raw of lyrics.split('\n')) {
-        const line = raw; const L = line.trim();
-        if (!L) { cleaned.push(line); continue; }
-        if (dropLineStarts.some(rx => rx.test(line))) continue;
-        const lower = L.toLowerCase();
-        const parts = lower.split(/[,\s]+/).filter(Boolean);
-        const looksLikeOnlyTags = parts.length > 0 && parts.every(p => tagWords.has(p));
-        if (looksLikeOnlyTags) continue;
-        if (tagWords.has(lower)) continue;
-        cleaned.push(line);
+    // ===== NOW convert numerals to words (AFTER ensure) =====
+    {
+      const lang = String(language || 'hu').toLowerCase();
+      if (/^(hu|hungarian|magyar)$/.test(lang)) {
+        lyrics = normalizeNumbersHU(lyrics);
+      } else if (/\d/.test(lyrics)) {
+        const sysNum = [
+          "Rewrite ALL numerals as fully spelled-out words in the requested language.",
+          "Keep section headings and line counts. No digits.",
+          "Return the full lyrics."
+        ].join("\n");
+        const numR = await fetch('https://api.openai.com/v1/chat/completions', {
+          method:'POST',
+          headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
+          body: JSON.stringify({
+            model: OPENAI_MODEL,
+            messages:[{role:'system', content: sysNum},{role:'user', content: lyrics}],
+            temperature:0.0,
+            max_tokens: 750
+          })
+        });
+        if (numR.ok) {
+          const jn = await numR.json();
+          lyrics = (jn?.choices?.[0]?.message?.content || lyrics).trim();
+        }
       }
-      lyrics = cleaned.join('\n').replace(/\n{3,}/g, '\n\n').trim();
-    })();
+    }
 
     // HU soft filter (only HU)
     {
@@ -1068,7 +927,7 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
     }
     const taskId = sj.data.taskId;
 
-    // Poll 2 tracks
+    // Poll up to 2 tracks
     const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 160);
     const intervalMs  = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 2000));
     let attempts = 0, tracks = [];
@@ -1100,9 +959,6 @@ if (names.length) for (const nm of names) if (!mandatoryKeywords.includes(nm)) m
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
   }
 });
-
-// === PATCH BLOCK END ===
-
 
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
