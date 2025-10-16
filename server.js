@@ -907,6 +907,9 @@ app.post('/api/generate_song', async (req, res) => {
     // Suno call
     lyrics = applySafeMorphHU(lyrics, { language });
     lyrics = applyRefrainAlt(lyrics);
+    
+    lyrics = ensureFullStructureForTechno(lyrics, { styles, brief, language });
+    lyrics = fixAccusativeLineEnds(lyrics);
 
     const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
       'Authorization': 'Bearer ' + SUNO_API_KEY,
