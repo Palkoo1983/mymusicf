@@ -1106,4 +1106,50 @@ function normalizeSectionHeadingsSafe(text) {
   } catch (_e) { return text; }
 }
 /* === END FINAL MICRO PATCHES ==================================== */
+/* === TECH/HOUSE CONTENT NUDGE (ultra-safe) ===================== */
+/* Csak techno/minimal/house esetén: ha a leírás kulcs-elemei
+   (helyek/értékek) hiányoznak a szövegből, a VÉGÉRE beteszünk
+   egy rövid (Break) blokkot a hiányzó kulcsszavakkal.
+   Nem módosítjuk a meglévő versszakokat.                        */
+function ensureTechnoStoryBits(lyrics, { styles = '', brief = '', language = '' } = {}) {
+  try {
+    const isTech = /(minimal\s*techno|techno|house)/i.test(String(styles));
+    if (!isTech) return lyrics;
+
+    let t = String(lyrics || '');
+    // Ha már van Break, nem bántjuk
+    if (/^\s*\(Break\)\s*$/mi.test(t)) return t;
+
+    const b = (brief || '').toLowerCase();
+    const must = [];
+    const need = (cond, tok) => { if (cond && !new RegExp('\\b' + tok + '\\b', 'i').test(t)) must.push(tok); };
+
+    // Nevek/helyek/motívumok a brief alapján
+    need(/nóra/.test(b), 'Nóra');
+    need(/pali/.test(b), 'Pali');
+    need(/szardíni/.test(b), 'Szardínia');
+    need(/portugáli/.test(b), 'Portugália');
+    need(/túrá/.test(b), 'túrák');
+    need(/goa/.test(b), 'goa');
+    need(/kitartás/.test(b), 'kitartás');
+    need(/logika/.test(b), 'logika');
+    need(/barátság/.test(b), 'barátság');
+    need(/újrakezd/.test(b), 'újrakezdés');
+    // 100% → "száz százalék" (ha a briefben szerepel)
+    need(/100\s*%|száz\s*százalék/.test(b), 'száz százalék');
+
+    if (!must.length) return t;
+
+    const lines = [];
+    const take = (arr) => arr.splice(0, Math.min(4, arr.length)).join(', ');
+    const pool = must.slice();
+    while (pool.length) lines.push(take(pool));
+
+    const breakBlock = '\n(Break)\n' + lines.join('\n') + '\n';
+    return t.trimEnd() + breakBlock;
+  } catch {
+    return lyrics;
+  }
+}
+/* === /TECH/HOUSE CONTENT NUDGE ================================= */
 
