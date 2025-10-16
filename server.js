@@ -482,7 +482,7 @@ async function enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, lan
   if (!looksHU) return lyrics;
 
   let preserveList = [...new Set([...(names || [])].filter(Boolean))];
-  const asciiOnly = (mandatoryKeywords || []).filter(k => /^[A-Za-z0-9 .,'\"\-\&\(\)]+$/.test(k || ''));
+  const asciiOnly = (mandatoryKeywords || []).filter(k => /^[A-Za-z0-9 .,'"\-\&\(\)]+$/.test(k || ''));
   preserveList = [...new Set([...preserveList, ...asciiOnly])];
 
   const sys = [
@@ -552,7 +552,7 @@ app.post('/api/generate_song', async (req, res) => {
       const b = (brief || '').toString();
       const arr = [];
       const m = b.match(/Kulcsszavak\s*:\s*([^\n\.]+)/i);
-      if (m && m[1]) m[1].split(/[;,.]/).map(s => s.trim()).filter(Boolean).forEach(k => arr.push(k));
+      if (m && m[1]) m[1].split(/[;,]/).map(s => s.trim()).filter(Boolean).forEach(k => arr.push(k));
       if (/évzáró/i.test(b)) arr.push('évzáró');
       if (/hackathon/i.test(b)) arr.push('hackathon');
       if (/\b2025\b/.test(b) || /kétezer\s+huszonöt/i.test(b)) arr.push('kétezer huszonöt');
@@ -585,7 +585,7 @@ app.post('/api/generate_song', async (req, res) => {
       const lang = String(language || 'hu').toLowerCase();
       const isHU = /^(hu|hungarian|magyar)$/.test(lang);
       if (!isHU) {
-        const asciiRx = /^[A-Za-z0-9 .,'\"\-\&\(\)]+$/;
+        const asciiRx = /^[A-Za-z0-9 .,'"\-\&\(\)]+$/;
         for (let i = mandatoryKeywords.length - 1; i >= 0; i--) {
           const kw = mandatoryKeywords[i] || '';
           if (!asciiRx.test(kw)) mandatoryKeywords.splice(i, 1);
@@ -600,9 +600,11 @@ app.post('/api/generate_song', async (req, res) => {
       const stop = new Set(['Szerelmem','Verse','Chorus','Margitszigeten','Margitsziget','Erdély','Tenerife','Madeira','Horvátország','Magyarország','Erdélyi','Horvát','Magyar']);
       return raw.filter(w => !stop.has(w));
     })();
+    // drop "céges" accidental name
     if (Array.isArray(names)) {
       names = names.filter(n => n.toLowerCase() !== 'céges' && n.toLowerCase() !== 'ceges');
     }
+    // strip HU name suffixes for non-HU
     {
       const lang = String(language || "hu").toLowerCase();
       const isHU = /^(hu|hungarian|magyar)$/.test(lang);
@@ -837,7 +839,7 @@ app.post('/api/generate_song', async (req, res) => {
         lyrics = lyrics.replace(/(^|\n)\s*(céges|évzáró)(\s*\d+)?\s*$(?=\n|$)/gim, '$1');
         lyrics = lyrics.replace(/([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű])(\d+)/g, '$1 $2');
         lyrics = lyrics.replace(/\n{3,}/g, '\n\n').trim();
-        lyrics = lyrics.replace(/\b[Cc][eé]ges\b/g, 'corporate');
+        lyrics = lyrics.replace(/\b[Cc][eé]ges\b/g, 'corporate'); // extra safety
       }
     }
 
@@ -901,6 +903,9 @@ app.post('/api/generate_song', async (req, res) => {
       const lang = String(language || 'hu').toLowerCase();
       if (/^(hu|hungarian|magyar)$/.test(lang)) lyrics = softHungarianAwkwardFilter(lyrics);
     }
+
+    // Global cross-style polish
+    lyrics = applyGlobalPolish(lyrics, { styles, language, brief, title });
 
     // Suno call
     const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
@@ -983,3 +988,86 @@ app.get('/api/suno/ping', async (req, res) => {
 
 /* ================== Start server ========================== */
 app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
+
+
+
+/* ======== GLOBAL LYRICS POLISH (style-agnostic, Hungarian-friendly) ======== */
+function _softSplitLongLine(line, maxChars) {
+  const L = line.trim();
+  if (L.length <= maxChars) return [L];
+  let idx = L.lastIndexOf(',', maxChars);
+  if (idx < 10) idx = L.lastIndexOf(' – ', maxChars);
+  if (idx < 10) idx = L.lastIndexOf(' - ', maxChars);
+  if (idx < 10) idx = L.lastIndexOf(' ', maxChars);
+  if (idx < 10) return [L];
+  return [L.slice(0, idx).trim(), L.slice(idx+1).trim()];
+}
+function _dedupeChorusLines(lines){
+  const seen = new Set(); const out = [];
+  for(const ln of lines){
+    const key = ln.toLowerCase().replace(/\s+/g,' ').trim();
+    if(seen.has(key)) {
+      out.push(ln.replace(/\b(ma|még|most)\b/i, 'mindig').replace(/\!+$/,''));
+    } else {
+      out.push(ln); seen.add(key);
+    }
+  }
+  return out;
+}
+function _fixHungarianGlitches(text){
+  let t = text;
+  t = t.replace(/\bvel\.$/gm, 'velünk.');
+  t = t.replace(/\bvel\,$/gm, 'velünk,');
+  t = t.replace(/\blen\b/g, 'lesz');
+  t = t.replace(/\bve\.$/gm, 'vele.');
+  t = t.replace(/\bve\,$/gm, 'vele,');
+  t = t.replace(/\báradnak\b/g, 'árad');
+  t = t.replace(/\bjárnak\b/g, 'jár');
+  t = t.replace(/\bél még\b/gi, 'játszunk még');
+  t = t.replace(/\bnem ér véget még\b/gi, 'hív még');
+  t = t.replace(/\bnem lesz több kétség\b/gi, 'béke ül szívünkön');
+  t = t.replace(/\bvoltál, maradj\b/gi, 'bennünk élsz tovább');
+  t = t.replace(/\brím\b/gi, 'fény');
+  return t;
+}
+function _removeTriggerWordsForTheme(text, theme){
+  const isCorp = /(?:céges|corporate|vállalat|year[- ]end|évzáró)/i.test(theme||'');
+  let t = text;
+  if(!isCorp){
+    t = t.replace(/(^|\s)(céges)\b/gi, '$1');
+  }
+  if (/(gyerekdal|ovi|óvoda|children|kids)/i.test(theme||'')){
+    t = t.replace(/\bjó a vég\b/gi, 'jó a játék');
+  }
+  return t.replace(/\n{3,}/g, '\n\n').trim();
+}
+function _polishRhymePacing(text){
+  const secRx = /(Verse\s+[1-4]|Chorus)\s*\n([\s\S]*?)(?=\n\s*(Verse\s+[1-4]|Chorus)\s*\\n|$)/gi;
+  return text.replace(secRx, (m, head, body) => {
+    const lines = body.split('\n').map(s => s.replace(/[ \t]+$/,''));
+    const out = [];
+    const MAX = /Chorus/i.test(head) ? 64 : 68;
+    for(let ln of lines){
+      if(!ln.trim()){ out.push(ln); continue; }
+      const parts = _softSplitLongLine(ln, MAX);
+      for(const p of parts){
+        let s = p;
+        s = s.replace(/\s*[–-]\s*$/,'').replace(/\s*,\s*$/,'').replace(/\s*;\s*$/,'');
+        out.push(s);
+      }
+    }
+    const final = /Chorus/i.test(head) ? _dedupeChorusLines(out) : out;
+    return head + '\n' + final.join('\n') + '\n';
+  });
+}
+function applyGlobalPolish(lyrics, opts){
+  try{
+    let t = lyrics || '';
+    t = _fixHungarianGlitches(t);
+    t = _polishRhymePacing(t);
+    const theme = (opts?.styles||'') + ' ' + (opts?.brief||'') + ' ' + (opts?.title||'');
+    t = _removeTriggerWordsForTheme(t, theme);
+    return t.trim();
+  }catch(_e){ return lyrics; }
+}
+/* ======== /GLOBAL LYRICS POLISH ======== */
