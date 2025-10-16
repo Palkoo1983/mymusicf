@@ -907,9 +907,9 @@ app.post('/api/generate_song', async (req, res) => {
     // Suno call
     lyrics = applySafeMorphHU(lyrics, { language });
     lyrics = applyRefrainAlt(lyrics);
-    
-    lyrics = ensureFullStructureForTechno(lyrics, { styles, brief, language });
-    lyrics = fixAccusativeLineEnds(lyrics);
+lyrics = applyFinalTinyFixesHU(lyrics, { language });
+lyrics = normalizeSectionHeadingsSafe(lyrics);
+
 
     const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
       'Authorization': 'Bearer ' + SUNO_API_KEY,
@@ -1053,70 +1053,57 @@ function applyRefrainAlt(text){
   }catch(_e){ return text; }
 }
 /* ======== /SAFE MORPH & REFRAIN ALT ======== */
-/* === FINAL SAFE PATCH START (non-destructive) ================== */
-/* 1) Techno/House structure guard – ha hiányzik Verse 1/2, pótolja
-      (csak minimal/house esetén, nagyon rövid sorokkal).           */
-function ensureFullStructureForTechno(lyrics, { styles = '', brief = '', language = 'hu' } = {}) {
+
+
+/* === FINAL MICRO PATCHES (safe, append-only) ==================== */
+/* 1) HU tiny tail fixes to avoid clipped suffixes on line ends */
+function applyFinalTinyFixesHU(lyrics, { language } = {}) {
   try {
-    const st = (styles || '').toLowerCase();
-    const isTech = /(minimal\s*techno|techno|house)/i.test(st);
-    if (!isTech) return lyrics;
-
-    let text = String(lyrics || '');
-
-    // fejlécek detektálása: Verse 1/2/3/4 és Chorus (HU/EN vegyesen)
-    const hasV1 = /(^|\n)\s*Verse\s*(1|egy)\s*$/i.test(text);
-    const hasV2 = /(^|\n)\s*Verse\s*(2|kettő)\s*$/i.test(text);
-    const firstChorusIdx = text.search(/(^|\n)\s*Chorus\s*$/im);
-
-    // ha megvan V1 és V2, nincs teendő
-    if (hasV1 && hasV2) return text;
-
-    // rövid, minimal sorok összeállítása brief-kulcsokból
-    const want = [];
-    const B = (brief || '').toLowerCase();
-
-    const pushIf = (cond, line) => { if (cond) want.push(line); };
-
-    // kulcsmotívumok
-    pushIf(/szardíni/.test(B), 'Szardínia hajnal');
-    pushIf(/portugál/.test(B), 'Portugália part');
-    pushIf(/újrakezd/.test(B), 'Újrakezdés most');
-    pushIf(/kitartás/.test(B), 'Kitartás él');
-    pushIf(/logika/.test(B), 'Logika vezet');
-    pushIf(/túrá|kirándul/.test(B), 'Túrák útja');
-    pushIf(/techno|house/.test(B), 'Techno lüktet');
-    pushIf(/száz\s*százalék|100/.test(B), 'Száz százalék');
-
-    // biztosítsunk minimum 2 sort
-    const v1Body = (want.slice(0, 2).join('\n') || 'Lüktet a ritmus\nIndul a fény');
-    const v2Body = (want.slice(2, 4).join('\n') || 'Közös az út\nSzívünk dobban');
-
-    // pótolt Verse 1/2 a legelső Chorus elé kerül
-    let prefix = '';
-    if (!hasV1) prefix += 'Verse 1\n' + v1Body + '\n\n';
-    if (!hasV2) prefix += 'Verse 2\n' + v2Body + '\n\n';
-
-    if (firstChorusIdx > -1) {
-      return text.slice(0, firstChorusIdx) + prefix + text.slice(firstChorusIdx);
-    }
-    // ha nem talál refrént, elé tesszük, hogy a Suno szerkezetet kapjon
-    return prefix + text;
-  } catch (_e) {
-    return lyrics;
-  }
-}
-
-/* 2) Finom magyar tárgyrag-javítás a sorvégeken
-      – célzottan csak az „ígéret” esetre, hogy ne legyen mellékhatás. */
-function fixAccusativeLineEnds(lyrics) {
-  try {
+    const lang = String(language || 'hu').toLowerCase();
+    if (!/^(hu|hungarian|magyar)$/.test(lang)) return lyrics;
     let t = String(lyrics || '');
-    // sorvégi „ígéret” → „ígéretet”
-    t = t.replace(/ígéret\s*$/gmi, 'ígéretet');
+
+    // 1/a) 'szívemben őrzöm az édes ígéret' (line end) → '... ígéretet'
+    t = t.replace(/szívemben őrzöm az édes ígéret\s*$/gmi, 'szívemben őrzöm az édes ígéretet');
+
+    // 1/b) line-end ' vel' (or with punctuation) → ' velünk'
+    t = t.replace(/(\s)vel(\s*([.!?,…]))?\s*$/gmi, function(_m, sp, _tail, punc){ return sp + 'velünk' + (punc || ''); });
+
     return t;
-  } catch (_e) {
-    return lyrics;
-  }
+  } catch (_e) { return lyrics; }
 }
-/* === FINAL SAFE PATCH END ====================================== */
+
+/* 2) Section headings: HU → EN and wrap into parentheses so singers don't read them aloud */
+function normalizeSectionHeadingsSafe(text) {
+  try {
+    let t = String(text || '');
+
+    // Map Hungarian headings to English on their own lines
+    const rules = [
+      [/^\s*Verse\s*egy\s*:?\s*$/gmi,   'Verse 1'],
+      [/^\s*Verse\s*kettő\s*:?\s*$/gmi, 'Verse 2'],
+      [/^\s*Verse\s*ketto\s*:?\s*$/gmi, 'Verse 2'],
+      [/^\s*Verse\s*három\s*:?\s*$/gmi, 'Verse 3'],
+      [/^\s*Verse\s*harom\s*:?\s*$/gmi, 'Verse 3'],
+      [/^\s*Verse\s*négy\s*:?\s*$/gmi,  'Verse 4'],
+      [/^\s*Verse\s*negy\s*:?\s*$/gmi,  'Verse 4'],
+      [/^\s*Verze\s*1\s*:?\s*$/gmi,     'Verse 1'],
+      [/^\s*Verze\s*2\s*:?\s*$/gmi,     'Verse 2'],
+      [/^\s*Verze\s*3\s*:?\s*$/gmi,     'Verse 3'],
+      [/^\s*Verze\s*4\s*:?\s*$/gmi,     'Verse 4'],
+      [/^\s*Refr[eé]n\s*:?\s*$/gmi,     'Chorus'],
+      [/^\s*H[ií]d\s*:?\s*$/gmi,        'Bridge'],
+      [/^\s*Verse\s*0*([1-4])\s*:?\s*$/gmi, function(_m, d){ return `Verse ${d}`; }],
+      [/^\s*Chorus\s*:?\s*$/gmi,        'Chorus'],
+      [/^\s*Bridge\s*:?\s*$/gmi,        'Bridge']
+    ];
+    for (const [rx, to] of rules) t = t.replace(rx, to);
+
+    // Wrap headings in parentheses – apply to all styles and all songs
+    t = t.replace(/^\s*(Verse\s+[1-4]|Chorus|Bridge)\s*$/gmi, function(_m, h){ return `(${h})`; });
+
+    return t;
+  } catch (_e) { return text; }
+}
+/* === END FINAL MICRO PATCHES ==================================== */
+
