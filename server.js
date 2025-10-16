@@ -482,7 +482,7 @@ async function enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, lan
   if (!looksHU) return lyrics;
 
   let preserveList = [...new Set([...(names || [])].filter(Boolean))];
-  const asciiOnly = (mandatoryKeywords || []).filter(k => /^[A-Za-z0-9 .,'"\-\&\(\)]+$/.test(k || ''));
+  const asciiOnly = (mandatoryKeywords || []).filter(k => /^[A-Za-z0-9 .,'\"\-\&\(\)]+$/.test(k || ''));
   preserveList = [...new Set([...preserveList, ...asciiOnly])];
 
   const sys = [
@@ -552,7 +552,7 @@ app.post('/api/generate_song', async (req, res) => {
       const b = (brief || '').toString();
       const arr = [];
       const m = b.match(/Kulcsszavak\s*:\s*([^\n\.]+)/i);
-      if (m && m[1]) m[1].split(/[;,]/).map(s => s.trim()).filter(Boolean).forEach(k => arr.push(k));
+      if (m && m[1]) m[1].split(/[;,.]/).map(s => s.trim()).filter(Boolean).forEach(k => arr.push(k));
       if (/évzáró/i.test(b)) arr.push('évzáró');
       if (/hackathon/i.test(b)) arr.push('hackathon');
       if (/\b2025\b/.test(b) || /kétezer\s+huszonöt/i.test(b)) arr.push('kétezer huszonöt');
@@ -585,7 +585,7 @@ app.post('/api/generate_song', async (req, res) => {
       const lang = String(language || 'hu').toLowerCase();
       const isHU = /^(hu|hungarian|magyar)$/.test(lang);
       if (!isHU) {
-        const asciiRx = /^[A-Za-z0-9 .,'"\-\&\(\)]+$/;
+        const asciiRx = /^[A-Za-z0-9 .,'\"\-\&\(\)]+$/;
         for (let i = mandatoryKeywords.length - 1; i >= 0; i--) {
           const kw = mandatoryKeywords[i] || '';
           if (!asciiRx.test(kw)) mandatoryKeywords.splice(i, 1);
@@ -600,11 +600,9 @@ app.post('/api/generate_song', async (req, res) => {
       const stop = new Set(['Szerelmem','Verse','Chorus','Margitszigeten','Margitsziget','Erdély','Tenerife','Madeira','Horvátország','Magyarország','Erdélyi','Horvát','Magyar']);
       return raw.filter(w => !stop.has(w));
     })();
-    // drop "céges" accidental name
     if (Array.isArray(names)) {
       names = names.filter(n => n.toLowerCase() !== 'céges' && n.toLowerCase() !== 'ceges');
     }
-    // strip HU name suffixes for non-HU
     {
       const lang = String(language || "hu").toLowerCase();
       const isHU = /^(hu|hungarian|magyar)$/.test(lang);
@@ -839,7 +837,7 @@ app.post('/api/generate_song', async (req, res) => {
         lyrics = lyrics.replace(/(^|\n)\s*(céges|évzáró)(\s*\d+)?\s*$(?=\n|$)/gim, '$1');
         lyrics = lyrics.replace(/([A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű])(\d+)/g, '$1 $2');
         lyrics = lyrics.replace(/\n{3,}/g, '\n\n').trim();
-        lyrics = lyrics.replace(/\b[Cc][eé]ges\b/g, 'corporate'); // extra safety
+        lyrics = lyrics.replace(/\b[Cc][eé]ges\b/g, 'corporate');
       }
     }
 
