@@ -904,10 +904,10 @@ app.post('/api/generate_song', async (req, res) => {
       if (/^(hu|hungarian|magyar)$/.test(lang)) lyrics = softHungarianAwkwardFilter(lyrics);
     }
 
-    // Global cross-style polish
-    lyrics = applyGlobalPolish(lyrics, { styles, language, brief, title });
-
     // Suno call
+    lyrics = applySafeMorphHU(lyrics, { language });
+    lyrics = applyRefrainAlt(lyrics);
+
     const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
       'Authorization': 'Bearer ' + SUNO_API_KEY,
       'Content-Type': 'application/json'
@@ -991,83 +991,62 @@ app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT)
 
 
 
-/* ======== GLOBAL LYRICS POLISH (style-agnostic, Hungarian-friendly) ======== */
-function _softSplitLongLine(line, maxChars) {
-  const L = line.trim();
-  if (L.length <= maxChars) return [L];
-  let idx = L.lastIndexOf(',', maxChars);
-  if (idx < 10) idx = L.lastIndexOf(' – ', maxChars);
-  if (idx < 10) idx = L.lastIndexOf(' - ', maxChars);
-  if (idx < 10) idx = L.lastIndexOf(' ', maxChars);
-  if (idx < 10) return [L];
-  return [L.slice(0, idx).trim(), L.slice(idx+1).trim()];
-}
-function _dedupeChorusLines(lines){
-  const seen = new Set(); const out = [];
-  for(const ln of lines){
-    const key = ln.toLowerCase().replace(/\s+/g,' ').trim();
-    if(seen.has(key)) {
-      out.push(ln.replace(/\b(ma|még|most)\b/i, 'mindig').replace(/\!+$/,''));
-    } else {
-      out.push(ln); seen.add(key);
-    }
-  }
-  return out;
-}
-function _fixHungarianGlitches(text){
-  let t = text;
-  t = t.replace(/\bvel\.$/gm, 'velünk.');
-  t = t.replace(/\bvel\,$/gm, 'velünk,');
-  t = t.replace(/\blen\b/g, 'lesz');
-  t = t.replace(/\bve\.$/gm, 'vele.');
-  t = t.replace(/\bve\,$/gm, 'vele,');
-  t = t.replace(/\báradnak\b/g, 'árad');
-  t = t.replace(/\bjárnak\b/g, 'jár');
-  t = t.replace(/\bél még\b/gi, 'játszunk még');
-  t = t.replace(/\bnem ér véget még\b/gi, 'hív még');
-  t = t.replace(/\bnem lesz több kétség\b/gi, 'béke ül szívünkön');
-  t = t.replace(/\bvoltál, maradj\b/gi, 'bennünk élsz tovább');
-  t = t.replace(/\brím\b/gi, 'fény');
-  return t;
-}
-function _removeTriggerWordsForTheme(text, theme){
-  const isCorp = /(?:céges|corporate|vállalat|year[- ]end|évzáró)/i.test(theme||'');
-  let t = text;
-  if(!isCorp){
-    t = t.replace(/(^|\s)(céges)\b/gi, '$1');
-  }
-  if (/(gyerekdal|ovi|óvoda|children|kids)/i.test(theme||'')){
-    t = t.replace(/\bjó a vég\b/gi, 'jó a játék');
-  }
-  return t.replace(/\n{3,}/g, '\n\n').trim();
-}
-function _polishRhymePacing(text){
-  const secRx = /(Verse\s+[1-4]|Chorus)\s*\n([\s\S]*?)(?=\n\s*(Verse\s+[1-4]|Chorus)\s*\\n|$)/gi;
-  return text.replace(secRx, (m, head, body) => {
-    const lines = body.split('\n').map(s => s.replace(/[ \t]+$/,''));
-    const out = [];
-    const MAX = /Chorus/i.test(head) ? 64 : 68;
-    for(let ln of lines){
-      if(!ln.trim()){ out.push(ln); continue; }
-      const parts = _softSplitLongLine(ln, MAX);
-      for(const p of parts){
-        let s = p;
-        s = s.replace(/\s*[–-]\s*$/,'').replace(/\s*,\s*$/,'').replace(/\s*;\s*$/,'');
-        out.push(s);
-      }
-    }
-    const final = /Chorus/i.test(head) ? _dedupeChorusLines(out) : out;
-    return head + '\n' + final.join('\n') + '\n';
-  });
-}
-function applyGlobalPolish(lyrics, opts){
+/* ======== SAFE MORPH & REFRAIN ALT (non-destructive) ======== */
+function applySafeMorphHU(text, opts){
   try{
-    let t = lyrics || '';
-    t = _fixHungarianGlitches(t);
-    t = _polishRhymePacing(t);
-    const theme = (opts?.styles||'') + ' ' + (opts?.brief||'') + ' ' + (opts?.title||'');
-    t = _removeTriggerWordsForTheme(t, theme);
-    return t.trim();
-  }catch(_e){ return lyrics; }
+    const lang = String(opts?.language||'hu').toLowerCase();
+    if (!/^(hu|hungarian|magyar)$/.test(lang)) return text;
+    let t = String(text||'');
+    t = t.replace(/\bszívele\b/gi, "szívével");
+    t = t.replace(/\bragyogzik\b/gi, "ragyog");
+    t = t.replace(/\bcsillogzik\b/gi, "csillog");
+    t = t.replace(/\bnevessz\b/gi, "nevess");
+    t = t.replace(/\bvel\.\s*$/gmi, "velünk.");
+    t = t.replace(/\bvel,\s*$/gmi, "velünk,");
+    t = t.replace(/\bjó a vég\b/gi, "jó a játék");
+    t = t.replace(/\bél a dal\b/gi, "száll a dal");
+    t = t.replace(/\bél a fény\b/gi, "ragyog a fény");
+    return t;
+  }catch(_e){ return text; }
 }
-/* ======== /GLOBAL LYRICS POLISH ======== */
+
+function applyRefrainAlt(text){
+  try{
+    const rx = /(Verse\s+[1-4]|Chorus)\s*\n([\s\S]*?)(?=\n\s*(Verse\s+[1-4]|Chorus)\s*\n|$)/gi;
+    const sections = [];
+    let m;
+    while ((m = rx.exec(text))){
+      sections.push({ head: m[1], body: m[2] });
+    }
+    if (!sections.length) return text;
+
+    let chorusCount = 0;
+    const out = [];
+    for (const s of sections){
+      if (/^Chorus$/i.test(s.head.trim())){
+        chorusCount += 1;
+        if (chorusCount >= 2){
+          const lines = s.body.split("\n");
+          const mapped = lines.map((ln, idx) => {
+            let L = ln;
+            if (idx % 2 === 0){
+              L = L.replace(/\börökké\b/gi, "mindig")
+                   .replace(/\bragyog\b/gi, "fénylik")
+                   .replace(/\bkérlek hát\b/gi, "szívem vár");
+            } else {
+              L = L.replace(/\bmindig\b/gi, "örökké")
+                   .replace(/\bfénylik\b/gi, "ragyog")
+                   .replace(/\bválaszolj\b/gi, "felelj");
+            }
+            return L.replace(/[ \t]+/g, " ").trimEnd();
+          });
+          out.push(s.head + "\n" + mapped.join("\n") + "\n");
+          continue;
+        }
+      }
+      out.push(s.head + "\n" + s.body + "\n");
+    }
+    return out.join("");
+  }catch(_e){ return text; }
+}
+/* ======== /SAFE MORPH & REFRAIN ALT ======== */
