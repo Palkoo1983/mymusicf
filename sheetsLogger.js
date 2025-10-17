@@ -27,7 +27,7 @@ function getSheets() {
 export async function appendOrderRow({ email='', styles='', vocal='', language='', brief='', lyrics='', link1='', link2='' }) {
   const when = new Date().toISOString();
   const sheets = getSheets();
-  const range = 'Munkalap1!B:J'; // A: sorszám képlettel, ezért B-től írunk
+  const range = 'Munkalap1!A:I'; // A: sorszám képlettel, ezért B-től írunk
   const values = [[ when, email, styles, vocal, language, brief, lyrics, link1, link2 ]];
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
