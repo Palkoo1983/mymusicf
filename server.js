@@ -960,6 +960,17 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
         .slice(0, 2);
     }
     if (!tracks.length) return res.status(502).json({ ok:false, message:'Suno did not return tracks in time.' });
+try {
+  const link1 = tracks[0]?.audio_url || '';
+  const link2 = tracks[1]?.audio_url || '';
+  await appendOrderRow({
+    email: req.body.email || '',
+    styles, vocal, language, brief, lyrics, link1, link2
+  });
+  console.log('[SHEETS] rögzítve', (req.body.email || 'n/a'));
+} catch (err) {
+  console.warn('[SHEETS] hiba:', err?.message || err);
+}
 
     return res.json({ ok:true, lyrics, style: styleFinal, tracks });
   } catch (e) {
