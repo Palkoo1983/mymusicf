@@ -9,7 +9,7 @@ import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
-import { appendOrderRow } from './sheetsLogger.js';
+import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
 
 
 // === EnZenem: Theme/Genre detectors + HU post-processor (regression guard) ===
@@ -20,6 +20,7 @@ function detectTheme(brief = '', styles = '') {
   if (/(esküv[őo]i|esküv[őo]|menyegző|lagzi)/.test(t)) return 'wedding';
   if (/(évforduló|házassági évforduló|jubileum)/.test(t)) return 'anniversary';
   if (/(születésnap|birthday|névnap)/.test(t)) return 'birthday';
+  if (/(jobbulás|gyógyulás|betegség|egészség|healing)/.test(t)) return 'healing';
   if (/(gyerekdal|gyermekdal|ovis|óvodás|kids|children)/.test(t)) return 'kidsong';
   return 'generic';
 }
@@ -34,7 +35,7 @@ function detectGenre(styles = '') {
 function postProcessHU(lyrics, { theme, genre, brief }) {
   let out = String(lyrics || '');
   out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
-  if (/(funeral|wedding|anniversary|kidsong)/.test(String(theme))) {
+  if (/(funeral|wedding|anniversary|kidsong|healing)/.test(String(theme))) {
     out = out.replace(/\b[Tt]empó\b/g, 'ütem');
   }
   out = out.replace(/^\s*,\s*/gm, '').replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
@@ -50,7 +51,7 @@ function postProcessHU(lyrics, { theme, genre, brief }) {
   if (theme === 'proposal') {
     out = out.replace(/\(Chorus\)([\s\S]*?)(?=\n\(Verse 4\)|$)/, (m, ch) => {
       if (!/[?？]/.test(ch)) {
-        return `(Chorus)\n${ch.strip()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
+        return `(Chorus)\n${ch.trim()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
       }
       return m;
     });
@@ -58,6 +59,11 @@ function postProcessHU(lyrics, { theme, genre, brief }) {
   if (theme === 'kidsong') {
     out = out.replace(/(.{9,})/g, (line) => line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n'));
   }
+  const briefLower = String(brief || '').toLowerCase();
+  if (!briefLower.includes('céges')) { out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, ''); }
+  if (!briefLower.includes('tempó')) { out = out.replace(/\b[Tt]empó\b/g, 'ütem').replace(/\b[Tt]empós\b/g, 'lendületes'); }
+  out = out.replace(/\btitkus\b/gi, 'titkos').replace(/\bállik\b/gi, 'áll');
+
   out = out.replace(/^Kulcsszavak:.*$/gmi, '');
   return out;
 }
@@ -1016,14 +1022,8 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
 try {
   const link1 = tracks[0]?.audio_url || '';
   const link2 = tracks[1]?.audio_url || '';
-  await appendOrderRow({
-    email: req.body.email || '',
-    styles, vocal, language, brief, lyrics, link1, link2
-  });
-  console.log('[SHEETS] rögzítve', (req.body.email || 'n/a'));
-} catch (err) {
-  console.warn('[SHEETS] hiba:', err?.message || err);
-}
+  await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2 });
+} catch (_e) { /* handled */ }
 
     
   try {

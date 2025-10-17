@@ -37,3 +37,12 @@ export async function appendOrderRow({ email='', styles='', vocal='', language='
     requestBody: { values }
   });
 }
+
+export async function safeAppendOrderRow(order) {
+  try {
+    await appendOrderRow(order);
+    console.log('[SHEETS] OK:', order?.email || 'n/a');
+  } catch (e) {
+    console.error('[SHEETS-FAIL]', (e && e.message) || String(e));
+  }
+}
