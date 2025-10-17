@@ -11,6 +11,59 @@ import dotenv from 'dotenv';
 import Stripe from 'stripe';
 import { appendOrderRow } from './sheetsLogger.js';
 
+
+// === EnZenem: Theme/Genre detectors + HU post-processor (regression guard) ===
+function detectTheme(brief = '', styles = '') {
+  const t = (String(brief) + ' ' + String(styles)).toLowerCase();
+  if (/(temet[ée]s|búcsúztat[óő]|gyász|ravatal)/.test(t)) return 'funeral';
+  if (/(lánykérés|eljegyzés|kér[jd] meg|proposal)/.test(t)) return 'proposal';
+  if (/(esküv[őo]i|esküv[őo]|menyegző|lagzi)/.test(t)) return 'wedding';
+  if (/(évforduló|házassági évforduló|jubileum)/.test(t)) return 'anniversary';
+  if (/(születésnap|birthday|névnap)/.test(t)) return 'birthday';
+  if (/(gyerekdal|gyermekdal|ovis|óvodás|kids|children)/.test(t)) return 'kidsong';
+  return 'generic';
+}
+function detectGenre(styles = '') {
+  const s = String(styles || '').toLowerCase();
+  if (/(techno|minimal|house)/.test(s)) return 'techno';
+  if (/(rap|hip[\s-]?hop|trap)/.test(s)) return 'rap';
+  if (/(pop|ballad|ballada|piano|zongora)/.test(s)) return 'pop';
+  if (/(rock|metal)/.test(s)) return 'rock';
+  return 'generic';
+}
+function postProcessHU(lyrics, { theme, genre, brief }) {
+  let out = String(lyrics || '');
+  out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
+  if (/(funeral|wedding|anniversary|kidsong)/.test(String(theme))) {
+    out = out.replace(/\b[Tt]empó\b/g, 'ütem');
+  }
+  out = out.replace(/^\s*,\s*/gm, '').replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+  if (theme === 'funeral') {
+    const wantsDrums = /\bvisszafogott\s+dob\b/i.test(brief) || /\bdob\b/i.test(brief);
+    if (!wantsDrums) {
+      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, '');
+      out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+    } else {
+      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, 'visszafogott dob').replace(/visszafogott\s+visszafogott/gi, 'visszafogott');
+    }
+  }
+  if (theme === 'proposal') {
+    out = out.replace(/\(Chorus\)([\s\S]*?)(?=\n\(Verse 4\)|$)/, (m, ch) => {
+      if (!/[?？]/.test(ch)) {
+        return `(Chorus)\n${ch.strip()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
+      }
+      return m;
+    });
+  }
+  if (theme === 'kidsong') {
+    out = out.replace(/(.{9,})/g, (line) => line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n'));
+  }
+  out = out.replace(/^Kulcsszavak:.*$/gmi, '');
+  return out;
+}
+// === End of regression guard helpers ===
+
+
 dotenv.config();
 
 const app = express();
@@ -972,7 +1025,18 @@ try {
   console.warn('[SHEETS] hiba:', err?.message || err);
 }
 
-    return res.json({ ok:true, lyrics, style: styleFinal, tracks });
+    
+  try {
+    const _theme = detectTheme(typeof brief !== 'undefined' ? brief : '', typeof styles !== 'undefined' ? styles : '');
+    const _genre = detectGenre(typeof styles !== 'undefined' ? styles : '');
+    const _lang  = String((typeof language !== 'undefined' ? language : 'hu')).toLowerCase();
+    if (/^(hu|hungarian|magyar)$/.test(_lang) && typeof lyrics === 'string') {
+      lyrics = postProcessHU(lyrics, { theme: _theme, genre: _genre, brief: (typeof brief !== 'undefined' ? brief : '') });
+    }
+  } catch(e) {
+    console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
+  }
+return res.json({ ok:true, lyrics, style: styleFinal, tracks });
   } catch (e) {
     console.error('[generate_song]', e);
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
