@@ -1,30 +1,3 @@
-
-  // --- Google Sheets logging ---
-  const { google } = require('googleapis');
-  async function logToGoogleSheet(row) {
-    try {
-      const auth = new google.auth.JWT(
-        process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        null,
-        process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-        ['https://www.googleapis.com/auth/spreadsheets']
-      );
-      const sheets = google.sheets({ version: 'v4', auth });
-      const sheetId = process.env.GOOGLE_SHEETS_ID;
-      await sheets.spreadsheets.values.append({
-        spreadsheetId: sheetId,
-        range: 'Munkalap1!A1',
-        valueInputOption: 'RAW',
-        insertDataOption: 'INSERT_ROWS',
-        requestBody: {
-          values: [row]
-        }
-      });
-    } catch (err) {
-      console.error('Google Sheets export error:', err);
-    }
-  }
-
 // ESM server.js – FINAL (stable)
 // - Keeps previous features (HU polish + rhyme/structure + style preserve + "céges"/"évzáró" cleanup)
 // - Guarantees numbers from brief appear, then converts digits→words at the very end
