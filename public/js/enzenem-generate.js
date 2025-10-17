@@ -47,5 +47,15 @@
       if(window.novaOrderFail) window.novaOrderFail();
       alert('Hoppá, elakadt a generálás. Próbáld újra kicsit később.');
     }
+    -  const payload = {
++  const payload = {
++     email:   (fd.get('email')||'').toString().trim(),
+      title:    (fd.get('title')||'').toString().trim(),
+      styles:   (fd.get('styles')||'').toString().trim(),
+      vocal:    (fd.get('vocal')||'instrumental').toString(),
+      language: (fd.get('language')||'hu').toString(),
+      brief:    (fd.get('brief')||'').toString().trim()
+   };
+
   });
 })();
