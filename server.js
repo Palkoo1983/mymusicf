@@ -9,22 +9,168 @@ import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
-import { appendOrderRow } from './sheetsLogger.js';
+import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
 
 
-// === Style normalizer: expand/clean common abbreviations so Suno gets canonical tags ===
-function normalizeStylesForSuno(stylesRaw = '') {
-  let s = String(stylesRaw || '');
-  s = s.replace(/\bdnb\b/gi, 'drum and bass');
-  s = s.replace(/\brnb\b/gi, 'r&b');
-  s = s.replace(/\bedm\b/gi, 'electronic dance music');
-  s = s.replace(/\belektronikus\b/gi, 'electronic');
-  s = s.replace(/\belekronikus\b/gi, 'electronic');
-  s = s.replace(/\belektronika\b/gi, 'electronic');
-  s = s.replace(/\s*,\s*/g, ', ').replace(/\s{2,}/g, ' ').trim();
-  s = s.replace(/,\s*,+/g, ',');
-  return s;
+
+/* ===================== ENZENEM GUARD V2 HELPERS ===================== */
+
+/** Unicode-friendly word boundary using negative lookarounds for non-letters. */
+function replaceWordHU(input, patternCore, replacer) {
+  // patternCore should be inside a non-capturing group string like '(céges|ceges)'
+  const letters = 'A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű';
+  const rx = new RegExp(`(?<![${letters}])(?:${patternCore})(?![${letters}])`, 'g');
+  return String(input || '').replace(rx, replacer);
 }
+
+/** Brief-aware sanitize: removes 'céges', 'évzáró'; tempó->ütem/tempós->lendületes unless brief explicitly contains them. */
+function sanitizeGuardV2(lyrics, brief) {
+  try {
+    let out = String(lyrics || '');
+    const b = String(brief || '').toLowerCase();
+
+    const allowCeges  = /\bcéges\b|\bceges\b/i.test(b);
+    const allowEvzaro = /\bévzáró\b|\bevzaro\b/i.test(b);
+    const allowTempo  = /\btempó\b|\btempo\b|\btempós\b/i.test(b);
+
+    if (!allowCeges) {
+      out = replaceWordHU(out, '(céges|ceges)(?:\\s+gondolatok)?', '');
+    }
+    if (!allowEvzaro) {
+      out = replaceWordHU(out, '(évzáró|evzaro)', '');
+    }
+    if (!allowTempo) {
+      out = replaceWordHU(out, '(tempó|tempo)', 'ütem');
+      out = replaceWordHU(out, '(tempós|tempos)', 'lendületes');
+    }
+
+    // tidy spaces and punctuation spacing
+    out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+    return out;
+  } catch (_) {
+    return lyrics;
+  }
+}
+
+/** Insert key concepts from brief if missing, with multiple anchors + fallbacks; keeps structure intact. */
+function ensureBriefConceptsV2(lyrics, brief) {
+  let out = String(lyrics || '');
+  const b = String(brief || '').toLowerCase();
+
+  const hasApaBrief = /(apa|édesap)/i.test(b);
+  const hasApaLyric = /(apa|édesap)/i.test(out);
+
+  const hasFociBrief = /(foci|fociban|focipálya|futball|labdarúg|gól|kapu|csapat)/i.test(b);
+  const hasFociLyric = /(foci|focipálya|futball|labda|gól|kapu|csapat)/i.test(out);
+
+  // Anchors (multiple languages/variants)
+  const anchors = {
+    verse3: [/\(Verse 3\)/i, /\(Verze 3\)/i, /^Vers( |z)? (három|3)[:)]/im],
+    verse4: [/\(Verse 4\)/i, /\(Verze 4\)/i, /^Vers( |z)? (négy|4)[:)]/im],
+    chorus: [/\(Chorus\)/i, /\(Refrain\)/i, /^Refr(én|ain)[:)]/im]
+  };
+
+  function insertBeforeFirstAnchor(text, anchorList, insert) {
+    for (const rx of anchorList) {
+      if (rx.test(text)) {
+        return text.replace(rx, `${insert}\n$&`);
+      }
+    }
+    return null;
+  }
+
+  // Only inject once per concept
+  if (hasApaBrief && !hasApaLyric) {
+    const apaLine = 'Apa emléke kísér, szavai bennünk élnek tovább,';
+    let next = insertBeforeFirstAnchor(out, anchors.verse4, apaLine);
+    if (next === null) next = insertBeforeFirstAnchor(out, anchors.chorus, apaLine);
+    if (next === null) next = out + `\n${apaLine}\n`; // fallback: append
+    out = next;
+  }
+
+  if (hasFociBrief && !hasFociLyric) {
+    const fociLine = 'Pályán szerzett góljaid fénye ma is velünk ragyog,';
+    let next = insertBeforeFirstAnchor(out, anchors.verse3, fociLine);
+    if (next === null) next = insertBeforeFirstAnchor(out, anchors.chorus, fociLine);
+    if (next === null) next = out + `\n${fociLine}\n`;
+    out = next;
+  }
+
+  // Gentle universal HU fixes
+  out = out.replace(/\bcsodákok\b/gi, 'csodás')
+           .replace(/\b[Aa] mi történet\b/g, 'a mi történetünk')
+           .replace(/\bminden újra kezd\b/gi, 'mindent újra kezd')
+           .replace(/kettő-?ezer-?húsz-?öt/gi, 'kettőezer-huszonöt');
+
+  // Wedding positivity
+  if (/(esküvő|wedding|proposal|engagement|anniversary)/i.test(b)) {
+    out = out.replace(/nincs több(é)? fény/gi, 'örök a fény');
+  }
+
+  // final tidy
+  out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+  return out;
+}
+
+/* =================== END ENZENEM GUARD V2 HELPERS =================== */
+
+
+// === EnZenem: Theme/Genre detectors + HU post-processor (regression guard) ===
+function detectTheme(brief = '', styles = '') {
+  const t = (String(brief) + ' ' + String(styles)).toLowerCase();
+  if (/(temet[ée]s|búcsúztat[óő]|gyász|ravatal)/.test(t)) return 'funeral';
+  if (/(lánykérés|eljegyzés|kér[jd] meg|proposal)/.test(t)) return 'proposal';
+  if (/(esküv[őo]i|esküv[őo]|menyegző|lagzi)/.test(t)) return 'wedding';
+  if (/(évforduló|házassági évforduló|jubileum)/.test(t)) return 'anniversary';
+  if (/(születésnap|birthday|névnap)/.test(t)) return 'birthday';
+  if (/(jobbulás|gyógyulás|betegség|egészség|healing)/.test(t)) return 'healing';
+  if (/(gyerekdal|gyermekdal|ovis|óvodás|kids|children)/.test(t)) return 'kidsong';
+  return 'generic';
+}
+function detectGenre(styles = '') {
+  const s = String(styles || '').toLowerCase();
+  if (/(techno|minimal|house)/.test(s)) return 'techno';
+  if (/(rap|hip[\s-]?hop|trap)/.test(s)) return 'rap';
+  if (/(pop|ballad|ballada|piano|zongora)/.test(s)) return 'pop';
+  if (/(rock|metal)/.test(s)) return 'rock';
+  return 'generic';
+}
+function postProcessHU(lyrics, { theme, genre, brief }) {
+  let out = String(lyrics || '');
+  out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
+  if (/(funeral|wedding|anniversary|kidsong|healing)/.test(String(theme))) {
+    out = out.replace(/\b[Tt]empó\b/g, 'ütem');
+  }
+  out = out.replace(/^\s*,\s*/gm, '').replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+  if (theme === 'funeral') {
+    const wantsDrums = /\bvisszafogott\s+dob\b/i.test(brief) || /\bdob\b/i.test(brief);
+    if (!wantsDrums) {
+      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, '');
+      out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+    } else {
+      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, 'visszafogott dob').replace(/visszafogott\s+visszafogott/gi, 'visszafogott');
+    }
+  }
+  if (theme === 'proposal') {
+    out = out.replace(/\(Chorus\)([\s\S]*?)(?=\n\(Verse 4\)|$)/, (m, ch) => {
+      if (!/[?？]/.test(ch)) {
+        return `(Chorus)\n${ch.trim()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
+      }
+      return m;
+    });
+  }
+  if (theme === 'kidsong') {
+    out = out.replace(/(.{9,})/g, (line) => line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n'));
+  }
+  const briefLower = String(brief || '').toLowerCase();
+  if (!briefLower.includes('céges')) { out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, ''); }
+  if (!briefLower.includes('tempó')) { out = out.replace(/\b[Tt]empó\b/g, 'ütem').replace(/\b[Tt]empós\b/g, 'lendületes'); }
+  out = out.replace(/\btitkus\b/gi, 'titkos').replace(/\bállik\b/gi, 'áll');
+
+  out = out.replace(/^Kulcsszavak:.*$/gmi, '');
+  return out;
+}
+// === End of regression guard helpers ===
 
 
 dotenv.config();
@@ -539,7 +685,6 @@ app.post('/api/generate_song', async (req, res) => {
     }
 
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
-  try { styles = normalizeStylesForSuno(styles); } catch(_) {}
 
     // language autodetect from brief (fallback)
     (function () {
@@ -776,7 +921,6 @@ app.post('/api/generate_song', async (req, res) => {
       return out.join(', ');
     }
     const styleFinal = buildStyleEN(styles, vocal, gptStyle);
-  try { styleFinal = normalizeStylesForSuno(styleFinal); } catch(_) {}
 
     // GPT #2 refine
     const sys2 = [
@@ -939,7 +1083,7 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
       model: 'V5',
       instrumental: (vocal === 'instrumental'),
       title: title,
-      style: normalizeStylesForSuno(styleFinal),
+      style: styleFinal,
       prompt: lyrics,
       callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
     });
@@ -981,16 +1125,25 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
 try {
   const link1 = tracks[0]?.audio_url || '';
   const link2 = tracks[1]?.audio_url || '';
-  await appendOrderRow({
-    email: req.body.email || '',
-    styles, vocal, language, brief, lyrics, link1, link2
-  });
-  console.log('[SHEETS] rögzítve', (req.body.email || 'n/a'));
-} catch (err) {
-  console.warn('[SHEETS] hiba:', err?.message || err);
-}
+  await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2 });
+} catch (_e) { /* handled */ }
 
-    return res.json({ ok:true, lyrics, style: normalizeStylesForSuno(styleFinal), tracks });
+    
+  try {
+    const _theme = detectTheme(typeof brief !== 'undefined' ? brief : '', typeof styles !== 'undefined' ? styles : '');
+    const _genre = detectGenre(typeof styles !== 'undefined' ? styles : '');
+    const _lang  = String((typeof language !== 'undefined' ? language : 'hu')).toLowerCase();
+    if (/^(hu|hungarian|magyar)$/.test(_lang) && typeof lyrics === 'string') {
+      lyrics = postProcessHU(lyrics, { theme: _theme, genre: _genre, brief: (typeof brief !== 'undefined' ? brief : '') });
+    }
+  } catch(e) {
+    console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
+  }
+
+// @ENZENEM: V2-PRE-RESPONSE
+try { lyrics = sanitizeGuardV2(lyrics, brief); } catch(_) {}
+try { lyrics = ensureBriefConceptsV2(lyrics, brief); } catch(_) {}
+return res.json({ ok:true, lyrics, style: styleFinal, tracks });
   } catch (e) {
     console.error('[generate_song]', e);
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
