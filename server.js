@@ -13,32 +13,68 @@ import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
 
 
 
-/* === UNIVERSAL BRIEF-AWARE SANITIZER ===============================
-   Removes "céges", "évzáró", and "tempó/tempós" from lyrics UNLESS the brief
-   explicitly contains them. Non-destructive: does not touch headings.
-==================================================================== */
+// === Style normalizer: expand/clean common abbreviations for Suno & prompts ===
+function normalizeStylesForSuno(stylesRaw = '') {
+  let s = String(stylesRaw || '');
+  s = s.replace(/\bdnb\b/gi, 'drum and bass');
+  s = s.replace(/\brnb\b/gi, 'r&b');
+  s = s.replace(/\bedm\b/gi, 'electronic dance music');
+  s = s.replace(/\belektronikus\b/gi, 'electronic'); // per user: elektronikus -> electronic
+  s = s.replace(/\belekronikus\b/gi, 'electronic');
+  s = s.replace(/\belektronika\b/gi, 'electronic');
+  s = s.replace(/\s*,\s*/g, ', ').replace(/\s{2,}/g, ' ').trim();
+
+/* === UNIVERSAL BRIEF-AWARE SANITIZER =============================== */
 function sanitizeCorporateWordsUniversal(lyrics, brief) {
   try {
     let out = String(lyrics || '');
     const b = String(brief || '').toLowerCase();
-    const allowCeges   = /\bcéges\b/i.test(b) || /\bceges\b/i.test(b);
-    const allowEvzaro  = /\bévzáró\b/i.test(b) || /\bevzaro\b/i.test(b);
-    const allowTempo   = /\btempó\b/i.test(b) || /\btempo\b/i.test(b) || /\btempós\b/i.test(b);
+    const allowCeges  = /\bcéges\b/.test(b) || /\bceges\b/.test(b);
+    const allowEvzaro = /\bévzáró\b/.test(b) || /\bevzaro\b/.test(b);
+    const allowTempo  = /\btempó\b/.test(b) || /\btempo\b/.test(b) || /\btempós\b/.test(b);
 
     if (!allowCeges) {
       out = out.replace(/\b[Cc][ée]ges(?:\s+gondolatok)?\b/g, '');
       out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+
+// === Universal Fine-Tuning for HU lyrics (non-destructive) ===
+function universalFineTuning(lyrics, brief, theme = '', genre = '') {
+  let out = String(lyrics || '');
+  const b = String(brief || '').toLowerCase();
+  const t = String(theme || '');
+  const weddingLike = /(esküvő|wedding|proposal|engagement|anniversary)/i.test(b + ' ' + t);
+
+  if (weddingLike) {
+    out = out.replace(/nincs több(é)? fény/gi, 'örök a fény');
+  }
+  out = out.replace(/\b[Cc]sodákok\b/g, 'csodás');
+  out = out.replace(/\b[Aa] mi történet\b/g, 'a mi történetünk');
+  out = out.replace(/\bminden újra kezd\b/gi, 'mindent újra kezd');
+  out = out.replace(/kettő-?ezer-?húsz-?öt/gi, 'kettőezer-huszonöt');
+
+  if (/(apa|édesap)/i.test(b) && !/(apa|édesap)/i.test(out)) {
+    out = out.replace(/\(Verse 4\)/i, '(Verse 4)\nApa hangja bennünk él, szavai vezetnek tovább,\n');
+  }
+  out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+  return out;
+}
+
+
     }
     if (!allowEvzaro) {
       out = out.replace(/\b[Ee]v[źz]áró\b/g, '');
       out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
     }
     if (!allowTempo) {
-      out = out.replace(/\b[Tt]empó\b/g, 'ütem');
-      out = out.replace(/\b[Tt]empós\b/g, 'lendületes');
+      out = out.replace(/\b[Tt]empó\b/g, 'ütem').replace(/\b[Tt]empós\b/g, 'lendületes');
     }
     return out;
   } catch (_e) { return lyrics; }
+}
+
+
+  s = s.replace(/,\s*,+/g, ',');
+  return s;
 }
 
 
@@ -1067,6 +1103,7 @@ try {
     console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
   }
 lyrics = sanitizeCorporateWordsUniversal(lyrics, brief);
+lyrics = universalFineTuning(lyrics, brief, (typeof theme!=='undefined'?theme:''), (typeof genre!=='undefined'?genre:''));
 return res.json({ ok: true, lyrics, style: styleFinal, tracks });
   } catch (e) {
     console.error('[generate_song]', e);
