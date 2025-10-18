@@ -418,7 +418,7 @@ async function polishHungarianLyrics({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, man
     "Megszólításnál természetes alakot használj (pl. \"Bence,\"; érzelmes birtokosnál \"Bencém\"), a tárgyesetet (\"Bencét\") csak indokolt szerkezetben.",
     "A sorok maradjanak rövidek, énekelhetők; a rímek legyenek gyengédek (ne kényszeríts értelmetlenséget).",
     "Kötelező kulcsszavak maradjanak verbatim: " + (mandatoryKeywords.length ? mandatoryKeywords.join(", ") : "(nincs)"),
-    "FORMÁTUM: Verse 1 / Verse 2 / Chorus / Verse 3 / Chorus – és versszakonként ugyanannyi sor maradjon.",
+    "FORMÁTUM: Verse 1 / Verse 2 / Chorus / Verse 3 / Verse 4 / Chorus – és versszakonként ugyanannyi sor maradjon.",
     "Csak a végleges dalszöveget add vissza (fejlécekkel), extra komment nélkül."
   ].join("\n");
 
@@ -851,7 +851,7 @@ app.post('/api/generate_song', async (req, res) => {
     // GPT #2 refine
     const sys2 = [
       'You are a native lyric editor in the target language.',
-      'Keep EXACT section headings (Verse 1 / Verse 2 / Chorus / Verse 3 / Chorus).',
+      'Keep EXACT section headings (Verse 1 / Verse 2 / Chorus / Verse 3 / Verse 4 / Chorus).',
       'LANGUAGE LOCK: ensure the entire text is in ' + language + '.',
       'Remove invented/non-words; replace with natural, idiomatic alternatives.',
       (isKidSong ? 'KID MODE ENFORCE: simplify phrasing, fix subject-verb agreement, AABB rhyme in verses, 2–4 line Chorus with a memorable hook and playful repetition.' : ''),
@@ -900,6 +900,7 @@ app.post('/api/generate_song', async (req, res) => {
 
     // listy fix
     try { lyrics = await rewriteKeywordListOpeners({ OPENAI_API_KEY, OPENAI_MODEL, lyrics }); }
+    catch (e) { console.error('rewriteKeywordListOpeners failed', e); }
 
     lyrics = await lengthenLyricsIfShort({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, mandatoryKeywords });
     catch(e){ console.warn('[LISTY_FIX_FAIL]', e?.message || e); }
@@ -1003,7 +1004,7 @@ lyrics = normalizeSectionHeadingsSafe(lyrics);
 lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
 
 
-    lyrics = enforceStructure3x2(lyrics);
+    lyrics = enforceStructure6Blocks(lyrics);
 
     const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
       'Authorization': 'Bearer ' + SUNO_API_KEY,
@@ -1266,7 +1267,7 @@ function ensureTechnoStoryBits(lyrics, { styles = '', brief = '', language = '' 
 
 
 // --- Structure enforcer: keep EXACT 3×2 blocks (V1, V2, Chorus, V3, Chorus)
-function enforceStructure3x2(lyrics) {
+function enforceStructure6Blocks(lyrics) {
   const raw = String(lyrics || '').trim();
   if (!raw) return raw;
 
@@ -1319,9 +1320,9 @@ async function lengthenLyricsIfShort({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, lan
   if (lines.length >= target) return lyrics;
 
   const sys = [
-    'You are a lyric lengthener. Keep EXACT 3×2 structure: (Verse 1 / Verse 2 / Chorus / Verse 3 / Chorus).',
-    'Do NOT add Bridge or Verse 4. Do NOT remove existing lines.',
-    'Target per section: Verse 1 = 6 lines, Verse 2 = 6 lines, Chorus = 4–6 lines, Verse 3 = 6 lines, final Chorus = 4–6 lines.',
+    'You are a lyric lengthener. Keep EXACT 6-block structure: (Verse 1 / Verse 2 / Chorus / Verse 3 / Verse 4 / Chorus).',
+    'Do NOT add Bridge. Keep Verse 4. Do NOT remove existing lines.',
+    'Target per section: Verse 1 = 6 lines, Verse 2 = 6 lines, Chorus = 4–6 lines, Verse 3 = 6 lines, Verse 4 = 6 lines, final Chorus = 4–6 lines.',
     'Keep rhyme and narrative coherence. Use ONLY brief-derived terms; do not invent new proper nouns.',
     'Language: ' + (language || 'hu') + ' (strict).',
     'Ensure all mandatory keywords appear verbatim at least once: ' + (mandatoryKeywords.join(', ') || '(none)')
