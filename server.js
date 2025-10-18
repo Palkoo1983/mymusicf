@@ -902,8 +902,7 @@ app.post('/api/generate_song', async (req, res) => {
     try { lyrics = await rewriteKeywordListOpeners({ OPENAI_API_KEY, OPENAI_MODEL, lyrics }); }
     catch (e) { console.error('rewriteKeywordListOpeners failed', e); }
 
-    lyrics = await lengthenLyricsIfShort({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, mandatoryKeywords });
-    catch(e){ console.warn('[LISTY_FIX_FAIL]', e?.message || e); }
+    try { lyrics = await lengthenLyricsIfShort({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, mandatoryKeywords }); } catch(e){ console.warn('[LENGTHEN_FAIL]', e?.message || e); }
 
     // PRE-ENFORCE: strip Hungarian name case endings for non-HU targets
     {
