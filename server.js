@@ -12,108 +12,25 @@ import Stripe from 'stripe';
 import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
 
 
-
-/* ===================== ENZENEM GUARD V2 HELPERS ===================== */
-
-/** Unicode-friendly word boundary using negative lookarounds for non-letters. */
-function replaceWordHU(input, patternCore, replacer) {
-  // patternCore should be inside a non-capturing group string like '(céges|ceges)'
-  const letters = 'A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű';
-  const rx = new RegExp(`(?<![${letters}])(?:${patternCore})(?![${letters}])`, 'g');
-  return String(input || '').replace(rx, replacer);
-}
-
-/** Brief-aware sanitize: removes 'céges', 'évzáró'; tempó->ütem/tempós->lendületes unless brief explicitly contains them. */
-function sanitizeGuardV2(lyrics, brief) {
-  try {
-    let out = String(lyrics || '');
-    const b = String(brief || '').toLowerCase();
-
-    const allowCeges  = /\bcéges\b|\bceges\b/i.test(b);
-    const allowEvzaro = /\bévzáró\b|\bevzaro\b/i.test(b);
-    const allowTempo  = /\btempó\b|\btempo\b|\btempós\b/i.test(b);
-
-    if (!allowCeges) {
-      out = replaceWordHU(out, '(céges|ceges)(?:\\s+gondolatok)?', '');
-    }
-    if (!allowEvzaro) {
-      out = replaceWordHU(out, '(évzáró|evzaro)', '');
-    }
-    if (!allowTempo) {
-      out = replaceWordHU(out, '(tempó|tempo)', 'ütem');
-      out = replaceWordHU(out, '(tempós|tempos)', 'lendületes');
-    }
-
-    // tidy spaces and punctuation spacing
-    out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
-    return out;
-  } catch (_) {
-    return lyrics;
-  }
-}
-
-/** Insert key concepts from brief if missing, with multiple anchors + fallbacks; keeps structure intact. */
-function ensureBriefConceptsV2(lyrics, brief) {
+/* === PostProcess Grammar Fix – safe, HU-specific === */
+function fixHungarianGrammar(lyrics) {
   let out = String(lyrics || '');
-  const b = String(brief || '').toLowerCase();
 
-  const hasApaBrief = /(apa|édesap)/i.test(b);
-  const hasApaLyric = /(apa|édesap)/i.test(out);
+  // tárgyrag tipikus esetei
+  out = out.replace(/érzed a szeretet([^a-záéíóöőúüűÁÉÍÓÖŐÚÜŰ])/gi, 'érzed a szeretetet$1');
+  out = out.replace(/a szeretet([^a-záéíóöőúüűÁÉÍÓÖŐÚÜŰ])/gi, 'a szeretetet$1');
 
-  const hasFociBrief = /(foci|fociban|focipálya|futball|labdarúg|gól|kapu|csapat)/i.test(b);
-  const hasFociLyric = /(foci|focipálya|futball|labda|gól|kapu|csapat)/i.test(out);
+  // dupla tiltás
+  out = out.replace(/soha\s+ne\s+nem/gi, 'soha nem');
 
-  // Anchors (multiple languages/variants)
-  const anchors = {
-    verse3: [/\(Verse 3\)/i, /\(Verze 3\)/i, /^Vers( |z)? (három|3)[:)]/im],
-    verse4: [/\(Verse 4\)/i, /\(Verze 4\)/i, /^Vers( |z)? (négy|4)[:)]/im],
-    chorus: [/\(Chorus\)/i, /\(Refrain\)/i, /^Refr(én|ain)[:)]/im]
-  };
+  // felesleges "én" mondatvég
+  out = out.replace(/vágyat\s+én\b/gi, 'vágyat');
+  out = out.replace(/szavak nélkül érzed a vágyat\s+én/gi, 'szavak nélkül érzed a vágyat');
 
-  function insertBeforeFirstAnchor(text, anchorList, insert) {
-    for (const rx of anchorList) {
-      if (rx.test(text)) {
-        return text.replace(rx, `${insert}\n$&`);
-      }
-    }
-    return null;
-  }
-
-  // Only inject once per concept
-  if (hasApaBrief && !hasApaLyric) {
-    const apaLine = 'Apa emléke kísér, szavai bennünk élnek tovább,';
-    let next = insertBeforeFirstAnchor(out, anchors.verse4, apaLine);
-    if (next === null) next = insertBeforeFirstAnchor(out, anchors.chorus, apaLine);
-    if (next === null) next = out + `\n${apaLine}\n`; // fallback: append
-    out = next;
-  }
-
-  if (hasFociBrief && !hasFociLyric) {
-    const fociLine = 'Pályán szerzett góljaid fénye ma is velünk ragyog,';
-    let next = insertBeforeFirstAnchor(out, anchors.verse3, fociLine);
-    if (next === null) next = insertBeforeFirstAnchor(out, anchors.chorus, fociLine);
-    if (next === null) next = out + `\n${fociLine}\n`;
-    out = next;
-  }
-
-  // Gentle universal HU fixes
-  out = out.replace(/\bcsodákok\b/gi, 'csodás')
-           .replace(/\b[Aa] mi történet\b/g, 'a mi történetünk')
-           .replace(/\bminden újra kezd\b/gi, 'mindent újra kezd')
-           .replace(/kettő-?ezer-?húsz-?öt/gi, 'kettőezer-huszonöt');
-
-  // Wedding positivity
-  if (/(esküvő|wedding|proposal|engagement|anniversary)/i.test(b)) {
-    out = out.replace(/nincs több(é)? fény/gi, 'örök a fény');
-  }
-
-  // final tidy
+  // általános finomítások
   out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
   return out;
 }
-
-/* =================== END ENZENEM GUARD V2 HELPERS =================== */
-
 
 // === EnZenem: Theme/Genre detectors + HU post-processor (regression guard) ===
 function detectTheme(brief = '', styles = '') {
@@ -1140,9 +1057,7 @@ try {
     console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
   }
 
-// @ENZENEM: V2-PRE-RESPONSE
-try { lyrics = sanitizeGuardV2(lyrics, brief); } catch(_) {}
-try { lyrics = ensureBriefConceptsV2(lyrics, brief); } catch(_) {}
+try { lyrics = fixHungarianGrammar(lyrics); } catch(_) {}
 return res.json({ ok:true, lyrics, style: styleFinal, tracks });
   } catch (e) {
     console.error('[generate_song]', e);
