@@ -9,65 +9,39 @@ import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
-import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
+import { appendOrderRow } from './sheetsLogger.js';
 
 
-// === EnZenem: Theme/Genre detectors + HU post-processor (regression guard) ===
-function detectTheme(brief = '', styles = '') {
-  const t = (String(brief) + ' ' + String(styles)).toLowerCase();
-  if (/(temet[ée]s|búcsúztat[óő]|gyász|ravatal)/.test(t)) return 'funeral';
-  if (/(lánykérés|eljegyzés|kér[jd] meg|proposal)/.test(t)) return 'proposal';
-  if (/(esküv[őo]i|esküv[őo]|menyegző|lagzi)/.test(t)) return 'wedding';
-  if (/(évforduló|házassági évforduló|jubileum)/.test(t)) return 'anniversary';
-  if (/(születésnap|birthday|névnap)/.test(t)) return 'birthday';
-  if (/(jobbulás|gyógyulás|betegség|egészség|healing)/.test(t)) return 'healing';
-  if (/(gyerekdal|gyermekdal|ovis|óvodás|kids|children)/.test(t)) return 'kidsong';
-  return 'generic';
+// === Style normalizer: expand/clean common abbreviations for Suno ===
+function normalizeStylesForSuno(stylesRaw = '') {
+  let s = String(stylesRaw || '');
+  s = s.replace(/\bdnb\b/gi, 'drum and bass');
+  s = s.replace(/\brnb\b/gi, 'r&b');
+  s = s.replace(/\bedm\b/gi, 'electronic dance music');
+  // per user: elektronikus -> electronic (and typos)
+  s = s.replace(/\belektronikus\b/gi, 'electronic');
+  s = s.replace(/\belekronikus\b/gi, 'electronic');
+  s = s.replace(/\belektronika\b/gi, 'electronic');
+  s = s.replace(/\s*,\s*/g, ', ').replace(/\s{2,}/g, ' ').trim();
+  s = s.replace(/,\s*,+/g, ',');
+  return s;
 }
-function detectGenre(styles = '') {
-  const s = String(styles || '').toLowerCase();
-  if (/(techno|minimal|house)/.test(s)) return 'techno';
-  if (/(rap|hip[\s-]?hop|trap)/.test(s)) return 'rap';
-  if (/(pop|ballad|ballada|piano|zongora)/.test(s)) return 'pop';
-  if (/(rock|metal)/.test(s)) return 'rock';
-  return 'generic';
-}
-function postProcessHU(lyrics, { theme, genre, brief }) {
-  let out = String(lyrics || '');
-  out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
-  if (/(funeral|wedding|anniversary|kidsong|healing)/.test(String(theme))) {
-    out = out.replace(/\b[Tt]empó\b/g, 'ütem');
-  }
-  out = out.replace(/^\s*,\s*/gm, '').replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
-  if (theme === 'funeral') {
-    const wantsDrums = /\bvisszafogott\s+dob\b/i.test(brief) || /\bdob\b/i.test(brief);
-    if (!wantsDrums) {
-      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, '');
-      out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
-    } else {
-      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, 'visszafogott dob').replace(/visszafogott\s+visszafogott/gi, 'visszafogott');
-    }
-  }
-  if (theme === 'proposal') {
-    out = out.replace(/\(Chorus\)([\s\S]*?)(?=\n\(Verse 4\)|$)/, (m, ch) => {
-      if (!/[?？]/.test(ch)) {
-        return `(Chorus)\n${ch.trim()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
-      }
-      return m;
-    });
-  }
-  if (theme === 'kidsong') {
-    out = out.replace(/(.{9,})/g, (line) => line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n'));
-  }
-  const briefLower = String(brief || '').toLowerCase();
-  if (!briefLower.includes('céges')) { out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, ''); }
-  if (!briefLower.includes('tempó')) { out = out.replace(/\b[Tt]empó\b/g, 'ütem').replace(/\b[Tt]empós\b/g, 'lendületes'); }
-  out = out.replace(/\btitkus\b/gi, 'titkos').replace(/\bállik\b/gi, 'áll');
 
-  out = out.replace(/^Kulcsszavak:.*$/gmi, '');
-  return out;
+
+// === BPM helpers: extract from brief; apply to style ===
+function extractBPMFromBrief(brief = '') {
+  const m = String(brief||'').match(/(\d{2,3})\s*[-–—]?\s*bpm(?:-?es)?/i);
+  if (!m) return null;
+  const v = parseInt(m[1],10);
+  if (!isNaN(v) && v>=50 && v<=240) return v;
+  return null;
 }
-// === End of regression guard helpers ===
+function applyBPMToStyle(styleStr = '', bpm = null) {
+  let s = String(styleStr||''); if (!bpm) return s;
+  if (/\b\d{2,3}\s*bpm\b/i.test(s)) return s;
+  s = s.trim(); if (s && !/[,.]$/.test(s)) s += ', ';
+  return s + bpm + ' bpm';
+}
 
 
 dotenv.config();
@@ -575,14 +549,6 @@ async function enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, lan
 
 /* ============ GPT → Suno generate ============ */
 app.post('/api/generate_song', async (req, res) => {
-  let _briefBPM = extractBPMFromBrief(brief);
-  /* DNB default 170 */
-  try {
-    const _stylesProbe = (typeof styles !== 'undefined' ? String(styles).toLowerCase() : '') + ' ' + (typeof styleFinal !== 'undefined' ? String(styleFinal).toLowerCase() : '');
-    const mentionsDNB = /\b(drumn?\s*and\s*bass|dnb)\b/.test(_stylesProbe);
-    if (!_briefBPM && mentionsDNB) { _briefBPM = 170; }
-  } catch(_) {}
-
   try {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
     if (!rateLimit('gen:' + ip, 45000, 5)) {
@@ -590,6 +556,14 @@ app.post('/api/generate_song', async (req, res) => {
     }
 
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
+  try { styles = normalizeStylesForSuno(styles); } catch(_) {}
+  let _briefBPM = extractBPMFromBrief(typeof brief !== 'undefined' ? brief : '');
+  try {
+    const probe = ((typeof styles!=='undefined'?String(styles).toLowerCase():'') + ' ' + (typeof styleFinal!=='undefined'?String(styleFinal).toLowerCase():''));
+    const mentionsDNB = /\b(drumn?\s*and\s*bass|dnb)\b/.test(probe);
+    if (!_briefBPM && mentionsDNB) _briefBPM = 170;
+  } catch(_) {}
+
 
     // language autodetect from brief (fallback)
     (function () {
@@ -825,7 +799,8 @@ app.post('/api/generate_song', async (req, res) => {
       if (vt && !seen.has(vt)) out.push(vt);
       return out.join(', ');
     }
-    const styleFinal = buildStyleEN(styles, vocal, gptStyle);
+    const \1
+  try { styleFinal = normalizeStylesForSuno(styleFinal); styleFinal = applyBPMToStyle(styleFinal, (typeof _briefBPM!=='undefined'?_briefBPM:null)); } catch(_) {}
 
     // GPT #2 refine
     const sys2 = [
@@ -988,7 +963,7 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
       model: 'V5',
       instrumental: (vocal === 'instrumental'),
       title: title,
-      style: applyBPMToStyle(styleFinal, _briefBPM),
+      style: styleFinal,
       prompt: lyrics,
       callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
     });
@@ -1030,21 +1005,16 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
 try {
   const link1 = tracks[0]?.audio_url || '';
   const link2 = tracks[1]?.audio_url || '';
-  await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2 });
-} catch (_e) { /* handled */ }
+  await appendOrderRow({
+    email: req.body.email || '',
+    styles, vocal, language, brief, lyrics, link1, link2
+  });
+  console.log('[SHEETS] rögzítve', (req.body.email || 'n/a'));
+} catch (err) {
+  console.warn('[SHEETS] hiba:', err?.message || err);
+}
 
-    
-  try {
-    const _theme = detectTheme(typeof brief !== 'undefined' ? brief : '', typeof styles !== 'undefined' ? styles : '');
-    const _genre = detectGenre(typeof styles !== 'undefined' ? styles : '');
-    const _lang  = String((typeof language !== 'undefined' ? language : 'hu')).toLowerCase();
-    if (/^(hu|hungarian|magyar)$/.test(_lang) && typeof lyrics === 'string') {
-      lyrics = postProcessHU(lyrics, { theme: _theme, genre: _genre, brief: (typeof brief !== 'undefined' ? brief : '') });
-    }
-  } catch(e) {
-    console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
-  }
-return res.json({ ok:true, lyrics, style: applyBPMToStyle(styleFinal, _briefBPM), tracks });
+    return res.json({ ok:true, lyrics, style: styleFinal, tracks });
   } catch (e) {
     console.error('[generate_song]', e);
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
