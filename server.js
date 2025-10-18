@@ -799,7 +799,7 @@ app.post('/api/generate_song', async (req, res) => {
       if (vt && !seen.has(vt)) out.push(vt);
       return out.join(', ');
     }
-    const \1
+ 
   try { styleFinal = normalizeStylesForSuno(styleFinal); styleFinal = applyBPMToStyle(styleFinal, (typeof _briefBPM!=='undefined'?_briefBPM:null)); } catch(_) {}
 
     // GPT #2 refine
