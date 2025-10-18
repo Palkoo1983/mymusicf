@@ -9,131 +9,22 @@ import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
-import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
+import { appendOrderRow } from './sheetsLogger.js';
 
 
-
-// === Style normalizer: expand/clean common abbreviations for Suno & prompts ===
+// === Style normalizer: expand/clean common abbreviations so Suno gets canonical tags ===
 function normalizeStylesForSuno(stylesRaw = '') {
   let s = String(stylesRaw || '');
   s = s.replace(/\bdnb\b/gi, 'drum and bass');
   s = s.replace(/\brnb\b/gi, 'r&b');
   s = s.replace(/\bedm\b/gi, 'electronic dance music');
-  s = s.replace(/\belektronikus\b/gi, 'electronic'); // per user: elektronikus -> electronic
+  s = s.replace(/\belektronikus\b/gi, 'electronic');
   s = s.replace(/\belekronikus\b/gi, 'electronic');
   s = s.replace(/\belektronika\b/gi, 'electronic');
   s = s.replace(/\s*,\s*/g, ', ').replace(/\s{2,}/g, ' ').trim();
-
-/* === UNIVERSAL BRIEF-AWARE SANITIZER =============================== */
-function sanitizeCorporateWordsUniversal(lyrics, brief) {
-  try {
-    let out = String(lyrics || '');
-    const b = String(brief || '').toLowerCase();
-    const allowCeges  = /\bcéges\b/.test(b) || /\bceges\b/.test(b);
-    const allowEvzaro = /\bévzáró\b/.test(b) || /\bevzaro\b/.test(b);
-    const allowTempo  = /\btempó\b/.test(b) || /\btempo\b/.test(b) || /\btempós\b/.test(b);
-
-    if (!allowCeges) {
-      out = out.replace(/\b[Cc][ée]ges(?:\s+gondolatok)?\b/g, '');
-      out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
-
-// === Universal Fine-Tuning for HU lyrics (non-destructive) ===
-function universalFineTuning(lyrics, brief, theme = '', genre = '') {
-  let out = String(lyrics || '');
-  const b = String(brief || '').toLowerCase();
-  const t = String(theme || '');
-  const weddingLike = /(esküvő|wedding|proposal|engagement|anniversary)/i.test(b + ' ' + t);
-
-  if (weddingLike) {
-    out = out.replace(/nincs több(é)? fény/gi, 'örök a fény');
-  }
-  out = out.replace(/\b[Cc]sodákok\b/g, 'csodás');
-  out = out.replace(/\b[Aa] mi történet\b/g, 'a mi történetünk');
-  out = out.replace(/\bminden újra kezd\b/gi, 'mindent újra kezd');
-  out = out.replace(/kettő-?ezer-?húsz-?öt/gi, 'kettőezer-huszonöt');
-
-  if (/(apa|édesap)/i.test(b) && !/(apa|édesap)/i.test(out)) {
-    out = out.replace(/\(Verse 4\)/i, '(Verse 4)\nApa hangja bennünk él, szavai vezetnek tovább,\n');
-  }
-  out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
-  return out;
-}
-
-
-    }
-    if (!allowEvzaro) {
-      out = out.replace(/\b[Ee]v[źz]áró\b/g, '');
-      out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
-    }
-    if (!allowTempo) {
-      out = out.replace(/\b[Tt]empó\b/g, 'ütem').replace(/\b[Tt]empós\b/g, 'lendületes');
-    }
-    return out;
-  } catch (_e) { return lyrics; }
-}
-
-
   s = s.replace(/,\s*,+/g, ',');
   return s;
 }
-
-
-// === EnZenem: Theme/Genre detectors + HU post-processor (regression guard) ===
-function detectTheme(brief = '', styles = '') {
-  const t = (String(brief) + ' ' + String(styles)).toLowerCase();
-  if (/(temet[ée]s|búcsúztat[óő]|gyász|ravatal)/.test(t)) return 'funeral';
-  if (/(lánykérés|eljegyzés|kér[jd] meg|proposal)/.test(t)) return 'proposal';
-  if (/(esküv[őo]i|esküv[őo]|menyegző|lagzi)/.test(t)) return 'wedding';
-  if (/(évforduló|házassági évforduló|jubileum)/.test(t)) return 'anniversary';
-  if (/(születésnap|birthday|névnap)/.test(t)) return 'birthday';
-  if (/(jobbulás|gyógyulás|betegség|egészség|healing)/.test(t)) return 'healing';
-  if (/(gyerekdal|gyermekdal|ovis|óvodás|kids|children)/.test(t)) return 'kidsong';
-  return 'generic';
-}
-function detectGenre(styles = '') {
-  const s = String(styles || '').toLowerCase();
-  if (/(techno|minimal|house)/.test(s)) return 'techno';
-  if (/(rap|hip[\s-]?hop|trap)/.test(s)) return 'rap';
-  if (/(pop|ballad|ballada|piano|zongora)/.test(s)) return 'pop';
-  if (/(rock|metal)/.test(s)) return 'rock';
-  return 'generic';
-}
-function postProcessHU(lyrics, { theme, genre, brief }) {
-  let out = String(lyrics || '');
-  out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
-  if (/(funeral|wedding|anniversary|kidsong|healing)/.test(String(theme))) {
-    out = out.replace(/\b[Tt]empó\b/g, 'ütem');
-  }
-  out = out.replace(/^\s*,\s*/gm, '').replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
-  if (theme === 'funeral') {
-    const wantsDrums = /\bvisszafogott\s+dob\b/i.test(brief) || /\bdob\b/i.test(brief);
-    if (!wantsDrums) {
-      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, '');
-      out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
-    } else {
-      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, 'visszafogott dob').replace(/visszafogott\s+visszafogott/gi, 'visszafogott');
-    }
-  }
-  if (theme === 'proposal') {
-    out = out.replace(/\(Chorus\)([\s\S]*?)(?=\n\(Verse 4\)|$)/, (m, ch) => {
-      if (!/[?？]/.test(ch)) {
-        return `(Chorus)\n${ch.trim()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
-      }
-      return m;
-    });
-  }
-  if (theme === 'kidsong') {
-    out = out.replace(/(.{9,})/g, (line) => line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n'));
-  }
-  const briefLower = String(brief || '').toLowerCase();
-  if (!briefLower.includes('céges')) { out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, ''); }
-  if (!briefLower.includes('tempó')) { out = out.replace(/\b[Tt]empó\b/g, 'ütem').replace(/\b[Tt]empós\b/g, 'lendületes'); }
-  out = out.replace(/\btitkus\b/gi, 'titkos').replace(/\bállik\b/gi, 'áll');
-
-  out = out.replace(/^Kulcsszavak:.*$/gmi, '');
-  return out;
-}
-// === End of regression guard helpers ===
 
 
 dotenv.config();
@@ -648,6 +539,7 @@ app.post('/api/generate_song', async (req, res) => {
     }
 
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
+  try { styles = normalizeStylesForSuno(styles); } catch(_) {}
 
     // language autodetect from brief (fallback)
     (function () {
@@ -884,6 +776,7 @@ app.post('/api/generate_song', async (req, res) => {
       return out.join(', ');
     }
     const styleFinal = buildStyleEN(styles, vocal, gptStyle);
+  try { styleFinal = normalizeStylesForSuno(styleFinal); } catch(_) {}
 
     // GPT #2 refine
     const sys2 = [
@@ -1046,7 +939,7 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
       model: 'V5',
       instrumental: (vocal === 'instrumental'),
       title: title,
-      style: styleFinal,
+      style: normalizeStylesForSuno(styleFinal),
       prompt: lyrics,
       callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
     });
@@ -1088,23 +981,16 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
 try {
   const link1 = tracks[0]?.audio_url || '';
   const link2 = tracks[1]?.audio_url || '';
-  await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2 });
-} catch (_e) { /* handled */ }
+  await appendOrderRow({
+    email: req.body.email || '',
+    styles, vocal, language, brief, lyrics, link1, link2
+  });
+  console.log('[SHEETS] rögzítve', (req.body.email || 'n/a'));
+} catch (err) {
+  console.warn('[SHEETS] hiba:', err?.message || err);
+}
 
-    
-  try {
-    const _theme = detectTheme(typeof brief !== 'undefined' ? brief : '', typeof styles !== 'undefined' ? styles : '');
-    const _genre = detectGenre(typeof styles !== 'undefined' ? styles : '');
-    const _lang  = String((typeof language !== 'undefined' ? language : 'hu')).toLowerCase();
-    if (/^(hu|hungarian|magyar)$/.test(_lang) && typeof lyrics === 'string') {
-      lyrics = postProcessHU(lyrics, { theme: _theme, genre: _genre, brief: (typeof brief !== 'undefined' ? brief : '') });
-    }
-  } catch(e) {
-    console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
-  }
-lyrics = sanitizeCorporateWordsUniversal(lyrics, brief);
-lyrics = universalFineTuning(lyrics, brief, (typeof theme!=='undefined'?theme:''), (typeof genre!=='undefined'?genre:''));
-return res.json({ ok: true, lyrics, style: styleFinal, tracks });
+    return res.json({ ok:true, lyrics, style: normalizeStylesForSuno(styleFinal), tracks });
   } catch (e) {
     console.error('[generate_song]', e);
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
