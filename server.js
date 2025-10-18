@@ -746,15 +746,9 @@ app.post('/api/generate_song', async (req, res) => {
       rhythmHint = 'longer, rhyme-rich lines (10–20 words) with internal rhymes and flow';
     } else if (/\b(trance|dance|edm|k[- ]?pop)\b/i.test(st)) {
       rhythmHint = 'energetic, uplifting, 4–8 word lines, catchy repetition; strong hook';
-    } MAY extend a line when needed to naturally include a mandatory keyword';
-    } else if (/rap|hip ?hop|trap|drill/.test(st)) {
-      rhythmHint = 'longer, rhyme-rich lines (10–20 words) with flow';
-    } else if (/trance|dance|edm|k[- ]?pop/.test(st)) {
-      rhythmHint = 'energetic, uplifting, 4–6 word lines, catchy and repetitive';
-    }
     let toneHint = 'use a natural tone matching the described genre.';
-    if (/lírikus|poetic|ballad|ballada|romantik/.test(st)) toneHint = 'use a poetic, lyrical tone with rich imagery, gentle rhymes and emotional depth.';
-    else if (/k[- ]?pop/.test(st)) toneHint = 'use catchy K-pop phrasing, easy singalong hooks, some light English loanwords allowed if natural.';
+    if (/lírikus|poetic|ballad|ballada|romantik/.test(st)) toneHint = 'use a lyrical tone with rich imagery, gentle rhymes and emotional depth.';
+    else if (/k[- ]?pop/.test(st)) toneHint = 'use catchy, polished phrasing and singalong hooks; some light English loanwords allowed if natural.';
     else if (/trap|drill|rap/.test(st)) toneHint = 'use expressive attitude, internal rhymes and punchy imagery typical for rap.';
     const isLyrical = /lírikus|poetic|ballad|ballada|romantik/.test(st);
     const isPopRockMusical = /pop|rock|musical/.test(st);
