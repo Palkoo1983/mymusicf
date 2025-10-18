@@ -1,8 +1,14 @@
-// ESM server.js – FINAL (stable)
-// - Keeps previous features (HU polish + rhyme/structure + style preserve + "céges"/"évzáró" cleanup)
-// - Guarantees numbers from brief appear, then converts digits→words at the very end
-// - Non-HU enforce only
-// - No stray \1 / print / unclosed strings; Node 18+ fetch OK
+// ESM server.js – FULL + Content Modes Guard (ALLOWED/FORBIDDEN)
+// Kiinduló alap: a feltöltött szerver (Suno + OpenAI flow, HU polish, logger, Stripe) – érintetlen marad,
+// kiegészítve egy univerzális tartalmi védelemmel, hogy a példaszavak ne szivárogjanak vissza.
+
+// - A védőréteg két részből áll:
+//   (1) Prompt RULES blokk: ALLOWED_LEXICON (briefből) + FORBIDDEN_LEXICON (globális tiltólista, brief felülírhatja).
+//   (2) Utó-szanitizálás: bármely tiltott token mechanikus kiszedése a szövegből.
+//
+// GUARD_MODE env: "strict" (alap), "soft" (csak szűrés, nincs újraírás), "off" (legacy).
+//
+// MEGJEGYZÉS: A fájl a te jelenlegi struktúrádat, helperjeidet és endpointjaidat követi.
 
 import express from 'express';
 import cors from 'cors';
@@ -38,7 +44,7 @@ function postProcessHU(lyrics, { theme, genre, brief }) {
   if (/(funeral|wedding|anniversary|kidsong|healing)/.test(String(theme))) {
     out = out.replace(/\b[Tt]empó\b/g, 'ütem');
   }
-  out = out.replace(/^\s*,\s*/gm, '').replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+  out = out.replace(/^\s*,\s*/gm, '').replace(/[ ]{2,}/g, ' ').replace(/\s+([.!?:;])/g, '$1');
   if (theme === 'funeral') {
     const wantsDrums = /\bvisszafogott\s+dob\b/i.test(brief) || /\bdob\b/i.test(brief);
     if (!wantsDrums) {
@@ -69,6 +75,51 @@ function postProcessHU(lyrics, { theme, genre, brief }) {
 }
 // === End of regression guard helpers ===
 
+
+// ===== Content Modes Guard (ALLOWED/ FORBIDDEN) – inline =====
+// GUARD_MODE: strict | soft | off
+function getGuardMode() { return (process.env.GUARD_MODE || 'strict').toLowerCase(); }
+
+const HU_STOP = new Set([
+  "és","vagy","hogy","ami","mert","mint","de","ha","is","meg","az","a","egy",
+  "vagyis","ám","ámde","egyben","hiszen","ugyan","szóval","valamint","illetve",
+  "én","te","ő","mi","ti","ők","énnekem","tőled","neki","nekem","velem","vele"
+]);
+// Globális tiltólista: csak akkor engedjük, ha a briefben explicit benne van (ALLOWED törli a tiltóból)
+const FORBIDDEN_GLOBAL = [
+  "céges","ceges","évzáró","evzaro","corporate","company","company party",
+  "tempó","tempo","dob","dobok","ritmus","drum","drums"
+];
+
+function tokenize(s='') {
+  return String(s).toLowerCase()
+    .normalize('NFC')
+    .replace(/[^\p{L}\p{N}\s\-]/gu, ' ')
+    .split(/\s+/)
+    .map(t => t.trim())
+    .filter(t => t.length >= 2 && !HU_STOP.has(t));
+}
+function buildAllowedLexicon({ brief, styles, vocal, language, names=[] }) {
+  const raw = [brief, styles, vocal, language, ...(names||[])].filter(Boolean).join(' ');
+  return Array.from(new Set(tokenize(raw)));
+}
+function buildForbiddenLexicon(extra=[], allowed=[]) {
+  const base = new Set([...FORBIDDEN_GLOBAL, ...extra.map(s=>String(s).toLowerCase())]);
+  for (const w of (allowed||[])) base.delete(String(w).toLowerCase());
+  return Array.from(base);
+}
+function sanitizeForbidden(text, forbidden=[]) {
+  let out = String(text||'');
+  for (const w of forbidden) {
+    const re = new RegExp(`\\b${w.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\b`, 'gi');
+    out = out.replace(re, '');
+  }
+  return out.replace(/[ \t]{2,}/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+}
+function containsForbidden(text, forbidden=[]) {
+  const lc = String(text||'').toLowerCase();
+  return forbidden.some(w => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\\]\\\\]/g,"\\$&")}\\b`,'i').test(lc));
+}
 
 dotenv.config();
 
@@ -491,8 +542,8 @@ function huNumberWord(n) {
       else if (rr < 10) tail = head2 + ones[rr];
       else if (rr < 20) tail = head2 + teens[rr-10];
       else {
-        const t = Math.floor(rr/10), u = rr%10;
-        tail = head2 + tens[t] + (u ? '-' + ones[u] : '');
+        const t2 = Math.floor(rr/10), u2 = rr%10;
+        tail = head2 + tens[t2] + (u2 ? '-' + ones[u2] : '');
       }
     }
     return head + '-' + tail;
@@ -709,6 +760,14 @@ app.post('/api/generate_song', async (req, res) => {
     activeStarts.set(key, now);
     setTimeout(() => activeStarts.delete(key), 60000);
 
+    // ===== Content Guard inputs =====
+    const guardMode = getGuardMode(); // strict|soft|off
+    const allowedLexicon = buildAllowedLexicon({ brief, styles, vocal, language, names });
+    const forbiddenLexicon = buildForbiddenLexicon(
+      (process.env.FORBIDDEN_EXTRA || '').split(',').map(s=>s.trim()).filter(Boolean),
+      allowedLexicon
+    );
+
     // style hints
     const st = (styles || '').toLowerCase();
     let rhythmHint = 'standard pop verse-chorus structure (6–10 words per line)';
@@ -742,7 +801,7 @@ app.post('/api/generate_song', async (req, res) => {
     ];
     const awkwardNote = 'Avoid unidiomatic or cliched Hungarian phrases such as: ' + awkwardHU.join(', ') + '. Prefer natural alternatives like: "örökké szeretlek", "közös történetünk", "nyitva a világ", "szívünk szabadon dobban".';
 
-    // GPT #1
+    // GPT #1 (draft with guard RULES)
     const sys1 = [
       'You write song lyrics in the requested language and also output an ENGLISH style descriptor (style_en) for a music model.',
       "Write lyrics that MATCH the client's chosen musical style in rhythm and tone.",
@@ -758,13 +817,18 @@ app.post('/api/generate_song', async (req, res) => {
       (isProposal ? 'Proposal rule: Chorus MUST contain a direct poetic question using typographic quotes and a question mark addressing the partner by name.' : ''),
       (/^(hu|hungarian|magyar)$/.test(String(language||'hu').toLowerCase()) ? pronunciationSafety : ''),
       (/^(hu|hungarian|magyar)$/.test(String(language||'hu').toLowerCase()) ? awkwardNote : ''),
-      'MANDATORY: Naturally include ALL of these keywords verbatim at least once if present: ' + (mandatoryKeywords.length ? mandatoryKeywords.join(', ') : '(no mandatory keywords)'),
-      'Use typographic quotes if quotes appear.',
+      // === GUARD RULES ===
+      'RULES (MANDATORY):',
+      '- Use ONLY content words from ALLOWED_LEXICON when adding domain-specific nouns/adjectives/themes.',
+      '- NEVER use any word from FORBIDDEN_LEXICON unless it appears in the brief verbatim.',
+      '- Structure: Verse 1 (4) / Verse 2 (4) / Chorus (2–4) / Verse 3 (4) / Verse 4 (4) / Chorus (2–4).',
+      '- Keep names exactly as given; do not alter.',
+      '- Numbers must be fully written in words (no digits).',
+      'ALLOWED_LEXICON: ' + JSON.stringify(allowedLexicon),
+      'FORBIDDEN_LEXICON: ' + JSON.stringify(forbiddenLexicon),
       'Return STRICT JSON ONLY: {"lyrics_draft":"...","style_en":"..."}',
-      'STRUCTURE: Verse 1 (4) / Verse 2 (4) / Chorus (2–4) / Verse 3 (4) / Verse 4 (4) / Chorus (2–4).',
       "Do NOT override already-English genre tags (e.g., 'minimal techno', 'house', 'pop').",
-      "If vocal is male/female/instrumental, append that as 'male vocals'/'female vocals' or omit for instrumental.",
-      'All numerals must be fully spelled out in words (no digits).'
+      "If vocal is male/female/instrumental, append that as 'male vocals'/'female vocals' or omit for instrumental."
     ].filter(Boolean).join('\n');
 
     const usr1 = [
@@ -857,6 +921,11 @@ app.post('/api/generate_song', async (req, res) => {
     if (oi2.ok){
       const j2 = await oi2.json();
       lyrics = (j2?.choices?.[0]?.message?.content || lyricsDraft).trim();
+    }
+
+    // ===== GUARD: sanitize forbidden (mechanikus szűrés) =====
+    if (guardMode !== 'off') {
+      lyrics = sanitizeForbidden(lyrics, forbiddenLexicon);
     }
 
     // HU polish (if HU)
@@ -964,13 +1033,12 @@ app.post('/api/generate_song', async (req, res) => {
       if (/^(hu|hungarian|magyar)$/.test(lang)) lyrics = softHungarianAwkwardFilter(lyrics);
     }
 
-    // Suno call
+    // Suno call – végső, apró húzások (meglévő helperjeid)
     lyrics = applySafeMorphHU(lyrics, { language });
     lyrics = applyRefrainAlt(lyrics);
-lyrics = applyFinalTinyFixesHU(lyrics, { language });
-lyrics = normalizeSectionHeadingsSafe(lyrics);
-lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
-
+    lyrics = applyFinalTinyFixesHU(lyrics, { language });
+    lyrics = normalizeSectionHeadingsSafe(lyrics);
+    lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
 
     const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
       'Authorization': 'Bearer ' + SUNO_API_KEY,
@@ -1019,24 +1087,24 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
         .slice(0, 2);
     }
     if (!tracks.length) return res.status(502).json({ ok:false, message:'Suno did not return tracks in time.' });
-try {
-  const link1 = tracks[0]?.audio_url || '';
-  const link2 = tracks[1]?.audio_url || '';
-  await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2 });
-} catch (_e) { /* handled */ }
+    try {
+      const link1 = tracks[0]?.audio_url || '';
+      const link2 = tracks[1]?.audio_url || '';
+      await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2 });
+    } catch (_e) { /* handled */ }
 
-    
-  try {
-    const _theme = detectTheme(typeof brief !== 'undefined' ? brief : '', typeof styles !== 'undefined' ? styles : '');
-    const _genre = detectGenre(typeof styles !== 'undefined' ? styles : '');
-    const _lang  = String((typeof language !== 'undefined' ? language : 'hu')).toLowerCase();
-    if (/^(hu|hungarian|magyar)$/.test(_lang) && typeof lyrics === 'string') {
-      lyrics = postProcessHU(lyrics, { theme: _theme, genre: _genre, brief: (typeof brief !== 'undefined' ? brief : '') });
+    try {
+      const _theme = detectTheme(typeof brief !== 'undefined' ? brief : '', typeof styles !== 'undefined' ? styles : '');
+      const _genre = detectGenre(typeof styles !== 'undefined' ? styles : '');
+      const _lang  = String((typeof language !== 'undefined' ? language : 'hu')).toLowerCase();
+      if (/^(hu|hungarian|magyar)$/.test(_lang) && typeof lyrics === 'string') {
+        lyrics = postProcessHU(lyrics, { theme: _theme, genre: _genre, brief: (typeof brief !== 'undefined' ? brief : '') });
+      }
+    } catch(e) {
+      console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
     }
-  } catch(e) {
-    console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
-  }
-return res.json({ ok:true, lyrics, style: styleFinal, tracks });
+
+    return res.json({ ok:true, lyrics, style: styleFinal, tracks });
   } catch (e) {
     console.error('[generate_song]', e);
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
@@ -1068,7 +1136,6 @@ app.get('/api/suno/ping', async (req, res) => {
 
 /* ================== Start server ========================== */
 app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
-
 
 
 /* ======== SAFE MORPH & REFRAIN ALT (non-destructive) ======== */
@@ -1229,4 +1296,3 @@ function ensureTechnoStoryBits(lyrics, { styles = '', brief = '', language = '' 
   }
 }
 /* === /TECH/HOUSE CONTENT NUDGE ================================= */
-
