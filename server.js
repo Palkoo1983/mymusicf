@@ -12,35 +12,18 @@ import Stripe from 'stripe';
 import { appendOrderRow } from './sheetsLogger.js';
 
 
-// === Style normalizer: expand/clean common abbreviations for Suno ===
+// === Style normalizer: expand/clean common abbreviations so Suno gets canonical tags ===
 function normalizeStylesForSuno(stylesRaw = '') {
   let s = String(stylesRaw || '');
   s = s.replace(/\bdnb\b/gi, 'drum and bass');
   s = s.replace(/\brnb\b/gi, 'r&b');
   s = s.replace(/\bedm\b/gi, 'electronic dance music');
-  // per user: elektronikus -> electronic (and typos)
   s = s.replace(/\belektronikus\b/gi, 'electronic');
   s = s.replace(/\belekronikus\b/gi, 'electronic');
   s = s.replace(/\belektronika\b/gi, 'electronic');
   s = s.replace(/\s*,\s*/g, ', ').replace(/\s{2,}/g, ' ').trim();
   s = s.replace(/,\s*,+/g, ',');
   return s;
-}
-
-
-// === BPM helpers: extract from brief; apply to style ===
-function extractBPMFromBrief(brief = '') {
-  const m = String(brief||'').match(/(\d{2,3})\s*[-–—]?\s*bpm(?:-?es)?/i);
-  if (!m) return null;
-  const v = parseInt(m[1],10);
-  if (!isNaN(v) && v>=50 && v<=240) return v;
-  return null;
-}
-function applyBPMToStyle(styleStr = '', bpm = null) {
-  let s = String(styleStr||''); if (!bpm) return s;
-  if (/\b\d{2,3}\s*bpm\b/i.test(s)) return s;
-  s = s.trim(); if (s && !/[,.]$/.test(s)) s += ', ';
-  return s + bpm + ' bpm';
 }
 
 
@@ -557,13 +540,6 @@ app.post('/api/generate_song', async (req, res) => {
 
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
   try { styles = normalizeStylesForSuno(styles); } catch(_) {}
-  let _briefBPM = extractBPMFromBrief(typeof brief !== 'undefined' ? brief : '');
-  try {
-    const probe = ((typeof styles!=='undefined'?String(styles).toLowerCase():'') + ' ' + (typeof styleFinal!=='undefined'?String(styleFinal).toLowerCase():''));
-    const mentionsDNB = /\b(drumn?\s*and\s*bass|dnb)\b/.test(probe);
-    if (!_briefBPM && mentionsDNB) _briefBPM = 170;
-  } catch(_) {}
-
 
     // language autodetect from brief (fallback)
     (function () {
@@ -799,8 +775,8 @@ app.post('/api/generate_song', async (req, res) => {
       if (vt && !seen.has(vt)) out.push(vt);
       return out.join(', ');
     }
- 
-  try { styleFinal = normalizeStylesForSuno(styleFinal); styleFinal = applyBPMToStyle(styleFinal, (typeof _briefBPM!=='undefined'?_briefBPM:null)); } catch(_) {}
+    const styleFinal = buildStyleEN(styles, vocal, gptStyle);
+  try { styleFinal = normalizeStylesForSuno(styleFinal); } catch(_) {}
 
     // GPT #2 refine
     const sys2 = [
@@ -963,7 +939,7 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
       model: 'V5',
       instrumental: (vocal === 'instrumental'),
       title: title,
-      style: styleFinal,
+      style: normalizeStylesForSuno(styleFinal),
       prompt: lyrics,
       callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
     });
@@ -1014,7 +990,7 @@ try {
   console.warn('[SHEETS] hiba:', err?.message || err);
 }
 
-    return res.json({ ok:true, lyrics, style: styleFinal, tracks });
+    return res.json({ ok:true, lyrics, style: normalizeStylesForSuno(styleFinal), tracks });
   } catch (e) {
     console.error('[generate_song]', e);
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
