@@ -1070,11 +1070,6 @@ try {
     console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
   }
 return res.json({ ok:true, lyrics, style: styleFinal, tracks });
-  } catch (e) {
-    console.error('[generate_song]', e);
-    return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
-  }
-});
 
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
