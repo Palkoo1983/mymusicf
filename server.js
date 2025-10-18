@@ -634,6 +634,9 @@ app.post('/api/generate_song', async (req, res) => {
 
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
 
+    // Normalize client styles
+    styles = normalizeClientStylesRaw(styles, brief);
+
     // language autodetect from brief (fallback)
     (function () {
       const b = (brief || '').toLowerCase();
@@ -669,6 +672,17 @@ app.post('/api/generate_song', async (req, res) => {
       if (/\b2025\b/.test(b) || /kétezer\s+huszonöt/i.test(b)) arr.push('kétezer huszonöt');
       return Array.from(new Set(arr));
     })();
+    // Extra: DnB/Goa + core motifs from brief
+    if (/\bd(n|&)?b|drum and bass\b/i.test(brief) || /\b(drum and bass)\b/i.test(styles)) {
+      if (!mandatoryKeywords.includes('drum and bass')) mandatoryKeywords.push('drum and bass');
+    }
+    if (/\bgoa\b/i.test(brief) || /\bgoa\b/i.test(styles)) {
+      if (!mandatoryKeywords.includes('goa')) mandatoryKeywords.push('goa');
+    }
+    ['kitartás','logika','barátság','újrakezdés','Nóra','Pali','Szardínia','Portugália'].forEach(w=>{
+      if (new RegExp('\\b'+w+'\\b','i').test(brief) && !mandatoryKeywords.includes(w)) mandatoryKeywords.push(w);
+    });
+
 
     // ADD: numbers/years from brief as mandatory (guarantee presence)
     (function(){
@@ -731,7 +745,24 @@ app.post('/api/generate_song', async (req, res) => {
       }
     }
 
-    const isProposal = /eljegyz|megkérés|kér(?:i|em).*kezét|kér.*hozzám|kérdés.*igen/i.test(brief || '');
+    
+// --- ADD: style normalizer (dnb/d&b → drum and bass; minimal → minimal techno; reggae csak ha brief kéri)
+function normalizeClientStylesRaw(styles, brief) {
+  let s = String(styles || '');
+  // Fix common aliases
+  s = s.replace(/\bd&b\b/gi, 'drum and bass')
+       .replace(/\bdnb\b/gi, 'drum and bass')
+       .replace(/\bminimal\b(?!\s*techno)/gi, 'minimal techno');
+  // Prevent unintended reggae unless user asked it
+  const briefWantsReggae = /\breggae\b/i.test(String(brief || ''));
+  if (!briefWantsReggae) {
+    s = s.replace(/\breggae\b/gi, '');
+  }
+  // Clean repeats/commas
+  return s.split(/[,\|\/]+/).map(t => t.trim()).filter(Boolean).join(', ');
+}
+
+const isProposal = /eljegyz|megkérés|kér(?:i|em).*kezét|kér.*hozzám|kérdés.*igen/i.test(brief || '');
     const isKidSong = /gyerekdal|óvoda|ovi|nursery|kids?\b|children\b/i.test((brief || '') + ' ' + (styles || ''));
 
     // vocal normalization
@@ -771,12 +802,14 @@ app.post('/api/generate_song', async (req, res) => {
     // style hints
     const st = (styles || '').toLowerCase();
     let rhythmHint = 'standard pop verse-chorus structure (6–10 words per line)';
-    if (/techno|minimal|house/.test(st)) {
-      rhythmHint = 'short, loop-like lines (2–6 words), repetitive, atmospheric; MAY extend a line when needed to naturally include a mandatory keyword';
-    } else if (/rap|hip ?hop|trap|drill/.test(st)) {
-      rhythmHint = 'longer, rhyme-rich lines (10–20 words) with flow';
-    } else if (/trance|dance|edm|k[- ]?pop/.test(st)) {
-      rhythmHint = 'energetic, uplifting, 4–6 word lines, catchy and repetitive';
+    if (/\b(minimal\s*techno|techno|house)\b/i.test(st)) {
+      rhythmHint = 'very short, loop-like lines (2–6 words), repetitive, atmospheric; keep groove; avoid long sentences';
+    } else if (/\b(drum and bass|d&b|dnb)\b/i.test(st)) {
+      rhythmHint = 'fast, percussive lines (3–7 words), syncopated feel; concise, energetic phrasing';
+    } else if (/\b(rap|hip ?hop|trap|drill)\b/i.test(st)) {
+      rhythmHint = 'longer, rhyme-rich lines (10–20 words) with internal rhymes and flow';
+    } else if (/\b(trance|dance|edm|k[- ]?pop)\b/i.test(st)) {
+      rhythmHint = 'energetic, uplifting, 4–8 word lines, catchy repetition; strong hook';
     }
     let toneHint = 'use a natural tone matching the described genre.';
     if (/lírikus|poetic|ballad|ballada|romantik/.test(st)) toneHint = 'use a poetic, lyrical tone with rich imagery, gentle rhymes and emotional depth.';
@@ -821,7 +854,7 @@ app.post('/api/generate_song', async (req, res) => {
       'RULES (MANDATORY):',
       '- Use ONLY content words from ALLOWED_LEXICON when adding domain-specific nouns/adjectives/themes.',
       '- NEVER use any word from FORBIDDEN_LEXICON unless it appears in the brief verbatim.',
-      '- Structure: Verse 1 (4) / Verse 2 (4) / Chorus (2–4) / Verse 3 (4) / Verse 4 (4) / Chorus (2–4).',
+      '- Structure: Verse 1 (4) / Verse 2 (4) / Chorus (2–4) / Verse 3 (4) / Chorus (2–4).',
       '- Keep names exactly as given; do not alter.',
       '- Numbers must be fully written in words (no digits).',
       'ALLOWED_LEXICON: ' + JSON.stringify(allowedLexicon),
@@ -883,10 +916,15 @@ app.post('/api/generate_song', async (req, res) => {
     }
     const styleFinal = buildStyleEN(styles, vocal, gptStyle);
 
+    const clientWantsDnB = /\b(drum and bass)\b/i.test(styles);
+    const styleReallyFinal = clientWantsDnB && !/\bdrum and bass\b/i.test(styleFinal)
+      ? (styleFinal ? 'drum and bass, ' + styleFinal : 'drum and bass')
+      : styleFinal;
+
     // GPT #2 refine
     const sys2 = [
       'You are a native lyric editor in the target language.',
-      'Keep EXACT section headings (Verse 1/Verse 2/Chorus/Verse 3/Verse 4/Chorus).',
+      'Keep EXACT section headings (Verse 1/Verse 2/Chorus/Verse 3/Chorus).',
       'LANGUAGE LOCK: ensure the entire text is in ' + language + '.',
       'Remove invented/non-words; replace with natural, idiomatic alternatives.',
       (isKidSong ? 'KID MODE ENFORCE: simplify phrasing, fix subject-verb agreement, AABB rhyme in verses, 2–4 line Chorus with a memorable hook and playful repetition.' : ''),
@@ -1040,6 +1078,9 @@ app.post('/api/generate_song', async (req, res) => {
     lyrics = normalizeSectionHeadingsSafe(lyrics);
     lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
 
+    // Enforce 3x2 structure universally
+    lyrics = enforceStructure3x2(lyrics);
+
     const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
       'Authorization': 'Bearer ' + SUNO_API_KEY,
       'Content-Type': 'application/json'
@@ -1048,7 +1089,7 @@ app.post('/api/generate_song', async (req, res) => {
       model: 'V5',
       instrumental: (vocal === 'instrumental'),
       title: title,
-      style: styleFinal,
+      style: styleReallyFinal,
       prompt: lyrics,
       callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
     });
@@ -1136,6 +1177,56 @@ app.get('/api/suno/ping', async (req, res) => {
 
 /* ================== Start server ========================== */
 app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
+
+
+
+// Enforce 3×2 structure even if the model drifted
+function enforceStructure3x2(lyrics) {
+  const raw = String(lyrics || '').trim();
+  // Split by headings
+  const re = /^\s*\(?(Verse\s+1|Verse\s+2|Verse\s+3|Verse\s+4|Chorus|Bridge|Break)\)?\s*$/gmi;
+  const parts = [];
+  let last = null;
+  raw.split('\n').forEach(line => {
+    const m = line.match(/^\s*\(?(Verse\s+\d+|Chorus|Bridge|Break)\)?\s*$/i);
+    if (m) {
+      last = { head: m[1].replace(/\s+0?/, ' '), lines: [] };
+      parts.push(last);
+    } else {
+      if (!last) {
+        last = { head: 'Verse 1', lines: [] };
+        parts.push(last);
+      }
+      last.lines.push(line);
+    }
+  });
+
+  const take = (name) => {
+    const i = parts.findIndex(p => new RegExp('^'+name+'$', 'i').test(p.head));
+    return i >= 0 ? parts.splice(i,1)[0] : null;
+  };
+
+  const v1 = take('Verse 1') || { head:'Verse 1', lines: [] };
+  const v2 = take('Verse 2') || { head:'Verse 2', lines: [] };
+  let ch1 = take('Chorus') || { head:'Chorus', lines: [] };
+  let v3 = take('Verse 3') || take('Verse 4') || { head:'Verse 3', lines: [] };
+  let ch2 = take('Chorus') || { head:'Chorus', lines: ch1.lines.slice() };
+
+  const norm = (s) => s.map(l => l.replace(/^\s+|\s+$/g,'')).filter(l => l.length);
+
+  const pack = [
+    { head: 'Verse 1', lines: norm(v1.lines).slice(0, 4) },
+    { head: 'Verse 2', lines: norm(v2.lines).slice(0, 4) },
+    { head: 'Chorus',  lines: norm(ch1.lines).slice(0, 4) },
+    { head: 'Verse 3', lines: norm(v3.lines).slice(0, 4) },
+    { head: 'Chorus',  lines: norm(ch2.lines).slice(0, 4) }
+  ];
+
+  for (const sec of pack) {
+    if (!sec.lines.length) sec.lines = ['(instrumental hook)'];
+  }
+  return pack.map(sec => `(${sec.head})\n${sec.lines.join('\n')}`).join('\n');
+}
 
 
 /* ======== SAFE MORPH & REFRAIN ALT (non-destructive) ======== */
