@@ -1,16 +1,3 @@
-
-// --- Style normalizer: DnB mapping, minimal techno, reggae removal unless brief asks, typo fix ('elektronikus'→'electronic')
-function normalizeClientStylesRaw(styles, brief) {
-  let s = String(styles || '');
-  s = s.replace(/\bd&b\b/gi, 'drum and bass')
-       .replace(/\bdnb\b/gi, 'drum and bass')
-       .replace(/\belektronikus\b/gi, 'electronic')
-       .replace(/\bminimal\b(?!\s*techno)/gi, 'minimal techno');
-  const briefWantsReggae = /\breggae\b/i.test(String(brief || ''));
-  if (!briefWantsReggae) s = s.replace(/\breggae\b/gi, '');
-  return s.split(/[,\|\/]+/).map(t => t.trim()).filter(Boolean).join(', ');
-}
-
 // ESM server.js – FINAL (stable)
 // - Keeps previous features (HU polish + rhyme/structure + style preserve + "céges"/"évzáró" cleanup)
 // - Guarantees numbers from brief appear, then converts digits→words at the very end
@@ -23,6 +10,36 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
 import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
+
+
+
+/* === UNIVERSAL BRIEF-AWARE SANITIZER ===============================
+   Removes "céges", "évzáró", and "tempó/tempós" from lyrics UNLESS the brief
+   explicitly contains them. Non-destructive: does not touch headings.
+==================================================================== */
+function sanitizeCorporateWordsUniversal(lyrics, brief) {
+  try {
+    let out = String(lyrics || '');
+    const b = String(brief || '').toLowerCase();
+    const allowCeges   = /\bcéges\b/i.test(b) || /\bceges\b/i.test(b);
+    const allowEvzaro  = /\bévzáró\b/i.test(b) || /\bevzaro\b/i.test(b);
+    const allowTempo   = /\btempó\b/i.test(b) || /\btempo\b/i.test(b) || /\btempós\b/i.test(b);
+
+    if (!allowCeges) {
+      out = out.replace(/\b[Cc][ée]ges(?:\s+gondolatok)?\b/g, '');
+      out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+    }
+    if (!allowEvzaro) {
+      out = out.replace(/\b[Ee]v[źz]áró\b/g, '');
+      out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+    }
+    if (!allowTempo) {
+      out = out.replace(/\b[Tt]empó\b/g, 'ütem');
+      out = out.replace(/\b[Tt]empós\b/g, 'lendületes');
+    }
+    return out;
+  } catch (_e) { return lyrics; }
+}
 
 
 // === EnZenem: Theme/Genre detectors + HU post-processor (regression guard) ===
@@ -560,7 +577,7 @@ async function enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, lan
 
   const sys = [
     `Rewrite the lyrics fully into ${target}.`,
-    "Preserve ALL section headings (Verse 1/Verse 2/Verse 3 / Chorus).",
+    "Preserve ALL section headings (Verse 1/Verse 2/Verse 3/Verse 4/Chorus).",
     "Keep rhythm and gentle rhymes.",
     (preserveList.length
       ? "Keep these tokens verbatim if they are proper names or must-stay words: " + preserveList.join(", ")
@@ -596,9 +613,7 @@ app.post('/api/generate_song', async (req, res) => {
 
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
 
-    
-    styles = normalizeClientStylesRaw(styles, brief);
-// language autodetect from brief (fallback)
+    // language autodetect from brief (fallback)
     (function () {
       const b = (brief || '').toLowerCase();
       const cur = String(language || '').toLowerCase().trim();
@@ -634,18 +649,7 @@ app.post('/api/generate_song', async (req, res) => {
       return Array.from(new Set(arr));
     })();
 
-    
-    // Ensure DnB/Goa + core motifs present as mandatory
-    if (/d(n|&)?b|drum and bass/i.test(brief) || /(drum and bass)/i.test(styles)) {
-      if (!mandatoryKeywords.includes('drum and bass')) mandatoryKeywords.push('drum and bass');
-    }
-    if (/goa/i.test(brief) || /goa/i.test(styles)) {
-      if (!mandatoryKeywords.includes('goa')) mandatoryKeywords.push('goa');
-    }
-    ['kitartás','logika','barátság','újrakezdés','Nóra','Pali','Szardínia','Portugália'].forEach(w => {
-      if (new RegExp('\b'+w+'\b','i').test(brief) && !mandatoryKeywords.includes(w)) mandatoryKeywords.push(w);
-    });
-// ADD: numbers/years from brief as mandatory (guarantee presence)
+    // ADD: numbers/years from brief as mandatory (guarantee presence)
     (function(){
       const btxt = String(brief || '');
       const allNums = Array.from(btxt.matchAll(/\b\d{1,4}\b/g)).map(m => m[0]);
@@ -738,17 +742,16 @@ app.post('/api/generate_song', async (req, res) => {
     // style hints
     const st = (styles || '').toLowerCase();
     let rhythmHint = 'standard pop verse-chorus structure (6–10 words per line)';
-    if (/\b(minimal\s*techno|techno|house)\b/i.test(st)) {
-      rhythmHint = 'very short, loop-like lines (2–6 words), repetitive, atmospheric; keep groove; avoid long sentences';
-    } else if (/\b(drum and bass|d&b|dnb)\b/i.test(st)) {
-      rhythmHint = 'fast, percussive lines (3–7 words), syncopated feel; concise, energetic phrasing';
-    } else if (/\b(rap|hip ?hop|trap|drill)\b/i.test(st)) {
-      rhythmHint = 'longer, rhyme-rich lines (10–20 words) with internal rhymes and flow';
-    } else if (/\b(trance|dance|edm|k[- ]?pop)\b/i.test(st)) {
-      rhythmHint = 'energetic, uplifting, 4–8 word lines, catchy repetition; strong hook';
+    if (/techno|minimal|house/.test(st)) {
+      rhythmHint = 'short, loop-like lines (2–6 words), repetitive, atmospheric; MAY extend a line when needed to naturally include a mandatory keyword';
+    } else if (/rap|hip ?hop|trap|drill/.test(st)) {
+      rhythmHint = 'longer, rhyme-rich lines (10–20 words) with flow';
+    } else if (/trance|dance|edm|k[- ]?pop/.test(st)) {
+      rhythmHint = 'energetic, uplifting, 4–6 word lines, catchy and repetitive';
+    }
     let toneHint = 'use a natural tone matching the described genre.';
-    if (/lírikus|poetic|ballad|ballada|romantik/.test(st)) toneHint = 'use a lyrical tone with rich imagery, gentle rhymes and emotional depth.';
-    else if (/k[- ]?pop/.test(st)) toneHint = 'use catchy, polished phrasing and singalong hooks; some light English loanwords allowed if natural.';
+    if (/lírikus|poetic|ballad|ballada|romantik/.test(st)) toneHint = 'use a poetic, lyrical tone with rich imagery, gentle rhymes and emotional depth.';
+    else if (/k[- ]?pop/.test(st)) toneHint = 'use catchy K-pop phrasing, easy singalong hooks, some light English loanwords allowed if natural.';
     else if (/trap|drill|rap/.test(st)) toneHint = 'use expressive attitude, internal rhymes and punchy imagery typical for rap.';
     const isLyrical = /lírikus|poetic|ballad|ballada|romantik/.test(st);
     const isPopRockMusical = /pop|rock|musical/.test(st);
@@ -845,13 +848,11 @@ app.post('/api/generate_song', async (req, res) => {
       return out.join(', ');
     }
     const styleFinal = buildStyleEN(styles, vocal, gptStyle);
-    const clientWantsDnB = /\b(drum and bass)\b/i.test(styles);
-    const styleReallyFinal = clientWantsDnB && !/\bdrum and bass\b/i.test(styleFinal) ? ((styleFinal ? 'drum and bass, ' + styleFinal : 'drum and bass')) : styleFinal;
 
     // GPT #2 refine
     const sys2 = [
       'You are a native lyric editor in the target language.',
-      'Keep EXACT section headings (Verse 1 / Verse 2 / Chorus / Verse 3 / Verse 4 / Chorus).',
+      'Keep EXACT section headings (Verse 1/Verse 2/Chorus/Verse 3/Verse 4/Chorus).',
       'LANGUAGE LOCK: ensure the entire text is in ' + language + '.',
       'Remove invented/non-words; replace with natural, idiomatic alternatives.',
       (isKidSong ? 'KID MODE ENFORCE: simplify phrasing, fix subject-verb agreement, AABB rhyme in verses, 2–4 line Chorus with a memorable hook and playful repetition.' : ''),
@@ -900,9 +901,7 @@ app.post('/api/generate_song', async (req, res) => {
 
     // listy fix
     try { lyrics = await rewriteKeywordListOpeners({ OPENAI_API_KEY, OPENAI_MODEL, lyrics }); }
-    catch (e) { console.error('rewriteKeywordListOpeners failed', e); }
-
-    try { lyrics = await lengthenLyricsIfShort({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, mandatoryKeywords }); } catch(e){ console.warn('[LENGTHEN_FAIL]', e?.message || e); }
+    catch(e){ console.warn('[LISTY_FIX_FAIL]', e?.message || e); }
 
     // PRE-ENFORCE: strip Hungarian name case endings for non-HU targets
     {
@@ -1003,8 +1002,6 @@ lyrics = normalizeSectionHeadingsSafe(lyrics);
 lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
 
 
-    lyrics = enforceStructure6Blocks(lyrics);
-
     const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
       'Authorization': 'Bearer ' + SUNO_API_KEY,
       'Content-Type': 'application/json'
@@ -1013,7 +1010,7 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
       model: 'V5',
       instrumental: (vocal === 'instrumental'),
       title: title,
-      style: styleReallyFinal,
+      style: styleFinal,
       prompt: lyrics,
       callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
     });
@@ -1069,7 +1066,13 @@ try {
   } catch(e) {
     console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
   }
-return res.json({ ok:true, lyrics, style: styleFinal, tracks });
+lyrics = sanitizeCorporateWordsUniversal(lyrics, brief);
+return res.json({ ok: true, lyrics, style: styleFinal, tracks });
+  } catch (e) {
+    console.error('[generate_song]', e);
+    return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
+  }
+});
 
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
@@ -1258,82 +1261,3 @@ function ensureTechnoStoryBits(lyrics, { styles = '', brief = '', language = '' 
 }
 /* === /TECH/HOUSE CONTENT NUDGE ================================= */
 
-
-
-// --- Structure enforcer: keep EXACT 3×2 blocks (V1, V2, Chorus, V3, Chorus)
-function enforceStructure6Blocks(lyrics) {
-  const raw = String(lyrics || '').trim();
-  if (!raw) return raw;
-
-  const parts = [];
-  let current = null;
-  const headRe = /^\s*\(?(Verse\s+\d+|Chorus)\)?\s*$/i;
-
-  raw.split('\n').forEach(line => {
-    const m = line.match(headRe);
-    if (m) {
-      current = { head: m[1].replace(/\s+0?/, ' '), lines: [] };
-      parts.push(current);
-    } else {
-      if (!current) { current = { head: 'Verse 1', lines: [] }; parts.push(current); }
-      current.lines.push(line);
-    }
-  });
-
-  const pick = (name) => {
-    const i = parts.findIndex(p => new RegExp('^'+name+'$', 'i').test(p.head));
-    return i >= 0 ? parts.splice(i,1)[0] : null;
-  };
-
-  const v1 = pick('Verse 1') || { head:'Verse 1', lines: [] };
-  const v2 = pick('Verse 2') || { head:'Verse 2', lines: [] };
-  const chA = pick('Chorus') || { head:'Chorus', lines: [] };
-  const v3 = pick('Verse 3') || pick('Verse 4') || { head:'Verse 3', lines: [] };
-  const chB = pick('Chorus') || { head:'Chorus', lines: chA.lines.slice() };
-
-  const norm = s => s.map(l => l.replace(/^\s+|\s+$/g,'')).filter(Boolean);
-
-  const pack = [
-    { head:'Verse 1', lines: norm(v1.lines).slice(0, 6) },
-    { head:'Verse 2', lines: norm(v2.lines).slice(0, 6) },
-    { head:'Chorus',  lines: norm(chA.lines).slice(0, 6) },
-    { head:'Verse 3', lines: norm(v3.lines).slice(0, 6) },
-    { head:'Chorus',  lines: norm(chB.lines).slice(0, 6) },
-  ];
-
-  for (const sec of pack) sec.lines = sec.lines.filter(l => !/^\((instrumental hook|Break|Bridge)\)$/i.test(l));
-  for (const sec of pack) if (!sec.lines.length) sec.lines = ['(hook)'];
-  return pack.map(s => `(${s.head})\n${s.lines.join('\n')}`).join('\n');
-}
-
-
-// --- Length corrector: expand to ~2–2.5 minutes if too short (keeps 3×2)
-async function lengthenLyricsIfShort({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, language, mandatoryKeywords = [] }) {
-  const lines = String(lyrics || '').split('\n').filter(l => l.trim().length);
-  const target = 26;
-  if (lines.length >= target) return lyrics;
-
-  const sys = [
-    'You are a lyric lengthener. Keep EXACT 6-block structure: (Verse 1 / Verse 2 / Chorus / Verse 3 / Verse 4 / Chorus).',
-    'Do NOT add Bridge. Keep Verse 4. Do NOT remove existing lines.',
-    'Target per section: Verse 1 = 6 lines, Verse 2 = 6 lines, Chorus = 4–6 lines, Verse 3 = 6 lines, Verse 4 = 6 lines, final Chorus = 4–6 lines.',
-    'Keep rhyme and narrative coherence. Use ONLY brief-derived terms; do not invent new proper nouns.',
-    'Language: ' + (language || 'hu') + ' (strict).',
-    'Ensure all mandatory keywords appear verbatim at least once: ' + (mandatoryKeywords.join(', ') || '(none)')
-  ].join('\n');
-
-  const r = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: OPENAI_MODEL,
-      messages: [{ role: 'system', content: sys }, { role: 'user', content: lyrics }],
-      temperature: 0.5,
-      max_tokens: 900
-    })
-  });
-  if (!r.ok) return lyrics;
-  const j = await r.json();
-  const out = (j?.choices?.[0]?.message?.content || '').trim();
-  return out || lyrics;
-}
