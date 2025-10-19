@@ -26,7 +26,7 @@
       vocal:    (fd.get('vocal')||'instrumental').toString(),
       language: (fd.get('language')||'hu').toString(),
       brief:    (fd.get('brief')||'').toString().trim(),
-      package: (fd.get('package')||'basic').toString().toString().trim()
+      package: (fd.get('package')||'basic').toString()
     };
 
     try{
