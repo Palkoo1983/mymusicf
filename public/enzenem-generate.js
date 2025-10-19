@@ -60,7 +60,8 @@
     const fd = new FormData(form);
     const data = {
       email: (form.querySelector('[name=email]')||{}).value || '',
-      style: (form.querySelector('[name=style]')||{}).value || '',
+      styles: (fd.get('styles')||'').toString(),   // <-- correct field name
+      style:  (fd.get('styles')||'').toString(),   // legacy compatibility
       vocal: (form.querySelector('[name=vocal]')||{}).value || '',
       language: (form.querySelector('[name=language]')||{}).value || '',
       brief: (form.querySelector('[name=brief]')||{}).value || '',
