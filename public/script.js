@@ -403,7 +403,7 @@ function initOrderForm() {
       if (orderStatus) orderStatus.textContent = json.message || 'Köszönjük! Válasz e-mailt küldtünk.';
       orderForm.reset();
       // ✅ NOVABOT: SIKER
-      try { window.novaOrderSuccess && window.novaOrderSuccess(); } catch(_){}
+      try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderSuccess && window.novaOrderSuccess(); } } catch(_){}
       setTimeout(() => {
         const desc = qs('#order textarea[name="brief"]');
         if (desc) desc.dispatchEvent(new Event('input', { bubbles: true }));
@@ -412,7 +412,7 @@ function initOrderForm() {
       if (orderStatus) orderStatus.textContent = 'Nem sikerült elküldeni. Próbáld újra később.';
       console.error(err);
       // ✅ NOVABOT: HIBA
-      try { window.novaOrderFail && window.novaOrderFail(); } catch(_){}
+      try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderFail && window.novaOrderFail(); } } catch(_){}
     }
   }
 
@@ -438,7 +438,7 @@ function initOrderForm() {
       acceptBtn?.removeEventListener('click', onAccept);
       cancelBtn?.removeEventListener('click', onCancel);
       // ✅ NOVABOT: FELTÉTEL ELUTASÍTVA → HIBA üzenet
-      try { window.novaOrderFail && window.novaOrderFail(); } catch(_){}
+      try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderFail && window.novaOrderFail(); } } catch(_){}
     };
 
     acceptBtn?.addEventListener('click', onAccept, { once:true });

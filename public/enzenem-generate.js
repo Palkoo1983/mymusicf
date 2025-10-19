@@ -1,5 +1,6 @@
 // EnZenem: Megrendelés -> /api/generate_song (customer-safe feedback only)
 (function(){
+  window.NB_NOTIFY_SOURCE = 'generate';
   let IN_FLIGHT = false;
   const form = document.getElementById('orderForm');
   if(!form) return;
