@@ -95,28 +95,72 @@ function normalizeWhitespace(lyrics = '') {
     .trim();
 }
 
-// --- RÉGI TEMATIKUS FINOMÍTÁSOK MEGTARTÁSA (bővítve óvatosan) ---
 function postProcessHU(lyrics = '', { theme = '', genre = '', brief = '', styles = '' } = {}) {
-  let s = String(lyrics);
+  let out = String(lyrics || '');
 
-  // "Céges" szó kisöprése (ártalmatlan)
-  s = s.replace(/\bc[ée]ges\b/gi, '');
-
-  // bizonyos témáknál "Tempó" → "ütem" (ahogy korábban)
+  // --- kontextus ---
   const themey = String(theme || '').toLowerCase();
-  if (/wedding|funeral|anniversary|kidsong|healing/.test(themey)) {
-    s = s.replace(/\b[Tt]emp[óo]\b/g, 'ütem');
+  const g = String(genre || styles || '').toLowerCase();
+  const briefLower = String(brief || '').toLowerCase();
+
+  const isElectronic = /(techno|minimal|house|trance|dnb|drum\s*and\s*bass|edm|lo-?fi|lofi)/i.test(g);
+  const isFuneral   = /\b(funeral|temet[ée]s|búcsúztat[óo])\b/i.test(themey + ' ' + briefLower);
+  const wantsDrums  = /\b(dob|dobol|dobbal|dobütés|drum|visszafogott\s+dob)\b/i.test(briefLower);
+
+  // 1) „CÉGES” mindig menjen ki (régi viselkedés megtartva)
+  out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
+
+  // 2) „TEMPÓ” → „ÜTEM” (régi szabály + kiegészítés)
+  //    - csak NEM elektronikus stílusoknál nyúlunk bele
+  //    - ha tematikus (wedding/funeral/anniversary/kidsong/healing) VAGY a brief nem ragaszkodik a "tempó" szóhoz
+  if (!isElectronic) {
+    if (/(funeral|wedding|anniversary|kidsong|healing)/.test(themey) || !briefLower.includes('tempó')) {
+      out = out
+        .replace(/\b[Tt]emp[óo]\b/g, 'ütem')
+        .replace(/\b[Tt]empós\b/g, 'lendületes');
+    }
   }
 
-  // temetés: "dob" visszafogása, ha a brief nem kéri kifejezetten
-  const briefHasDrum = /\b(dob|dobol|dobbal|dobütés|drum)\b/i.test(String(brief||''));
-  const isFuneral = /\bfuneral|temet[ée]s|búcsúztat[óo]\b/i.test(themey + ' ' + brief);
-  if (isFuneral && !briefHasDrum) {
-    s = s.replace(/\b[Dd]ob(ok|bal|bal[l]al)?\b/g, 'visszafogott dob');
+  // 3) TEMETÉS: „dob” visszafogása, ha a brief NEM kéri (régi logika megőrizve)
+  if (isFuneral && !wantsDrums) {
+    out = out
+      .replace(/\b[Dd]ob(ok|bal|bal+l+al|ot)?\b/gi, 'visszafogott dob')
+      .replace(/visszafogott\s+visszafogott/gi, 'visszafogott');
   }
 
-  return s;
+  // 4) PROPOSAL: refrénben legyen kérdés, ha nincs (régi logika)
+  if (themey === 'proposal') {
+    out = out.replace(/\(Chorus\)([\s\S]*?)(?=\n\(Verse 4\)|$)/, (m, ch) => {
+      if (!/[?？]/.test(ch)) {
+        return `(Chorus)\n${ch.trim()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
+      }
+      return m;
+    });
+  }
+
+  // 5) KIDSONG: rövidebb sorok (régi logika)
+  if (themey === 'kidsong') {
+    out = out.replace(/(.{9,})/g, (line) =>
+      line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n')
+    );
+  }
+
+  // 6) Apró elütések (régi)
+  out = out.replace(/\btitkus\b/gi, 'titkos').replace(/\bállik\b/gi, 'áll');
+
+  // 7) Prompt-maradványok (régi)
+  out = out.replace(/^Kulcsszavak:.*$/gmi, '');
+
+  // 8) Enyhe pontozás/whitespace (régi)
+  out = out
+    .replace(/^\s*,\s*/gm, '')
+    .replace(/[ ]{2,}/g, ' ')
+    .replace(/\s+([.,!?:;])/g, '$1')
+    .trim();
+
+  return out;
 }
+
 
 // --- FŐ, UNIVERZÁLIS POLISH: MINDEN magyar szövegre fusson ---
 function polishHU(lyrics = '', ctx = {}) {
