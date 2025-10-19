@@ -127,29 +127,58 @@ async function createDailySheetFully(title) {
   return sheetId;
 }
 
-/** Létező lapon is biztosítsuk: fejléc + fagyasztás + CF */
 async function ensureHeaderFreezeCF(title) {
   const gs = sheets();
   const sheetId = await getSheetIdByTitle(title);
   if (!sheetId) return;
 
-  // fejléc ellenőrzés
+  // 1) Olvassuk az A1:J1-et
+  let row = [];
   try {
     const r = await gs.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
       range: `${title}!A1:J1`
     });
-    const row = r.data.values?.[0] || [];
-    const hasAny = row.some(v => (v || "").toString().trim() !== "");
-    if (!hasAny) {
-      await gs.spreadsheets.values.update({
-        spreadsheetId: SHEET_ID,
-        range: `${title}!A1:J1`,
-        valueInputOption: "RAW",
-        requestBody: { values: [HEADER] }
-      });
+    row = r.data.values?.[0] || [];
+  } catch (_) { row = []; }
+
+  // Segédfüggvény: a jelenlegi sor tényleg a várt fejléc-e?
+  const isHeaderMatch = (arr) => {
+    if (!arr || arr.length === 0) return false;
+    const norm = (x="") => x.toString().trim().toLowerCase();
+    const a = arr.map(norm);
+    const b = [
+      "időpont","e-mail","stílus(ok)","ének","nyelv",
+      "brief","dalszöveg","link #1","link #2","formátum"
+    ];
+    // pontos egyezés kell az első 10 cellára
+    for (let i=0;i<b.length;i++){
+      if ((a[i]||"") !== b[i]) return false;
     }
-  } catch (e) {
+    return true;
+  };
+
+  const needInsertHeaderRow = !isHeaderMatch(row);
+
+  if (needInsertHeaderRow) {
+    // 2) Beszúrunk egy új sort a tetejére (index 0), hogy ne írjunk felül semmit
+    try {
+      await gs.spreadsheets.batchUpdate({
+        spreadsheetId: SHEET_ID,
+        requestBody: {
+          requests: [{
+            insertDimension: {
+              range: { sheetId, dimension: "ROWS", startIndex: 0, endIndex: 1 },
+              inheritFromBefore: false
+            }
+          }]
+        }
+      });
+    } catch (e) {
+      console.warn("[INSERT top row warn]", e?.message || e);
+    }
+
+    // 3) Fejléc kiírása A1:J1-be
     try {
       await gs.spreadsheets.values.update({
         spreadsheetId: SHEET_ID,
@@ -157,10 +186,12 @@ async function ensureHeaderFreezeCF(title) {
         valueInputOption: "RAW",
         requestBody: { values: [HEADER] }
       });
-    } catch (e2) { console.warn("[HEADER ensure warn]", e2?.message || e2); }
+    } catch (e) {
+      console.warn("[HEADER write warn]", e?.message || e);
+    }
   }
 
-  // fagyasztás (idempotens)
+  // 4) Első sor fagyasztása (idempotens)
   try {
     await gs.spreadsheets.batchUpdate({
       spreadsheetId: SHEET_ID,
@@ -173,51 +204,42 @@ async function ensureHeaderFreezeCF(title) {
         }]
       }
     });
-  } catch (e) { console.warn("[FREEZE ensure warn]", e?.message || e); }
+  } catch (e) {
+    console.warn("[FREEZE ensure warn]", e?.message || e);
+  }
 
-  // CF – próbáljuk felvenni, ha hiányzik (a Sheets engedi több szabályt is, nem gond)
+  // 5) CF szabály: próbálkozunk vesszővel és pontosvesszővel is (lokálfüggetlen)
+  const cfRanges = [{ sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: 10 }]; // A2:J
+  const cfReq = (formula) => [{
+    addConditionalFormatRule: {
+      rule: {
+        ranges: cfRanges,
+        booleanRule: {
+          condition: { type: "CUSTOM_FORMULA", values: [{ userEnteredValue: formula }] },
+          format: { backgroundColor: { red: 1, green: 1, blue: 0.6 } }
+        }
+      },
+      index: 0
+    }
+  }];
+
   try {
     await gs.spreadsheets.batchUpdate({
       spreadsheetId: SHEET_ID,
-      requestBody: {
-        requests: [{
-          addConditionalFormatRule: {
-            rule: {
-              ranges: [{ sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: 10 }],
-              booleanRule: {
-                condition: { type: "CUSTOM_FORMULA", values: [{ userEnteredValue: '=OR($J2="mp4",$J2="wav")' }] },
-                format: { backgroundColor: { red: 1, green: 1, blue: 0.6 } }
-              }
-            },
-            index: 0
-          }
-        }]
-      }
+      requestBody: { requests: cfReq('=OR($J2="mp4",$J2="wav")') } // EN, ,
     });
   } catch (e1) {
     try {
       await gs.spreadsheets.batchUpdate({
         spreadsheetId: SHEET_ID,
-        requestBody: {
-          requests: [{
-            addConditionalFormatRule: {
-              rule: {
-                ranges: [{ sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: 10 }],
-                booleanRule: {
-                  condition: { type: "CUSTOM_FORMULA", values: [{ userEnteredValue: '=OR($J2="mp4";$J2="wav")' }] },
-                  format: { backgroundColor: { red: 1, green: 1, blue: 0.6 } }
-                }
-              },
-              index: 0
-            }
-          }]
-        }
+        requestBody: { requests: cfReq('=OR($J2="mp4";$J2="wav")') } // HU, ;
       });
     } catch (e2) {
       console.warn("[CF ensure warn]", e1?.message || e1, "| fallback:", e2?.message || e2);
     }
   }
 }
+
 
 /** Fő: napi fül biztosítása + fejléc + freeze + CF + APPEND A2-től (A–J) */
 export async function safeAppendOrderRow(order = {}) {
