@@ -989,26 +989,46 @@ app.post('/api/generate_song', async (req, res) => {
       if (/^(hu|hungarian|magyar)$/.test(lang)) lyrics = softHungarianAwkwardFilter(lyrics);
     }
 
-    // Suno call
-    lyrics = applySafeMorphHU(lyrics, { language });
-    lyrics = applyRefrainAlt(lyrics);
+   // Suno call (only for MP3)
+lyrics = applySafeMorphHU(lyrics, { language });
+lyrics = applyRefrainAlt(lyrics);
 lyrics = applyFinalTinyFixesHU(lyrics, { language });
 lyrics = normalizeSectionHeadingsSafe(lyrics);
 lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
 
-
-    const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
-      'Authorization': 'Bearer ' + SUNO_API_KEY,
-      'Content-Type': 'application/json'
-    }, {
-      customMode: true,
-      model: 'V5',
-      instrumental: (vocal === 'instrumental'),
-      title: title,
-      style: styleFinal,
-      prompt: lyrics,
-      callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
+// ✅ NEW: skip Suno if not MP3
+if (!isMP3) {
+  try {
+    await safeAppendOrderRow({
+      email: req.body.email || '',
+      styles, vocal, language, brief, lyrics,
+      link1: '', link2: '', format
     });
+  } catch (_e) {
+    console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
+  }
+  return res.json({
+    ok: true,
+    lyrics,
+    style: styleFinal,
+    tracks: [],
+    format
+  });
+}
+
+// === SUNO API CALL (MP3 only) ===
+const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
+  'Authorization': 'Bearer ' + SUNO_API_KEY,
+  'Content-Type': 'application/json'
+}, {
+  customMode: true,
+  model: 'V5',
+  instrumental: (vocal === 'instrumental'),
+  title: title,
+  style: styleFinal,
+  prompt: lyrics,
+  callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
+});
 
     if (!startRes.ok) {
       return res.status(502).json({ ok:false, message:'Suno start error', detail:startRes.text, status:startRes.status });
