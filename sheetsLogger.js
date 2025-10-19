@@ -170,3 +170,9 @@ export async function safeAppendOrderRow(order = {}) {
     console.error("[SHEETS ERROR]", e?.message || e);
   }
 }
+// a fájl VÉGÉRE tedd (vagy a safeAppendOrderRow alá):
+
+export async function appendOrderRow(order = {}) {
+  // kompatibilitás a régi importtal
+  return safeAppendOrderRow(order);
+}
