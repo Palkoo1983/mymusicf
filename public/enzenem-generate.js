@@ -22,6 +22,7 @@
 
     const fd = new FormData(form);
     const payload = {
+      email:   (fd.get('email')||'').toString().trim(),
       title:    (fd.get('title')||'').toString().trim(),
       styles:   (fd.get('styles')||'').toString().trim(),
       vocal:    (fd.get('vocal')||'instrumental').toString(),
