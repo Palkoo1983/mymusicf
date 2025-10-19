@@ -1,5 +1,6 @@
 // EnZenem: Megrendelés -> /api/generate_song (customer-safe feedback only)
 (function(){
+  let IN_FLIGHT = false;
   const form = document.getElementById('orderForm');
   if(!form) return;
 
@@ -47,16 +48,19 @@
   }
 
   form.addEventListener('submit', async (e)=>{
+    if(IN_FLIGHT) return; IN_FLIGHT = true;
     e.preventDefault();
 
     // basic collection
+    const fd = new FormData(form);
     const data = {
       email: (form.querySelector('[name=email]')||{}).value || '',
       style: (form.querySelector('[name=style]')||{}).value || '',
       vocal: (form.querySelector('[name=vocal]')||{}).value || '',
       language: (form.querySelector('[name=language]')||{}).value || '',
       brief: (form.querySelector('[name=brief]')||{}).value || '',
-      consent: !!(form.querySelector('[name=consent]')||{}).checked
+      consent: !!(form.querySelector('[name=consent]')||{}).checked,
+      package: (fd.get('package')||'basic').toString()
     };
 
     // disable form
@@ -72,8 +76,15 @@
 
       // Regardless of backend details, never render lyrics or links here.
       // Only confirm that generation has started successfully.
-      const okMsg = 'Éljen! A megrendelést elküldtük a ChatGPT/Suno rendszernek, a generálás megkezdődött. ' +
-                    'A kész dal és minden részlet az admin rendszerbe és e-mailre kerül.';
+      const pkg = (data.package||'basic');
+      let okMsg;
+      if(pkg === 'video'){
+        okMsg = 'Éljen! (MP4 – Videó csomag) A megrendelést elküldtük, a generálás megkezdődött. A kész videót e-mailben küldjük és az adminban is megjelenik.';
+      } else if(pkg === 'premium'){
+        okMsg = 'Éljen! (WAV – Prémium) A megrendelést elküldtük, a generálás megkezdődött. A kész WAV fájlt e-mailben küldjük és az adminban is megjelenik.';
+      } else {
+        okMsg = 'Éljen! (MP3) A megrendelést elküldtük, a generálás megkezdődött. A kész dalt e-mailben küldjük és az adminban is megjelenik.';
+      }
       showFeedback(okMsg, true);
 
       // Trigger NovaBot success line (speaks when supported)
@@ -88,6 +99,7 @@
       if(window.novaOrderFail) window.novaOrderFail();
     } finally {
       if (submitBtn){ submitBtn.disabled = false; submitBtn.textContent = submitBtn.dataset.prevText || 'Megrendelem'; }
+      IN_FLIGHT = false;
     }
   });
 })();
