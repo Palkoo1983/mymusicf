@@ -1027,7 +1027,15 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
       attempts++;
       await new Promise(r => setTimeout(r, intervalMs));
       const pr = 
-    // If not MP3, skip Suno flow: log to Google Sheet with empty links and return lyrics only
+await fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
+        method:'GET',
+        headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY }
+      });
+      if (!pr.ok) continue;
+      const st = await pr.json();
+      if (!st || st.code !== 200) continue;
+      const items = (st.data && st.data.response && st.data.response.sunoData) || [];
+    // === Non-MP3 branch: skip Suno, only log lyrics to Google Sheet ===
     if (!isMP3) {
       try {
         await safeAppendOrderRow({
@@ -1038,14 +1046,7 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
       } catch (_e) { /* ignore sheet error */ }
       return res.json({ ok: true, lyrics, style: styleFinal, tracks: [] });
     }
-await fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
-        method:'GET',
-        headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY }
-      });
-      if (!pr.ok) continue;
-      const st = await pr.json();
-      if (!st || st.code !== 200) continue;
-      const items = (st.data && st.data.response && st.data.response.sunoData) || [];
+
       tracks = items
         .map(d => ({
           title: d.title || title,
