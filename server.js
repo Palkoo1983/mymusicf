@@ -160,41 +160,7 @@ function detectGenre(styles = '') {
   if (/(rock|metal)/.test(s)) return 'rock';
   return 'generic';
 }
-function postProcessHU(lyrics, { theme, genre, brief }) {
-  let out = String(lyrics || '');
-  out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
-  if (/(funeral|wedding|anniversary|kidsong|healing)/.test(String(theme))) {
-    out = out.replace(/\b[Tt]empó\b/g, 'ütem');
-  }
-  out = out.replace(/^\s*,\s*/gm, '').replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
-  if (theme === 'funeral') {
-    const wantsDrums = /\bvisszafogott\s+dob\b/i.test(brief) || /\bdob\b/i.test(brief);
-    if (!wantsDrums) {
-      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, '');
-      out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
-    } else {
-      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, 'visszafogott dob').replace(/visszafogott\s+visszafogott/gi, 'visszafogott');
-    }
-  }
-  if (theme === 'proposal') {
-    out = out.replace(/\(Chorus\)([\s\S]*?)(?=\n\(Verse 4\)|$)/, (m, ch) => {
-      if (!/[?？]/.test(ch)) {
-        return `(Chorus)\n${ch.trim()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
-      }
-      return m;
-    });
-  }
-  if (theme === 'kidsong') {
-    out = out.replace(/(.{9,})/g, (line) => line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n'));
-  }
-  const briefLower = String(brief || '').toLowerCase();
-  if (!briefLower.includes('céges')) { out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, ''); }
-  if (!briefLower.includes('tempó')) { out = out.replace(/\b[Tt]empó\b/g, 'ütem').replace(/\b[Tt]empós\b/g, 'lendületes'); }
-  out = out.replace(/\btitkus\b/gi, 'titkos').replace(/\bállik\b/gi, 'áll');
 
-  out = out.replace(/^Kulcsszavak:.*$/gmi, '');
-  return out;
-}
 // === End of regression guard helpers ===
 
 
