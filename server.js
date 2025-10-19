@@ -602,6 +602,11 @@ app.post('/api/generate_song', async (req, res) => {
     }
 
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
+    // Map requested package->format
+    const pkg = (req.body && (req.body.package||req.body.format)) ? String((req.body.package||req.body.format)).toLowerCase() : 'basic';
+    const format = pkg==='basic' ? 'mp3' : (pkg==='video' ? 'mp4' : pkg==='premium' ? 'wav' : pkg);
+    const isMP3 = (format === 'mp3');
+
 
     // language autodetect from brief (fallback)
     (function () {
@@ -1021,7 +1026,19 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
     while (tracks.length < 2 && attempts < maxAttempts) {
       attempts++;
       await new Promise(r => setTimeout(r, intervalMs));
-      const pr = await fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
+      const pr = 
+    // If not MP3, skip Suno flow: log to Google Sheet with empty links and return lyrics only
+    if (!isMP3) {
+      try {
+        await safeAppendOrderRow({
+          email: req.body.email || '',
+          styles, vocal, language, brief, lyrics,
+          link1: '', link2: ''
+        });
+      } catch (_e) { /* ignore sheet error */ }
+      return res.json({ ok: true, lyrics, style: styleFinal, tracks: [] });
+    }
+await fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
         method:'GET',
         headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY }
       });

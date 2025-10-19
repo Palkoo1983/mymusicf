@@ -25,7 +25,8 @@
       styles:   (fd.get('styles')||'').toString().trim(),
       vocal:    (fd.get('vocal')||'instrumental').toString(),
       language: (fd.get('language')||'hu').toString(),
-      brief:    (fd.get('brief')||'').toString().trim()
+      brief:    (fd.get('brief')||'').toString().trim(),
+      package: (fd.get('package')||'basic').toString().toString().trim()
     };
 
     try{
