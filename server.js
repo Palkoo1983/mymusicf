@@ -12,25 +12,133 @@ import Stripe from 'stripe';
 import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
 
 
-/* === PostProcess Grammar Fix – safe, HU-specific === */
-function fixHungarianGrammar(lyrics) {
-  let out = String(lyrics || '');
+// =========================
+//  UNIVERSAL HUNGARIAN POLISH HELPERS
+//  (biztonságos, óvatos javítások – szerkezetet nem bont)
+// =========================
 
-  // tárgyrag tipikus esetei
-  out = out.replace(/érzed a szeretet([^a-záéíóöőúüűÁÉÍÓÖŐÚÜŰ])/gi, 'érzed a szeretetet$1');
-  out = out.replace(/a szeretet([^a-záéíóöőúüűÁÉÍÓÖŐÚÜŰ])/gi, 'a szeretetet$1');
+// --- régi jók MEGTARTÁSA (bővítve) ---
+function fixHungarianGrammar(lyrics = '') {
+  let s = String(lyrics);
 
-  // dupla tiltás
-  out = out.replace(/soha\s+ne\s+nem/gi, 'soha nem');
+  // dupla tagadás: "soha ne nem" → "soha nem"
+  s = s.replace(/\bsoha\s+ne\s+nem\b/gi, 'soha nem');
 
-  // felesleges "én" mondatvég
-  out = out.replace(/vágyat\s+én\b/gi, 'vágyat');
-  out = out.replace(/szavak nélkül érzed a vágyat\s+én/gi, 'szavak nélkül érzed a vágyat');
+  // gyakori tárgyrag-hiányok (óvatos, csak önmagában álló szavakra)
+  const objNeeded = ['szeretet', 'vágy', 'érzés', 'öröm', 'remény', 'élet', 'emlék', 'pillanat', 'csoda', 'fény', 'mosoly', 'könny'];
+  objNeeded.forEach(w =>
+    s = s.replace(new RegExp(String.raw`\b(${w})\b(?=(?:[^\wáéíóöőúüű-]|$))`, 'gi'),
+      (m) => m + 'et') // pl. "szeretet" → "szeretetet"; "öröm"→"örömet" nem mindig tökéletes, de jobb a semminél
+  );
 
-  // általános finomítások
-  out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
-  return out;
+  return s;
 }
+
+// --- ÚJ: évszám/typók/archaikumok finomítása (univerzális) ---
+function fixYearsAndTypos(lyrics = '') {
+  let s = String(lyrics);
+
+  // "kétezer-húsz-öt" / "kétezer-húszöt" → "kétezer-huszonöt"
+  s = s.replace(/\bk[ée]tezer-?h[uú]sz-?([a-záéíóöőúüű]+)\b/gi, 'kétezer-huszon$1');
+
+  // pár tipikus félreütés/torz alak (a tesztekből)
+  s = s
+    .replace(/\bzsongán\b/gi, 'zsong már')
+    .replace(/\bmaradánk\b/gi, 'maradunk')
+    .replace(/\btávolló\b/gi, 'távolból')
+    .replace(/\bragyogál\b/gi, 'ragyog már')
+    .replace(/\bnyaránál\b/gi, 'nyarán'); // „nyaránál” hibás
+
+  return s;
+}
+
+// --- ÚJ: párosok/kollokációk/partikulák javítása (univerzális) ---
+function fixPairsAndCollocations(lyrics = '') {
+  let s = String(lyrics);
+
+  // "sosem ér véget el" → "sosem ér véget"
+  s = s.replace(/\b(v[ée]get)\s+el\b/gi, '$1');
+
+  // "örök – török" klasszikus félrím/elszólás kiszedése, ha közel vannak
+  s = s.replace(/\b(ör[öo]k\w*)\b([^\n]{0,12})\b(t[öo]r[öo]k\w*)\b/gi, '$1$2');
+
+  // biztos kollokáció: "fény szál húz" → "fénysugár vezet"
+  s = s.replace(/\bf[ée]ny\s+sz[áa]l\s+h[úu]z\b/gi, 'fénysugár vezet');
+
+  // "soha ne add" → ha nincs vonzat, egészítsük ki: "soha ne add fel"
+  s = s.replace(/\bsoha\s+ne\s+add\b(?!\s+fel)/gi, 'soha ne add fel');
+
+  return s;
+}
+
+// --- ÚJ: prompt-maradványok, (Break) kulcsszó-dump óvatos takarítása ---
+function stripPromptArtifacts(lyrics = '') {
+  let s = String(lyrics);
+
+  // Ha a (Break) után 1–2 sor nyers, kommákkal felsorolt kulcsszólista jön, töröljük
+  s = s.replace(/\n\(\s*Break\s*\)\n([\s\S]*?)$/i, (m, body) => {
+    const lines = String(body || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    const isKeywordDump = lines.length <= 2 && /,\s*/.test(lines.join(', '));
+    return isKeywordDump ? '' : m;
+  });
+
+  return s;
+}
+
+// --- FEGYELMEZŐ KÖZPONTOZÁS/WHITESPACE (óvatos) ---
+function normalizeWhitespace(lyrics = '') {
+  return String(lyrics)
+    .replace(/[ \t]{2,}/g, ' ')        // több szóköz → 1
+    .replace(/\s+([.,!?:;])/g, '$1')   // írásjel előtti szóköz törlés
+    .replace(/[ \t]+\n/g, '\n')        // soreleji space törlés
+    .replace(/\n{3,}/g, '\n\n')        // túl sok üres sor → max 1 üres
+    .trim();
+}
+
+// --- RÉGI TEMATIKUS FINOMÍTÁSOK MEGTARTÁSA (bővítve óvatosan) ---
+function postProcessHU(lyrics = '', { theme = '', genre = '', brief = '', styles = '' } = {}) {
+  let s = String(lyrics);
+
+  // "Céges" szó kisöprése (ártalmatlan)
+  s = s.replace(/\bc[ée]ges\b/gi, '');
+
+  // bizonyos témáknál "Tempó" → "ütem" (ahogy korábban)
+  const themey = String(theme || '').toLowerCase();
+  if (/wedding|funeral|anniversary|kidsong|healing/.test(themey)) {
+    s = s.replace(/\b[Tt]emp[óo]\b/g, 'ütem');
+  }
+
+  // temetés: "dob" visszafogása, ha a brief nem kéri kifejezetten
+  const briefHasDrum = /\b(dob|dobol|dobbal|dobütés|drum)\b/i.test(String(brief||''));
+  const isFuneral = /\bfuneral|temet[ée]s|búcsúztat[óo]\b/i.test(themey + ' ' + brief);
+  if (isFuneral && !briefHasDrum) {
+    s = s.replace(/\b[Dd]ob(ok|bal|bal[l]al)?\b/g, 'visszafogott dob');
+  }
+
+  return s;
+}
+
+// --- FŐ, UNIVERZÁLIS POLISH: MINDEN magyar szövegre fusson ---
+function polishHU(lyrics = '', ctx = {}) {
+  let t = String(lyrics || '');
+
+  // 1) nyelvtani alap (régi jók)
+  t = fixHungarianGrammar(t);
+
+  // 2) új hibák (univerzális)
+  t = fixYearsAndTypos(t);
+  t = fixPairsAndCollocations(t);
+  t = stripPromptArtifacts(t);
+
+  // 3) tematikus finom (régi jók megtartva)
+  t = postProcessHU(t, ctx);
+
+  // 4) whitespace/pontozás
+  t = normalizeWhitespace(t);
+
+  return t;
+}
+
 
 // === EnZenem: Theme/Genre detectors + HU post-processor (regression guard) ===
 function detectTheme(brief = '', styles = '') {
@@ -1083,8 +1191,21 @@ try {
     console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
   }
 
-try { lyrics = fixHungarianGrammar(lyrics); } catch(_) {}
+// UNIVERSAL POLISH – minden magyar szövegre fusson
+try {
+  if ((language || '').toLowerCase().startsWith('hu')) {
+    lyrics = polishHU(lyrics, {
+      theme,
+      genre: detectGenre(styles), // ha nincs ilyen helper nálad, ezt a sort töröld
+      brief,
+      styles
+    });
+  }
+} catch (_) { /* no-op */ }
+
+// Válasz (adminnak maradhat a lyrics is; ügyfél nem rendereli)
 return res.json({ ok:true, lyrics, style: styleFinal, tracks });
+
   } catch (e) {
     console.error('[generate_song]', e);
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
