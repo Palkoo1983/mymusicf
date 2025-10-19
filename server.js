@@ -1027,17 +1027,6 @@ lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
       attempts++;
       await new Promise(r => setTimeout(r, intervalMs));
       const pr = await 
-    // === Non-MP3 branch: skip Suno completely, only log to Google Sheet ===
-    if (!isMP3) {
-      try {
-        await safeAppendOrderRow({
-          email: req.body.email || '',
-          styles, vocal, language, brief, lyrics,
-          link1: '', link2: '', format
-        });
-      } catch (_e) { /* ignore */ }
-      return res.json({ ok:true, lyrics, style: styleFinal, tracks: [], format });
-    }
 fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
         method:'GET',
         headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY }
@@ -1059,7 +1048,7 @@ fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponen
 try {
   const link1 = tracks[0]?.audio_url || '';
   const link2 = tracks[1]?.audio_url || '';
-  await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2 , format });
+  await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2 , format , format });
 } catch (_e) { /* handled */ }
 
     
@@ -1076,6 +1065,35 @@ try {
 
 try { lyrics = fixHungarianGrammar(lyrics); } catch(_) {}
 return res.json({ ok:true, lyrics, style: styleFinal, tracks });
+  } catch (e) {
+    console.error('[generate_song]', e);
+    return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
+  }
+});
+
+/* ================== DIAG endpoints ======================== */
+app.get('/api/generate_song/ping', (req, res) => {
+  res.json({ ok:true, diag:{
+    node: process.version, fetch_defined: typeof fetch!=='undefined',
+    has_OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
+    has_SUNO_API_KEY: !!process.env.SUNO_API_KEY,
+    SUNO_BASE_URL: process.env.SUNO_BASE_URL||null,
+    public_url: process.env.PUBLIC_URL || null
+  }});
+});
+
+app.get('/api/suno/ping', async (req, res) => {
+  try{
+;
+if (isMP3) {
+
+}
+else {
+  try {
+    await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1: '', link2: '', format });
+  } catch (_e) { /* ignore */ }
+  return res.json({ ok:true, lyrics, style: styleFinal, tracks: [], format });
+}
   } catch (e) {
     console.error('[generate_song]', e);
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
