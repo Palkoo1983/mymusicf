@@ -23,7 +23,12 @@
     feedback.style.borderRadius = '10px';
     feedback.style.fontWeight = '600';
     feedback.style.display = 'none'; // hidden by default
-    form.parentNode.insertBefore(feedback, form);
+    const payNote = document.querySelector('p.note');
+    if(payNote && payNote.parentNode){
+      payNote.parentNode.insertBefore(feedback, payNote.nextSibling);
+    } else {
+      form.parentNode.insertBefore(feedback, form.nextSibling);
+    }
   }
 
   function showFeedback(text, ok=true){
@@ -77,14 +82,7 @@
       // Regardless of backend details, never render lyrics or links here.
       // Only confirm that generation has started successfully.
       const pkg = (data.package||'basic');
-      let okMsg;
-      if(pkg === 'video'){
-        okMsg = 'Éljen! (MP4 – Videó csomag) A megrendelést elküldtük, a generálás megkezdődött. A kész videót e-mailben küldjük és az adminban is megjelenik.';
-      } else if(pkg === 'premium'){
-        okMsg = 'Éljen! (WAV – Prémium) A megrendelést elküldtük, a generálás megkezdődött. A kész WAV fájlt e-mailben küldjük és az adminban is megjelenik.';
-      } else {
-        okMsg = 'Éljen! (MP3) A megrendelést elküldtük, a generálás megkezdődött. A kész dalt e-mailben küldjük és az adminban is megjelenik.';
-      }
+      let okMsg = 'Köszönjük! Megrendelésed beérkezett. Hamarosan kapsz visszaigazolást e-mailben.';
       showFeedback(okMsg, true);
 
       // Trigger NovaBot success line (speaks when supported)
