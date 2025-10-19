@@ -400,7 +400,7 @@ function initOrderForm() {
     if (orderStatus) orderStatus.textContent = 'Küldés...';
     try {
       const json = await postJSON('/api/order', data);
-      if (orderStatus) orderStatus.textContent = json.message || 'Köszönjük! Válasz e-mailt küldtünk.';
+      if (orderStatus) { orderStatus.textContent = ''; orderStatus.style.display = 'none'; }
       orderForm.reset();
       // ✅ NOVABOT: SIKER
       try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderSuccess && window.novaOrderSuccess(); } } catch(_){}
