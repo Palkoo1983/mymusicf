@@ -5,6 +5,9 @@ const PRIVATE_KEY_RAW= process.env.GOOGLE_PRIVATE_KEY || "";
 const SHEET_ID       = process.env.GOOGLE_SHEET_ID;
 
 function getAuth() {
+  if (!SERVICE_EMAIL || !PRIVATE_KEY_RAW || !SHEET_ID) {
+    throw new Error("Google Sheets env hiányzik (GOOGLE_SERVICE_EMAIL / GOOGLE_PRIVATE_KEY / GOOGLE_SHEET_ID).");
+  }
   const privateKey = PRIVATE_KEY_RAW.replace(/\\n/g, "\n");
   return new google.auth.JWT(
     SERVICE_EMAIL,
@@ -30,108 +33,72 @@ function getBudapestNow() {
     second: "2-digit",
     hour12: false,
   }).formatToParts(new Date());
-
   const obj = Object.fromEntries(parts.map(p => [p.type, p.value]));
-  const yyyy = obj.year;
-  const mm   = obj.month;
-  const dd   = obj.day;
-  const HH   = obj.hour;
-  const MM   = obj.minute;
-  const SS   = obj.second;
-
-  // Offset lekérése rövid offset formával (pl. GMT+2 → +02:00)
-  const tzName = new Intl.DateTimeFormat("en", {
-    timeZone: tz,
-    timeZoneName: "shortOffset",
-    hour: "2-digit",
+  const ymd = `${obj.year}-${obj.month}-${obj.day}`;
+  // rövid offset (pl. GMT+2 → +02:00)
+  const offPart = new Intl.DateTimeFormat("en", {
+    timeZone: tz, timeZoneName: "shortOffset", hour: "2-digit"
   }).formatToParts(new Date()).find(p => p.type === "timeZoneName")?.value || "GMT+0";
-
-  const m = tzName.match(/GMT([+\-]\d{1,2})(?::?(\d{2}))?/i);
+  const m = offPart.match(/GMT([+\-]\d{1,2})(?::?(\d{2}))?/i);
   let off = "+00:00";
   if (m) {
-    const h = String(m[1]).padStart(3, "0");         // +2 → +02
-    const min = m[2] ? m[2] : "00";
-    off = `${h.startsWith("+")||h.startsWith("-") ? h : (h.startsWith("−")?("-"+h.slice(1)) : h)}:${min}`;
-    if (/^\+\d$|^-\d$/.test(off.slice(0,2))) off = off.replace(/^([+-])(\d)(?=:)/, (_,$1,$2)=>$1+"0"+$2);
+    const hh = String(m[1]).replace("−","-");
+    const h2 = (/^[+\-]\d$/.test(hh)) ? hh[0] + "0" + hh[1] : hh;
+    off = `${h2}:${m[2] || "00"}`;
   }
-
-  const ymd = `${yyyy}-${mm}-${dd}`;
-  const isoLocal = `${ymd}T${HH}:${MM}:${SS}${off}`;
+  const isoLocal = `${ymd}T${obj.hour}:${obj.minute}:${obj.second}${off}`;
   return { ymd, isoLocal };
 }
 
-/** Ellenőrzi/létrehozza a napi (YYYY-MM-DD) munkalapot és hozzáadja a sárga CF szabályt mp4/wav-ra. */
+/** Létrehoz napi (YYYY-MM-DD) munkalapot; CF szabályt csak megpróbál hozzáadni. */
 async function ensureDailySheet(title) {
   const gs = sheets();
-
-  // Megnézzük, létezik-e a lap
   const meta = await gs.spreadsheets.get({ spreadsheetId: SHEET_ID });
   const existing = meta.data.sheets?.find(s => s.properties?.title === title);
-  if (existing) {
-    return existing.properties.sheetId;
-  }
+  if (existing) return existing.properties.sheetId;
 
-  // 1) Új lap létrehozása
+  // 1) Új lap
   const addRes = await gs.spreadsheets.batchUpdate({
     spreadsheetId: SHEET_ID,
-    requestBody: {
-      requests: [
-        {
-          addSheet: {
-            properties: {
-              title,
-              gridProperties: { frozenRowCount: 0 },
-            },
-          },
-        },
-      ],
-    },
+    requestBody: { requests: [{ addSheet: { properties: { title } } }] }
   });
   const sheetId = addRes.data.replies?.[0]?.addSheet?.properties?.sheetId;
 
-  // 2) Feltételes formázás hozzáadása: J oszlop "mp4" vagy "wav" → sárga háttér
-  // Használunk CUSTOM_FORMULA-t az egész tartományra (A:J)
-  await gs.spreadsheets.batchUpdate({
-    spreadsheetId: SHEET_ID,
-    requestBody: {
-      requests: [
-        {
+  // 2) Feltételes formázás – HA nem sikerül, nem baj
+  try {
+    await gs.spreadsheets.batchUpdate({
+      spreadsheetId: SHEET_ID,
+      requestBody: {
+        requests: [{
           addConditionalFormatRule: {
             rule: {
-              ranges: [
-                { sheetId, startRowIndex: 0, startColumnIndex: 0, endColumnIndex: 10 } // A:J
-              ],
+              ranges: [{ sheetId, startRowIndex: 0, startColumnIndex: 0, endColumnIndex: 10 }], // A:J
               booleanRule: {
-                condition: {
-                  type: "CUSTOM_FORMULA",
-                  values: [{ userEnteredValue: '=OR($J:$J="mp4",$J:$J="wav")' }]
-                },
-                format: {
-                  backgroundColor: { red: 1.0, green: 1.0, blue: 0.6 } // halvány sárga
-                }
+                // fontos: soralapú képlet, nem $J:$J !
+                condition: { type: "CUSTOM_FORMULA", values: [{ userEnteredValue: '=OR($J1="mp4",$J1="wav")' }] },
+                format: { backgroundColor: { red: 1.0, green: 1.0, blue: 0.6 } }
               }
             },
             index: 0
           }
-        }
-      ]
-    }
-  });
+        }]
+      }
+    });
+  } catch (e) {
+    console.warn("[SHEETS CF WARN]", e?.message || e);
+  }
 
   return sheetId;
 }
 
-/** Központi logoló – mostantól napi fülre ír, magyar idő szerint. */
+/** Append sor a napi fülre, magyar idő szerint. */
 export async function safeAppendOrderRow(order = {}) {
   try {
     const gs = sheets();
     const { ymd, isoLocal } = getBudapestNow();
-    const sheetTitle = ymd; // pl. "2025-10-19"
-
-    // Napi lap biztosítása + CF szabály
+    const sheetTitle = ymd; // pl. 2025-10-19
     await ensureDailySheet(sheetTitle);
 
-    // Oszlopok: A:Időpont B:E-mail C:Stílus(ok) D:Ének E:Nyelv F:Brief G:Dalszöveg H:Link#1 I:Link#2 J:Formátum
     const {
       email = "",
       styles = "",
@@ -145,7 +112,7 @@ export async function safeAppendOrderRow(order = {}) {
     } = order;
 
     const values = [[
-      isoLocal,  // magyar idő szerint időbélyeg
+      isoLocal,
       email,
       styles,
       vocal,
@@ -170,9 +137,8 @@ export async function safeAppendOrderRow(order = {}) {
     console.error("[SHEETS ERROR]", e?.message || e);
   }
 }
-// a fájl VÉGÉRE tedd (vagy a safeAppendOrderRow alá):
 
+/** Visszafelé kompatibilitás (ha valahol még ezt importálja a szerver) */
 export async function appendOrderRow(order = {}) {
-  // kompatibilitás a régi importtal
   return safeAppendOrderRow(order);
 }
