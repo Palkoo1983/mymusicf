@@ -4,141 +4,95 @@ const SERVICE_EMAIL  = process.env.GOOGLE_SERVICE_EMAIL;
 const PRIVATE_KEY_RAW= process.env.GOOGLE_PRIVATE_KEY || "";
 const SHEET_ID       = process.env.GOOGLE_SHEET_ID;
 
-function getAuth() {
-  if (!SERVICE_EMAIL || !PRIVATE_KEY_RAW || !SHEET_ID) {
-    throw new Error("Google Sheets env hiányzik (GOOGLE_SERVICE_EMAIL / GOOGLE_PRIVATE_KEY / GOOGLE_SHEET_ID).");
-  }
-  const privateKey = PRIVATE_KEY_RAW.replace(/\\n/g, "\n");
+function getAuth(){
+  const key = PRIVATE_KEY_RAW.replace(/\\n/g,"\n");
   return new google.auth.JWT(
-    SERVICE_EMAIL,
-    null,
-    privateKey,
+    SERVICE_EMAIL,null,key,
     ["https://www.googleapis.com/auth/spreadsheets"]
   );
 }
-function sheets() {
-  return google.sheets({ version: "v4", auth: getAuth() });
+function sheets(){ return google.sheets({version:"v4",auth:getAuth()}); }
+
+// ====== Magyar idő (Europe/Budapest)
+function getBudapestNow(){
+  const tz="Europe/Budapest";
+  const fmt=new Intl.DateTimeFormat("en-CA",{timeZone:tz,
+    year:"numeric",month:"2-digit",day:"2-digit",
+    hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false});
+  const p=Object.fromEntries(fmt.formatToParts(new Date()).map(v=>[v.type,v.value]));
+  const ymd=`${p.year}-${p.month}-${p.day}`;
+  return {ymd, iso:`${ymd}T${p.hour}:${p.minute}:${p.second}+02:00`};
 }
 
-/** Magyar idő (Europe/Budapest) – YYYY-MM-DD és ISO-szerű időbélyeg + offset */
-function getBudapestNow() {
-  const tz = "Europe/Budapest";
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: tz,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).formatToParts(new Date());
-  const obj = Object.fromEntries(parts.map(p => [p.type, p.value]));
-  const ymd = `${obj.year}-${obj.month}-${obj.day}`;
-  // rövid offset (pl. GMT+2 → +02:00)
-  const offPart = new Intl.DateTimeFormat("en", {
-    timeZone: tz, timeZoneName: "shortOffset", hour: "2-digit"
-  }).formatToParts(new Date()).find(p => p.type === "timeZoneName")?.value || "GMT+0";
-  const m = offPart.match(/GMT([+\-]\d{1,2})(?::?(\d{2}))?/i);
-  let off = "+00:00";
-  if (m) {
-    const hh = String(m[1]).replace("−","-");
-    const h2 = (/^[+\-]\d$/.test(hh)) ? hh[0] + "0" + hh[1] : hh;
-    off = `${h2}:${m[2] || "00"}`;
-  }
-  const isoLocal = `${ymd}T${obj.hour}:${obj.minute}:${obj.second}${off}`;
-  return { ymd, isoLocal };
-}
+// ====== fejléc-sor (rögzített)
+const HEADER=[
+  "Időpont","E-mail","Stílus(ok)","Ének","Nyelv",
+  "Brief","Dalszöveg","Link #1","Link #2","Formátum"
+];
 
-/** Létrehoz napi (YYYY-MM-DD) munkalapot; CF szabályt csak megpróbál hozzáadni. */
-async function ensureDailySheet(title) {
-  const gs = sheets();
-  const meta = await gs.spreadsheets.get({ spreadsheetId: SHEET_ID });
-  const existing = meta.data.sheets?.find(s => s.properties?.title === title);
-  if (existing) return existing.properties.sheetId;
+// ====== napi sheet biztosítása
+async function ensureDailySheet(title){
+  const gs=sheets();
+  const meta=await gs.spreadsheets.get({spreadsheetId:SHEET_ID});
+  const exists=meta.data.sheets?.find(s=>s.properties?.title===title);
+  if(exists) return exists.properties.sheetId;
 
-  // 1) Új lap
-  const addRes = await gs.spreadsheets.batchUpdate({
-    spreadsheetId: SHEET_ID,
-    requestBody: { requests: [{ addSheet: { properties: { title } } }] }
+  const add=await gs.spreadsheets.batchUpdate({
+    spreadsheetId:SHEET_ID,
+    requestBody:{requests:[{addSheet:{properties:{title}}}]}
   });
-  const sheetId = addRes.data.replies?.[0]?.addSheet?.properties?.sheetId;
+  const sheetId=add.data.replies?.[0]?.addSheet?.properties?.sheetId;
 
-  // 2) Feltételes formázás – HA nem sikerül, nem baj
-  try {
-    await gs.spreadsheets.batchUpdate({
-      spreadsheetId: SHEET_ID,
-      requestBody: {
-        requests: [{
-          addConditionalFormatRule: {
-            rule: {
-              ranges: [{ sheetId, startRowIndex: 0, startColumnIndex: 0, endColumnIndex: 10 }], // A:J
-              booleanRule: {
-                // fontos: soralapú képlet, nem $J:$J !
-                condition: { type: "CUSTOM_FORMULA", values: [{ userEnteredValue: '=OR($J1="mp4",$J1="wav")' }] },
-                format: { backgroundColor: { red: 1.0, green: 1.0, blue: 0.6 } }
-              }
-            },
-            index: 0
-          }
-        }]
-      }
+  // Fejléc írása + CF (sárga mp4/wav)
+  try{
+    await gs.spreadsheets.values.update({
+      spreadsheetId:SHEET_ID,
+      range:`${title}!A1:J1`,
+      valueInputOption:"RAW",
+      requestBody:{values:[HEADER]}
     });
-  } catch (e) {
-    console.warn("[SHEETS CF WARN]", e?.message || e);
-  }
-
+    await gs.spreadsheets.batchUpdate({
+      spreadsheetId:SHEET_ID,
+      requestBody:{requests:[{
+        addConditionalFormatRule:{
+          rule:{
+            ranges:[{sheetId,startRowIndex:1,endRowIndex:1000,startColumnIndex:0,endColumnIndex:10}],
+            booleanRule:{
+              condition:{type:"CUSTOM_FORMULA",
+                values:[{userEnteredValue:'=OR($J1="mp4",$J1="wav")'}]},
+              format:{backgroundColor:{red:1,green:1,blue:0.6}}
+            }
+          },
+          index:0
+        }
+      }]}
+    });
+  }catch(e){ console.warn("[SHEET setup warn]",e?.message||e); }
   return sheetId;
 }
 
-/** Append sor a napi fülre, magyar idő szerint. */
-export async function safeAppendOrderRow(order = {}) {
-  try {
-    const gs = sheets();
-    const { ymd, isoLocal } = getBudapestNow();
-    const sheetTitle = ymd; // pl. 2025-10-19
-    await ensureDailySheet(sheetTitle);
+// ====== fő függvény
+export async function safeAppendOrderRow(order={}){
+  try{
+    const gs=sheets();
+    const {ymd,iso}=getBudapestNow();
+    const sheet=ymd;
+    await ensureDailySheet(sheet);
 
-    const {
-      email = "",
-      styles = "",
-      vocal = "",
-      language = "hu",
-      brief = "",
-      lyrics = "",
-      link1 = "",
-      link2 = "",
-      format = "",
-    } = order;
+    const {email="",styles="",vocal="",language="hu",
+           brief="",lyrics="",link1="",link2="",format=""}=order;
 
-    const values = [[
-      isoLocal,
-      email,
-      styles,
-      vocal,
-      language,
-      brief,
-      lyrics,
-      link1,
-      link2,
-      (format || "").toLowerCase()
-    ]];
-
+    const row=[[iso,email,styles,vocal,language,brief,lyrics,link1,link2,(format||"").toLowerCase()]];
     await gs.spreadsheets.values.append({
-      spreadsheetId: SHEET_ID,
-      range: `${sheetTitle}!A:J`,
-      valueInputOption: "USER_ENTERED",
-      insertDataOption: "INSERT_ROWS",
-      requestBody: { values }
+      spreadsheetId:SHEET_ID,
+      range:`${sheet}!A:J`,
+      valueInputOption:"USER_ENTERED",
+      insertDataOption:"INSERT_ROWS",
+      requestBody:{values:row}
     });
-
-    console.log("[SHEETS] OK:", email, "→", sheetTitle);
-  } catch (e) {
-    console.error("[SHEETS ERROR]", e?.message || e);
-  }
+    console.log("[SHEET OK]",sheet,email);
+  }catch(e){ console.error("[SHEET ERR]",e?.message||e); }
 }
 
-/** Visszafelé kompatibilitás (ha valahol még ezt importálja a szerver) */
-export async function appendOrderRow(order = {}) {
-  return safeAppendOrderRow(order);
-}
+// régi kompatibilitás
+export async function appendOrderRow(o={}){ return safeAppendOrderRow(o); }
