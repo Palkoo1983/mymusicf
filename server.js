@@ -52,43 +52,23 @@ function detectGenre(styles = '') {
   if (/(rock|metal)/.test(s)) return 'rock';
   return 'generic';
 }
-function postProcessHU(lyrics = '', { theme = '', genre = '', brief = '', styles = '' } = {}) {
+function postProcessHU(lyrics, { theme, genre, brief }) {
   let out = String(lyrics || '');
-
-  // --- kontextus ---
-  const themey = String(theme || '').toLowerCase();
-  const g = String(genre || styles || '').toLowerCase();
-  const briefLower = String(brief || '').toLowerCase();
-
-  const isElectronic = /(techno|minimal|house|trance|dnb|drum\s*and\s*bass|edm|lo-?fi|lofi)/i.test(g);
-  const isFuneral   = /\b(funeral|temet[ée]s|búcsúztat[óo])\b/i.test(themey + ' ' + briefLower);
-
-  // 0) évszám-normalizálás (hyphen + space variánsok)
-  out = out.replace(/\bk[ée]tezer-?h[uú]sz-?([a-záéíóöőúüű]+)/gi, 'kétezer-huszon$1')
-           .replace(/\bk[ée]tezer\s+huszon([a-záéíóöőúüű]+)/gi, 'kétezer-huszon$1');
-
-  // 1) „CÉGES” mindig menjen ki (ártalmatlan, régi viselkedés)
   out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
-
-  // 2) „TEMPÓ” → „ÜTEM” (régi szabály + kiegészítés)
-  if (!isElectronic) {
-    if (/(funeral|wedding|anniversary|kidsong|healing)/.test(themey) || !briefLower.includes('tempó')) {
-      out = out
-        .replace(/\b[Tt]emp[óo]\b/g, 'ütem')
-        .replace(/\b[Tt]empós\b/g, 'lendületes');
+  if (/(funeral|wedding|anniversary|kidsong|healing)/.test(String(theme))) {
+    out = out.replace(/\b[Tt]empó\b/g, 'ütem');
+  }
+  out = out.replace(/^\s*,\s*/gm, '').replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+  if (theme === 'funeral') {
+    const wantsDrums = /\bvisszafogott\s+dob\b/i.test(brief) || /\bdob\b/i.test(brief);
+    if (!wantsDrums) {
+      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, '');
+      out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+    } else {
+      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, 'visszafogott dob').replace(/visszafogott\s+visszafogott/gi, 'visszafogott');
     }
   }
-
-  // 3) TEMETÉS: dob visszafogása/egységesítése — akkor is, ha kérték
-  if (isFuneral) {
-    out = out
-      .replace(/\b[Dd]ob(ok|bal|bal+l+al|ot)?\b/gi, 'visszafogott dob')
-      .replace(/\bdobban\b/gi, 'halkan szóló dob')
-      .replace(/visszafogott\s+visszafogott/gi, 'visszafogott');
-  }
-
-  // 4) PROPOSAL: refrénben legyen kérdés, ha nincs (régi logika)
-  if (themey === 'proposal') {
+  if (theme === 'proposal') {
     out = out.replace(/\(Chorus\)([\s\S]*?)(?=\n\(Verse 4\)|$)/, (m, ch) => {
       if (!/[?？]/.test(ch)) {
         return `(Chorus)\n${ch.trim()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
@@ -96,59 +76,15 @@ function postProcessHU(lyrics = '', { theme = '', genre = '', brief = '', styles
       return m;
     });
   }
-
-  // 5) KIDSONG: rövidített sorok + HU interjekció
-  if (themey === 'kidsong') {
-    out = out.replace(/(.{9,})/g, (line) =>
-      line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n')
-    );
-    // "Clap clap" → "Taps, taps"
-    out = out.replace(/\b[Cc]lap[, ]+clap\b/g, 'Taps, taps');
+  if (theme === 'kidsong') {
+    out = out.replace(/(.{9,})/g, (line) => line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n'));
   }
-
-  // 6) ELEKTRONIKUS STÍLUS: (Break) dump feltétel nélkül ki
-  if (isElectronic) {
-    out = out.replace(/\n?\(\s*Break\s*\)[\s\S]*?(?=\n\(|$)/gi, '');
-  } else {
-    // 6/b) NEM elektronikusnál: ha Chorus-szal indul, tegyük lejjebb (Verse1/2 után)
-    if (/^\s*\(Chorus\)/i.test(out) && /\(Verse\s*\d+\)/i.test(out)) {
-      const mCh = out.match(/^\s*\(Chorus\)([\s\S]*?)(?=\n\(|$)/i);
-      if (mCh) {
-        const chorusBlock = mCh[0];
-        const rest = out.slice(chorusBlock.length).trimStart();
-        const v2 = rest.match(/\(Verse\s*2\)([\s\S]*?)(?=\n\(|$)/i);
-        const v1 = rest.match(/\(Verse\s*1\)([\s\S]*?)(?=\n\(|$)/i);
-        if (v2) {
-          const insertAt = rest.indexOf(v2[0]) + v2[0].length;
-          out = (rest.slice(0, insertAt).trimEnd() + '\n\n' + chorusBlock + '\n\n' + rest.slice(insertAt).trimStart()).trim();
-        } else if (v1) {
-          const insertAt = rest.indexOf(v1[0]) + v1[0].length;
-          out = (rest.slice(0, insertAt).trimEnd() + '\n\n' + chorusBlock + '\n\n' + rest.slice(insertAt).trimStart()).trim();
-        }
-      }
-    }
-  }
-
-  // 7) DnB szóalak-puhítás (csak drum&bass esetén)
-  if (/\b(dnb|drum\s*and\s*bass)\b/i.test(g)) {
-    out = out
-      .replace(/\bold[óo]d\b/gi, 'oldódik')
-      .replace(/\bbenn\b/gi, 'benne');
-  }
-
-  // 8) Apró elütések (régi)
+  const briefLower = String(brief || '').toLowerCase();
+  if (!briefLower.includes('céges')) { out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, ''); }
+  if (!briefLower.includes('tempó')) { out = out.replace(/\b[Tt]empó\b/g, 'ütem').replace(/\b[Tt]empós\b/g, 'lendületes'); }
   out = out.replace(/\btitkus\b/gi, 'titkos').replace(/\bállik\b/gi, 'áll');
 
-  // 9) Prompt-maradványok (régi)
   out = out.replace(/^Kulcsszavak:.*$/gmi, '');
-
-  // 10) Pontozás/whitespace (régi)
-  out = out
-    .replace(/^\s*,\s*/gm, '')
-    .replace(/[ ]{2,}/g, ' ')
-    .replace(/\s+([.,!?:;])/g, '$1')
-    .trim();
-
   return out;
 }
 // === End of regression guard helpers ===
@@ -1119,29 +1055,15 @@ fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponen
       const st = await pr.json();
       if (!st || st.code !== 200) continue;
       const items = (st.data && st.data.response && st.data.response.sunoData) || [];
-      tracks = items.flatMap(d => {
-          const urls = [];
-          const a1 = d.audioUrl || d.url || d.audio_url;
-          const a2 = d.audioUrl2 || d.url2 || d.audio_url_2;
-          if (a1) urls.push(a1);
-          if (a2) urls.push(a2);
-          if (Array.isArray(d.clips)) {
-            for (const c of d.clips) {
-              if (c?.audioUrl || c?.audio_url) urls.push(c.audioUrl || c.audio_url);
-              if (c?.audioUrlAlt || c?.audio_url_alt) urls.push(c.audioUrlAlt || c.audio_url_alt);
-            }
-          }
-          // return as individual track objects
-          return urls.map(u => ({ title: d.title || title, audio_url: u, image_url: d.imageUrl || d.coverUrl }));
-        })
-        .map(x => ({ ...x, audio_url: String(x.audio_url||'').trim() }))
-        .filter(x => !!x.audio_url && /^https?:\/\//i.test(x.audio_url))
-        .reduce((acc, cur) => {
-          if (!acc.find(t => t.audio_url === cur.audio_url)) acc.push(cur);
-          return acc;
-        }, [])
+      tracks = items
+        .map(d => ({
+          title: d.title || title,
+          audio_url: d.audioUrl || d.url,
+          image_url: d.imageUrl || d.coverUrl
+        }))
+        .filter(x => !!x.audio_url)
         .slice(0, 2);
-}
+    }
     if (!tracks.length) return res.status(502).json({ ok:false, message:'Suno did not return tracks in time.' });
 try {
   const link1 = tracks[0]?.audio_url || '';
