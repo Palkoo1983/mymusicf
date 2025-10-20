@@ -1032,81 +1032,57 @@ const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
     }
     const taskId = sj.data.taskId;
 
-    // === Poll Suno record-info until we get up to 2 tracks or hit max attempts ===
-const maxAttempts = Math.max(6, Math.min(60, Number(process.env.SUNO_MAX_ATTEMPTS || 30)));
-const intervalMs  = Math.max(1000, Math.min(15000, Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 2000))));
-let attempts = 0, tracks = [];
-
-while (tracks.length < 2 && attempts < maxAttempts) {
-  attempts++;
-  await new Promise(r => setTimeout(r, intervalMs));
-  const pr = await fetch(
-    SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId),
-    { method:'GET', headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY } }
-  );
-  if (!pr.ok) continue;
-  const st = await pr.json();
-  if (!st || st.code !== 200) continue;
-  const items = (st.data && st.data.response && st.data.response.sunoData) || [];
-  tracks = items
-    .map(d => ({
-      title: d.title || title,
-      audio_url: d.audioUrl || d.url,
-      image_url: d.imageUrl || d.coverUrl
-    }))
-    .filter(x => !!x.audio_url)
-    .slice(0, 2);
-}
-
-// Ha nincs track, jelöljük a munkát failed-nek és kilépünk (async mód: nincs res.json itt)
-if (!tracks.length) {
-  JOBS.set(jobId, { status:'failed', error:{ message:'Suno did not return tracks in time.' } });
-  return;
-}
-
-// Sheet log – a két linkkel
+    // Poll up to 2 tracks
+    const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 160);
+    const intervalMs  = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 2000));
+    let attempts = 0, tracks = [];
+    while (tracks.length < 2 && attempts < maxAttempts) {
+      attempts++;
+      await new Promise(r => setTimeout(r, intervalMs));
+      const pr = await 
+fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
+        method:'GET',
+        headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY }
+      });
+      if (!pr.ok) continue;
+      const st = await pr.json();
+      if (!st || st.code !== 200) continue;
+      const items = (st.data && st.data.response && st.data.response.sunoData) || [];
+      tracks = items
+        .map(d => ({
+          title: d.title || title,
+          audio_url: d.audioUrl || d.url,
+          image_url: d.imageUrl || d.coverUrl
+        }))
+        .filter(x => !!x.audio_url)
+        .slice(0, 2);
+    }
+    if (!tracks.length) { JOBS.set(jobId, { status:'failed', error:{ message:'Suno did not return tracks in time.' } }); return; }
 try {
   const link1 = tracks[0]?.audio_url || '';
   const link2 = tracks[1]?.audio_url || '';
-  await safeAppendOrderRow({ 
-    email: req.body.email || '', 
-    styles, vocal, language, brief, lyrics, 
-    link1, link2, 
-    format 
-  });
-} catch (_e) {
-  // sheet log hiba nem blokkol
-}
+  await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2 , format , format });
+} catch (_e) { /* handled */ }
 
-// Magyar végső mikropolír (ha nálad van ilyen lépés a legvégén)
-{
-  const _lang  = String(language || 'hu').toLowerCase();
-  if (/^(hu|hungarian|magyar)$/.test(_lang) && typeof lyrics === 'string') {
-    const _theme = (brief || '').toString();
-    const _genre = (styles || style || '').toString();
-    lyrics = postProcessHU(lyrics, { theme: _theme, genre: _genre, brief: _theme });
-  }
-}
-
-// Sikeres befejezés – az async pipeline-nak jelezzük, NEM küldünk res.json-t itt!
-JOBS.set(jobId, { status:'done', result:{ lyrics, style: styleFinal, tracks, format } });
-return;
-
-// === setImmediate háttérmunkás zárása ===
-} catch (e) {
-  JOBS.set(jobId, { status:'failed', error:{ message: String((e && e.message) || e) } });
-}
-}); // <-- ez zárja a setImmediate(async () => { ... })-t
-
-} catch (e) {
-  // külső try/catch – azonnali 'processing' válasz az elején már elküldve
-  // ha itt (nagyon korán) dőlne el valami, inkább írjuk be a JOBS-ba
+    
   try {
-    if (jobId) JOBS.set(jobId, { status:'failed', error:{ message: String((e && e.message) || e) } });
-  } catch(_) {}
-}
-}); // <-- ez zárja az app.post('/api/generate_song', ...) route-ot
+    const _theme = detectTheme(typeof brief !== 'undefined' ? brief : '', typeof styles !== 'undefined' ? styles : '');
+    const _genre = detectGenre(typeof styles !== 'undefined' ? styles : '');
+    const _lang  = String((typeof language !== 'undefined' ? language : 'hu')).toLowerCase();
+    if (/^(hu|hungarian|magyar)$/.test(_lang) && typeof lyrics === 'string') {
+      lyrics = postProcessHU(lyrics, { theme: _theme, genre: _genre, brief: (typeof brief !== 'undefined' ? brief : '') });
+    }
+  } catch(e) {
+    console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
+  }
 
+try { lyrics = polishHU(lyrics, { theme: themeFinal, genre: detectGenre(styleFinal), brief: brief, styles: styleFinal }); } catch(_) {}
+return res.json({ ok:true, lyrics, style: styleFinal, tracks });
+  } catch (e) {
+    console.error('[generate_song]', e);
+    return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
+  }
+});
 
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
@@ -1120,20 +1096,15 @@ app.get('/api/generate_song/ping', (req, res) => {
 });
 
 app.get('/api/suno/ping', async (req, res) => {
-  try{
-;
-if (isMP3) {
-
-}
-else {
   try {
-    await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1: '', link2: '', format });
-  } catch (_e) { /* ignore */ }
-  return res.json({ ok:true, lyrics, style: styleFinal, tracks: [], format });
-}
+    return res.json({
+      ok: true,
+      has_SUNO_API_KEY: !!process.env.SUNO_API_KEY,
+      SUNO_BASE_URL: process.env.SUNO_BASE_URL || null,
+      public_url: process.env.PUBLIC_URL || null
+    });
   } catch (e) {
-    console.error('[generate_song]', e);
-    return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
+    return res.status(500).json({ ok:false, message: String((e && e.message) || e) });
   }
 });
 
