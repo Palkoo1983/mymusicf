@@ -95,9 +95,9 @@ function buildGuardContext({ language, styles, vocal, brief, names = [], mandato
   const danceLike = /(trance|dance|edm|k[- ]?pop)/.test(st);
 
   let rhythmHint = 'standard pop verse-chorus structure (6–10 words per line)';
-  if (technoLike) rhythmHint = 'short, loop-like lines (2–6 words), repetitive, atmospheric; MAY extend a line when needed to naturally include a mandatory keyword';
+  if (technoLike) rhythmHint = 'short, loop-like lines (4–6 words), repetitive, atmospheric; MAY extend a line when needed to naturally include a mandatory keyword';
   else if (rapLike) rhythmHint = 'longer, rhyme-rich lines (10–20 words) with flow';
-  else if (danceLike) rhythmHint = 'energetic, uplifting, 4–6 word lines, catchy and repetitive';
+  else if (danceLike) rhythmHint = 'energetic, uplifting, 5–6 word lines, catchy and repetitive';
 
   let toneHint = 'use a natural tone matching the described genre.';
   if (/lírikus|poetic|ballad|ballada|romantik/.test(st)) toneHint = 'use a poetic, lyrical tone with rich imagery, gentle rhymes and emotional depth.';
@@ -928,11 +928,11 @@ app.post('/api/generate_song', async (req, res) => {
     const st = (styles || '').toLowerCase();
     let rhythmHint = 'standard pop verse-chorus structure (6–10 words per line)';
     if (/techno|minimal|house/.test(st)) {
-      rhythmHint = 'short, loop-like lines (2–6 words), repetitive, atmospheric; MAY extend a line when needed to naturally include a mandatory keyword';
+      rhythmHint = 'short, loop-like lines (4–6 words), repetitive, atmospheric; MAY extend a line when needed to naturally include a mandatory keyword';
     } else if (/rap|hip ?hop|trap|drill/.test(st)) {
       rhythmHint = 'longer, rhyme-rich lines (10–20 words) with flow';
     } else if (/trance|dance|edm|k[- ]?pop/.test(st)) {
-      rhythmHint = 'energetic, uplifting, 4–6 word lines, catchy and repetitive';
+      rhythmHint = 'energetic, uplifting, 5–6 word lines, catchy and repetitive';
     }
     let toneHint = 'use a natural tone matching the described genre.';
     if (/lírikus|poetic|ballad|ballada|romantik/.test(st)) toneHint = 'use a poetic, lyrical tone with rich imagery, gentle rhymes and emotional depth.';
