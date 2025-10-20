@@ -886,7 +886,7 @@ app.post('/api/generate_song', async (req, res) => {
       if (!isHU && Array.isArray(names)) {
         const base = names.map(nm => {
           const s = String(nm || "");
-          const mm = s.match(/^([A-ZÁÉÍÓÖŐÚÜŰ][\\wÁÉÍÓÖŐÚÜŰáéíóöőúüű\\-']+?)(?:nak|nek|val|vel|ba|be|ban|ben|ra|re|ról|ről|hoz|hez|höz|tól|től|nál|nél)?$/i);
+          const mm = s.match(/^([\p{Lu}][\p{L}\p{M}'-]+?)(?:nak|nek|val|vel|ba|be|ban|ben|ra|re|ról|ről|hoz|hez|höz|tól|től|nál|nél)?$/u);
           return mm ? mm[1] : s;
         });
         const seen = new Set(); const clean = [];
@@ -1077,7 +1077,7 @@ app.post('/api/generate_song', async (req, res) => {
       const lang = String(language || "hu").toLowerCase();
       const isHU = /^(hu|hungarian|magyar)$/.test(lang);
       if (!isHU) {
-        lyrics = lyrics.replace(/\\b([A-ZÁÉÍÓÖŐÚÜŰ][\\wÁÉÍÓÖŐÚÜŰáéíóöőúüű\\-']+?)(?:nak|nek|val|vel|ba|be|ban|ben|ra|re|ról|ről|hoz|hez|höz|tól|től|nál|nél)\\b/g, "$1");
+        lyrics = lyrics.replace(/\b([\p{Lu}][\p{L}\p{M}'-]+?)(?:nak|nek|val|vel|ba|be|ban|ben|ra|re|ról|ről|hoz|hez|höz|tól|től|nál|nél)\b/gu, "$1");
       }
     }
 
