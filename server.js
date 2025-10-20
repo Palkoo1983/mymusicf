@@ -1119,8 +1119,7 @@ fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponen
       const st = await pr.json();
       if (!st || st.code !== 200) continue;
       const items = (st.data && st.data.response && st.data.response.sunoData) || [];
-      tracks = items
-        .flatMap(d => {
+      tracks = items.flatMap(d => {
           const urls = [];
           const a1 = d.audioUrl || d.url || d.audio_url;
           const a2 = d.audioUrl2 || d.url2 || d.audio_url_2;
