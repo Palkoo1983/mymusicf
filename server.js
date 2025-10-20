@@ -487,7 +487,7 @@ async function polishHungarianLyrics({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, man
     "Pl. \"<főnév> fest aranyra a táj\" helyett természetesebb: \"Arany naplemente nyugszik a tájon\" / \"A tájat aranyra festi a naplemente\".",
     "Megszólításnál természetes alakot használj (pl. \"Bence,\"; érzelmes birtokosnál \"Bencém\"), a tárgyesetet (\"Bencét\") csak indokolt szerkezetben.",
     "A sorok maradjanak rövidek, énekelhetők; a rímek legyenek gyengédek (ne kényszeríts értelmetlenséget).",
-    "Kötelező kulcsszavak maradjanak verbatim: " + (mandatoryKeywords.length ? mandatoryKeywords.join(\", \") : \"(nincs)\"),
+    "Kötelező kulcsszavak maradjanak verbatim: " + (mandatoryKeywords.length ? mandatoryKeywords.join(", ") : "(nincs)"),
     "FORMÁTUM: Verse 1 / Verse 2 / Chorus / Verse 3 / Verse 4 / Chorus – és versszakonként ugyanannyi sor maradjon.",
     "Csak a végleges dalszöveget add vissza (fejlécekkel), extra komment nélkül."
   ].join("\n");
