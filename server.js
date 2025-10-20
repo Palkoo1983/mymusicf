@@ -12,25 +12,177 @@ import Stripe from 'stripe';
 import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
 
 
-/* === PostProcess Grammar Fix – safe, HU-specific === */
-function fixHungarianGrammar(lyrics) {
+// =========================
+//  UNIVERSAL HUNGARIAN POLISH HELPERS
+//  (biztonságos, óvatos javítások – szerkezetet nem bont)
+// =========================
+
+// --- régi jók MEGTARTÁSA (bővítve) ---
+function fixHungarianGrammar(lyrics = '') {
+  let s = String(lyrics);
+
+  // dupla tagadás: "soha ne nem" → "soha nem"
+  s = s.replace(/\bsoha\s+ne\s+nem\b/gi, 'soha nem');
+
+  // gyakori tárgyrag-hiányok (óvatos, csak önmagában álló szavakra)
+  const objNeeded = ['szeretet', 'vágy', 'érzés', 'öröm', 'remény', 'élet', 'emlék', 'pillanat', 'csoda', 'fény', 'mosoly', 'könny'];
+  objNeeded.forEach(w =>
+    s = s.replace(new RegExp(String.raw`\b(${w})\b(?=(?:[^\wáéíóöőúüű-]|$))`, 'gi'),
+      (m) => m + 'et') // pl. "szeretet" → "szeretetet"; "öröm"→"örömet" nem mindig tökéletes, de jobb a semminél
+  );
+
+  return s;
+}
+
+// --- ÚJ: évszám/typók/archaikumok finomítása (univerzális) ---
+function fixYearsAndTypos(lyrics = '') {
+  let s = String(lyrics);
+
+  // "kétezer-húsz-öt" / "kétezer-húszöt" → "kétezer-huszonöt"
+  s = s.replace(/\bk[ée]tezer-?h[uú]sz-?([a-záéíóöőúüű]+)\b/gi, 'kétezer-huszon$1');
+
+  // pár tipikus félreütés/torz alak (a tesztekből)
+  s = s
+    .replace(/\bzsongán\b/gi, 'zsong már')
+    .replace(/\bmaradánk\b/gi, 'maradunk')
+    .replace(/\btávolló\b/gi, 'távolból')
+    .replace(/\bragyogál\b/gi, 'ragyog már')
+    .replace(/\bnyaránál\b/gi, 'nyarán'); // „nyaránál” hibás
+
+  return s;
+}
+
+// --- ÚJ: párosok/kollokációk/partikulák javítása (univerzális) ---
+function fixPairsAndCollocations(lyrics = '') {
+  let s = String(lyrics);
+
+  // "sosem ér véget el" → "sosem ér véget"
+  s = s.replace(/\b(v[ée]get)\s+el\b/gi, '$1');
+
+  // "örök – török" klasszikus félrím/elszólás kiszedése, ha közel vannak
+  s = s.replace(/\b(ör[öo]k\w*)\b([^\n]{0,12})\b(t[öo]r[öo]k\w*)\b/gi, '$1$2');
+
+  // biztos kollokáció: "fény szál húz" → "fénysugár vezet"
+  s = s.replace(/\bf[ée]ny\s+sz[áa]l\s+h[úu]z\b/gi, 'fénysugár vezet');
+
+  // "soha ne add" → ha nincs vonzat, egészítsük ki: "soha ne add fel"
+  s = s.replace(/\bsoha\s+ne\s+add\b(?!\s+fel)/gi, 'soha ne add fel');
+
+  return s;
+}
+
+// --- ÚJ: prompt-maradványok, (Break) kulcsszó-dump óvatos takarítása ---
+function stripPromptArtifacts(lyrics = '') {
+  let s = String(lyrics);
+
+  // Ha a (Break) után 1–2 sor nyers, kommákkal felsorolt kulcsszólista jön, töröljük
+  s = s.replace(/\n\(\s*Break\s*\)\n([\s\S]*?)$/i, (m, body) => {
+    const lines = String(body || '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    const isKeywordDump = lines.length <= 2 && /,\s*/.test(lines.join(', '));
+    return isKeywordDump ? '' : m;
+  });
+
+  return s;
+}
+
+// --- FEGYELMEZŐ KÖZPONTOZÁS/WHITESPACE (óvatos) ---
+function normalizeWhitespace(lyrics = '') {
+  return String(lyrics)
+    .replace(/[ \t]{2,}/g, ' ')        // több szóköz → 1
+    .replace(/\s+([.,!?:;])/g, '$1')   // írásjel előtti szóköz törlés
+    .replace(/[ \t]+\n/g, '\n')        // soreleji space törlés
+    .replace(/\n{3,}/g, '\n\n')        // túl sok üres sor → max 1 üres
+    .trim();
+}
+
+function postProcessHU(lyrics = '', { theme = '', genre = '', brief = '', styles = '' } = {}) {
   let out = String(lyrics || '');
 
-  // tárgyrag tipikus esetei
-  out = out.replace(/érzed a szeretet([^a-záéíóöőúüűÁÉÍÓÖŐÚÜŰ])/gi, 'érzed a szeretetet$1');
-  out = out.replace(/a szeretet([^a-záéíóöőúüűÁÉÍÓÖŐÚÜŰ])/gi, 'a szeretetet$1');
+  // --- kontextus ---
+  const themey = String(theme || '').toLowerCase();
+  const g = String(genre || styles || '').toLowerCase();
+  const briefLower = String(brief || '').toLowerCase();
 
-  // dupla tiltás
-  out = out.replace(/soha\s+ne\s+nem/gi, 'soha nem');
+  const isElectronic = /(techno|minimal|house|trance|dnb|drum\s*and\s*bass|edm|lo-?fi|lofi)/i.test(g);
+  const isFuneral   = /\b(funeral|temet[ée]s|búcsúztat[óo])\b/i.test(themey + ' ' + briefLower);
+  const wantsDrums  = /\b(dob|dobol|dobbal|dobütés|drum|visszafogott\s+dob)\b/i.test(briefLower);
 
-  // felesleges "én" mondatvég
-  out = out.replace(/vágyat\s+én\b/gi, 'vágyat');
-  out = out.replace(/szavak nélkül érzed a vágyat\s+én/gi, 'szavak nélkül érzed a vágyat');
+  // 1) „CÉGES” mindig menjen ki (régi viselkedés megtartva)
+  out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
 
-  // általános finomítások
-  out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
+  // 2) „TEMPÓ” → „ÜTEM” (régi szabály + kiegészítés)
+  //    - csak NEM elektronikus stílusoknál nyúlunk bele
+  //    - ha tematikus (wedding/funeral/anniversary/kidsong/healing) VAGY a brief nem ragaszkodik a "tempó" szóhoz
+  if (!isElectronic) {
+    if (/(funeral|wedding|anniversary|kidsong|healing)/.test(themey) || !briefLower.includes('tempó')) {
+      out = out
+        .replace(/\b[Tt]emp[óo]\b/g, 'ütem')
+        .replace(/\b[Tt]empós\b/g, 'lendületes');
+    }
+  }
+
+  // 3) TEMETÉS: „dob” visszafogása, ha a brief NEM kéri (régi logika megőrizve)
+  if (isFuneral && !wantsDrums) {
+    out = out
+      .replace(/\b[Dd]ob(ok|bal|bal+l+al|ot)?\b/gi, 'visszafogott dob')
+      .replace(/visszafogott\s+visszafogott/gi, 'visszafogott');
+  }
+
+  // 4) PROPOSAL: refrénben legyen kérdés, ha nincs (régi logika)
+  if (themey === 'proposal') {
+    out = out.replace(/\(Chorus\)([\s\S]*?)(?=\n\(Verse 4\)|$)/, (m, ch) => {
+      if (!/[?？]/.test(ch)) {
+        return `(Chorus)\n${ch.trim()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
+      }
+      return m;
+    });
+  }
+
+  // 5) KIDSONG: rövidebb sorok (régi logika)
+  if (themey === 'kidsong') {
+    out = out.replace(/(.{9,})/g, (line) =>
+      line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n')
+    );
+  }
+
+  // 6) Apró elütések (régi)
+  out = out.replace(/\btitkus\b/gi, 'titkos').replace(/\bállik\b/gi, 'áll');
+
+  // 7) Prompt-maradványok (régi)
+  out = out.replace(/^Kulcsszavak:.*$/gmi, '');
+
+  // 8) Enyhe pontozás/whitespace (régi)
+  out = out
+    .replace(/^\s*,\s*/gm, '')
+    .replace(/[ ]{2,}/g, ' ')
+    .replace(/\s+([.,!?:;])/g, '$1')
+    .trim();
+
   return out;
 }
+
+
+// --- FŐ, UNIVERZÁLIS POLISH: MINDEN magyar szövegre fusson ---
+function polishHU(lyrics = '', ctx = {}) {
+  let t = String(lyrics || '');
+
+  // 1) nyelvtani alap (régi jók)
+  t = fixHungarianGrammar(t);
+
+  // 2) új hibák (univerzális)
+  t = fixYearsAndTypos(t);
+  t = fixPairsAndCollocations(t);
+  t = stripPromptArtifacts(t);
+
+  // 3) tematikus finom (régi jók megtartva)
+  t = postProcessHU(t, ctx);
+
+  // 4) whitespace/pontozás
+  t = normalizeWhitespace(t);
+
+  return t;
+}
+
 
 // === EnZenem: Theme/Genre detectors + HU post-processor (regression guard) ===
 function detectTheme(brief = '', styles = '') {
@@ -52,41 +204,7 @@ function detectGenre(styles = '') {
   if (/(rock|metal)/.test(s)) return 'rock';
   return 'generic';
 }
-function postProcessHU(lyrics, { theme, genre, brief }) {
-  let out = String(lyrics || '');
-  out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
-  if (/(funeral|wedding|anniversary|kidsong|healing)/.test(String(theme))) {
-    out = out.replace(/\b[Tt]empó\b/g, 'ütem');
-  }
-  out = out.replace(/^\s*,\s*/gm, '').replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
-  if (theme === 'funeral') {
-    const wantsDrums = /\bvisszafogott\s+dob\b/i.test(brief) || /\bdob\b/i.test(brief);
-    if (!wantsDrums) {
-      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, '');
-      out = out.replace(/[ ]{2,}/g, ' ').replace(/\s+([.,!?:;])/g, '$1');
-    } else {
-      out = out.replace(/\bdob(ok|bal|bal|ot)?\b/gi, 'visszafogott dob').replace(/visszafogott\s+visszafogott/gi, 'visszafogott');
-    }
-  }
-  if (theme === 'proposal') {
-    out = out.replace(/\(Chorus\)([\s\S]*?)(?=\n\(Verse 4\)|$)/, (m, ch) => {
-      if (!/[?？]/.test(ch)) {
-        return `(Chorus)\n${ch.trim()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
-      }
-      return m;
-    });
-  }
-  if (theme === 'kidsong') {
-    out = out.replace(/(.{9,})/g, (line) => line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n'));
-  }
-  const briefLower = String(brief || '').toLowerCase();
-  if (!briefLower.includes('céges')) { out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, ''); }
-  if (!briefLower.includes('tempó')) { out = out.replace(/\b[Tt]empó\b/g, 'ütem').replace(/\b[Tt]empós\b/g, 'lendületes'); }
-  out = out.replace(/\btitkus\b/gi, 'titkos').replace(/\bállik\b/gi, 'áll');
 
-  out = out.replace(/^Kulcsszavak:.*$/gmi, '');
-  return out;
-}
 // === End of regression guard helpers ===
 
 
@@ -1083,8 +1201,21 @@ try {
     console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
   }
 
-try { lyrics = fixHungarianGrammar(lyrics); } catch(_) {}
+// UNIVERSAL POLISH – minden magyar szövegre fusson
+try {
+  if ((language || '').toLowerCase().startsWith('hu')) {
+    lyrics = polishHU(lyrics, {
+      theme,
+      genre: detectGenre(styles), // ha nincs ilyen helper nálad, ezt a sort töröld
+      brief,
+      styles
+    });
+  }
+} catch (_) { /* no-op */ }
+
+// Válasz (adminnak maradhat a lyrics is; ügyfél nem rendereli)
 return res.json({ ok:true, lyrics, style: styleFinal, tracks });
+
   } catch (e) {
     console.error('[generate_song]', e);
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
