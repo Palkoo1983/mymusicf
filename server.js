@@ -53,32 +53,103 @@ function detectGenre(styles = '') {
   return 'generic';
 }
 function postProcessHU(lyrics = '', { theme = '', genre = '', brief = '', styles = '' } = {}) {
-  let s = String(lyrics);
+  let out = String(lyrics || '');
 
+  // --- kontextus ---
   const themey = String(theme || '').toLowerCase();
-  const gen = String(genre || '').toLowerCase();
+  const g = String(genre || styles || '').toLowerCase();
+  const briefLower = String(brief || '').toLowerCase();
 
-  s = s.replace(/\b[cć]?[ée]ges\b/gi, '');
+  const isElectronic = /(techno|minimal|house|trance|dnb|drum\s*and\s*bass|edm|lo-?fi|lofi)/i.test(g);
+  const isFuneral   = /\b(funeral|temet[ée]s|búcsúztat[óo])\b/i.test(themey + ' ' + briefLower);
 
-  s = s.replace(/\b[Tt]emp[óo]\b/g, 'ütem').replace(/\b[Tt]emp[óo]s\b/g, 'lendületes');
+  // 0) évszám-normalizálás (hyphen + space variánsok)
+  out = out.replace(/\bk[ée]tezer-?h[uú]sz-?([a-záéíóöőúüű]+)/gi, 'kétezer-huszon$1')
+           .replace(/\bk[ée]tezer\s+huszon([a-záéíóöőúüű]+)/gi, 'kétezer-huszon$1');
 
-  if (/\b(temet[ée]s|búcsúztat[óő]|gyász|ravatal|funeral)\b/i.test(themey + ' ' + brief)) {
-    s = s
-      .replace(/\bdobban\b/gi, 'halkan szól a dob')
-      .replace(/\b[Dd]ob(ok|bal|bal[l]al|ot)?\b/gi, 'visszafogott dob')
+  // 1) „CÉGES” mindig menjen ki (ártalmatlan, régi viselkedés)
+  out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
+
+  // 2) „TEMPÓ” → „ÜTEM” (régi szabály + kiegészítés)
+  if (!isElectronic) {
+    if (/(funeral|wedding|anniversary|kidsong|healing)/.test(themey) || !briefLower.includes('tempó')) {
+      out = out
+        .replace(/\b[Tt]emp[óo]\b/g, 'ütem')
+        .replace(/\b[Tt]empós\b/g, 'lendületes');
+    }
+  }
+
+  // 3) TEMETÉS: dob visszafogása/egységesítése — akkor is, ha kérték
+  if (isFuneral) {
+    out = out
+      .replace(/\b[Dd]ob(ok|bal|bal+l+al|ot)?\b/gi, 'visszafogott dob')
+      .replace(/\bdobban\b/gi, 'halkan szóló dob')
       .replace(/visszafogott\s+visszafogott/gi, 'visszafogott');
   }
 
-  if (/\b(dnb|drum\s*&\s*bass|drum\s*and\s*bass)\b/i.test(gen + ' ' + styles)) {
-    s = s.replace(/\boldód\b/gi, 'oldódik')
-         .replace(/\bbenn\b/gi, 'benne');
+  // 4) PROPOSAL: refrénben legyen kérdés, ha nincs (régi logika)
+  if (themey === 'proposal') {
+    out = out.replace(/\(Chorus\)([\s\S]*?)(?=\n\(Verse 4\)|$)/, (m, ch) => {
+      if (!/[?？]/.test(ch)) {
+        return `(Chorus)\n${ch.trim()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
+      }
+      return m;
+    });
   }
 
-  if (/\b(gyerekdal|kidsong|gyermekdal|óvoda|ovis)\b/i.test(themey + ' ' + styles)) {
-    s = s.replace(/\b[Cc]lap\s*[Cc]lap\b/g, 'Taps, taps');
+  // 5) KIDSONG: rövidített sorok + HU interjekció
+  if (themey === 'kidsong') {
+    out = out.replace(/(.{9,})/g, (line) =>
+      line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n')
+    );
+    // "Clap clap" → "Taps, taps"
+    out = out.replace(/\b[Cc]lap[, ]+clap\b/g, 'Taps, taps');
   }
 
-  return s;
+  // 6) ELEKTRONIKUS STÍLUS: (Break) dump feltétel nélkül ki
+  if (isElectronic) {
+    out = out.replace(/\n?\(\s*Break\s*\)[\s\S]*?(?=\n\(|$)/gi, '');
+  } else {
+    // 6/b) NEM elektronikusnál: ha Chorus-szal indul, tegyük lejjebb (Verse1/2 után)
+    if (/^\s*\(Chorus\)/i.test(out) && /\(Verse\s*\d+\)/i.test(out)) {
+      const mCh = out.match(/^\s*\(Chorus\)([\s\S]*?)(?=\n\(|$)/i);
+      if (mCh) {
+        const chorusBlock = mCh[0];
+        const rest = out.slice(chorusBlock.length).trimStart();
+        const v2 = rest.match(/\(Verse\s*2\)([\s\S]*?)(?=\n\(|$)/i);
+        const v1 = rest.match(/\(Verse\s*1\)([\s\S]*?)(?=\n\(|$)/i);
+        if (v2) {
+          const insertAt = rest.indexOf(v2[0]) + v2[0].length;
+          out = (rest.slice(0, insertAt).trimEnd() + '\n\n' + chorusBlock + '\n\n' + rest.slice(insertAt).trimStart()).trim();
+        } else if (v1) {
+          const insertAt = rest.indexOf(v1[0]) + v1[0].length;
+          out = (rest.slice(0, insertAt).trimEnd() + '\n\n' + chorusBlock + '\n\n' + rest.slice(insertAt).trimStart()).trim();
+        }
+      }
+    }
+  }
+
+  // 7) DnB szóalak-puhítás (csak drum&bass esetén)
+  if (/\b(dnb|drum\s*and\s*bass)\b/i.test(g)) {
+    out = out
+      .replace(/\bold[óo]d\b/gi, 'oldódik')
+      .replace(/\bbenn\b/gi, 'benne');
+  }
+
+  // 8) Apró elütések (régi)
+  out = out.replace(/\btitkus\b/gi, 'titkos').replace(/\bállik\b/gi, 'áll');
+
+  // 9) Prompt-maradványok (régi)
+  out = out.replace(/^Kulcsszavak:.*$/gmi, '');
+
+  // 10) Pontozás/whitespace (régi)
+  out = out
+    .replace(/^\s*,\s*/gm, '')
+    .replace(/[ ]{2,}/g, ' ')
+    .replace(/\s+([.,!?:;])/g, '$1')
+    .trim();
+
+  return out;
 }
 // === End of regression guard helpers ===
 
@@ -731,11 +802,11 @@ app.post('/api/generate_song', async (req, res) => {
     const st = (styles || '').toLowerCase();
     let rhythmHint = 'standard pop verse-chorus structure (6–10 words per line)';
     if (/techno|minimal|house/.test(st)) {
-      rhythmHint = 'short, loop-like lines (4–6 words), repetitive, atmospheric; MAY extend a line when needed to naturally include a mandatory keyword';
+      rhythmHint = 'short, loop-like lines (2–6 words), repetitive, atmospheric; MAY extend a line when needed to naturally include a mandatory keyword';
     } else if (/rap|hip ?hop|trap|drill/.test(st)) {
       rhythmHint = 'longer, rhyme-rich lines (10–20 words) with flow';
     } else if (/trance|dance|edm|k[- ]?pop/.test(st)) {
-      rhythmHint = 'energetic, uplifting, 5–6 word lines, catchy and repetitive';
+      rhythmHint = 'energetic, uplifting, 4–6 word lines, catchy and repetitive';
     }
     let toneHint = 'use a natural tone matching the described genre.';
     if (/lírikus|poetic|ballad|ballada|romantik/.test(st)) toneHint = 'use a poetic, lyrical tone with rich imagery, gentle rhymes and emotional depth.';
@@ -831,7 +902,15 @@ app.post('/api/generate_song', async (req, res) => {
       for(const tag of base){
         if (!protectedGenres.has(tag) && !seen.has(tag) && addedMood < 2){ out.push(tag); seen.add(tag); addedMood++; }
       }
-      const vt = (vocalNorm==='male') ? 'male vocals' : (vocalNorm==='female') ? 'female vocals' : '';
+      let vt = '';
+      switch (String(vocalNorm||'').toLowerCase()){
+        case 'male': vt = 'male vocals'; break;
+        case 'female': vt = 'female vocals'; break;
+        case 'duet': vt = 'male and female vocals'; break;
+        case 'child': vt = 'child vocal'; break;
+        case 'robot': vt = 'synthetic/robotic female vocal (vocoder, AI-like, crystal)'; break;
+        default: vt = ''; }
+
       if (vt && !seen.has(vt)) out.push(vt);
       return out.join(', ');
     }
@@ -988,8 +1067,6 @@ lyrics = applyRefrainAlt(lyrics);
 lyrics = applyFinalTinyFixesHU(lyrics, { language });
 lyrics = normalizeSectionHeadingsSafe(lyrics);
 lyrics = ensureTechnoStoryBits(lyrics, { styles, brief, language });
-    lyrics = ensureChorusMinLines(lyrics);
-    lyrics = ensureKidsOnomatopoeia(lyrics, { styles, brief, language });
 
 // ✅ NEW: skip Suno if not MP3
 if (!isMP3) {
@@ -1050,15 +1127,29 @@ fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponen
       const st = await pr.json();
       if (!st || st.code !== 200) continue;
       const items = (st.data && st.data.response && st.data.response.sunoData) || [];
-      tracks = items
-        .map(d => ({
-          title: d.title || title,
-          audio_url: d.audioUrl || d.url,
-          image_url: d.imageUrl || d.coverUrl
-        }))
-        .filter(x => !!x.audio_url)
+      tracks = items.flatMap(d => {
+          const urls = [];
+          const a1 = d.audioUrl || d.url || d.audio_url;
+          const a2 = d.audioUrl2 || d.url2 || d.audio_url_2;
+          if (a1) urls.push(a1);
+          if (a2) urls.push(a2);
+          if (Array.isArray(d.clips)) {
+            for (const c of d.clips) {
+              if (c?.audioUrl || c?.audio_url) urls.push(c.audioUrl || c.audio_url);
+              if (c?.audioUrlAlt || c?.audio_url_alt) urls.push(c.audioUrlAlt || c.audio_url_alt);
+            }
+          }
+          // return as individual track objects
+          return urls.map(u => ({ title: d.title || title, audio_url: u, image_url: d.imageUrl || d.coverUrl }));
+        })
+        .map(x => ({ ...x, audio_url: String(x.audio_url||'').trim() }))
+        .filter(x => !!x.audio_url && /^https?:\/\//i.test(x.audio_url))
+        .reduce((acc, cur) => {
+          if (!acc.find(t => t.audio_url === cur.audio_url)) acc.push(cur);
+          return acc;
+        }, [])
         .slice(0, 2);
-    }
+}
     if (!tracks.length) return res.status(502).json({ ok:false, message:'Suno did not return tracks in time.' });
 try {
   const link1 = tracks[0]?.audio_url || '';
@@ -1078,7 +1169,7 @@ try {
     console.warn('[POSTPROCESS] HU clean skipped:', e?.message || e);
   }
 
-try { lyrics = polishHU(lyrics, { theme: themeFinal, genre: detectGenre(styleFinal), brief: brief, styles: styleFinal }); } catch(_) {}
+try { lyrics = fixHungarianGrammar(lyrics); } catch(_) {}
 return res.json({ ok:true, lyrics, style: styleFinal, tracks });
   } catch (e) {
     console.error('[generate_song]', e);
@@ -1204,43 +1295,6 @@ function applyRefrainAlt(text){
 /* ======== /SAFE MORPH & REFRAIN ALT ======== */
 
 
-
-/* === Chorus guard helpers (append-only, safe) === */
-function ensureChorusMinLines(text) {
-  try {
-    let t = String(text || '');
-    const rx = /\((?:Chorus)\)\s*\n([\s\S]*?)(?=\n\s*\(|$)/gi;
-    t = t.replace(rx, (m, body) => {
-      const lines = body.split('\n').map(s => s.replace(/\s+$/,'')).filter(s => s.length>0);
-      if (lines.length >= 4) return m; // OK
-      const needed = 4 - lines.length;
-      for (let i=0; i<needed; i++) {
-        const seed = lines[Math.max(0, lines.length-1)] || 'La la la';
-        const echo = seed.replace(/\b(örökké|mindig|fény|szív|út)\b/gi, '$1');
-        lines.push(echo || seed || 'La la la');
-      }
-      return m.replace(body, lines.join('\n') + '\n');
-    });
-    return t;
-  } catch (_e) { return text; }
-}
-
-function ensureKidsOnomatopoeia(text, { styles = '', brief = '', language = 'hu' } = {}) {
-  try {
-    const isHU = /^(hu|hungarian|magyar)$/i.test(String(language||'hu'));
-    const kid = /(gyerekdal|óvoda|ovis|children|kids?)/i.test(String(styles||'') + ' ' + String(brief||''));
-    if (!kid) return text;
-    let t = String(text||'');
-    const rx = /\((?:Chorus)\)\s*\n([\s\S]*?)(?=\n\s*\(|$)/gi;
-    t = t.replace(rx, (m, body) => {
-      if (/(taps|clap|la la|lala|csitt|csatt)/i.test(body)) return m;
-      const add = isHU ? 'Taps, taps! La la la!' : 'Clap clap! La la la!';
-      const out = (body.endsWith('\n') ? body : body + '\n') + add + '\n';
-      return m.replace(body, out);
-    });
-    return t;
-  } catch (_e) { return text; }
-}
 /* === FINAL MICRO PATCHES (safe, append-only) ==================== */
 /* 1) HU tiny tail fixes to avoid clipped suffixes on line ends */
 function applyFinalTinyFixesHU(lyrics, { language } = {}) {
@@ -1339,113 +1393,3 @@ function ensureTechnoStoryBits(lyrics, { styles = '', brief = '', language = '' 
 }
 /* === /TECH/HOUSE CONTENT NUDGE ================================= */
 
-
-
-function fixYearsAndTypos(lyrics = '') {
-  let s = String(lyrics);
-
-  s = s.replace(/\bk[ée]tezer\s*-?\s*h[uú]sz\s*-?\s*([a-záéíóöőúüű]+)\b/gi, 'kétezer-huszon$1');
-
-  s = s
-    .replace(/\bzsongán\b/gi, 'zsong már')
-    .replace(/\bmaradánk\b/gi, 'maradunk')
-    .replace(/\btávolló\b/gi, 'távolból')
-    .replace(/\bragyogál\b/gi, 'ragyog már')
-    .replace(/\bnyaránál\b/gi, 'nyarán');
-
-  return s;
-}
-
-
-function stripPromptArtifacts(lyrics = '', { genre = '' } = {}) {
-  let s = String(lyrics || '');
-
-  s = s.replace(/\n\(\s*Break\s*\)\n([\s\S]*?)$/i, (m, tail) => {
-    const nextHdrIdx = tail.search(/\n\(\s*(Verse|Chorus)\b/i);
-    const scope = nextHdrIdx >= 0 ? tail.slice(0, nextHdrIdx) : tail;
-    const lines = scope.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
-    const looksLikeDump = lines.length <= 2 && /,/.test(lines.join(', ')) &&
-                          lines.every(l => l.split(/\s+/).length <= 10);
-    if (looksLikeDump) return '\n';
-    return m;
-  });
-
-  return s;
-}
-
-
-function enforceElectronicStructure(lyrics = '', { genre = '' } = {}) {
-  const electronic = /\b(techno|minimal|house|trance|dnb|drum\s*&\s*bass|edm)\b/i.test(String(genre||''));
-  if (!electronic) return String(lyrics||'');
-  let s = String(lyrics || '');
-
-  const hdrRe = /\(\s*(Verse\s*\d+|Chorus)\s*\)/ig;
-  let m, blocks = [];
-  while ((m = hdrRe.exec(s)) !== null) {
-    blocks.push({type: m[1].toLowerCase().startsWith('verse') ? 'verse' : 'chorus', 
-                 label: m[1], idx: m.index});
-  }
-  if (blocks.length === 0) return s;
-
-  function blockEndFrom(startIdx){
-    const re2 = /\(\s*(Verse\s*\d+|Chorus)\s*\)/ig;
-    re2.lastIndex = startIdx + 1;
-    const nx = re2.exec(s);
-    return nx ? nx.index : s.length;
-  }
-
-  if (blocks[0].type === 'chorus') {
-    const v2 = blocks.find(b => b.type==='verse' && /\bverse\s*2\b/i.test(b.label));
-    if (v2) {
-      const chStart = blocks[0].idx;
-      const chEnd = blockEndFrom(chStart);
-      const chorusBlock = s.slice(chStart, chEnd).trim();
-      s = (s.slice(0, chStart) + s.slice(chEnd)).trim();
-      const reV2 = new RegExp(String.raw`\(\s*Verse\s*2\s*\)`, 'i');
-      const v2Start = s.search(reV2);
-      let v2End = s.length;
-      if (v2Start >= 0) {
-        const reNext = /\(\s*(Verse\s*\d+|Chorus)\s*\)/ig;
-        reNext.lastIndex = v2Start + 1;
-        const nx = reNext.exec(s);
-        v2End = nx ? nx.index : s.length;
-      }
-      s = s.slice(0, v2End) + "\n\n" + chorusBlock + "\n\n" + s.slice(v2End);
-    }
-  }
-
-  let chorusMatches = s.match(/\(\s*Chorus\s*\)/ig) || [];
-  if (chorusMatches.length === 1) {
-    const chStart = s.search(/\(\s*Chorus\s*\)/i);
-    if (chStart >= 0) {
-      const reNext = /\(\s*(Verse\s*\d+|Chorus)\s*\)/ig;
-      reNext.lastIndex = chStart + 1;
-      const nx = reNext.exec(s);
-      const chEnd = nx ? nx.index : s.length;
-      const chorusBlock = s.slice(chStart, chEnd).trim();
-      s = s.trim() + "\n\n" + chorusBlock + "\n";
-    }
-  }
-
-  return s;
-}
-
-
-function polishHU(lyrics = '', ctx = {}) {
-  let t = String(lyrics || '');
-
-  try { t = fixHungarianGrammar(t); } catch(_) {}
-
-  t = fixYearsAndTypos(t);
-  t = fixPairsAndCollocations(t);
-
-  t = stripPromptArtifacts(t, ctx);
-
-  t = postProcessHU(t, ctx);
-
-  t = enforceElectronicStructure(t, ctx);
-
-  t = normalizeWhitespace(t);
-
-  return t;
-}
