@@ -9,10 +9,6 @@ import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
-
-/* === Lightweight in-memory job store for async generation === */
-const JOBS = new Map(); // jobId -> { status, createdAt, result?, error? }
-function newJobId(){ return 'job_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
 import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
 
 
@@ -591,27 +587,11 @@ async function enforceTargetLanguage({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, lan
 }
 
 /* ============ GPT → Suno generate ============ */
-
-/* === Async status endpoint === */
-app.get('/api/generate_song/status', (req, res) => {
-  const id = String(req.query.jobId || '').trim();
-  if (!id || !JOBS.has(id)) return res.json({ ok:false, status:'unknown' });
-  const j = JOBS.get(id);
-  res.json({ ok:true, jobId:id, status:j.status, result:j.result || null, error:j.error || null });
-});
 app.post('/api/generate_song', async (req, res) => {
   try {
-    // === ASYNC NON-BLOCKING: return immediately with jobId, do heavy work in background ===
-    const jobId = newJobId();
-    JOBS.set(jobId, { status:'processing', createdAt: Date.now() });
-    res.json({ ok:true, status:'processing', jobId });
-    // Do the rest in background without blocking client
-    setImmediate(async () => {
-      try {
-
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
     if (!rateLimit('gen:' + ip, 45000, 5)) {
-      JOBS.set(jobId, { status:'failed', error:{ message:'Rate limited' } }); return;
+      return res.status(429).json({ ok:false, message:'Túl sok kérés. Próbáld később.' });
     }
 
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
@@ -1030,28 +1010,21 @@ if (!isMP3) {
 }
 
 // === SUNO API CALL (MP3 only) ===
-const startRes = await sunoStartV1(
-  SUNO_BASE_URL + '/api/v1/generate',
-  {
-    'Authorization': 'Bearer ' + SUNO_API_KEY,
-    'Content-Type': 'application/json'
-  },
-  {
-    customMode: true,
-    model: 'V5',
-    instrumental: (vocal === 'instrumental'),
-    title,
-    style: styleFinal,
-    prompt: lyrics,
-    callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
-  }
-);
-    });
-
+const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
+  'Authorization': 'Bearer ' + SUNO_API_KEY,
+  'Content-Type': 'application/json'
+}, {
+  customMode: true,
+  model: 'V5',
+  instrumental: (vocal === 'instrumental'),
+  title: title,
+  style: styleFinal,
+  prompt: lyrics,
+  callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
 });
 
     if (!startRes.ok) {
-      JOBS.set(jobId, { status:'failed', error:{ message:'Suno start error', detail:startRes.text, status:startRes.status } }); return;
+      return res.status(502).json({ ok:false, message:'Suno start error', detail:startRes.text, status:startRes.status });
     }
     const sj = startRes.json;
     if (!sj || sj.code !== 200 || !sj.data || !sj.data.taskId) {
@@ -1084,7 +1057,7 @@ fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponen
         .filter(x => !!x.audio_url)
         .slice(0, 2);
     }
-    if (!tracks.length) JOBS.set(jobId, { status:'failed', error:{ message:'Suno did not return tracks in time.' } }); return;
+    if (!tracks.length) { JOBS.set(jobId, { status:'failed', error:{ message:'Suno did not return tracks in time.' } }); return; }
 try {
   const link1 = tracks[0]?.audio_url || '';
   const link2 = tracks[1]?.audio_url || '';
@@ -1123,18 +1096,22 @@ app.get('/api/generate_song/ping', (req, res) => {
 });
 
 app.get('/api/suno/ping', async (req, res) => {
+  try{
+;
+if (isMP3) {
+
+}
+else {
   try {
-    return res.json({
-      ok: true,
-      has_SUNO_API_KEY: !!process.env.SUNO_API_KEY,
-      SUNO_BASE_URL: process.env.SUNO_BASE_URL || null,
-      public_url: process.env.PUBLIC_URL || null
-    });
+    await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1: '', link2: '', format });
+  } catch (_e) { /* ignore */ }
+  return res.json({ ok:true, lyrics, style: styleFinal, tracks: [], format });
+}
   } catch (e) {
-    return res.status(500).json({ ok:false, message: String((e && e.message) or e) });
+    console.error('[generate_song]', e);
+    return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
   }
 });
-
 
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
