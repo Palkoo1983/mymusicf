@@ -1008,6 +1008,19 @@ if (!isMP3) {
     format
   });
 }
+// --- EARLY SHEET LOG (lyrics megvan, Suno előtt) ---
+try {
+  await safeAppendOrderRow({
+    email: req.body.email || '',
+    styles, vocal, language, brief,
+    lyrics,              // a kész dalszöveg pillanatképe
+    link1: '', link2: '',// üresen, mert Suno még nem futott le
+    format
+  });
+} catch (_e) {
+  console.warn('[SHEETS:EARLY_LOG_FAIL]', _e?.message || _e);
+}
+// --- /EARLY ---
 
 // === SUNO API CALL (MP3 only) ===
 const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
