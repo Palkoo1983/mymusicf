@@ -902,7 +902,15 @@ app.post('/api/generate_song', async (req, res) => {
       for(const tag of base){
         if (!protectedGenres.has(tag) && !seen.has(tag) && addedMood < 2){ out.push(tag); seen.add(tag); addedMood++; }
       }
-      const vt = (vocalNorm==='male') ? 'male vocals' : (vocalNorm==='female') ? 'female vocals' : '';
+      let vt = '';
+      switch (String(vocalNorm||'').toLowerCase()){
+        case 'male': vt = 'male vocals'; break;
+        case 'female': vt = 'female vocals'; break;
+        case 'duet': vt = 'male and female vocals'; break;
+        case 'child': vt = 'child vocal'; break;
+        case 'robot': vt = 'synthetic/robotic female vocal (vocoder, AI-like, crystal)'; break;
+        default: vt = ''; }
+
       if (vt && !seen.has(vt)) out.push(vt);
       return out.join(', ');
     }
