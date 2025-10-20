@@ -1141,14 +1141,7 @@ fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponen
           return acc;
         }, [])
         .slice(0, 2);
-        .map(d => ({
-          title: d.title || title,
-          audio_url: d.audioUrl || d.url,
-          image_url: d.imageUrl || d.coverUrl
-        }))
-        .filter(x => !!x.audio_url)
-        .slice(0, 2);
-    }
+}
     if (!tracks.length) return res.status(502).json({ ok:false, message:'Suno did not return tracks in time.' });
 try {
   const link1 = tracks[0]?.audio_url || '';
