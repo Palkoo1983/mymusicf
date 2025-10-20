@@ -1030,18 +1030,22 @@ if (!isMP3) {
 }
 
 // === SUNO API CALL (MP3 only) ===
-const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
-  'Authorization': 'Bearer ' + SUNO_API_KEY,
-  'Content-Type': 'application/json'
-}, {
-  customMode: true,
-  model: 'V5',
-  instrumental: (vocal === 'instrumental'),
-  title: title,
-  style: styleFinal,
-  prompt: lyrics,
-  callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
-      } catch(e){ JOBS.set(jobId, { status:'failed', error:{ message:String(e&&e.message||e) } }); }
+const startRes = await sunoStartV1(
+  SUNO_BASE_URL + '/api/v1/generate',
+  {
+    'Authorization': 'Bearer ' + SUNO_API_KEY,
+    'Content-Type': 'application/json'
+  },
+  {
+    customMode: true,
+    model: 'V5',
+    instrumental: (vocal === 'instrumental'),
+    title,
+    style: styleFinal,
+    prompt: lyrics,
+    callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
+  }
+);
     });
 
 });
@@ -1119,22 +1123,18 @@ app.get('/api/generate_song/ping', (req, res) => {
 });
 
 app.get('/api/suno/ping', async (req, res) => {
-  try{
-;
-if (isMP3) {
-
-}
-else {
   try {
-    await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1: '', link2: '', format });
-  } catch (_e) { /* ignore */ }
-  return res.json({ ok:true, lyrics, style: styleFinal, tracks: [], format });
-}
+    return res.json({
+      ok: true,
+      has_SUNO_API_KEY: !!process.env.SUNO_API_KEY,
+      SUNO_BASE_URL: process.env.SUNO_BASE_URL || null,
+      public_url: process.env.PUBLIC_URL || null
+    });
   } catch (e) {
-    console.error('[generate_song]', e);
-    return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
+    return res.status(500).json({ ok:false, message: String((e && e.message) or e) });
   }
 });
+
 
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
