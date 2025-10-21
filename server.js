@@ -91,7 +91,13 @@ if (!briefExplicitTempo) {
   }
 // --- SZERKEZETI POLÍR: 3 Verse + 2 Chorus, érzelmesnél 2 soros chorus ---
 out = enforceSongStructure(out, { style: g, theme: themey, brief: briefLower });
-return out.trim();
+// ÚJ: KOHERENCIA + RAGOZÁS POLÍR (magyar szerkesztői kör)
+out = await coherencePolishHU(out, {
+  brief: briefLower,
+  style: g,
+  theme: themey
+});
+  return out.trim();
 
   // 3) TEMETÉS: dob visszafogása/egységesítése — akkor is, ha kérték
   if (isFuneral) {
@@ -1519,5 +1525,95 @@ function deriveChorusFrom(verseText = '') {
   const seed = (l[0] || '') + ' ' + (l[1] || '');
   // tömör, univerzális refrén-minta
   return `${seed.trim()}\nEz a mi dalunk, együtt szól.`;
+}
+// --- KOHERENCIA + RAGOZÁS POLÍR (HU) ---
+// Nincs új fájl, egyetlen szerkesztői kör. Fail-safe: hiba esetén az eredetit adja vissza.
+async function coherencePolishHU(text, { brief = '', style = '', theme = '' } = {}) {
+  try {
+    const ctx = (style + ' ' + theme + ' ' + brief).toLowerCase();
+    const isEmotional = /(romantikus|ballada|érzelmes|esküv|lánykérés)/i.test(ctx);
+
+    // 0) Gyors helyi tisztítás – determinisztikus
+    let draft = String(text || '');
+    const quickFixes = [
+      [/ +([,.!?;:])/g, "$1"],      // írásjel előtti space
+      [/(\S)\s+(\n)/g, "$1$2"],     // sorvégi space
+      [/ {2,}/g, " "],              // dupla space
+      [/\n{3,}/g, "\n\n"],          // túl sok üres sor
+      [/kett[oő]ezer/gi, "kétezer"] // gyakori számalak
+    ];
+    for (const [rgx, rep] of quickFixes) draft = draft.replace(rgx, rep);
+
+    // 1) OpenAI "copy-edit" pass – szigorú megkötésekkel (szerkezetet ne bántsa)
+    const { default: OpenAI } = await import('openai');
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+
+    const system = [
+      "Magyar szerkesztő vagy. Feladat: helyesírás/ragozás javítása és koherencia növelése.",
+      "Tartsd meg PONTOSAN a szakaszcímkéket és szerkezetet: (Verse 1|2|3), (Chorus), (Bridge).",
+      "Ne adj hozzá új szakaszt, ne törölj szakaszt. Csak soron belüli javítás/átfogalmazás megengedett.",
+      "Őrizd meg a NEVEKET, HELYEKET, SZÁMOKAT, DÁTUMOKAT a brief szerint.",
+      "Metaforák maradjanak érthetők és kapcsolódjanak az előző sorokhoz (koherens képiség).",
+      isEmotional
+        ? "Érzelmes/romantikus/esküvői dal: A CHORUS legyen 4 soros, énekelhető, ismétlések nélkül."
+        : "Nem érzelmes dal: a CHORUS maradjon feszes, énekelhető; ne legyen túl hosszú.",
+      "Visszaadott formátum: csak a szöveg, az eredeti címkézést megtartva."
+    ].join("\n");
+
+    const user = [
+      "BRIEF:",
+      brief,
+      "",
+      "STÍLUS/TÉMA:",
+      `${style} | ${theme}`,
+      "",
+      "SZÖVEG (javítsd a fenti elvek szerint, szerkezet/címkék megtartásával):",
+      draft
+    ].join("\n");
+
+    const resp = await client.responses.create({
+      model: MODEL,
+      input: [{ role: "system", content: system }, { role: "user", content: user }],
+      temperature: 0.2,
+      max_output_tokens: 1200
+    });
+
+    let edited = String(resp.output_text || '').trim();
+    if (!edited || edited.split('\n').length < 4) return draft; // sanity
+
+    // 2) Záró szerkezeti biztosítás: érzelmesnél refrén = 4 sor
+    if (isEmotional) {
+      edited = edited.replace(
+        /(^|\n)\(Chorus\)\s*\n([\s\S]*?)(?=\n\(|$)/g,
+        (m, pre, body) => {
+          const lines = body.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+          // ha kevesebb, egészítsd ki 4-re
+          while (lines.length < 4) {
+            const seed = lines[lines.length - 1] || lines[0] || "Együtt dobban a szívünk";
+            lines.push(lines.length % 2 === 0 ? seed : seed); // egyszerű kitöltés
+          }
+          // ha több, tartsd meg az első 4 egyedi sort
+          const seen = new Set(); const four = [];
+          for (const l of lines) {
+            const k = l.toLowerCase();
+            if (!k || seen.has(k)) continue;
+            seen.add(k);
+            four.push(l);
+            if (four.length === 4) break;
+          }
+          return `${pre}(Chorus)\n${four.join('\n')}`;
+        }
+      );
+    }
+
+    // 3) Finomítás: felesleges üres sorok ritkítása
+    edited = edited.replace(/\n{3,}/g, "\n\n").trim();
+    return edited;
+
+  } catch (e) {
+    console.warn("coherencePolishHU skipped:", e?.message || e);
+    return String(text || '');
+  }
 }
 
