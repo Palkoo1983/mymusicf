@@ -91,13 +91,16 @@ if (!briefExplicitTempo) {
   }
 // --- SZERKEZETI POLÍR: 3 Verse + 2 Chorus, érzelmesnél 2 soros chorus ---
 out = enforceSongStructure(out, { style: g, theme: themey, brief: briefLower });
-// ÚJ: KOHERENCIA + RAGOZÁS POLÍR (magyar szerkesztői kör)
-out = await coherencePolishHU(out, {
-  brief: briefLower,
-  style: g,
-  theme: themey
-});
-  return out.trim();
+// ÚJ: KOHERENCIA + RAGOZÁS POLÍR (magyar szerkesztői kör) – SYNC SAFE
+try {
+  // Itt NEM hívunk await-et (a környezet nem async).
+  // Könnyű, szinkron polír, ami már most elérhető:
+  out = softHungarianAwkwardFilter(fixHungarianGrammar(out));
+} catch (_e) {
+  // no-op
+}
+return out.trim();
+
 
   // 3) TEMETÉS: dob visszafogása/egységesítése — akkor is, ha kérték
   if (isFuneral) {
