@@ -1,5 +1,5 @@
-/* server.js – EnZenem Restore v4.1 (adapter-safe)
-   – Generate adapter: nem dől el, ha más a fájlnév/mappa
+/* src/server.js – EnZenem Render‑Proof v4.1 (Sheets‑first, Suno‑safe)
+   Minden backend fájl a /src alatt van. Start: node src/server.js
 */
 import express from "express";
 import cors from "cors";
