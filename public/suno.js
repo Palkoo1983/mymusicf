@@ -1,4 +1,4 @@
-/* suno.js – Suno v5 wrapper */
+/* src/suno.js – Suno v5 wrapper */
 import fetch from "node-fetch";
 
 const SUNO_BASE = process.env.SUNO_BASE_URL;

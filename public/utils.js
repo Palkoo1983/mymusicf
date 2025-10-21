@@ -1,4 +1,4 @@
-/* utils.js */
+/* src/utils.js */
 export function normalizeOrder(raw = {}) {
   const pick = (v) => (v == null ? "" : String(v).trim());
   return {

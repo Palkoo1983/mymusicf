@@ -1,4 +1,4 @@
-/* notifier.js – admin értesítések */
+/* src/notifier.js – admin értesítések */
 import fetch from "node-fetch";
 
 const RESEND_ONLY = String(process.env.RESEND_ONLY || "true").toLowerCase() === "true";

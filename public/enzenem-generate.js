@@ -1,4 +1,4 @@
-/* enzenem-generate.js – OpenAI lyrics */
+/* src/enzenem-generate.js – OpenAI lyrics */
 import OpenAI from "openai";
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MODEL  = process.env.OPENAI_MODEL || "gpt-4.1-mini";
