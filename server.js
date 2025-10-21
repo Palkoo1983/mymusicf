@@ -66,6 +66,17 @@ function postProcessHU(lyrics = '', { theme = '', genre = '', brief = '', styles
   // 0) évszám-normalizálás (hyphen + space variánsok)
   out = out.replace(/\bk[ée]tezer-?h[uú]sz-?([a-záéíóöőúüű]+)/gi, 'kétezer-huszon$1')
            .replace(/\bk[ée]tezer\s+huszon([a-záéíóöőúüű]+)/gi, 'kétezer-huszon$1');
+// HARD BAN – "céges tempó" és variánsai sehol
+out = out
+  .replace(/\b[cç][eé]ges[-\s]*temp[óo]\b/gi, 'ünnepi ütem'); // teljes kifejezés
+// maradék "céges" majd a következő blokk is kiszedi
+// "tempó" → "ütem" csak ha a brief NEM kéri kifejezetten a "tempó" szót
+const briefExplicitTempo = /\btemp[óo]\b/i.test(briefLower);
+if (!briefExplicitTempo) {
+  out = out
+    .replace(/\b[Tt]emp[óo]\b/g, 'ütem')
+    .replace(/\b[Tt]empós\b/g, 'lendületes');
+}
 
   // 1) „CÉGES” mindig menjen ki (ártalmatlan, régi viselkedés)
   out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
