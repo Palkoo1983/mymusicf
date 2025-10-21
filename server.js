@@ -1,10 +1,10 @@
-/* server.js – EnZenem Restore v4.1 (root-based)
-   Sheets-first + Suno-safe; gyerek/robot/duett fixek
+/* server.js – EnZenem Restore v4.1 (adapter-safe)
+   – Generate adapter: nem dől el, ha más a fájlnév/mappa
 */
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import { generateLyrics } from "./enzenem-generate.js";
+import { generateLyrics } from "./generate-adapter.js";
 import { sendAdminNotice } from "./notifier.js";
 import { createRow, updateRowByKey } from "./sheetsLogger.js";
 import { generateTwoTracks } from "./suno.js";
