@@ -4,12 +4,12 @@
 // - Non-HU enforce only
 // - No stray \1 / print / unclosed strings; Node 18+ fetch OK
 
-const express = require('express');
-const cors = require('cors');
-const nodemailer = require('nodemailer');
-const dotenv = require('dotenv');
-const Stripe = require('stripe');
-const { appendOrderRow, safeAppendOrderRow } = require('./sheetsLogger.js');
+import express from 'express';
+import cors from 'cors';
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+import Stripe from 'stripe';
+import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
 
 
 /* === PostProcess Grammar Fix – safe, HU-specific === */
@@ -1620,5 +1620,3 @@ async function coherencePolishHU(text, { brief = '', style = '', theme = '' } = 
   }
 }
 
-
-module.exports = {};
