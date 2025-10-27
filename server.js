@@ -903,7 +903,7 @@ app.post('/api/generate_song', async (req, res) => {
       'MANDATORY: Naturally include ALL of these keywords verbatim at least once if present: ' + (mandatoryKeywords.length ? mandatoryKeywords.join(', ') : '(no mandatory keywords)'),
       'Use typographic quotes if quotes appear.',
       'Return STRICT JSON ONLY: {"lyrics_draft":"...","style_en":"..."}',
-      'STRUCTURE: Verse 1 (4) / Verse 2 (4) / Chorus (2–4) / Verse 3 (4) / Verse 4 (4) / Chorus (2–4).',
+      'STRUCTURE: Verse 1 (4) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4).',
       "Do NOT override already-English genre tags (e.g., 'minimal techno', 'house', 'pop').",
       "If vocal is male/female/instrumental, append that as 'male vocals'/'female vocals' or omit for instrumental.",
       'All numerals must be fully spelled out in words (no digits).'
@@ -1416,72 +1416,6 @@ function ensureTechnoStoryBits(lyrics, { styles = '', brief = '', language = '' 
   } catch {
     return lyrics;
   }
-}
-/* === /TECH/HOUSE CONTENT NUDGE ================================= */
-// --- SZERKEZETI POLÍR: 3 Verse + 2 Chorus, érzelmesnél 2 soros chorus ---
-function enforceSongStructure(text, { style = '', theme = '', brief = '' } = {}) {
-  let blocks = parseSectionsSafe(text);
-  const isElectronic = /(techno|minimal|house|trance|dnb|drum\s*&?\s*bass|edm|lo-?fi)/i.test(style);
-  const isEmotional = /(romantikus|ballada|érzelmes|esküv|lánykérés|búcsú|temet)/i.test(style + ' ' + theme + ' ' + brief);
-
-  // 1) Normalizáld a címkéket ("Verse", "Chorus", "Bridge")
-  blocks = blocks.map(b => ({ ...b, kind: normalizeKind(b.kind) }));
-
-  // 2) Verse-ek száma: legyen 3
-  const verses = blocks.filter(b => b.kind === 'Verse');
-  if (verses.length > 3) {
-    // hagyd meg az első 3-at (a többiek menjenek)
-    let keep = 0;
-    blocks = blocks.filter(b => {
-      if (b.kind !== 'Verse') return true;
-      if (keep < 3) { keep++; return true; }
-      return false;
-    });
-  } else if (verses.length < 3) {
-    // duplikáld az utolsó verset, hogy meglegyen a 3
-    const lastV = verses[verses.length - 1] || blocks.find(b => b.kind === 'Other') || { text: '' };
-    for (let i = verses.length; i < 3; i++) {
-      blocks.push({ kind: 'Verse', text: lastV.text });
-    }
-  }
-
-  // 3) Chorus: legyen pontosan 2
-  let choruses = blocks.filter(b => b.kind === 'Chorus');
-  if (choruses.length === 0) {
-    // képezz egyet az utolsó versből
-    const lastVerse = [...blocks].reverse().find(b => b.kind === 'Verse');
-    blocks.push({ kind: 'Chorus', text: deriveChorusFrom(lastVerse?.text || '') });
-    choruses = blocks.filter(b => b.kind === 'Chorus');
-  }
-  if (choruses.length === 1) {
-    blocks.push({ kind: 'Chorus', text: choruses[0].text });
-  } else if (choruses.length > 2) {
-    // csak az első kettő maradjon
-    let seen = 0;
-    blocks = blocks.filter(b => {
-      if (b.kind !== 'Chorus') return true;
-      if (seen < 2) { seen++; return true; }
-      return false;
-    });
-  }
-
-  // 4) Érzelmes daloknál a refrén legyen 2 soros (tömör, emlékezhető)
-  if (isEmotional) {
-    blocks = blocks.map(b => {
-      if (b.kind !== 'Chorus') return b;
-      const lines = b.text.split(/\r?\n/).filter(x => x.trim());
-      const two = (lines[0] || '').trim();
-      const four = (lines[1] || '').trim();
-      return { ...b, text: [two, four].filter(Boolean).join('\n') };
-    });
-  }
-
-  // 5) Elektronikus stílusnál is garantáld a 3V+2C keretet (már kész), csak tedd rendbe a címkéket
-  // + duplikált sorok szűrése
-  blocks = blocks.map(b => ({ ...b, text: dedupeLinesLite(b.text) }));
-
-  // 6) Újraépítés
-  return joinBlocks(blocks).trim();
 }
 
 // ---- Segédek (lokálisak, nincs külső függés) ----
