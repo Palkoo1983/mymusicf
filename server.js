@@ -1216,16 +1216,12 @@ app.get('/api/generate_song/ping', (req, res) => {
 });
 
 app.get('/api/suno/ping', async (req, res) => {
-  try{
-;
-// [removed empty if (isMP3) block]
-
-else {
+ 
   try {
     await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1: '', link2: '', format });
   } catch (_e) { /* ignore */ }
   return res.json({ ok:true, lyrics, style: styleFinal, tracks: [], format });
-}
+
   } catch (e) {
     console.error('[generate_song]', e);
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
