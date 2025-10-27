@@ -818,9 +818,7 @@ app.post('/api/generate_song', async (req, res) => {
     else if (/trap|drill|rap/.test(st)) toneHint = 'use expressive attitude, internal rhymes and punchy imagery typical for rap.';
     const isLyrical = /lírikus|poetic|ballad|ballada|romantik/.test(st);
     const isPopRockMusical = /pop|rock|musical/.test(st);
-    const chorusHint = (isLyrical || isPopRockMusical || isKidSong)
-      ? 'Chorus should be 2–4 short, memorable lines with one clear hook (do not over-explain).'
-      : 'Keep chorus concise and catchy.';
+    const chorusHint = 'Chorus must be exactly 4 lines (no more, no less). Keep one clear hook.';
     const rhymeHint = isKidSong
       ? 'Use very simple AABB end-rhymes in verses (or ABAB if more natural).'
       : (isLyrical || isPopRockMusical)
