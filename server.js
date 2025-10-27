@@ -506,10 +506,10 @@ function enforceUniversalSongStructure(lyrics) {
   if (!lyrics) return lyrics;
   let out = lyrics.trim();
 
-  // 1) Töröld a nem kívánt szakaszcímkéket és extra blokkokat
-  out = out.replace(/\n?\(\s*(Break|Bridge|Intro|Outro|Interlude|Final)\s*\)[\s\S]*?(?=\n\(|$)/gi, '');
+  // 1️⃣ Töröld a nem kívánt extra blokkokat (Bridge, Break, Outro stb.)
+  out = out.replace(/\n?\(\s*(Bridge|Intro|Outro|Interlude|Final)\s*\)[\s\S]*?(?=\n\(|$)/gi, '');
 
-  // 2) Biztosítsd a szükséges címkéket (Verse 1, Verse 2, Chorus, Verse 3, Verse 4, Chorus)
+  // 2️⃣ Szükséges címkék garantálása
   const parts = ['Verse 1', 'Verse 2', 'Chorus', 'Verse 3', 'Verse 4', 'Chorus'];
   for (const p of parts) {
     if (!new RegExp(`\\(${p}\\)`, 'i').test(out)) {
@@ -517,20 +517,21 @@ function enforceUniversalSongStructure(lyrics) {
     }
   }
 
- // 3️⃣ Minden (Verse|Chorus) pontosan 4 soros legyen
-out = out.replace(/\((Verse|Chorus)\s*\d*\)([\s\S]*?)(?=(\n\(|$))/gi, (match, tag, body) => {
-  const n = (match.match(/\d+/) || [null])[0];
-  // a test teljes blokk tartalma – ne vesszen el a sorvégi newline
-  const lines = body.trim().split(/\r?\n/).filter(l => l.trim().length > 0);
-  while (lines.length < 4) lines.push('...');
-  const fixed = lines.slice(0, 4);
-  // mindig 4 soros refrén is
-  const label = tag === 'Chorus' ? '(Chorus)' : `(Verse ${n || ''})`;
-  return `${label}\n${fixed.join('\n')}\n`;
-});
+  // 3️⃣ Minden Verse/Chorus pontosan 4 soros legyen (végre is számol)
+  out = out.replace(/\((Verse|Chorus)\s*\d*\)([\s\S]*?)(?=(\n\(\w|\Z))/gi, (match, tag, body) => {
+    const num = (match.match(/\d+/) || [null])[0];
+    const lines = body.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+
+    // Chorus is fixen 4 soros
+    while (lines.length < 4) lines.push('...');
+    const fixed = lines.slice(0, 4);
+
+    return `(${tag}${tag === 'Chorus' ? '' : (num ? ' ' + num : '')})\n${fixed.join('\n')}\n`;
+  });
 
   return out.trim();
 }
+
 
 async function polishHungarianLyrics({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, mandatoryKeywords = [] }) {
   const sys = [
