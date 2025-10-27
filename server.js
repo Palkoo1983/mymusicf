@@ -502,6 +502,33 @@ async function sunoStartV1(url, headers, body){
 }
 
 /* ======================= HU POLISH HELPER ======================= */
+function enforceUniversalSongStructure(lyrics) {
+  if (!lyrics) return lyrics;
+  let out = lyrics.trim();
+
+  // 1) Töröld a nem kívánt szakaszcímkéket és extra blokkokat
+  out = out.replace(/\n?\(\s*(Break|Bridge|Intro|Outro|Interlude|Final)\s*\)[\s\S]*?(?=\n\(|$)/gi, '');
+
+  // 2) Biztosítsd a szükséges címkéket (Verse 1, Verse 2, Chorus, Verse 3, Verse 4, Chorus)
+  const parts = ['Verse 1', 'Verse 2', 'Chorus', 'Verse 3', 'Verse 4', 'Chorus'];
+  for (const p of parts) {
+    if (!new RegExp(`\\(${p}\\)`, 'i').test(out)) {
+      out += `\n\n(${p})\n...`;
+    }
+  }
+
+  // 3) Minden (Verse|Chorus) pontosan 4 soros legyen (hiányt pótoljuk '...'-al, többletet vágjuk)
+  out = out.replace(/\((Verse|Chorus)\s*\d*\)([\s\S]*?)(?=\n\(|$)/gi, (m, tag, body) => {
+    const n = (m.match(/\d+/) || [null])[0];      // Verse sorszám, Chorusnál nincs
+    const lines = body.trim().split(/\n+/).filter(Boolean);
+    while (lines.length < 4) lines.push('...');
+    const fixed = lines.slice(0, 4);
+    return `(${tag}${tag === 'Chorus' ? '' : (n ? ' ' + n : '')})\n${fixed.join('\n')}`;
+  });
+
+  return out.trim();
+}
+
 async function polishHungarianLyrics({ OPENAI_API_KEY, OPENAI_MODEL, lyrics, mandatoryKeywords = [] }) {
   const sys = [
     "Te magyar anyanyelvű dalszöveg-szerkesztő vagy.",
@@ -1199,6 +1226,7 @@ return res.json({ ok:true, lyrics, style: styleFinal, tracks });
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
   }
 });
+lyrics = enforceUniversalSongStructure(lyrics);
 
 
 /* ================== DIAG endpoints ======================== */
