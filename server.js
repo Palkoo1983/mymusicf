@@ -66,6 +66,29 @@ function postProcessHU(lyrics = '', { theme = '', genre = '', brief = '', styles
   // 0) évszám-normalizálás (hyphen + space variánsok)
   out = out.replace(/\bk[ée]tezer-?h[uú]sz-?([a-záéíóöőúüű]+)/gi, 'kétezer-huszon$1')
            .replace(/\bk[ée]tezer\s+huszon([a-záéíóöőúüű]+)/gi, 'kétezer-huszon$1');
+// HARD BAN – "céges tempó" és variánsai sehol
+out = out
+  .replace(/\b[cç][eé]ges[-\s]*temp[óo]\b/gi, 'ünnepi ütem'); // teljes kifejezés
+// maradék "céges" majd a következő blokk is kiszedi
+// "tempó" → "ütem" csak ha a brief NEM kéri kifejezetten a "tempó" szót
+const briefExplicitTempo = /\btemp[óo]\b/i.test(briefLower);
+if (!briefExplicitTempo) {
+  out = out
+    .replace(/\b[Tt]emp[óo]\b/g, 'ütem')
+    .replace(/\b[Tt]empós\b/g, 'lendületes');
+}
+
+  // 1) „CÉGES” mindig menjen ki (ártalmatlan, régi viselkedés)
+  out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
+
+  // 2) „TEMPÓ” → „ÜTEM” (régi szabály + kiegészítés)
+  if (!isElectronic) {
+    if (/(funeral|wedding|anniversary|kidsong|healing)/.test(themey) || !briefLower.includes('tempó')) {
+      out = out
+        .replace(/\b[Tt]emp[óo]\b/g, 'ütem')
+        .replace(/\b[Tt]empós\b/g, 'lendületes');
+    }
+  }
 
 // ÚJ: KOHERENCIA + RAGOZÁS POLÍR (magyar szerkesztői kör) – SYNC SAFE
 try {
@@ -103,6 +126,29 @@ return out.trim();
     );
     // "Clap clap" → "Taps, taps"
     out = out.replace(/\b[Cc]lap[, ]+clap\b/g, 'Taps, taps');
+  }
+
+  // 6) ELEKTRONIKUS STÍLUS: (Break) dump feltétel nélkül ki
+  if (isElectronic) {
+    out = out.replace(/\n?\(\s*Break\s*\)[\s\S]*?(?=\n\(|$)/gi, '');
+  } else {
+    // 6/b) NEM elektronikusnál: ha Chorus-szal indul, tegyük lejjebb (Verse1/2 után)
+    if (/^\s*\(Chorus\)/i.test(out) && /\(Verse\s*\d+\)/i.test(out)) {
+      const mCh = out.match(/^\s*\(Chorus\)([\s\S]*?)(?=\n\(|$)/i);
+      if (mCh) {
+        const chorusBlock = mCh[0];
+        const rest = out.slice(chorusBlock.length).trimStart();
+        const v2 = rest.match(/\(Verse\s*2\)([\s\S]*?)(?=\n\(|$)/i);
+        const v1 = rest.match(/\(Verse\s*1\)([\s\S]*?)(?=\n\(|$)/i);
+        if (v2) {
+          const insertAt = rest.indexOf(v2[0]) + v2[0].length;
+          out = (rest.slice(0, insertAt).trimEnd() + '\n\n' + chorusBlock + '\n\n' + rest.slice(insertAt).trimStart()).trim();
+        } else if (v1) {
+          const insertAt = rest.indexOf(v1[0]) + v1[0].length;
+          out = (rest.slice(0, insertAt).trimEnd() + '\n\n' + chorusBlock + '\n\n' + rest.slice(insertAt).trimStart()).trim();
+        }
+      }
+    }
   }
 
   // 7) DnB szóalak-puhítás (csak drum&bass esetén)
@@ -756,7 +802,10 @@ app.post('/api/generate_song', async (req, res) => {
       const stop = new Set(['Szerelmem','Verse','Chorus','Margitszigeten','Margitsziget','Erdély','Tenerife','Madeira','Horvátország','Magyarország','Erdélyi','Horvát','Magyar']);
       return raw.filter(w => !stop.has(w));
     })();
-   
+    // drop "céges" accidental name
+    if (Array.isArray(names)) {
+      names = names.filter(n => n.toLowerCase() !== 'céges' && n.toLowerCase() !== 'ceges');
+    }
     // strip HU name suffixes for non-HU
     {
       const lang = String(language || "hu").toLowerCase();
@@ -818,7 +867,9 @@ app.post('/api/generate_song', async (req, res) => {
     else if (/trap|drill|rap/.test(st)) toneHint = 'use expressive attitude, internal rhymes and punchy imagery typical for rap.';
     const isLyrical = /lírikus|poetic|ballad|ballada|romantik/.test(st);
     const isPopRockMusical = /pop|rock|musical/.test(st);
-    const chorusHint = 'Chorus must be exactly 4 lines (no more, no less). Keep one clear hook.';
+    const chorusHint = (isLyrical || isPopRockMusical || isKidSong)
+      ? 'Chorus should be 2–4 short, memorable lines with one clear hook (do not over-explain).'
+      : 'Keep chorus concise and catchy.';
     const rhymeHint = isKidSong
       ? 'Use very simple AABB end-rhymes in verses (or ABAB if more natural).'
       : (isLyrical || isPopRockMusical)
@@ -839,7 +890,7 @@ app.post('/api/generate_song', async (req, res) => {
       "Write lyrics that MATCH the client's chosen musical style in rhythm and tone.",
       'LANGUAGE LOCK: write the lyrics STRICTLY in ' + language + ' (no mixing).',
       'Do NOT invent or coin nonsense words; only real, idiomatic words.',
-      (isKidSong ? 'KID MODE: very simple vocabulary, present tense, 3–6 words per line, AABB rhymes in verses, 4 line catchy hook in Chorus, include onomatopoeia (e.g., la la, clap clap) and movement cues.' : ''),
+      (isKidSong ? 'KID MODE: very simple vocabulary, present tense, 3–6 words per line, AABB rhymes in verses, 2–4 line catchy hook in Chorus, include onomatopoeia (e.g., la la, clap clap) and movement cues.' : ''),
       'Rhythm rule: ' + rhythmHint,
       'Tone rule: ' + toneHint,
       'Rhyme rule: ' + rhymeHint,
@@ -924,7 +975,7 @@ app.post('/api/generate_song', async (req, res) => {
       'Keep EXACT section headings (Verse 1/Verse 2/Chorus/Verse 3/Verse 4/Chorus).',
       'LANGUAGE LOCK: ensure the entire text is in ' + language + '.',
       'Remove invented/non-words; replace with natural, idiomatic alternatives.',
-      (isKidSong ? 'KID MODE ENFORCE: simplify phrasing, fix subject-verb agreement, AABB rhyme in verses, 4 line Chorus with a memorable hook and playful repetition.' : ''),
+      (isKidSong ? 'KID MODE ENFORCE: simplify phrasing, fix subject-verb agreement, AABB rhyme in verses, 2–4 line Chorus with a memorable hook and playful repetition.' : ''),
       'Enforce rhythm rule: ' + rhythmHint,
       'Enforce tone rule: ' + toneHint,
       'Apply: ' + rhymeHint,
@@ -1321,6 +1372,51 @@ function normalizeSectionHeadingsSafe(text) {
   } catch (_e) { return text; }
 }
 /* === END FINAL MICRO PATCHES ==================================== */
+/* === TECH/HOUSE CONTENT NUDGE (ultra-safe) ===================== */
+/* Csak techno/minimal/house esetén: ha a leírás kulcs-elemei
+   (helyek/értékek) hiányoznak a szövegből, a VÉGÉRE beteszünk
+   egy rövid (Break) blokkot a hiányzó kulcsszavakkal.
+   Nem módosítjuk a meglévő versszakokat.                        */
+function ensureTechnoStoryBits(lyrics, { styles = '', brief = '', language = '' } = {}) {
+  try {
+    const isTech = /(minimal\s*techno|techno|house)/i.test(String(styles));
+    if (!isTech) return lyrics;
+
+    let t = String(lyrics || '');
+    // Ha már van Break, nem bántjuk
+    if (/^\s*\(Break\)\s*$/mi.test(t)) return t;
+
+    const b = (brief || '').toLowerCase();
+    const must = [];
+    const need = (cond, tok) => { if (cond && !new RegExp('\\b' + tok + '\\b', 'i').test(t)) must.push(tok); };
+
+    // Nevek/helyek/motívumok a brief alapján
+    need(/nóra/.test(b), 'Nóra');
+    need(/pali/.test(b), 'Pali');
+    need(/szardíni/.test(b), 'Szardínia');
+    need(/portugáli/.test(b), 'Portugália');
+    need(/túrá/.test(b), 'túrák');
+    need(/goa/.test(b), 'goa');
+    need(/kitartás/.test(b), 'kitartás');
+    need(/logika/.test(b), 'logika');
+    need(/barátság/.test(b), 'barátság');
+    need(/újrakezd/.test(b), 'újrakezdés');
+    // 100% → "száz százalék" (ha a briefben szerepel)
+    need(/100\s*%|száz\s*százalék/.test(b), 'száz százalék');
+
+    if (!must.length) return t;
+
+    const lines = [];
+    const take = (arr) => arr.splice(0, Math.min(4, arr.length)).join(', ');
+    const pool = must.slice();
+    while (pool.length) lines.push(take(pool));
+
+    const breakBlock = '\n(Break)\n' + lines.join('\n') + '\n';
+    return t.trimEnd() + breakBlock;
+  } catch {
+    return lyrics;
+  }
+}
 
 // ---- Segédek (lokálisak, nincs külső függés) ----
 function normalizeKind(k = '') {
@@ -1460,3 +1556,4 @@ async function coherencePolishHU(text, { brief = '', style = '', theme = '' } = 
     return String(text || '');
   }
 }
+
