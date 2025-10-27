@@ -1230,7 +1230,6 @@ else {
 });
 
 /* ================== DIAG endpoints ======================== */
-app.get('/api/generate_song/ping', (req, res) => {
   res.json({ ok:true, diag:{
     node: process.version, fetch_defined: typeof fetch!=='undefined',
     has_OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
@@ -1240,7 +1239,6 @@ app.get('/api/generate_song/ping', (req, res) => {
   }});
 });
 
-app.get('/api/suno/ping', async (req, res) => {
   try{
     const BASE = (process.env.SUNO_BASE_URL || 'https://sunoapi.org').replace(/\/+$/,'');
     const H = { 'Authorization': `Bearer ${process.env.SUNO_API_KEY||''}`, 'Content-Type':'application/json' };
