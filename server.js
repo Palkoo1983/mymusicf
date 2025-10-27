@@ -1232,8 +1232,6 @@ else {
 /* ================== DIAG endpoints ======================== */
 // [removed duplicate /api/generate_song/ping]
 
-});
-
 // [removed duplicate /api/suno/ping]
 
     const t1 = await r1.text();
