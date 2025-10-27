@@ -1,3 +1,7 @@
+// EnZenem server_dedup_v1.js
+// Based on main8 – deduplicated by Nova (2025-10-27)
+// Functionality identical; duplicates commented as // [removed ...]
+
 // ESM server.js – FINAL (stable)
 // - Keeps previous features (HU polish + rhyme/structure + style preserve + "céges"/"évzáró" cleanup)
 // - Guarantees numbers from brief appear, then converts digits→words at the very end
@@ -1214,9 +1218,8 @@ app.get('/api/generate_song/ping', (req, res) => {
 app.get('/api/suno/ping', async (req, res) => {
   try{
 ;
-if (isMP3) {
+// [removed empty if (isMP3) block]
 
-}
 else {
   try {
     await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1: '', link2: '', format });
@@ -1230,15 +1233,8 @@ else {
 });
 
 /* ================== DIAG endpoints ======================== */
-app.get('/api/generate_song/ping', (req, res) => {
-  res.json({ ok:true, diag:{
-    node: process.version, fetch_defined: typeof fetch!=='undefined',
-    has_OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
-    has_SUNO_API_KEY: !!process.env.SUNO_API_KEY,
-    SUNO_BASE_URL: process.env.SUNO_BASE_URL||null,
-    public_url: process.env.PUBLIC_URL || null
-  }});
-});
+// [removed duplicate route /api/generate_song/ping]
+);
 
 app.get('/api/suno/ping', async (req, res) => {
   try{
