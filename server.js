@@ -1237,7 +1237,6 @@ else {
     SUNO_BASE_URL: process.env.SUNO_BASE_URL||null,
     public_url: process.env.PUBLIC_URL || null
   }});
-});
 
   try{
     const BASE = (process.env.SUNO_BASE_URL || 'https://sunoapi.org').replace(/\/+$/,'');
