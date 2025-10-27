@@ -517,14 +517,17 @@ function enforceUniversalSongStructure(lyrics) {
     }
   }
 
-  // 3) Minden (Verse|Chorus) pontosan 4 soros legyen (hiányt pótoljuk '...'-al, többletet vágjuk)
-  out = out.replace(/\((Verse|Chorus)\s*\d*\)([\s\S]*?)(?=\n\(|$)/gi, (m, tag, body) => {
-    const n = (m.match(/\d+/) || [null])[0];      // Verse sorszám, Chorusnál nincs
-    const lines = body.trim().split(/\n+/).filter(Boolean);
-    while (lines.length < 4) lines.push('...');
-    const fixed = lines.slice(0, 4);
-    return `(${tag}${tag === 'Chorus' ? '' : (n ? ' ' + n : '')})\n${fixed.join('\n')}`;
-  });
+ // 3️⃣ Minden (Verse|Chorus) pontosan 4 soros legyen
+out = out.replace(/\((Verse|Chorus)\s*\d*\)([\s\S]*?)(?=(\n\(|$))/gi, (match, tag, body) => {
+  const n = (match.match(/\d+/) || [null])[0];
+  // a test teljes blokk tartalma – ne vesszen el a sorvégi newline
+  const lines = body.trim().split(/\r?\n/).filter(l => l.trim().length > 0);
+  while (lines.length < 4) lines.push('...');
+  const fixed = lines.slice(0, 4);
+  // mindig 4 soros refrén is
+  const label = tag === 'Chorus' ? '(Chorus)' : `(Verse ${n || ''})`;
+  return `${label}\n${fixed.join('\n')}\n`;
+});
 
   return out.trim();
 }
