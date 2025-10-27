@@ -1,7 +1,3 @@
-// EnZenem server_dedup_v1.js
-// Based on main8 – deduplicated by Nova (2025-10-27)
-// Functionality identical; duplicates commented as // [removed ...]
-
 // ESM server.js – FINAL (stable)
 // - Keeps previous features (HU polish + rhyme/structure + style preserve + "céges"/"évzáró" cleanup)
 // - Guarantees numbers from brief appear, then converts digits→words at the very end
@@ -1215,12 +1211,18 @@ app.get('/api/generate_song/ping', (req, res) => {
   }});
 });
 
-app.get('/api/suno/ping', (req, res) => {
-  return res.json({ ok: true, message: 'suno pong' });
-});
+app.get('/api/suno/ping', async (req, res) => {
+  try{
+;
+if (isMP3) {
+
+}
+else {
+  try {
+    await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1: '', link2: '', format });
   } catch (_e) { /* ignore */ }
   return res.json({ ok:true, lyrics, style: styleFinal, tracks: [], format });
-
+}
   } catch (e) {
     console.error('[generate_song]', e);
     return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
@@ -1228,12 +1230,12 @@ app.get('/api/suno/ping', (req, res) => {
 });
 
 /* ================== DIAG endpoints ======================== */
-// [removed duplicate route /api/generate_song/ping]
-);
+// [removed duplicate /api/generate_song/ping]
 
-app.get('/api/suno/ping', (req, res) => {
-  return res.json({ ok: true, message: 'suno pong' });
 });
+
+// [removed duplicate /api/suno/ping]
+
     const t1 = await r1.text();
     return res.json({ ok:true, base: BASE, post_generate: { status:r1.status, len:t1.length, head:t1.slice(0,160) } });
   }catch(e){
