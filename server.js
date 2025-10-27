@@ -1230,10 +1230,21 @@ else {
 });
 
 /* ================== DIAG endpoints ======================== */
-// [removed duplicate /api/generate_song/ping]
+app.get('/api/generate_song/ping', (req, res) => {
+  res.json({ ok:true, diag:{
+    node: process.version, fetch_defined: typeof fetch!=='undefined',
+    has_OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
+    has_SUNO_API_KEY: !!process.env.SUNO_API_KEY,
+    SUNO_BASE_URL: process.env.SUNO_BASE_URL||null,
+    public_url: process.env.PUBLIC_URL || null
+  }});
+});
 
-// [removed duplicate /api/suno/ping]
-
+app.get('/api/suno/ping', async (req, res) => {
+  try{
+    const BASE = (process.env.SUNO_BASE_URL || 'https://sunoapi.org').replace(/\/+$/,'');
+    const H = { 'Authorization': `Bearer ${process.env.SUNO_API_KEY||''}`, 'Content-Type':'application/json' };
+    const r1 = await fetch(`${BASE}/api/v1/generate`, { method:'POST', headers:H, body: JSON.stringify({ invalid:true }) });
     const t1 = await r1.text();
     return res.json({ ok:true, base: BASE, post_generate: { status:r1.status, len:t1.length, head:t1.slice(0,160) } });
   }catch(e){
