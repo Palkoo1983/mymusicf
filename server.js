@@ -89,8 +89,7 @@ if (!briefExplicitTempo) {
         .replace(/\b[Tt]empós\b/g, 'lendületes');
     }
   }
-// --- SZERKEZETI POLÍR: 3 Verse + 2 Chorus, érzelmesnél 2 soros chorus ---
-out = enforceSongStructure(out, { style: g, theme: themey, brief: briefLower });
+
 // ÚJ: KOHERENCIA + RAGOZÁS POLÍR (magyar szerkesztői kör) – SYNC SAFE
 try {
   // Itt NEM hívunk await-et (a környezet nem async).
