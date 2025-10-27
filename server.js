@@ -1215,10 +1215,9 @@ app.get('/api/generate_song/ping', (req, res) => {
   }});
 });
 
-app.get('/api/suno/ping', async (req, res) => {
- 
-  try {
-    await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1: '', link2: '', format });
+app.get('/api/suno/ping', (req, res) => {
+  return res.json({ ok: true, message: 'suno pong' });
+});
   } catch (_e) { /* ignore */ }
   return res.json({ ok:true, lyrics, style: styleFinal, tracks: [], format });
 
@@ -1232,11 +1231,9 @@ app.get('/api/suno/ping', async (req, res) => {
 // [removed duplicate route /api/generate_song/ping]
 );
 
-app.get('/api/suno/ping', async (req, res) => {
-  try{
-    const BASE = (process.env.SUNO_BASE_URL || 'https://sunoapi.org').replace(/\/+$/,'');
-    const H = { 'Authorization': `Bearer ${process.env.SUNO_API_KEY||''}`, 'Content-Type':'application/json' };
-    const r1 = await fetch(`${BASE}/api/v1/generate`, { method:'POST', headers:H, body: JSON.stringify({ invalid:true }) });
+app.get('/api/suno/ping', (req, res) => {
+  return res.json({ ok: true, message: 'suno pong' });
+});
     const t1 = await r1.text();
     return res.json({ ok:true, base: BASE, post_generate: { status:r1.status, len:t1.length, head:t1.slice(0,160) } });
   }catch(e){
