@@ -403,6 +403,7 @@ app.post('/api/generate_song', async (req, res) => {
     try { payload = JSON.parse(j1?.choices?.[0]?.message?.content || '{}'); } catch {}
     let lyrics = (payload.lyrics_draft || payload.lyrics || '').trim();
     let gptStyle = (payload.style_en || '').trim();
+    lyrics = await applyPolishUniversalHU(lyrics, language);
 
     // Végső stílus Suno-hoz: védd a kliens által kért műfajokat + vokál tag
     function buildStyleEN(client, vocalNorm, styleEN){
@@ -577,6 +578,75 @@ app.post('/api/suno/callback', async (req, res) => {
     res.status(500).json({ ok:false });
   }
 });
+async function applyPolishUniversalHU(lyrics, language) {
+  try {
+    if (!lyrics || !language) return lyrics;
+    const lang = String(language).toLowerCase();
+    if (!/(magyar|hungarian|hu)/.test(lang)) return lyrics;
+
+    let out = lyrics.trim();
+
+    // 1️⃣ Sorvégi tisztítás
+    out = out.replace(/[ \t]+$/gm, '').replace(/\n{3,}/g, '\n\n').trim();
+
+    // 2️⃣ Természetes kifejezések és ragozások
+    const fixes = [
+      [/\bszeretet\b(?![a-z])/gi, 'szeretetet'],
+      [/\bvágy\b(?![a-z])/gi, 'vágyat'],
+      [/\bsoha ne nem\b/gi, 'soha ne'],
+      [/\bmint a ([^ ]+) regényen\b/gi, 'mint egy $1 regényben'],
+      [/\bnincs több fény\b/gi, 'örök a fény'],
+      [/\bálom él\b/gi, 'álom él bennem'],
+      [/\bén\b\s*$/gmi, ''],
+      [/\bszívem szól neked\b/gi, 'a szívem neked szól'],
+      [/\bszeretet érzem\b/gi, 'szeretetet érzek'],
+      [/\bremény érzem\b/gi, 'reményt érzek'],
+      [/\bhit érzem\b/gi, 'hitet érzek'],
+      [/\bút nyitva áll\b/gi, 'nyitva az út előttünk'],
+      [/\btovább él\b/gi, 'tovább él bennem']
+    ];
+    for (const [rx, rep] of fixes) out = out.replace(rx, rep);
+
+    // 3️⃣ Dupla szavak törlése
+    out = out.replace(/\b(\w+)\s+\1\b/gi, '$1');
+
+    // 4️⃣ Minden sor nagybetűvel kezdődjön, és ponttal záródjon
+    out = out.split(/\n/).map(line => {
+      const l = line.trim();
+      if (!l) return '';
+      const cap = l.charAt(0).toUpperCase() + l.slice(1);
+      return /[.!?]$/.test(cap) ? cap : cap + '.';
+    }).join('\n');
+
+    // 5️⃣ Lágy rímhatás – zárósorokra ad enyhe kötést
+    const rhymeHints = ['még', 'tovább', 'velünk', 'együtt', 'bennünk', 'álom', 'fény'];
+    out = out.replace(/(\n[^\n]+)$/gm, (m) => {
+      const last = m.trim().toLowerCase();
+      if (!/[aeiouáéíóöőúüű]{2,}$/.test(last))
+        return m + ' ' + rhymeHints[Math.floor(Math.random()*rhymeHints.length)];
+      return m;
+    });
+
+    // 6️⃣ Átvezető kifejezések a szakaszok között
+    out = out.replace(/\n\(Verse 2\)/i, '\nÍgy folytatódik a történet:\n(Verse 2)');
+    out = out.replace(/\n\(Verse 3\)/i, '\nMost új fejezet kezdődik:\n(Verse 3)');
+    out = out.replace(/\n\(Verse 4\)/i, '\nÉs végül elérkezünk a záráshoz:\n(Verse 4)');
+
+    // 7️⃣ Számok → magyar szavak (rövid lista)
+    const nums = {
+      '0':'nulla','1':'egy','2':'kettő','3':'három','4':'négy','5':'öt','6':'hat','7':'hét','8':'nyolc','9':'kilenc','10':'tíz'
+    };
+    out = out.replace(/\b\d+\b/g, d => nums[d] || d);
+
+    // 8️⃣ Fejlécek védelme
+    out = out.replace(/\s*\(\s*(Verse|Chorus)\s*([1-4]*)\s*\)\s*/gi, (_, tag, num) => `(${tag}${num ? ' ' + num : ''})\n`);
+
+    return out.trim();
+  } catch (err) {
+    console.warn('[applyPolishUniversalHU] fail:', err.message);
+    return lyrics;
+  }
+}
 
 /* ================== Start server ========================== */
 app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
