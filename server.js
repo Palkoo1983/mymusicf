@@ -11,6 +11,19 @@ import bodyParser from "body-parser";
 dotenv.config();
 const app = express();
 app.use(bodyParser.json({ limit: "2mb" }));
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// static frontend
+app.use(express.static(path.join(__dirname, "public")));
+
+// fallback for SPA routes
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 const PORT = process.env.PORT || 8000;
 
