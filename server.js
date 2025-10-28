@@ -149,8 +149,12 @@ function postProcessHU(lyrics = '', { theme = '', genre = '', brief = '', styles
       out = keep.join('\n');
     }
 
-    // Végső szerkezetbiztosítás (Verse1→Verse2→Chorus→Verse3→Verse4→Chorus; 4 sor/blokk)
-    out = enforceUniversalSongStructure(out);
+ // Végső szerkezetbiztosítás (de ha Chorus-szal kezdődik, kényszeríts Verse 1-et előre)
+if (/^\s*\(Chorus\)/i.test(out)) {
+  out = '(Verse 1)\n' + out.trim();
+}
+out = enforceUniversalSongStructure(out);
+
 
     // HU micro-fixes
     out = applyFinalTinyFixesHU(out);
