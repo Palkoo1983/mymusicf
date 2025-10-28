@@ -433,27 +433,23 @@ app.post('/api/generate_song', async (req, res) => {
       return out.join(', ');
     }
     const styleFinal = buildStyleEN(styles, vocal, gptStyle);
-function normalizeSectionHeadingsSafe(text) {
+function normalizeSectionHeadingsSafeStrict(text) {
   if (!text) return text;
   let t = String(text);
 
-  // Magyar címkék → angol
-  const rules = [
-    [/^\s*\(?\s*(Vers|Verze)\s*0*([1-4])\s*\)?\s*:?\s*$/gmi, (_m, _p, n) => `Verse ${n}`],
-    [/^\s*\(?\s*Refr[eé]n\s*\)?\s*:?\s*$/gmi, 'Chorus'],
-    [/^\s*\(?\s*H[ií]d\s*\)?\s*:?\s*$/gmi, ''],
-    [/^\s*\(?\s*Bridge\s*\)?\s*:?\s*$/gmi, '']
-  ];
-  for (const [rx, to] of rules) t = t.replace(rx, to);
+  // 1) Magyar → angol alapformák (még zárójel nélkül)
+  t = t.replace(/^\s*\(?\s*(Vers|Verze)\s*0*([1-4])\s*\)?\s*:?\s*$/gmi, (_m, _v, n) => `Verse ${n}`);
+  t = t.replace(/^\s*\(?\s*Refr[eé]n\s*\)?\s*:?\s*$/gmi, 'Chorus');
 
-  // Angol címkék egységesítése – csak Verse 1–4, Chorus maradhat
-  t = t.replace(
-    /^\s*(?:\(\s*)?(Verse\s+[1-4]|Chorus)(?:\s*\))?\s*:?\s*$/gmi,
-    (_m, h) => `(${h})`
-  );
+  // 2) MINDEN NEM KELLŐ SZAKASZCÍM (Bridge/Híd/Intro/Outro/Interlude) TÖRLÉSE
+  t = t.replace(/^\s*\(?\s*(H[ií]d|Bridge|Intro|Outro|Interlude)\s*\)?\s*:?\s*$/gmi, '');
+
+  // 3) Angol címsorok normalizálása és zárójelezése
+  t = t.replace(/^\s*(?:\(\s*)?(Verse\s+[1-4]|Chorus)(?:\s*\))?\s*:?\s*$/gmi, (_m, h) => `(${h})`);
 
   return t.trim();
 }
+
 
     // Ha nem MP3: nincs Suno, csak Sheets + visszaadás
     if (!isMP3) {
@@ -466,6 +462,8 @@ function normalizeSectionHeadingsSafe(text) {
       } catch (_e) {
         console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
       }
+      lyrics = normalizeSectionHeadingsSafeStrict(lyrics);
+
       return res.json({ ok: true, lyrics, style: styleFinal, tracks: [], format });
     }
 
