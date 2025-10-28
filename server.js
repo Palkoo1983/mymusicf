@@ -53,109 +53,118 @@ function detectGenre(styles = '') {
   return 'generic';
 }
 function postProcessHU(lyrics = '', { theme = '', genre = '', brief = '', styles = '' } = {}) {
-  let out = String(lyrics || '');
+  try {
+    let out = String(lyrics || '');
+    const looksHU = /[áéíóöőúüűÁÉÍÓÖŐÚÜŰ]/.test(out);
+    if (!looksHU) return out;
 
-  // --- kontextus ---
-  const themey = String(theme || '').toLowerCase();
-  const g = String(genre || styles || '').toLowerCase();
-  const briefLower = String(brief || '').toLowerCase();
+    // --- alap normalizálás ---
+    const briefLower = String(brief || '').toLowerCase();
+    out = out
+      .replace(/\r/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ ]{2,}/g, ' ')
+      .trim();
 
-  const isElectronic = /(techno|minimal|house|trance|dnb|drum\s*and\s*bass|edm|lo-?fi|lofi)/i.test(g);
-  const isFuneral   = /\b(funeral|temet[ée]s|búcsúztat[óo])\b/i.test(themey + ' ' + briefLower);
+    // 0) évszám-normalizálás (hyphen + space variánsok) – marad
+    out = out.replace(/\bk[ée]tezer-?h[uú]sz-?([a-záéíóöőúüű]+)/gi, 'kétezer-huszon$1')
+             .replace(/\bk[ée]tezer\s+huszon([a-záéíóöőúüű]+)/gi, 'kétezer-huszon$1');
 
-  // 0) évszám-normalizálás (hyphen + space variánsok)
-  out = out.replace(/\bk[ée]tezer-?h[uú]sz-?([a-záéíóöőúüű]+)/gi, 'kétezer-huszon$1')
-           .replace(/\bk[ée]tezer\s+huszon([a-záéíóöőúüű]+)/gi, 'kétezer-huszon$1');
-// HARD BAN – "céges tempó" és variánsai sehol
-out = out
-  .replace(/\b[cç][eé]ges[-\s]*temp[óo]\b/gi, 'ünnepi ütem'); // teljes kifejezés
-// maradék "céges" majd a következő blokk is kiszedi
-// "tempó" → "ütem" csak ha a brief NEM kéri kifejezetten a "tempó" szót
-const briefExplicitTempo = /\btemp[óo]\b/i.test(briefLower);
-if (!briefExplicitTempo) {
-  out = out
-    .replace(/\b[Tt]emp[óo]\b/g, 'ütem')
-    .replace(/\b[Tt]empós\b/g, 'lendületes');
-}
+    // HARD BAN – "céges tempó" és variánsai sehol – marad
+    out = out.replace(/\b[cç][eé]ges[-\s]*temp[óo]\b/gi, 'ünnepi ütem');
 
-  // 1) „CÉGES” mindig menjen ki (ártalmatlan, régi viselkedés)
-  out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
-
-  // 2) „TEMPÓ” → „ÜTEM” (régi szabály + kiegészítés)
-  if (!isElectronic) {
-    if (/(funeral|wedding|anniversary|kidsong|healing)/.test(themey) || !briefLower.includes('tempó')) {
+    // "tempó" → "ütem" csak ha a brief NEM kéri kifejezetten a "tempó" szót – marad
+    const briefExplicitTempo = /\btemp[óo]\b/i.test(briefLower);
+    if (!briefExplicitTempo) {
       out = out
         .replace(/\b[Tt]emp[óo]\b/g, 'ütem')
         .replace(/\b[Tt]empós\b/g, 'lendületes');
     }
-  }
 
-// ÚJ: KOHERENCIA + RAGOZÁS POLÍR (magyar szerkesztői kör) – SYNC SAFE
-try {
-  // Itt NEM hívunk await-et (a környezet nem async).
-  // Könnyű, szinkron polír, ami már most elérhető:
-  out = softHungarianAwkwardFilter(fixHungarianGrammar(out));
-} catch (_e) {
-  // no-op
-}
-return out.trim();
+    // 1) „CÉGES” mindig menjen ki – marad
+    out = out.replace(/\b[Cc]éges( gondolatok)?\b/g, '');
 
+    // 2) Fölösleges fejcímek törlése univerzálisan (Bridge/Break/Outro/Intro)
+    out = out.replace(/\n?\(\s*(Bridge|Break|Outro|Intro)\s*\)[\s\S]*?(?=\n\(|$)/gi, '');
 
-  // 3) TEMETÉS: dob visszafogása/egységesítése — akkor is, ha kérték
-  if (isFuneral) {
+    // Címkék egységesítése
+    out = normalizeSectionHeadingsSafe(out);
+
+    // Koherencia + ragozás polír (szinkron, univerzális)
+    try { out = softHungarianAwkwardFilter(fixHungarianGrammar(out)); } catch {}
+
+    // --- UNIVERZÁLIS apró tisztítások (stílusfüggetlen) ---
     out = out
-      .replace(/\b[Dd]ob(ok|bal|bal+l+al|ot)?\b/gi, 'visszafogott dob')
-      .replace(/\bdobban\b/gi, 'halkan szóló dob')
-      .replace(/visszafogott\s+visszafogott/gi, 'visszafogott');
-  }
+      .replace(/^\s*,\s*/gm, '')
+      .replace(/\s+([.,!?:;])/g, '$1')
+      .replace(/\btitkus\b/gi, 'titkos')
+      .replace(/\bállik\b/gi, 'áll')
+      .replace(/^Kulcsszavak:.*$/gmi, '')
+      .trim();
 
-  // 4) PROPOSAL: refrénben legyen kérdés, ha nincs (régi logika)
-  if (themey === 'proposal') {
-    out = out.replace(/\(Chorus\)([\s\S]*?)(?=\n\(Verse 4\)|$)/, (m, ch) => {
-      if (!/[?？]/.test(ch)) {
-        return `(Chorus)\n${ch.trim()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
+    // ====== EZ A KÉT BLOKK VÁLTOZATLANUL MARAD ======
+
+    // 4) PROPOSAL: refrénben legyen kérdés, ha nincs (régi logika) — VÁLTOZATLAN
+    {
+      const themey = String(theme || '').toLowerCase();
+      if (themey === 'proposal') {
+        out = out.replace(/\(Chorus\)([\s\S]*?)(?=\n\(Verse 4\)|$)/, (m, ch) => {
+          if (!/[?？]/.test(ch)) {
+            return `(Chorus)\n${ch.trim()}\nKérlek, mondd ki most: leszel a feleségem?\n`;
+          }
+          return m;
+        });
       }
-      return m;
-    });
-  }
+    }
 
-  // 5) KIDSONG: rövidített sorok + HU interjekció
-  if (themey === 'kidsong') {
-    out = out.replace(/(.{9,})/g, (line) =>
-      line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n')
-    );
-    // "Clap clap" → "Taps, taps"
-    out = out.replace(/\b[Cc]lap[, ]+clap\b/g, 'Taps, taps');
-  }
+    // 5) KIDSONG: rövidített sorok + HU interjekció — VÁLTOZATLAN
+    {
+      const themey = String(theme || '').toLowerCase();
+      if (themey === 'kidsong') {
+        out = out.replace(/(.{9,})/g, (line) =>
+          line.replace(/(\S+\s+\S+\s+\S+\s+\S+)(\s+)/g, '$1\n')
+        );
+        // "Clap clap" → "Taps, taps"
+        out = out.replace(/\b[Cc]lap[, ]+clap\b/g, 'Taps, taps');
+      }
+    }
 
-  // 6) ELEKTRONIKUS STÍLUS: (Break) dump feltétel nélkül ki
-  if (isElectronic) {
-    out = out.replace(/\n?\(\s*Break\s*\)[\s\S]*?(?=\n\(|$)/gi, '');
-  } else {
-  }
+    // ====== /KÉT BLOKK VÁLTOZATLAN ======
 
-  // 7) DnB szóalak-puhítás (csak drum&bass esetén)
-  if (/\b(dnb|drum\s*and\s*bass)\b/i.test(g)) {
+    // DnB puha szóalakok – univerzális biztonság, de NEM kötelező stílus-feltétel
     out = out
       .replace(/\bold[óo]d\b/gi, 'oldódik')
       .replace(/\bbenn\b/gi, 'benne');
+
+    // Duplikált sorok kivezetése (kíméletes)
+    {
+      const seen = new Set(); const keep = [];
+      for (const line of out.split(/\n+/)) {
+        const k = line.trim();
+        if (!k) { keep.push(line); continue; }
+        if (seen.has(k.toLowerCase())) continue;
+        seen.add(k.toLowerCase());
+        keep.push(line);
+      }
+      out = keep.join('\n');
+    }
+
+    // Végső szerkezetbiztosítás (Verse1→Verse2→Chorus→Verse3→Verse4→Chorus; 4 sor/blokk)
+    out = enforceUniversalSongStructure(out);
+
+    // HU micro-fixes
+    out = applyFinalTinyFixesHU(out);
+
+    // Finom nyelvi szűrő
+    out = softHungarianAwkwardFilter(out);
+
+    return out.trim();
+  } catch (err) {
+    console.error('postProcessHU universal polish error:', err);
+    return lyrics;
   }
-
-  // 8) Apró elütések (régi)
-  out = out.replace(/\btitkus\b/gi, 'titkos').replace(/\bállik\b/gi, 'áll');
-
-  // 9) Prompt-maradványok (régi)
-  out = out.replace(/^Kulcsszavak:.*$/gmi, '');
-
-  // 10) Pontozás/whitespace (régi)
-  out = out
-    .replace(/^\s*,\s*/gm, '')
-    .replace(/[ ]{2,}/g, ' ')
-    .replace(/\s+([.,!?:;])/g, '$1')
-    .trim();
-
-  return out;
 }
+
 // === End of regression guard helpers ===
 
 
