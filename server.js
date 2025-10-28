@@ -578,7 +578,7 @@ app.post('/api/suno/callback', async (req, res) => {
     res.status(500).json({ ok:false });
   }
 });
-// === UNIVERSAL HU POLISH – STRUCTURE & SENSE REPAIR (final refined) ===
+// === UNIVERSAL HU POLISH – STRUCTURE, SENSE & FINAL CHORUS RESTORE ===
 async function applyPolishUniversalHU(lyrics, language) {
   try {
     if (!lyrics) return lyrics;
@@ -587,16 +587,15 @@ async function applyPolishUniversalHU(lyrics, language) {
 
     let out = String(lyrics || '').trim();
 
-    // 1️⃣ Egységes sorelválasztás, whitespace takarítás
+    // 1️⃣ Sorelválasztás, whitespace tisztítás
     out = out.replace(/\r\n?/g, '\n')
              .replace(/[ \t]+$/gm, '')
              .replace(/\n{3,}/g, '\n\n')
              .trim();
 
-    // 2️⃣ Fejlécek normalizálása → (Verse n) / (Chorus)
+    // 2️⃣ Fejlécek normalizálása
     out = out.split('\n').map(line => {
       let t = line.trim();
-
       if (!t) return '';
       if (/^\(?\s*(H[ií]d|Bridge|Intro|Outro|Interlude)\s*\)?\s*$/i.test(t)) return '';
 
@@ -611,13 +610,12 @@ async function applyPolishUniversalHU(lyrics, language) {
       return t;
     }).filter(Boolean).join('\n');
 
-    // 3️⃣ Sorok nagybetű + pont + duplikátum kiszűrés
+    // 3️⃣ Sorok formázása: nagybetű + pont + duplikátum szűrés
     const seen = new Set();
     const lines = out.split('\n').map(l => {
       const t = l.trim();
       if (!t) return '';
       if (/^\(Verse\s+[1-4]\)|^\(Chorus\)$/i.test(t)) return t;
-
       if (seen.has(t.toLowerCase())) return '';
       seen.add(t.toLowerCase());
 
@@ -628,14 +626,24 @@ async function applyPolishUniversalHU(lyrics, language) {
 
     out = lines.join('\n');
 
-    // 4️⃣ Félmondatok javítása – értelmes befejezés hozzáadása
+    // 4️⃣ Félmondatok értelmes lezárása
     out = out
-      .replace(/\b[Ll]ankad\./g, 'lankad, de új erőt találunk.')
-      .replace(/\bMelletted minden lépés\./g, 'melletted minden lépés egy új kezdet.')
-      .replace(/\bSzívünkben erősen\./g, 'szívünkben erősen ég a barátság.')
-      .replace(/\bÚjrakezdés, barátság, szívünkben erősen\./g, 'Újrakezdés és barátság él szívünkben erősen.');
+      .replace(/\bLankad\./gi, 'lankad, de új erőt találunk.')
+      .replace(/\bMelletted minden lépés\./gi, 'melletted minden lépés egy új kezdet.')
+      .replace(/\bSzívünkben erősen\./gi, 'szívünkben erősen ég a barátság.')
+      .replace(/\bÚjrakezdés, barátság, szívünkben erősen\./gi, 'Újrakezdés és barátság él szívünkben erősen.');
 
-    // 5️⃣ Extra üres sorok tisztítása
+    // 5️⃣ Utolsó Chorus automatikus visszaillesztés
+    const hasLastChorus = /\(Chorus\)[\s\S]*$/.test(out);
+    const chorusBlocks = [...out.matchAll(/\(Chorus\)[\s\S]*?(?=\n\(Verse\s+[3-4]\)|$)/g)];
+    if (!hasLastChorus && chorusBlocks.length > 0) {
+      const lastChorus = chorusBlocks[chorusBlocks.length - 1][0].trim();
+      if (lastChorus) {
+        out = out.trim() + '\n\n' + lastChorus;
+      }
+    }
+
+    // 6️⃣ Extra üres sorok takarítása
     out = out.replace(/\n{3,}/g, '\n\n').trim();
 
     return out;
@@ -644,6 +652,7 @@ async function applyPolishUniversalHU(lyrics, language) {
     return lyrics;
   }
 }
+
 
 /* ================== Start server ========================== */
 app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
