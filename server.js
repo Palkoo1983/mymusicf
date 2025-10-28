@@ -1412,7 +1412,7 @@ function ensureTechnoStoryBits(lyrics, { styles = '', brief = '', language = '' 
     while (pool.length) lines.push(take(pool));
 
     const breakBlock = '\n(Break)\n' + lines.join('\n') + '\n';
-    return t.trimEnd() + breakBlock;
+    return t.trimEnd();
   } catch {
     return lyrics;
   }
