@@ -504,25 +504,35 @@ function enforceUniversalSongStructure(lyrics) {
   // 1️⃣ Töröld a nem kívánt extra blokkokat (Bridge, Break, Outro stb.)
   out = out.replace(/\n?\(\s*(Bridge|Intro|Outro|Interlude|Final)\s*\)[\s\S]*?(?=\n\(|$)/gi, '');
 
-  // 2️⃣ Szükséges címkék garantálása
-  const parts = ['Verse 1', 'Verse 2', 'Chorus', 'Verse 3', 'Verse 4', 'Chorus'];
-  for (const p of parts) {
-    if (!new RegExp(`\\(${p}\\)`, 'i').test(out)) {
-      out += `\n\n(${p})\n...`;
-    }
+  // 2️⃣ Rendezd a blokkokat a fix sorrendbe (Verse1 → Verse2 → Chorus → Verse3 → Verse4 → Chorus)
+const order = ['Verse 1', 'Verse 2', 'Chorus', 'Verse 3', 'Verse 4', 'Chorus'];
+const blocks = {};
+const rx = /\((Verse\s*\d*|Chorus)\)([\s\S]*?)(?=(\n\(Verse|\n\(Chorus|\Z))/gi;
+let match;
+while ((match = rx.exec(out)) !== null) {
+  const key = match[1].trim();
+  blocks[key] = match[0].trim();
+}
+
+// Építsd újra a teljes szöveget a helyes sorrendben
+let rebuilt = '';
+for (const key of order) {
+  if (blocks[key]) {
+    rebuilt += blocks[key] + '\n\n';
+  } else {
+    rebuilt += `(${key})\n...\n\n`;
   }
+}
+out = rebuilt.trim();
 
-  // 3️⃣ Minden Verse/Chorus pontosan 4 soros legyen (végre is számol)
-  out = out.replace(/\((Verse|Chorus)\s*\d*\)([\s\S]*?)(?=(\n\(\w|\Z))/gi, (match, tag, body) => {
-    const num = (match.match(/\d+/) || [null])[0];
-    const lines = body.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-
-    // Chorus is fixen 4 soros
-    while (lines.length < 4) lines.push('...');
-    const fixed = lines.slice(0, 4);
-
-    return `(${tag}${tag === 'Chorus' ? '' : (num ? ' ' + num : '')})\n${fixed.join('\n')}\n`;
-  });
+// 3️⃣ Minden Verse/Chorus pontosan 4 soros legyen
+out = out.replace(/\((Verse|Chorus)\s*\d*\)([\s\S]*?)(?=(\n\(\w|\Z))/gi, (match, tag, body) => {
+  const num = (match.match(/\d+/) || [null])[0];
+  const lines = body.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  while (lines.length < 4) lines.push('...');
+  const fixed = lines.slice(0, 4);
+  return `(${tag}${tag === 'Chorus' ? '' : (num ? ' ' + num : '')})\n${fixed.join('\n')}\n`;
+});
 
   return out.trim();
 }
