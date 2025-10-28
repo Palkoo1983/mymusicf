@@ -433,6 +433,27 @@ app.post('/api/generate_song', async (req, res) => {
       return out.join(', ');
     }
     const styleFinal = buildStyleEN(styles, vocal, gptStyle);
+function normalizeSectionHeadingsSafe(text) {
+  if (!text) return text;
+  let t = String(text);
+
+  // Magyar címkék → angol
+  const rules = [
+    [/^\s*\(?\s*(Vers|Verze)\s*0*([1-4])\s*\)?\s*:?\s*$/gmi, (_m, _p, n) => `Verse ${n}`],
+    [/^\s*\(?\s*Refr[eé]n\s*\)?\s*:?\s*$/gmi, 'Chorus'],
+    [/^\s*\(?\s*H[ií]d\s*\)?\s*:?\s*$/gmi, ''],
+    [/^\s*\(?\s*Bridge\s*\)?\s*:?\s*$/gmi, '']
+  ];
+  for (const [rx, to] of rules) t = t.replace(rx, to);
+
+  // Angol címkék egységesítése – csak Verse 1–4, Chorus maradhat
+  t = t.replace(
+    /^\s*(?:\(\s*)?(Verse\s+[1-4]|Chorus)(?:\s*\))?\s*:?\s*$/gmi,
+    (_m, h) => `(${h})`
+  );
+
+  return t.trim();
+}
 
     // Ha nem MP3: nincs Suno, csak Sheets + visszaadás
     if (!isMP3) {
