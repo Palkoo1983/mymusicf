@@ -581,78 +581,67 @@ app.post('/api/suno/callback', async (req, res) => {
 // === UNIVERSAL HU POLISH – STRUCTURE, SENSE & FINAL CHORUS RESTORE (FIXED) ===
 async function applyPolishUniversalHU(lyrics, language) {
   try {
-    if (!lyrics) return lyrics;
-    const lang = String(language || '').toLowerCase();
-    if (!/(^hu$|hungarian|magyar)/.test(lang)) return String(lyrics).trim();
+    if (!lyrics || !language) return lyrics;
+    const lang = String(language).toLowerCase();
+    if (!/(magyar|hungarian|hu)/.test(lang)) return lyrics;
 
-    let out = String(lyrics || '').trim();
+    let out = lyrics.trim();
 
-    // 1️⃣ Sorelválasztás, whitespace tisztítás
-    out = out.replace(/\r\n?/g, '\n')
-             .replace(/[ \t]+$/gm, '')
-             .replace(/\n{3,}/g, '\n\n')
-             .trim();
+    // 1️⃣ Felesleges szóközök, üres sorok
+    out = out.replace(/[ \t]+$/gm, '').replace(/\n{3,}/g, '\n\n').trim();
 
-    // 2️⃣ Fejlécek normalizálása
+    // 2️⃣ Apró helyesírási és ragozási javítások (nem erőltetett)
+    const fixes = [
+      [/\bsoha ne nem\b/gi, 'soha ne'],
+      [/\bmint a ([^ ]+) regényen\b/gi, 'mint egy $1 regényben'],
+      [/\bnincs több fény\b/gi, 'örök a fény'],
+      [/\bén\b\s*$/gmi, ''],
+      [/\bszeretet érzem\b/gi, 'szeretetet érzek'],
+      [/\bvágy érzem\b/gi, 'vágyat érzek'],
+      [/\bkitartás érzem\b/gi, 'kitartást érzek'],
+      [/\bálmot látom\b/gi, 'álmot látok'],
+      [/\berő érzem\b/gi, 'erőt érzek']
+    ];
+    for (const [rx, rep] of fixes) out = out.replace(rx, rep);
+
+    // 3️⃣ Szakaszcímek angolosítása és zárójelezése (no magyar szám!)
+    out = out.replace(/^\s*\(?\s*(Vers|Verze)\s*0*([1-4])\s*\)?\s*:?\s*$/gmi, (_m, _v, n) => `(Verse ${n})`);
+    out = out.replace(/^\s*\(?\s*Refr[eé]n\s*\)?\s*:?\s*$/gmi, '(Chorus)');
+    out = out.replace(/^\s*\(?\s*(Híd|Bridge|Intro|Outro|Interlude)\s*\)?\s*:?\s*$/gmi, '');
+
+    // 4️⃣ Sor eleji nagybetű, ha hiányzik
     out = out.split('\n').map(line => {
-      let t = line.trim();
+      const t = line.trim();
       if (!t) return '';
-      if (/^\(?\s*(H[ií]d|Bridge|Intro|Outro|Interlude)\s*\)?\s*$/i.test(t)) return '';
+      return t.charAt(0).toUpperCase() + t.slice(1);
+    }).join('\n');
 
-      const mVerse = t.match(/^\(?\s*(?:Vers|Verze|Verse)\s*0*([1-4])\s*\)?\s*$/i);
-      if (mVerse) return `(Verse ${mVerse[1]})`;
+    // 5️⃣ Felesleges pont, vessző, vagy ismétlés javítása
+    out = out.replace(/([,.!?])\1+/g, '$1').replace(/\b(\w+)\s+\1\b/gi, '$1');
 
-      if (/^\(?\s*Refr[eé]n\s*\)?\s*$/i.test(t)) return `(Chorus)`;
+    // 6️⃣ Félmondat-korrekciók (értelmes, teljes mondatok)
+    const senseFixes = [
+      [/újrakezdés[^.!?\n]*lankad/gi, 'az újrakezdés reménye sosem halványul'],
+      [/melletted minden lépés/gi, 'melletted minden lépés egy új kezdet'],
+      [/szívünkben erősen/gi, 'szívünkben erősen ég a barátság'],
+      [/örök, mint a remény/gi, 'örök, mint maga a remény'],
+      [/mint a tavaszi szél/gi, 'mint a tavaszi szellő'],
+      [/együtt lépünk tovább/gi, 'együtt lépünk tovább az úton']
+    ];
+    for (const [rx, rep] of senseFixes) out = out.replace(rx, rep);
 
-      const mEn = t.match(/^(?:\(\s*)?(Verse\s+[1-4]|Chorus)(?:\s*\))?$/i);
-      if (mEn) return `(${mEn[1]})`;
-
-      return t;
-    }).filter(Boolean).join('\n');
-
-    // 3️⃣ Sorok formázása: nagybetű + pont + duplikátum szűrés
-    const seen = new Set();
-    const lines = out.split('\n').map(l => {
-      const t = l.trim();
-      if (!t) return '';
-      if (/^\(Verse\s+[1-4]\)|^\(Chorus\)$/i.test(t)) return t;
-      if (seen.has(t.toLowerCase())) return '';
-      seen.add(t.toLowerCase());
-
-      let fixed = t.charAt(0).toUpperCase() + t.slice(1);
-      if (!/[.!?]$/.test(fixed)) fixed += '.';
-      return fixed;
-    }).filter(Boolean);
-    out = lines.join('\n');
-
-    // 4️⃣ Félmondatok javítása – értelmes befejezéssel
+    // 7️⃣ Köznyelvi toldalék-javítások (túl rövid zárások)
     out = out
-      .replace(/\bLankad\./gi, 'lankad, de új erőt találunk.')
-      .replace(/\bMelletted minden lépés\./gi, 'melletted minden lépés egy új kezdet.')
-      .replace(/\bSzívünkben erősen\./gi, 'szívünkben erősen ég a barátság.')
-      .replace(/\bÚjrakezdés, barátság, szívünkben erősen\./gi, 'Újrakezdés és barátság él szívünkben erősen.');
+      .replace(/,\s*(velünk|együtt|még|fény|álom)\s*$/gmi, '.')
+      .replace(/\bvelünk\.$/gmi, 'velünk együtt.')
+      .replace(/\bálom\.$/gmi, 'álom vár ránk.');
 
-    // 5️⃣ Utolsó Chorus automatikus visszaillesztés (garantált)
-    const chorusBlocks = [...out.matchAll(/\(Chorus\)[\s\S]*?(?=\n\(Verse\s+[3-4]\)|$)/g)];
-    if (chorusBlocks.length > 0) {
-      const lastChorus = chorusBlocks[chorusBlocks.length - 1][0].trim();
-      const hasFinalChorus = /\n\(Chorus\)[\s\S]*?$/.test(out);
-      if (!hasFinalChorus && lastChorus) {
-        out = out.trim() + '\n\n' + lastChorus; // mindig záró refrén
-      }
-    }
-
-    // 6️⃣ Extra üres sorok takarítása
-    out = out.replace(/\n{3,}/g, '\n\n').trim();
-
-    return out;
-  } catch (e) {
-    console.warn('[applyPolishUniversalHU]', e?.message || e);
+    return out.trim();
+  } catch (err) {
+    console.warn('[applyPolishUniversalHU fail]', err.message);
     return lyrics;
   }
 }
-
-
 
 /* ================== Start server ========================== */
 app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
