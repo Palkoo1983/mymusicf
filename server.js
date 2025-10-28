@@ -128,6 +128,29 @@ return out.trim();
     out = out.replace(/\b[Cc]lap[, ]+clap\b/g, 'Taps, taps');
   }
 
+  // 6) ELEKTRONIKUS STÍLUS: (Break) dump feltétel nélkül ki
+  if (isElectronic) {
+    out = out.replace(/\n?\(\s*Break\s*\)[\s\S]*?(?=\n\(|$)/gi, '');
+  } else {
+    // 6/b) NEM elektronikusnál: ha Chorus-szal indul, tegyük lejjebb (Verse1/2 után)
+    if (/^\s*\(Chorus\)/i.test(out) && /\(Verse\s*\d+\)/i.test(out)) {
+      const mCh = out.match(/^\s*\(Chorus\)([\s\S]*?)(?=\n\(|$)/i);
+      if (mCh) {
+        const chorusBlock = mCh[0];
+        const rest = out.slice(chorusBlock.length).trimStart();
+        const v2 = rest.match(/\(Verse\s*2\)([\s\S]*?)(?=\n\(|$)/i);
+        const v1 = rest.match(/\(Verse\s*1\)([\s\S]*?)(?=\n\(|$)/i);
+        if (v2) {
+          const insertAt = rest.indexOf(v2[0]) + v2[0].length;
+          out = (rest.slice(0, insertAt).trimEnd() + '\n\n' + chorusBlock + '\n\n' + rest.slice(insertAt).trimStart()).trim();
+        } else if (v1) {
+          const insertAt = rest.indexOf(v1[0]) + v1[0].length;
+          out = (rest.slice(0, insertAt).trimEnd() + '\n\n' + chorusBlock + '\n\n' + rest.slice(insertAt).trimStart()).trim();
+        }
+      }
+    }
+  }
+
   // 7) DnB szóalak-puhítás (csak drum&bass esetén)
   if (/\b(dnb|drum\s*and\s*bass)\b/i.test(g)) {
     out = out
@@ -845,6 +868,7 @@ app.post('/api/generate_song', async (req, res) => {
     const isLyrical = /lírikus|poetic|ballad|ballada|romantik/.test(st);
     const isPopRockMusical = /pop|rock|musical/.test(st);
     const chorusHint = (isLyrical || isPopRockMusical || isKidSong)
+      ? 'Chorus should be 2–4 short, memorable lines with one clear hook (do not over-explain).'
       : 'Keep chorus concise and catchy.';
     const rhymeHint = isKidSong
       ? 'Use very simple AABB end-rhymes in verses (or ABAB if more natural).'
@@ -866,7 +890,7 @@ app.post('/api/generate_song', async (req, res) => {
       "Write lyrics that MATCH the client's chosen musical style in rhythm and tone.",
       'LANGUAGE LOCK: write the lyrics STRICTLY in ' + language + ' (no mixing).',
       'Do NOT invent or coin nonsense words; only real, idiomatic words.',
-      (isKidSong ? 'KID MODE: very simple vocabulary, present tense, 3–6 words per line, AABB rhymes in verses, 4 line catchy hook in Chorus, include onomatopoeia (e.g., la la, clap clap) and movement cues.' : ''),
+      (isKidSong ? 'KID MODE: very simple vocabulary, present tense, 3–6 words per line, AABB rhymes in verses, 2–4 line catchy hook in Chorus, include onomatopoeia (e.g., la la, clap clap) and movement cues.' : ''),
       'Rhythm rule: ' + rhythmHint,
       'Tone rule: ' + toneHint,
       'Rhyme rule: ' + rhymeHint,
