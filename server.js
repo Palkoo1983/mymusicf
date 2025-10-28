@@ -578,7 +578,7 @@ app.post('/api/suno/callback', async (req, res) => {
     res.status(500).json({ ok:false });
   }
 });
-// === UNIVERSAL HU POLISH – STRUCTURE, SENSE & FINAL CHORUS RESTORE ===
+// === UNIVERSAL HU POLISH – STRUCTURE, SENSE & FINAL CHORUS RESTORE (FIXED) ===
 async function applyPolishUniversalHU(lyrics, language) {
   try {
     if (!lyrics) return lyrics;
@@ -623,23 +623,22 @@ async function applyPolishUniversalHU(lyrics, language) {
       if (!/[.!?]$/.test(fixed)) fixed += '.';
       return fixed;
     }).filter(Boolean);
-
     out = lines.join('\n');
 
-    // 4️⃣ Félmondatok értelmes lezárása
+    // 4️⃣ Félmondatok javítása – értelmes befejezéssel
     out = out
       .replace(/\bLankad\./gi, 'lankad, de új erőt találunk.')
       .replace(/\bMelletted minden lépés\./gi, 'melletted minden lépés egy új kezdet.')
       .replace(/\bSzívünkben erősen\./gi, 'szívünkben erősen ég a barátság.')
       .replace(/\bÚjrakezdés, barátság, szívünkben erősen\./gi, 'Újrakezdés és barátság él szívünkben erősen.');
 
-    // 5️⃣ Utolsó Chorus automatikus visszaillesztés
-    const hasLastChorus = /\(Chorus\)[\s\S]*$/.test(out);
+    // 5️⃣ Utolsó Chorus automatikus visszaillesztés (garantált)
     const chorusBlocks = [...out.matchAll(/\(Chorus\)[\s\S]*?(?=\n\(Verse\s+[3-4]\)|$)/g)];
-    if (!hasLastChorus && chorusBlocks.length > 0) {
+    if (chorusBlocks.length > 0) {
       const lastChorus = chorusBlocks[chorusBlocks.length - 1][0].trim();
-      if (lastChorus) {
-        out = out.trim() + '\n\n' + lastChorus;
+      const hasFinalChorus = /\n\(Chorus\)[\s\S]*?$/.test(out);
+      if (!hasFinalChorus && lastChorus) {
+        out = out.trim() + '\n\n' + lastChorus; // mindig záró refrén
       }
     }
 
@@ -652,6 +651,7 @@ async function applyPolishUniversalHU(lyrics, language) {
     return lyrics;
   }
 }
+
 
 
 /* ================== Start server ========================== */
