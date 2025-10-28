@@ -132,23 +132,6 @@ return out.trim();
   if (isElectronic) {
     out = out.replace(/\n?\(\s*Break\s*\)[\s\S]*?(?=\n\(|$)/gi, '');
   } else {
-    // 6/b) NEM elektronikusnál: ha Chorus-szal indul, tegyük lejjebb (Verse1/2 után)
-    if (/^\s*\(Chorus\)/i.test(out) && /\(Verse\s*\d+\)/i.test(out)) {
-      const mCh = out.match(/^\s*\(Chorus\)([\s\S]*?)(?=\n\(|$)/i);
-      if (mCh) {
-        const chorusBlock = mCh[0];
-        const rest = out.slice(chorusBlock.length).trimStart();
-        const v2 = rest.match(/\(Verse\s*2\)([\s\S]*?)(?=\n\(|$)/i);
-        const v1 = rest.match(/\(Verse\s*1\)([\s\S]*?)(?=\n\(|$)/i);
-        if (v2) {
-          const insertAt = rest.indexOf(v2[0]) + v2[0].length;
-          out = (rest.slice(0, insertAt).trimEnd() + '\n\n' + chorusBlock + '\n\n' + rest.slice(insertAt).trimStart()).trim();
-        } else if (v1) {
-          const insertAt = rest.indexOf(v1[0]) + v1[0].length;
-          out = (rest.slice(0, insertAt).trimEnd() + '\n\n' + chorusBlock + '\n\n' + rest.slice(insertAt).trimStart()).trim();
-        }
-      }
-    }
   }
 
   // 7) DnB szóalak-puhítás (csak drum&bass esetén)
