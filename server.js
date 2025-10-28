@@ -868,7 +868,7 @@ app.post('/api/generate_song', async (req, res) => {
     const isLyrical = /lírikus|poetic|ballad|ballada|romantik/.test(st);
     const isPopRockMusical = /pop|rock|musical/.test(st);
     const chorusHint = (isLyrical || isPopRockMusical || isKidSong)
-      ? 'Chorus should be 2–4 short, memorable lines with one clear hook (do not over-explain).'
+      ? 'Chorus should be 4 short, memorable lines with one clear hook (do not over-explain).'
       : 'Keep chorus concise and catchy.';
     const rhymeHint = isKidSong
       ? 'Use very simple AABB end-rhymes in verses (or ABAB if more natural).'
@@ -890,7 +890,7 @@ app.post('/api/generate_song', async (req, res) => {
       "Write lyrics that MATCH the client's chosen musical style in rhythm and tone.",
       'LANGUAGE LOCK: write the lyrics STRICTLY in ' + language + ' (no mixing).',
       'Do NOT invent or coin nonsense words; only real, idiomatic words.',
-      (isKidSong ? 'KID MODE: very simple vocabulary, present tense, 3–6 words per line, AABB rhymes in verses, 2–4 line catchy hook in Chorus, include onomatopoeia (e.g., la la, clap clap) and movement cues.' : ''),
+      (isKidSong ? 'KID MODE: very simple vocabulary, present tense, 3–6 words per line, AABB rhymes in verses, 4 line catchy hook in Chorus, include onomatopoeia (e.g., la la, clap clap) and movement cues.' : ''),
       'Rhythm rule: ' + rhythmHint,
       'Tone rule: ' + toneHint,
       'Rhyme rule: ' + rhymeHint,
@@ -975,7 +975,7 @@ app.post('/api/generate_song', async (req, res) => {
       'Keep EXACT section headings (Verse 1/Verse 2/Chorus/Verse 3/Verse 4/Chorus).',
       'LANGUAGE LOCK: ensure the entire text is in ' + language + '.',
       'Remove invented/non-words; replace with natural, idiomatic alternatives.',
-      (isKidSong ? 'KID MODE ENFORCE: simplify phrasing, fix subject-verb agreement, AABB rhyme in verses, 2–4 line Chorus with a memorable hook and playful repetition.' : ''),
+      (isKidSong ? 'KID MODE ENFORCE: simplify phrasing, fix subject-verb agreement, AABB rhyme in verses, 4 line Chorus with a memorable hook and playful repetition.' : ''),
       'Enforce rhythm rule: ' + rhythmHint,
       'Enforce tone rule: ' + toneHint,
       'Apply: ' + rhymeHint,
@@ -1491,7 +1491,6 @@ async function coherencePolishHU(text, { brief = '', style = '', theme = '' } = 
 
     const system = [
       "Magyar szerkesztő vagy. Feladat: helyesírás/ragozás javítása és koherencia növelése.",
-      "Tartsd meg PONTOSAN a szakaszcímkéket és szerkezetet: (Verse 1|2|3), (Chorus), (Bridge).",
       "Ne adj hozzá új szakaszt, ne törölj szakaszt. Csak soron belüli javítás/átfogalmazás megengedett.",
       "Őrizd meg a NEVEKET, HELYEKET, SZÁMOKAT, DÁTUMOKAT a brief szerint.",
       "Metaforák maradjanak érthetők és kapcsolódjanak az előző sorokhoz (koherens képiség).",
