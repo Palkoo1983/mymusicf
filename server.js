@@ -430,12 +430,40 @@ const usr1 = [
       return res.status(502).json({ ok:false, message:'OpenAI error', detail:t });
     }
     const j1 = await oi1.json();
-    let payload = {};
-    try { payload = JSON.parse(j1?.choices?.[0]?.message?.content || '{}'); } catch {}
-    let lyrics = (payload.lyrics_draft || payload.lyrics || '').trim();
-    let gptStyle = (payload.style_en || '').trim();
-   
-    lyrics = await applyPolishUniversalHU(lyrics, language);
+
+// --- ROBUSZTUS JSON + FALLBACK + POLISH ---
+const raw = j1?.choices?.[0]?.message?.content || '';
+
+let payload;
+try {
+  payload = JSON.parse(raw);
+} catch {
+  payload = {};
+}
+
+// több kulcsot is próbálunk, hogy tuti legyen szöveg:
+let lyrics = (
+  payload.lyrics_draft ||
+  payload.lyrics ||
+  payload.text ||
+  payload.song ||
+  ''
+).trim();
+
+let gptStyle = (
+  payload.style_en ||
+  payload.style ||
+  ''
+).trim();
+
+// ha a JSON üres, essünk vissza a nyers contentre
+if (!lyrics && raw) {
+  lyrics = String(raw).trim();
+}
+
+// **ITT FUT LE A MAGYAR POLÍR MINDIG, NEM ÜRES SZÖVEGEN**
+lyrics = await applyPolishUniversalHU(lyrics, language);
+
 
     // Végső stílus Suno-hoz: védd a kliens által kért műfajokat + vokál tag
     function buildStyleEN(client, vocalNorm, styleEN){
