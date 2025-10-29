@@ -366,22 +366,40 @@ app.post('/api/generate_song', async (req, res) => {
     activeStarts.set(key, now);
     setTimeout(() => activeStarts.delete(key), 60000);
 
-    // GPT #1 – egyszerű, polír nélküli kérés
-    const sys1 = [
-      'You write song lyrics in the requested language and also output an ENGLISH style descriptor (style_en) for a music model.',
-      'Write lyrics that MATCH the client’s chosen musical style in rhythm and tone.',
-      'LANGUAGE LOCK: write the lyrics STRICTLY in ' + language + ' (no mixing).',
-      'STRUCTURE: Verse 1 (4 lines) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4).',
-      'Do NOT output explanations. Return JSON only: {"lyrics_draft":"...","style_en":"..."}'
-    ].join('\n');
+   // --- GPT System Prompt ---
+const profile = determineStyleProfile(styles, brief, vocal);
 
-    const usr1 = [
-      'Title: ' + title,
-      'Client styles: ' + styles,
-      'Vocal: ' + vocal,
-      'Language: ' + language,
-      'Brief: ' + brief
-    ].join('\n');
+// Magyar nyelvű, de kulcsosított leírás a GPT-nek
+const styleProfileText = `
+Style profile (in Hungarian, use these traits in writing):
+tone: ${profile.tone.emotion}, ${profile.tone.brightness}, ${profile.tone.density}
+rhythm: ${profile.rhythm.wordsPerLine[0]}–${profile.rhythm.wordsPerLine[1]} szó/sor, tempó: ${profile.rhythm.tempo}
+theme: ${profile.theme || 'általános'}
+poetic images: ${profile.words.poeticImages || 'balanced'}
+keywords: ${(profile.words.keywords || []).join(', ')}
+special rules: ${profile.universalRules.enforceVariation ? 'változatos, logikus képek' : ''}
+`;
+
+// GPT rendszer prompt (megtartva a JSON formátumot)
+const sys1 = [
+  'You are a professional lyric writer AI. You generate songs strictly following the requested style and theme.',
+  'Follow the given style profile below when creating rhythm, emotion, tone, and vocabulary.',
+  'LANGUAGE LOCK: write the lyrics STRICTLY in ' + language + ' (no mixing).',
+  'STRUCTURE: Verse 1 (4 lines) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4).',
+  'OUTPUT: Return JSON only: {"lyrics_draft":"...","style_en":"..."}'
+].join('\n');
+
+// User prompt = input + stílusprofil
+const usr1 = [
+  'Title: ' + title,
+  'Client styles: ' + styles,
+  'Vocal: ' + vocal,
+  'Language: ' + language,
+  'Brief: ' + brief,
+  '',
+  '=== STYLE PROFILE ===',
+  styleProfileText.trim()
+].join('\n');
 
     const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
       method:'POST',
@@ -403,8 +421,7 @@ app.post('/api/generate_song', async (req, res) => {
     try { payload = JSON.parse(j1?.choices?.[0]?.message?.content || '{}'); } catch {}
     let lyrics = (payload.lyrics_draft || payload.lyrics || '').trim();
     let gptStyle = (payload.style_en || '').trim();
-    const profile = determineStyleProfile(styles, brief, vocal);
-    console.log('[StyleProfile]', profile);
+   
     lyrics = await applyPolishUniversalHU(lyrics, language);
 
     // Végső stílus Suno-hoz: védd a kliens által kért műfajokat + vokál tag
