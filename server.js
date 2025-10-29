@@ -396,10 +396,10 @@ const sys2 = [
   '- For ACOUSTIC / BALLAD songs: each line should contain at least 7 words, gentle and poetic, with flowing phrasing.',
   '- For RAP songs: each line should contain at least 10 words, maintaining natural flow, rhyme, and coherent meaning (no fillers).',
   '- For CHILD songs: each line should contain at least 5 words; in the Chorus include 1–2 playful onomatopoeias (e.g., "la-la", "taps-taps", "bumm-bumm"), used rhythmically.',
-  '- For WEDDING or ROMANTIC songs: use at least one natural metaphor (sunset, sea, stars, light, breeze) connecting to love, unity, or time.',
-  '- For FUNERAL songs: tone must remain calm, serene, full of gratitude and light. Avoid slang and harsh rhythms.',
-  '- For BIRTHDAY songs: the person’s name must appear naturally in every Chorus; keep rhythm joyful and positive.',
-  '- UNIVERSAL RULES: vary sentence beginnings, ensure meaningful continuity, avoid nonsense or mixed metaphors, and prefer smooth, natural lyrical flow.'
+  '- For WEDDING or ROMANTIC songs: each line should contain at least 8 words; include at least one natural metaphor (sunset, sea, stars, light, breeze) connecting to love or unity.',
+  '- For FUNERAL songs: each line should contain at least 7 words; tone must remain calm, serene, full of gratitude and light. Avoid slang and harsh rhythms.',
+  '- For BIRTHDAY songs: each line should contain at least 7 words; the person’s name must appear naturally in every Chorus; keep rhythm joyful and positive.',
+  '- UNIVERSAL RULES: vary sentence beginnings, ensure meaningful continuity, avoid nonsense or mixed metaphors, preserve natural Hungarian rhythm and vowel harmony, and ensure the final Chorus repeats identically at the end.'
 ].join('\n');
 
 // User prompt = input + stílusprofil
