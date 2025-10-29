@@ -401,6 +401,31 @@ const sys2 = [
   '- For BIRTHDAY songs: each line should contain at least 7 words; the person’s name must appear naturally in every Chorus; keep rhythm joyful and positive.',
   '- UNIVERSAL RULES: vary sentence beginnings, ensure meaningful continuity, avoid nonsense or mixed metaphors, preserve natural Hungarian rhythm and vowel harmony, and ensure the final Chorus repeats identically at the end.'
 ].join('\n');
+const sys3 = [
+  '=== HUNGARIAN LANGUAGE POLISH & COHERENCE RULES ===',
+  '- Write the entire song in natural, grammatically correct Hungarian.',
+  '- Every line must form a full, meaningful sentence — avoid fragments or disconnected phrases.',
+  '- Ensure logical flow between lines; verses and choruses must connect coherently.',
+  '- Use proper Hungarian suffixes and vowel harmony (no "-ban/-ben" mismatches).',
+  '- Remove unnecessary spaces or blank lines.',
+  '- Avoid double punctuation or repeated words (e.g., "fény fény" → "fény").',
+  '- Capitalize the first letter of each line.',
+  '- Use correct and natural conjugations (e.g., "szeretet érzem" → "szeretetet érzek", "vágy érzem" → "vágyat érzek").',
+  '- Replace incorrect or awkward expressions with fluent, native Hungarian equivalents.',
+  '- Convert any numeric digits to written Hungarian words (e.g., 10 → tíz, 2024 → kétezer-huszonnégy).',
+  '- Exclude numbers from section headings (Verse, Chorus).',
+  '- Keep poetic rhythm consistent with the style, but always semantically correct.',
+  '- If style = wedding/romantic, include logical, coherent metaphors (e.g., naplemente, tenger, csillag, fény, szellő). Avoid random or nonsense imagery.',
+  '- If style = funeral, use gentle and calm tone, gratitude and peace — no harsh or absurd images.',
+  '- Maintain smooth rhyme and rhythm (AABB or ABAB patterns when natural).',
+  '- Avoid meaningless repetition or filler words.',
+  '- Ensure tense consistency (past/present forms should not randomly change).',
+  '- Use rich, expressive but realistic imagery; avoid mixed or unrelated metaphors.',
+  '- Avoid invented or non-existent Hungarian words.',
+  '- All numeric or temporal expressions (years, ages) must be written in full words.',
+  '- Final chorus must repeat identically at the end.',
+  '- The song must feel cohesive, fluent and emotionally expressive — never robotic or literal.'
+].join('\n');
 
 // User prompt = input + stílusprofil
 const usr1 = [
@@ -414,17 +439,27 @@ const usr1 = [
   styleProfileText.trim()
 ].join('\n');
 
-    const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
-      method:'POST',
-      headers:{ 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'Content-Type':'application/json' },
-      body: JSON.stringify({
-        model: OPENAI_MODEL,
-        messages:[{role:'system', content: sys1},{role:'user', content: usr1}],
-        temperature:0.7,
-        response_format:{ type:'json_object' },
-        max_tokens: 800
-      })
-    });
+    // --- Kombinált rendszerprompt: struktúra + stílus + magyar nyelvi polish ---
+const sysPrompt = [sys1, sys2, sys3].join('\n\n');
+
+const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${OPENAI_API_KEY}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    model: OPENAI_MODEL,
+    messages: [
+      { role: 'system', content: sysPrompt },
+      { role: 'user', content: usr1 }
+    ],
+    temperature: 0.7,
+    response_format: { type: 'json_object' },
+    max_tokens: 800
+  })
+});
+
     if(!oi1.ok){
       const t = await oi1.text();
       return res.status(502).json({ ok:false, message:'OpenAI error', detail:t });
@@ -460,10 +495,6 @@ let gptStyle = (
 if (!lyrics && raw) {
   lyrics = String(raw).trim();
 }
-
-// **ITT FUT LE A MAGYAR POLÍR MINDIG, NEM ÜRES SZÖVEGEN**
-lyrics = await applyPolishUniversalHU(lyrics, language);
-
 
     // Végső stílus Suno-hoz: védd a kliens által kért műfajokat + vokál tag
     function buildStyleEN(client, vocalNorm, styleEN){
@@ -800,158 +831,6 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
   return profile;
 }
 
-
-// === UNIVERSAL HU POLISH – STRUCTURE, SENSE & FINAL CHORUS RESTORE (FIXED) ===
-async function applyPolishUniversalHU(lyrics, language) {
-  try {
-    if (!lyrics || !language) return lyrics;
-    const lang = String(language).toLowerCase();
-    if (!/(magyar|hungarian|hu)/.test(lang)) return lyrics;
-
-    let out = lyrics.trim();
-
-    // 1️⃣ Felesleges szóközök, üres sorok
-    out = out.replace(/[ \t]+$/gm, '').replace(/\n{3,}/g, '\n\n').trim();
-
-    // 2️⃣ Apró helyesírási és ragozási javítások (nem erőltetett)
-    const fixes = [
-      [/\bsoha ne nem\b/gi, 'soha ne'],
-      [/\bmint a ([^ ]+) regényen\b/gi, 'mint egy $1 regényben'],
-      [/\bnincs több fény\b/gi, 'örök a fény'],
-      [/\bén\b\s*$/gmi, ''],
-      [/\bszeretet érzem\b/gi, 'szeretetet érzek'],
-      [/\bvágy érzem\b/gi, 'vágyat érzek'],
-      [/\bkitartás érzem\b/gi, 'kitartást érzek'],
-      [/\bálmot látom\b/gi, 'álmot látok'],
-      [/\berő érzem\b/gi, 'erőt érzek']
-    ];
-    for (const [rx, rep] of fixes) out = out.replace(rx, rep);
-
-    // 3️⃣ Szakaszcímek angolosítása és zárójelezése (no magyar szám!)
-    out = out.replace(/^\s*\(?\s*(Vers|Verze)\s*0*([1-4])\s*\)?\s*:?\s*$/gmi, (_m, _v, n) => `(Verse ${n})`);
-    out = out.replace(/^\s*\(?\s*Refr[eé]n\s*\)?\s*:?\s*$/gmi, '(Chorus)');
-    out = out.replace(/^\s*\(?\s*(Híd|Bridge|Intro|Outro|Interlude)\s*\)?\s*:?\s*$/gmi, '');
-
-    // 4️⃣ Sor eleji nagybetű, ha hiányzik
-    out = out.split('\n').map(line => {
-      const t = line.trim();
-      if (!t) return '';
-      return t.charAt(0).toUpperCase() + t.slice(1);
-    }).join('\n');
-
-    // 5️⃣ Felesleges pont, vessző, vagy ismétlés javítása
-    out = out.replace(/([,.!?])\1+/g, '$1').replace(/\b(\w+)\s+\1\b/gi, '$1');
-
-    // 6️⃣ Félmondat-korrekciók (értelmes, teljes mondatok)
-    const senseFixes = [
-      [/újrakezdés[^.!?\n]*lankad/gi, 'az újrakezdés reménye sosem halványul'],
-      [/melletted minden lépés/gi, 'melletted minden lépés egy új kezdet'],
-      [/szívünkben erősen/gi, 'szívünkben erősen ég a barátság'],
-      [/örök, mint a remény/gi, 'örök, mint maga a remény'],
-      [/mint a tavaszi szél/gi, 'mint a tavaszi szellő'],
-      [/együtt lépünk tovább/gi, 'együtt lépünk tovább az úton']
-    ];
-    for (const [rx, rep] of senseFixes) out = out.replace(rx, rep);
-
-    // 7️⃣ Köznyelvi toldalék-javítások (túl rövid zárások)
-    out = out
-      .replace(/,\s*(velünk|együtt|még|fény|álom)\s*$/gmi, '.')
-      .replace(/\bvelünk\.$/gmi, 'velünk együtt.')
-      .replace(/\bálom\.$/gmi, 'álom vár ránk.');
-    // 8️⃣ Számok → betűs alakra (biztonságos, szerkezetkímélő verzió)
-    const numWords = {
-      0:'nulla',1:'egy',2:'kettő',3:'három',4:'négy',5:'öt',
-      6:'hat',7:'hét',8:'nyolc',9:'kilenc',10:'tíz',
-      11:'tizenegy',12:'tizenkettő',13:'tizenhárom',14:'tizennégy',
-      15:'tizenöt',16:'tizenhat',17:'tizenhét',18:'tizennyolc',19:'tizenkilenc',
-      20:'húsz',30:'harminc',40:'negyven',50:'ötven',60:'hatvan',
-      70:'hetven',80:'nyolcvan',90:'kilencven',100:'száz',
-      1000:'ezer',2000:'kétezer'
-    };
-
-    function toWordsHU(n){
-      n = parseInt(n,10);
-      if (numWords[n]) return numWords[n];
-      if (n > 2000 && n < 2100) {
-        const t = n - 2000;
-        if (numWords[t]) return 'kétezer-' + numWords[t];
-        if (t < 20) return 'kétezer-' + (numWords[t] || String(t));
-        if (t >= 20 && t < 100) {
-          const tens = Math.floor(t/10)*10;
-          const ones = t%10;
-          return 'kétezer-' + numWords[tens] + (ones ? numWords[ones] : '');
-        }
-      }
-      if (n >= 21 && n < 100) {
-        const tens = Math.floor(n/10)*10;
-        const ones = n%10;
-        return numWords[tens] + (ones ? numWords[ones] : '');
-      }
-      return String(n);
-    }
-
-    // Csak nem-címsoros sorokban cserélünk számokat
-    const headingRx = /^\s*\(?(?:Verse\s*\d+|Chorus)\)?\s*:?\s*$/i;
-
-    out = out
-      .split('\n')
-      .map(line => {
-        const t = line.trim();
-        // kizárás: üres, vagy bármi, ami verse/chorus címet tartalmaz
-        if (
-          !t ||
-          headingRx.test(t) ||
-          t.toLowerCase().includes('verse ') ||
-          t.toLowerCase().includes('chorus')
-        ) return line;
-
-        // ha zenei tempó vagy bpm szerepel, ne módosítsuk
-        if (/\bbpm\b/i.test(line)) return line;
-
-        // egyébként cseréljük a számokat
-        return line.replace(/\b\d{1,4}\b/g, m => toWordsHU(m));
-      })
-      .join('\n');
-      // --- új kis fix: kötőjeles rag javítása ---
-      out = out.replace(/-ben\b/gi, 'ben').replace(/-ban\b/gi, 'ban');
-
-    // 9️⃣ Nem létező / hibás szavak javítása
-    const typoFix = [
-      [/\btégedhez\b/gi, 'hozzád'],
-      [/\bvárád\b/gi, 'vár rád'],
-      [/\bmegzenél\b/gi, 'megszólal'],
-      [/\bhittel telt\b/gi, 'hittel teli'],
-      [/\bemléked él bennünk soha el nem múlik\b/gi, 'emléked örökké él bennünk'],
-      [/\bút várád\b/gi, 'út vár rád']
-      [/\bnaplemente örök\b/gi, 'naplemente múló'],
-      [/\bnaplemente aranyán\b/gi, 'naplemente fényén'],
-      [/\bnaplemente arany fénye\b/gi, 'naplemente arany fénye ragyog'],
-      [/\bnaplemente örök\b/gi, 'naplemente fénye örök'],
-      [/\btényébe\b/gi, 'fényébe'],
-      [/\bárnyán\b/gi, 'árnyában'],
-      [/\bhíd, amely\b/gi, 'híd, mi'],
-      [/\bszeretet kap\b/gi, 'szeretetet kapunk'],
-      [/\bnóri, oti, és a naplemente örök emlék maradsz\b/gi, 'Nóri, Oti és a naplemente örök emlék maradtok'],
-      [/\bkéz a kézben\b/gi, 'kéz a kézben lépve'],
-      [/\börök szerelem tényébe\b/gi, 'örök szerelem fényébe'],
-    ];
-    for (const [rx, rep] of typoFix) out = out.replace(rx, rep);
-
-    // 🔟 Enyhe igeidő-egységesítés (múlt / jelen)
-    out = out.replace(/\bvoltál\b/g, 'vagy')
-             .replace(/\blettél\b/g, 'vagy')
-             .replace(/\blesz\b/g, 'maradsz')
-             .replace(/\bleszek\b/g, 'maradok')
-             .replace(/\bmaradsz maradok\b/g, 'maradunk')
-             .replace(/\bmaradsz maradsz\b/g, 'maradsz')
-             .replace(/\bmaradok maradok\b/g, 'maradok');
-  
-    return out.trim();
-  } catch (err) {
-    console.warn('[applyPolishUniversalHU fail]', err.message);
-    return lyrics;
-  }
-}
 
 /* ================== Start server ========================== */
 app.listen(PORT, () => console.log('Server running on http://localhost:' + PORT));
