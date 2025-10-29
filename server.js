@@ -386,7 +386,7 @@ const sys1 = [
   'Follow the given style profile below when creating rhythm, emotion, tone, and vocabulary.',
   'LANGUAGE LOCK: write the lyrics STRICTLY in ' + language + ' (no mixing).',
   'STRUCTURE: Verse 1 (4 lines) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4).',
-  'OUTPUT: Return JSON only: {"lyrics_draft":"...","style_en":"..."}'
+  'OUTPUT: Return only the clean lyrics text with proper line breaks (no JSON, no explanations, no markdown).'
 ].join('\n');
 const sys2 = [
   '=== UNIVERSAL STYLE ENFORCEMENT RULES (Natural flow + min word limit) ===',
@@ -455,7 +455,6 @@ const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
       { role: 'user', content: usr1 }
     ],
     temperature: 0.7,
-    response_format: { type: 'json_object' },
     max_tokens: 800
   })
 });
