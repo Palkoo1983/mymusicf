@@ -382,12 +382,20 @@ special rules: ${profile.universalRules.enforceVariation ? 'változatos, logikus
 
 // GPT rendszer prompt (megtartva a JSON formátumot)
 const sys1 = [
-  'You are a professional lyric writer AI. You generate songs strictly following the requested style and theme.',
+  'You are a professional lyric writer AI. You generate complete, structured Hungarian song lyrics strictly following the requested style and theme.',
   'Follow the given style profile below when creating rhythm, emotion, tone, and vocabulary.',
   'LANGUAGE LOCK: write the lyrics STRICTLY in ' + language + ' (no mixing).',
-  'STRUCTURE: Verse 1 (4 lines) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4).',
-  'OUTPUT: Return only the clean lyrics text with proper line breaks (no JSON, no explanations, no markdown).'
+  'STRUCTURE IS MANDATORY: the song must include these section titles exactly as shown:',
+  '(Verse 1)',
+  '(Verse 2)',
+  '(Chorus)',
+  '(Verse 3)',
+  '(Verse 4)',
+  '(Chorus)',
+  'Each verse and chorus must have exactly 4 lines.',
+  'OUTPUT: Return only the clean lyrics text with proper section titles and line breaks (no JSON, no markdown, no explanations).'
 ].join('\n');
+
 const sys2 = [
   '=== UNIVERSAL STYLE ENFORCEMENT RULES (Natural flow + min word limit) ===',
   '- For POP songs: each line should contain at least 8 words, focusing on emotion, melody, and natural phrasing.',
