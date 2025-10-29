@@ -403,6 +403,8 @@ app.post('/api/generate_song', async (req, res) => {
     try { payload = JSON.parse(j1?.choices?.[0]?.message?.content || '{}'); } catch {}
     let lyrics = (payload.lyrics_draft || payload.lyrics || '').trim();
     let gptStyle = (payload.style_en || '').trim();
+    const profile = determineStyleProfile(styles, brief, vocal);
+    console.log('[StyleProfile]', profile);
     lyrics = await applyPolishUniversalHU(lyrics, language);
 
     // Végső stílus Suno-hoz: védd a kliens által kért műfajokat + vokál tag
@@ -578,6 +580,114 @@ app.post('/api/suno/callback', async (req, res) => {
     res.status(500).json({ ok:false });
   }
 });
+// === STYLE PROFILE DECISION ENGINE (6 fő zenei stílus + 3 tematikus blokk) ===
+function determineStyleProfile(styles = '', brief = '', vocal = '') {
+  const s = (styles || '').toLowerCase();
+  const b = (brief || '').toLowerCase();
+  const v = (vocal || '').toLowerCase();
+
+  // --- 1️⃣ Alap zenei stílus detektálása ---
+  let baseStyle = 'pop';
+  if (/(rock|punk|metal)/.test(s)) baseStyle = 'rock';
+  else if (/(techno|trance|electro|house|edm|electronic|dnb|drum)/.test(s)) baseStyle = 'electronic';
+  else if (/(acoustic|ballad|folk|guitar|piano|lírai|lassú)/.test(s)) baseStyle = 'acoustic';
+  else if (/(rap|trap|hip.?hop)/.test(s)) baseStyle = 'rap';
+  else if (/(none|null|unknown)/.test(s)) baseStyle = 'none';
+
+  // --- 2️⃣ Tematikus blokk felismerése ---
+  let theme = null;
+  if (/(esküvő|lánykérés|valentin|jegyes|házasság)/.test(b)) theme = 'wedding';
+  else if (/(temetés|búcsúztat|gyász|emlék|nyugodj|részvét|jobbulás)/.test(b)) theme = 'funeral';
+  else if (/(gyerek|mese|ovis|humoros|vicces|nevetséges)/.test(b)) theme = 'child';
+
+  // --- 3️⃣ Vocal finomítás (nem felülíró, csak stílusmódosító) ---
+  let vocalMode = 'neutral';
+  if (/male/.test(v)) vocalMode = 'male';
+  else if (/female/.test(v)) vocalMode = 'female';
+  else if (/duet/.test(v)) vocalMode = 'duet';
+  else if (/child/.test(v)) vocalMode = 'child';
+  else if (/robot|synthetic/.test(v)) vocalMode = 'robot';
+
+  // --- 4️⃣ Stílusjellemzők (zenei forma, ritmus, szóhasználat) ---
+  const baseProfiles = {
+    pop: {
+      rhythm: { wordsPerLine: [6, 10], tempo: 'medium' },
+      tone: { emotion: 'high', brightness: 'warm', density: 'balanced' },
+      words: { allowSlang: false, repetition: 'moderate' }
+    },
+    rock: {
+      rhythm: { wordsPerLine: [7, 11], tempo: 'medium-fast' },
+      tone: { emotion: 'strong', brightness: 'bright', density: 'dense' },
+      words: { allowSlang: true, repetition: 'low' }
+    },
+    electronic: {
+      rhythm: { wordsPerLine: [5, 8], tempo: 'fast' },
+      tone: { emotion: 'neutral', brightness: 'cool', density: 'minimal' },
+      words: { allowSlang: false, repetition: 'high' }
+    },
+    acoustic: {
+      rhythm: { wordsPerLine: [6, 9], tempo: 'slow' },
+      tone: { emotion: 'soft', brightness: 'warm', density: 'airy' },
+      words: { allowSlang: false, repetition: 'low' }
+    },
+    rap: {
+      rhythm: { wordsPerLine: [9, 14], tempo: 'variable' },
+      tone: { emotion: 'assertive', brightness: 'neutral', density: 'dense' },
+      words: { allowSlang: true, repetition: 'rhythmic' }
+    },
+    none: {
+      rhythm: { wordsPerLine: [6, 9], tempo: 'medium' },
+      tone: { emotion: 'neutral', brightness: 'balanced', density: 'medium' },
+      words: { allowSlang: false, repetition: 'moderate' }
+    }
+  };
+
+  // --- 5️⃣ Tematikus módosítók (felülírás a zenei profilon) ---
+  const themeMods = {
+    wedding: {
+      tone: { emotion: 'romantic', brightness: 'warm', density: 'full' },
+      words: { keywords: ['ígéret', 'hűség', 'örök', 'fény', 'igen'], allowSlang: false },
+      overrides: { positivity: 'high', structure: 'balanced' }
+    },
+    funeral: {
+      tone: { emotion: 'serene', brightness: 'dim', density: 'soft' },
+      words: { keywords: ['emlék', 'fény', 'hála', 'búcsú', 'béke'], allowSlang: false },
+      overrides: { positivity: 'low', structure: 'slow' }
+    },
+    child: {
+      tone: { emotion: 'joyful', brightness: 'bright', density: 'light' },
+      words: { keywords: ['játszunk', 'taps', 'mosoly', 'napocska', 'dal'], allowSlang: false },
+      overrides: { simplicity: 'high', repetition: 'very-high' }
+    }
+  };
+
+  // --- 6️⃣ Összevonás és prioritáskezelés ---
+  let profile = JSON.parse(JSON.stringify(baseProfiles[baseStyle] || baseProfiles.pop));
+  profile.baseStyle = baseStyle;
+  profile.theme = theme;
+  profile.vocal = vocalMode;
+  profile.priority = ['theme', 'style', 'vocal'];
+
+  // Tematikus felülírás
+  if (theme && themeMods[theme]) {
+    const t = themeMods[theme];
+    profile.tone = { ...profile.tone, ...t.tone };
+    profile.words = { ...profile.words, ...t.words };
+    profile.overrides = { ...t.overrides };
+  }
+
+  // Vocal finomhangolás
+  if (vocalMode === 'child' && theme !== 'child') {
+    profile.theme = 'child';
+    const t = themeMods.child;
+    profile.tone = { ...profile.tone, ...t.tone };
+    profile.words = { ...profile.words, ...t.words };
+    profile.overrides = { ...t.overrides };
+  }
+
+  return profile;
+}
+
 // === UNIVERSAL HU POLISH – STRUCTURE, SENSE & FINAL CHORUS RESTORE (FIXED) ===
 async function applyPolishUniversalHU(lyrics, language) {
   try {
