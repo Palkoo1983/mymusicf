@@ -635,6 +635,47 @@ async function applyPolishUniversalHU(lyrics, language) {
       .replace(/,\s*(velünk|együtt|még|fény|álom)\s*$/gmi, '.')
       .replace(/\bvelünk\.$/gmi, 'velünk együtt.')
       .replace(/\bálom\.$/gmi, 'álom vár ránk.');
+    // 8️⃣ Számok → betűs alakra (egyszerű magyar számnevek)
+    const numWords = {
+      0: 'nulla', 1: 'egy', 2: 'kettő', 3: 'három', 4: 'négy', 5: 'öt',
+      6: 'hat', 7: 'hét', 8: 'nyolc', 9: 'kilenc', 10: 'tíz',
+      11: 'tizenegy', 12: 'tizenkettő', 13: 'tizenhárom', 14: 'tizennégy',
+      15: 'tizenöt', 16: 'tizenhat', 17: 'tizenhét', 18: 'tizennyolc', 19: 'tizenkilenc',
+      20: 'húsz', 30: 'harminc', 40: 'negyven', 50: 'ötven', 60: 'hatvan',
+      70: 'hetven', 80: 'nyolcvan', 90: 'kilencven', 100: 'száz',
+      1000: 'ezer', 2000: 'kétezer'
+    };
+    out = out.replace(/\b\d{1,4}\b/g, m => {
+      const n = parseInt(m, 10);
+      if (numWords[n]) return numWords[n];
+      if (n > 2000 && n < 2100) {
+        const t = n - 2000;
+        return 'kétezer-' + (numWords[t] || t);
+      }
+      if (n >= 21 && n < 100) {
+        const tens = Math.floor(n / 10) * 10;
+        const ones = n % 10;
+        return numWords[tens] + (ones ? numWords[ones] : '');
+      }
+      return m;
+    });
+
+    // 9️⃣ Nem létező / hibás szavak javítása
+    const typoFix = [
+      [/\btégedhez\b/gi, 'hozzád'],
+      [/\bvárád\b/gi, 'vár rád'],
+      [/\bmegzenél\b/gi, 'megszólal'],
+      [/\bhittel telt\b/gi, 'hittel teli'],
+      [/\bemléked él bennünk soha el nem múlik\b/gi, 'emléked örökké él bennünk'],
+      [/\bút várád\b/gi, 'út vár rád']
+    ];
+    for (const [rx, rep] of typoFix) out = out.replace(rx, rep);
+
+    // 🔟 Enyhe igeidő-egységesítés (múlt / jelen)
+    out = out.replace(/\bvoltál\b/g, 'vagy')
+             .replace(/\blettél\b/g, 'vagy')
+             .replace(/\blesz\b/g, 'maradsz')
+             .replace(/\bleszek\b/g, 'maradok');
 
     return out.trim();
   } catch (err) {
