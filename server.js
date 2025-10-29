@@ -689,7 +689,8 @@ async function applyPolishUniversalHU(lyrics, language) {
         return line.replace(/\b\d{1,4}\b/g, m => toWordsHU(m));
       })
       .join('\n');
-
+      // --- új kis fix: kötőjeles rag javítása ---
+      out = out.replace(/-ben\b/gi, 'ben').replace(/-ban\b/gi, 'ban');
 
     // 9️⃣ Nem létező / hibás szavak javítása
     const typoFix = [
@@ -699,6 +700,17 @@ async function applyPolishUniversalHU(lyrics, language) {
       [/\bhittel telt\b/gi, 'hittel teli'],
       [/\bemléked él bennünk soha el nem múlik\b/gi, 'emléked örökké él bennünk'],
       [/\bút várád\b/gi, 'út vár rád']
+      [/\bnaplemente örök\b/gi, 'naplemente múló'],
+      [/\bnaplemente aranyán\b/gi, 'naplemente fényén'],
+      [/\bnaplemente arany fénye\b/gi, 'naplemente arany fénye ragyog'],
+      [/\bnaplemente örök\b/gi, 'naplemente fénye örök'],
+      [/\btényébe\b/gi, 'fényébe'],
+      [/\bárnyán\b/gi, 'árnyában'],
+      [/\bhíd, amely\b/gi, 'híd, mi'],
+      [/\bszeretet kap\b/gi, 'szeretetet kapunk'],
+      [/\bnóri, oti, és a naplemente örök emlék maradsz\b/gi, 'Nóri, Oti és a naplemente örök emlék maradtok'],
+      [/\bkéz a kézben\b/gi, 'kéz a kézben lépve'],
+      [/\börök szerelem tényébe\b/gi, 'örök szerelem fényébe']
     ];
     for (const [rx, rep] of typoFix) out = out.replace(rx, rep);
 
@@ -706,8 +718,11 @@ async function applyPolishUniversalHU(lyrics, language) {
     out = out.replace(/\bvoltál\b/g, 'vagy')
              .replace(/\blettél\b/g, 'vagy')
              .replace(/\blesz\b/g, 'maradsz')
-             .replace(/\bleszek\b/g, 'maradok');
-
+             .replace(/\bleszek\b/g, 'maradok')
+             .replace(/\bmaradsz maradok\b/g, 'maradunk')
+             .replace(/\bmaradsz maradsz\b/g, 'maradsz')
+             .replace(/\bmaradok maradok\b/g, 'maradok');
+  
     return out.trim();
   } catch (err) {
     console.warn('[applyPolishUniversalHU fail]', err.message);
