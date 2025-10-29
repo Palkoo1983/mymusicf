@@ -820,7 +820,7 @@ async function applyPolishUniversalHU(lyrics, language) {
       [/\bszeretet kap\b/gi, 'szeretetet kapunk'],
       [/\bnóri, oti, és a naplemente örök emlék maradsz\b/gi, 'Nóri, Oti és a naplemente örök emlék maradtok'],
       [/\bkéz a kézben\b/gi, 'kéz a kézben lépve'],
-      [/\börök szerelem tényébe\b/gi, 'örök szerelem fényébe']
+      [/\börök szerelem tényébe\b/gi, 'örök szerelem fényébe'],
     ];
     for (const [rx, rep] of typoFix) out = out.replace(rx, rep);
 
