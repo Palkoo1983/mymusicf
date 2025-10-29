@@ -388,6 +388,19 @@ const sys1 = [
   'STRUCTURE: Verse 1 (4 lines) / Verse 2 (4) / Chorus (4) / Verse 3 (4) / Verse 4 (4) / Chorus (4).',
   'OUTPUT: Return JSON only: {"lyrics_draft":"...","style_en":"..."}'
 ].join('\n');
+const sys2 = [
+  '=== UNIVERSAL STYLE ENFORCEMENT RULES (Natural flow + min word limit) ===',
+  '- For POP songs: each line should contain at least 8 words, focusing on emotion, melody, and natural phrasing.',
+  '- For ROCK songs: each line should contain at least 8 words, with energetic and expressive rhythm.',
+  '- For ELECTRONIC / TECHNO songs: each line should contain at least 6 words, rhythmic and atmospheric, prioritizing imagery over story.',
+  '- For ACOUSTIC / BALLAD songs: each line should contain at least 7 words, gentle and poetic, with flowing phrasing.',
+  '- For RAP songs: each line should contain at least 10 words, maintaining natural flow, rhyme, and coherent meaning (no fillers).',
+  '- For CHILD songs: each line should contain at least 5 words; in the Chorus include 1–2 playful onomatopoeias (e.g., "la-la", "taps-taps", "bumm-bumm"), used rhythmically.',
+  '- For WEDDING or ROMANTIC songs: use at least one natural metaphor (sunset, sea, stars, light, breeze) connecting to love, unity, or time.',
+  '- For FUNERAL songs: tone must remain calm, serene, full of gratitude and light. Avoid slang and harsh rhythms.',
+  '- For BIRTHDAY songs: the person’s name must appear naturally in every Chorus; keep rhythm joyful and positive.',
+  '- UNIVERSAL RULES: vary sentence beginnings, ensure meaningful continuity, avoid nonsense or mixed metaphors, and prefer smooth, natural lyrical flow.'
+].join('\n');
 
 // User prompt = input + stílusprofil
 const usr1 = [
