@@ -635,30 +635,51 @@ async function applyPolishUniversalHU(lyrics, language) {
       .replace(/,\s*(velünk|együtt|még|fény|álom)\s*$/gmi, '.')
       .replace(/\bvelünk\.$/gmi, 'velünk együtt.')
       .replace(/\bálom\.$/gmi, 'álom vár ránk.');
-    // 8️⃣ Számok → betűs alakra (egyszerű magyar számnevek)
+       // 8️⃣ Számok → betűs alakra (címkeszűrten, hogy a (Verse 1) NE változzon)
     const numWords = {
-      0: 'nulla', 1: 'egy', 2: 'kettő', 3: 'három', 4: 'négy', 5: 'öt',
-      6: 'hat', 7: 'hét', 8: 'nyolc', 9: 'kilenc', 10: 'tíz',
-      11: 'tizenegy', 12: 'tizenkettő', 13: 'tizenhárom', 14: 'tizennégy',
-      15: 'tizenöt', 16: 'tizenhat', 17: 'tizenhét', 18: 'tizennyolc', 19: 'tizenkilenc',
-      20: 'húsz', 30: 'harminc', 40: 'negyven', 50: 'ötven', 60: 'hatvan',
-      70: 'hetven', 80: 'nyolcvan', 90: 'kilencven', 100: 'száz',
-      1000: 'ezer', 2000: 'kétezer'
+      0:'nulla',1:'egy',2:'kettő',3:'három',4:'négy',5:'öt',
+      6:'hat',7:'hét',8:'nyolc',9:'kilenc',10:'tíz',
+      11:'tizenegy',12:'tizenkettő',13:'tizenhárom',14:'tizennégy',
+      15:'tizenöt',16:'tizenhat',17:'tizenhét',18:'tizennyolc',19:'tizenkilenc',
+      20:'húsz',30:'harminc',40:'negyven',50:'ötven',60:'hatvan',
+      70:'hetven',80:'nyolcvan',90:'kilencven',100:'száz',
+      1000:'ezer',2000:'kétezer'
     };
-    out = out.replace(/\b\d{1,4}\b/g, m => {
-      const n = parseInt(m, 10);
+    function toWordsHU(n){
+      n = parseInt(n,10);
       if (numWords[n]) return numWords[n];
       if (n > 2000 && n < 2100) {
         const t = n - 2000;
-        return 'kétezer-' + (numWords[t] || t);
+        if (numWords[t]) return 'kétezer-' + numWords[t];
+        // 2001–2099 ritka kombinációk
+        if (t < 20) return 'kétezer-' + (numWords[t] || String(t));
+        if (t >= 20 && t < 100) {
+          const tens = Math.floor(t/10)*10, ones = t%10;
+          return 'kétezer-' + numWords[tens] + (ones ? numWords[ones] : '');
+        }
       }
       if (n >= 21 && n < 100) {
-        const tens = Math.floor(n / 10) * 10;
-        const ones = n % 10;
+        const tens = Math.floor(n/10)*10, ones = n%10;
         return numWords[tens] + (ones ? numWords[ones] : '');
       }
-      return m;
-    });
+      return String(n); // ha nem tudjuk szépen, hagyjuk érintetlenül
+    }
+
+    // Csak olyan sorokban konvertálunk, amelyek NEM tiszta címsorok
+    const headingRx = /^\s*\(?(?:Verse\s+[1-4]|Chorus)\)?\s*$/i;
+    out = out
+      .split('\n')
+      .map(line => {
+        const t = line.trim();
+        if (!t || headingRx.test(t)) return line; // (Verse 1) / (Chorus) marad
+        // Kerüljük a tempó/egység mintákat (pl. 175 bpm)
+        return line.replace(/\b\d{1,4}\b/g, m => {
+          const around = line.toLowerCase();
+          if (/\bbpm\b/.test(around)) return m; // tempó: hagyjuk
+          return toWordsHU(m);
+        });
+      })
+      .join('\n');
 
     // 9️⃣ Nem létező / hibás szavak javítása
     const typoFix = [
