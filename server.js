@@ -580,7 +580,7 @@ app.post('/api/suno/callback', async (req, res) => {
     res.status(500).json({ ok:false });
   }
 });
-// === STYLE PROFILE DECISION ENGINE (6 fő zenei stílus + 3 tematikus blokk) ===
+// === STYLE PROFILE DECISION ENGINE (6 fő zenei stílus + 4 tematikus blokk) ===
 function determineStyleProfile(styles = '', brief = '', vocal = '') {
   const s = (styles || '').toLowerCase();
   const b = (brief || '').toLowerCase();
@@ -599,6 +599,7 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
   if (/(esküvő|lánykérés|valentin|jegyes|házasság)/.test(b)) theme = 'wedding';
   else if (/(temetés|búcsúztat|gyász|emlék|nyugodj|részvét|jobbulás)/.test(b)) theme = 'funeral';
   else if (/(gyerek|mese|ovis|humoros|vicces|nevetséges)/.test(b)) theme = 'child';
+  else if (/(szülinap|születésnap|ünnep|party|ünneplés|boldog szülinap)/.test(b)) theme = 'birthday';
 
   // --- 3️⃣ Vocal finomítás (nem felülíró, csak stílusmódosító) ---
   let vocalMode = 'neutral';
@@ -608,37 +609,37 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
   else if (/child/.test(v)) vocalMode = 'child';
   else if (/robot|synthetic/.test(v)) vocalMode = 'robot';
 
-  // --- 4️⃣ Stílusjellemzők (zenei forma, ritmus, szóhasználat) ---
+  // --- 4️⃣ Alap stílusprofilok ---
   const baseProfiles = {
     pop: {
-      rhythm: { wordsPerLine: [6, 10], tempo: 'medium' },
+      rhythm: { wordsPerLine: [8, 10], tempo: 'medium' },
       tone: { emotion: 'high', brightness: 'warm', density: 'balanced' },
-      words: { allowSlang: false, repetition: 'moderate' }
+      words: { allowSlang: false, repetition: 'low', variation: 'high', poeticImages: 'moderate' }
     },
     rock: {
-      rhythm: { wordsPerLine: [7, 11], tempo: 'medium-fast' },
+      rhythm: { wordsPerLine: [8, 12], tempo: 'medium-fast' },
       tone: { emotion: 'strong', brightness: 'bright', density: 'dense' },
-      words: { allowSlang: true, repetition: 'low' }
+      words: { allowSlang: true, repetition: 'low', variation: 'high', poeticImages: 'few' }
     },
     electronic: {
-      rhythm: { wordsPerLine: [5, 8], tempo: 'fast' },
+      rhythm: { wordsPerLine: [6, 8], tempo: 'fast' },
       tone: { emotion: 'neutral', brightness: 'cool', density: 'minimal' },
-      words: { allowSlang: false, repetition: 'high' }
+      words: { allowSlang: false, repetition: 'medium', variation: 'medium', poeticImages: 'minimal' }
     },
     acoustic: {
-      rhythm: { wordsPerLine: [6, 9], tempo: 'slow' },
+      rhythm: { wordsPerLine: [7, 11], tempo: 'slow' },
       tone: { emotion: 'soft', brightness: 'warm', density: 'airy' },
-      words: { allowSlang: false, repetition: 'low' }
+      words: { allowSlang: false, repetition: 'low', variation: 'high', poeticImages: 'rich' }
     },
     rap: {
-      rhythm: { wordsPerLine: [9, 14], tempo: 'variable' },
+      rhythm: { wordsPerLine: [10, 16], tempo: 'variable' },
       tone: { emotion: 'assertive', brightness: 'neutral', density: 'dense' },
-      words: { allowSlang: true, repetition: 'rhythmic' }
+      words: { allowSlang: true, repetition: 'rhythmic', variation: 'high', poeticImages: 'few' }
     },
     none: {
-      rhythm: { wordsPerLine: [6, 9], tempo: 'medium' },
+      rhythm: { wordsPerLine: [6, 10], tempo: 'medium' },
       tone: { emotion: 'neutral', brightness: 'balanced', density: 'medium' },
-      words: { allowSlang: false, repetition: 'moderate' }
+      words: { allowSlang: false, repetition: 'moderate', variation: 'medium', poeticImages: 'balanced' }
     }
   };
 
@@ -646,18 +647,63 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
   const themeMods = {
     wedding: {
       tone: { emotion: 'romantic', brightness: 'warm', density: 'full' },
-      words: { keywords: ['ígéret', 'hűség', 'örök', 'fény', 'igen'], allowSlang: false },
-      overrides: { positivity: 'high', structure: 'balanced' }
+      words: {
+        keywords: ['ígéret', 'hűség', 'örök', 'fény', 'igen'],
+        allowSlang: false,
+        variation: 'very-high',
+        poeticImages: 'rich'
+      },
+      overrides: {
+        positivity: 'high',
+        structure: 'balanced',
+        metaphorRule: 'logical-only',
+        repetition: 'minimal'
+      }
     },
     funeral: {
       tone: { emotion: 'serene', brightness: 'dim', density: 'soft' },
-      words: { keywords: ['emlék', 'fény', 'hála', 'búcsú', 'béke'], allowSlang: false },
-      overrides: { positivity: 'low', structure: 'slow' }
+      words: {
+        keywords: ['emlék', 'fény', 'hála', 'búcsú', 'béke'],
+        allowSlang: false,
+        variation: 'medium',
+        poeticImages: 'gentle'
+      },
+      overrides: {
+        positivity: 'low',
+        structure: 'slow',
+        metaphorRule: 'realistic',
+        repetition: 'minimal'
+      }
     },
     child: {
       tone: { emotion: 'joyful', brightness: 'bright', density: 'light' },
-      words: { keywords: ['játszunk', 'taps', 'mosoly', 'napocska', 'dal'], allowSlang: false },
-      overrides: { simplicity: 'high', repetition: 'very-high' }
+      words: {
+        keywords: ['játszunk', 'taps', 'mosoly', 'napocska', 'dal'],
+        allowSlang: false,
+        variation: 'medium',
+        poeticImages: 'simple'
+      },
+      overrides: {
+        simplicity: 'high',
+        repetition: 'moderate',
+        onomatopoeia: ['taps-taps', 'la-la', 'bumm-bumm'],
+        onomatopoeiaPlacement: 'chorus-only'
+      }
+    },
+    birthday: {
+      tone: { emotion: 'cheerful', brightness: 'bright', density: 'full' },
+      words: {
+        keywords: ['élet', 'barátok', 'nevetés', 'torta', 'fény', 'emlék', 'boldog születésnap'],
+        allowSlang: false,
+        variation: 'high',
+        poeticImages: 'vivid'
+      },
+      overrides: {
+        positivity: 'very-high',
+        structure: 'upbeat',
+        refrainNameMention: true,
+        repetition: 'moderate'
+      }
     }
   };
 
@@ -676,7 +722,7 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
     profile.overrides = { ...t.overrides };
   }
 
-  // Vocal finomhangolás
+  // Vocal finomhangolás – gyermekhang automatikus átvétel
   if (vocalMode === 'child' && theme !== 'child') {
     profile.theme = 'child';
     const t = themeMods.child;
@@ -685,8 +731,17 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
     profile.overrides = { ...t.overrides };
   }
 
+  // Globális szabály: minden stílusban törekvés a változatosságra
+  profile.universalRules = {
+    enforceVariation: true,
+    forbidIdenticalSentenceStart: true,
+    forbidNonsensicalMetaphor: true,
+    requirePositiveClosure: true
+  };
+
   return profile;
 }
+
 
 // === UNIVERSAL HU POLISH – STRUCTURE, SENSE & FINAL CHORUS RESTORE (FIXED) ===
 async function applyPolishUniversalHU(lyrics, language) {
