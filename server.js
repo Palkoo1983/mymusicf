@@ -393,7 +393,8 @@ const sys1 = [
   '(Verse 4)',
   '(Chorus)',
   'Each verse and chorus must have exactly 4 lines.',
-  'OUTPUT: Return only the clean lyrics text with proper section titles and line breaks (no JSON, no markdown, no explanations).'
+  'OUTPUT: Return only the clean lyrics text with proper section titles and line breaks (no JSON, no markdown, no explanations).',
+  'Include and respect all style hints: ' + styles + '.'
 ].join('\n');
 
 const sys2 = [
@@ -503,17 +504,31 @@ let gptStyle = (
 if (!lyrics && raw) {
   lyrics = String(raw).trim();
 }
-
+// --- NORMALIZE GENRES ---
+function normalizeGenre(g) {
+  return g
+    .toLowerCase()
+    .replace(/\brepp\b/g, 'rap')
+    .replace(/\bmagyar népdal\b/g, 'folk')
+    .replace(/\bhegedű\b/g, 'violin')
+    .replace(/\bzongora\b/g, 'piano')
+    .trim();
+}
     // Végső stílus Suno-hoz: védd a kliens által kért műfajokat + vokál tag
     function buildStyleEN(client, vocalNorm, styleEN){
       const protectedGenres = new Set([
-        'minimal techno','pop','rock','house','techno','trance','drum and bass','dnb','hip hop','hip-hop',
-        'r&b','rnb','soul','funk','jazz','blues','edm','electronic','ambient','lo-fi','lofi','metal','punk',
-        'indie','folk','country','reggaeton','reggae','synthwave','vaporwave','trap','drill','hardstyle',
-        'progressive house','deep house','electro house','future bass','dubstep','garage','uk garage','breakbeat','phonk','k-pop','kpop'
-      ]);
-      const base = (styleEN||'').toLowerCase().split(/[,\|\/]+/).map(s=>s.trim()).filter(Boolean);
-      const cli  = (client||'').toLowerCase().split(/[,\|\/]+/).map(s=>s.trim()).filter(Boolean);
+  'rap','hip hop','hip-hop','folk','violin','piano',
+  'minimal techno','pop','rock','house','techno','trance','drum and bass',
+  'r&b','rnb','soul','funk','jazz','blues','edm','electronic','ambient',
+  'lo-fi','lofi','metal','punk','indie','country','reggaeton','reggae',
+  'synthwave','vaporwave','trap','drill','hardstyle','progressive house',
+  'deep house','electro house','future bass','dubstep','garage',
+  'uk garage','breakbeat','phonk','k-pop','kpop'
+]);
+
+    const base = (styleEN||'').split(/[,\|\/]+/).map(s => normalizeGenre(s)).filter(Boolean);
+    const cli  = (client||'').split(/[,\|\/]+/).map(s => normalizeGenre(s)).filter(Boolean);
+
       const out = []; const seen = new Set();
       for(const g of cli){ if (protectedGenres.has(g) && !seen.has(g)){ out.push(g); seen.add(g); } }
       let addedMood = 0;
@@ -533,7 +548,7 @@ if (!lyrics && raw) {
       return out.join(', ');
     }
     const styleFinal = buildStyleEN(styles, vocal, gptStyle);
-function normalizeSectionHeadingsSafeStrict(text) {
+    function normalizeSectionHeadingsSafeStrict(text) {
   if (!text) return text;
   let t = String(text);
 
