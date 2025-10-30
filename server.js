@@ -784,7 +784,7 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
   let theme = null;
   if (/(esküvő|lánykérés|valentin|jegyes|házasság)/.test(b)) theme = 'wedding';
   else if (/(temetés|búcsúztat|gyász|emlék|nyugodj|részvét|jobbulás)/.test(b)) theme = 'funeral';
-  else if (/(gyerek|mese|ovis|humoros|vicces|nevetséges)/.test(b)) theme = 'child';
+  else if (/(gyerekdal|ovis|óvoda|mese|gyermeki|kisfiú|kislány)/.test(b)) theme = 'child';
   else if (/(szülinap|születésnap|ünnep|party|ünneplés|boldog szülinap)/.test(b)) theme = 'birthday';
 
   // --- 3️⃣ Vocal finomítás (nem felülíró, csak stílusmódosító) ---
