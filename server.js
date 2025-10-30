@@ -511,8 +511,8 @@ function numToHungarian(n) {
   return String(n); // fallback for very large numbers
 }
 
-// replace all numbers (1–9999)
-lyrics = lyrics.replace(/\b(\d{1,4})\.?\b/g, (_, n) => numToHungarian(parseInt(n, 10)));
+// replace all numbers (1–9999) except those following "Verse" or "Chorus"
+lyrics = lyrics.replace(/(?<!Verse\s|Chorus\s)\b\d{1,4}\b/g, n => numToHungarian(parseInt(n, 10)));
 
 // --- UNIVERSAL NORMALIZE GENRES (HU → EN) ---
 function normalizeGenre(g) {
