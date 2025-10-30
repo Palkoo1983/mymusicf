@@ -380,9 +380,9 @@ const sys2 = [
   '- For FUNERAL songs: each line should contain at least 7 words; tone must remain calm, serene, full of gratitude and light. Avoid slang and harsh rhythms.',
   '- For BIRTHDAY songs: each line should contain at least 7 words; the person’s name must appear naturally in every Chorus; keep rhythm joyful and positive.',
   '- UNIVERSAL RULES: vary sentence beginnings, ensure meaningful continuity, avoid nonsense or mixed metaphors, preserve natural Hungarian rhythm and vowel harmony, and ensure the final Chorus repeats identically at the end.',
-  '- IMPORTANT: onomatopoeia elements (like "la-la", "taps-taps", "bumm-bumm") are allowed ONLY when style = child.',
   '- APPLY ONLY ONE STYLE RULESET matching the most dominant genre from the client styles.',
-  '- If multiple genres are listed (e.g. "minimal techno, house, trance"), choose the one that best fits the rhythm and tone, and apply its minimum word rule consistently to all verses and choruses.'
+  '- If multiple genres are listed (e.g. "minimal techno, house, trance"), choose the one that best fits the rhythm and tone, and apply its minimum word rule consistently to all verses and choruses.',
+  '- IMPORTANT: child-song specific words (napocska, dalocska, ovis, kacagás, la-la, taps-taps, bumm-bumm) are allowed ONLY when style = child; never use them in any other genre or theme.'
 ].join('\n');
 
 const sys3 = [
@@ -864,7 +864,7 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
     child: {
       tone: { emotion: 'joyful', brightness: 'bright', density: 'light' },
       words: {
-        keywords: ['játszunk', 'taps', 'mosoly', 'napocska', 'dal'],
+        keywords: ['játszunk', 'játsszunk', 'napocska', 'dalocska','ovis', 'kacagás', 'bumm-bumm', 'la-la', 'taps-taps'],
         allowSlang: false,
         variation: 'medium',
         poeticImages: 'simple'
@@ -925,6 +925,19 @@ if (vocalMode === 'child' && theme !== 'child' && /(gyerek|ovis|mese|ját|iskol�
     forbidNonsensicalMetaphor: true,
     requirePositiveClosure: true
   };
+  // --- 7️⃣ Gyerekdal-szókészlet izolálása ---
+  // Ha a stílus vagy téma NEM gyerekdal, akkor a gyerekdalos kulcsszavakat töröljük a keywords-ból
+  if (profile.theme !== 'child' && profile.baseStyle !== 'child') {
+    const childWords = [
+      'játszunk', 'játsszunk', 'napocska', 'dalocska',
+      'ovis', 'kacagás', 'bumm-bumm', 'la-la', 'taps-taps'
+    ];
+    if (Array.isArray(profile.words.keywords)) {
+      profile.words.keywords = profile.words.keywords.filter(
+        w => !childWords.includes(w)
+      );
+    }
+  }
 
   return profile;
 }
