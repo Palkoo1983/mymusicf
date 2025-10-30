@@ -1,104 +1,72 @@
-// EnZenem: Megrendelés -> /api/generate_song (customer-safe feedback only)
+// EnZenem: Megrendelés -> VPOS redirect ONLY (no API feedback to frontend)
 (function(){
-  window.NB_NOTIFY_SOURCE = 'generate';
+  window.NB_NOTIFY_SOURCE = 'vpos';
   let IN_FLIGHT = false;
   const form = document.getElementById('orderForm');
   if(!form) return;
 
-  // Legacy containers (we now hide them for customers)
-  const resultBox = document.getElementById('song-result');
-  const linksList = document.getElementById('song-links');
-  const lyricsBox = document.getElementById('song-lyrics');
+  // Hide any legacy result areas if exist
+  ['song-result','song-links','song-lyrics'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el){ el.hidden = true; el.innerHTML = ''; }
+  });
 
-  // Hide any old result sections so customers never see links/lyrics
-  [resultBox, linksList, lyricsBox].forEach(el => { if(el){ el.hidden = true; el.innerHTML = ''; } });
-
-  // Lightweight inline feedback banner injected above the form
-  let feedback = document.getElementById('order-feedback');
-  if(!feedback){
-    feedback = document.createElement('div');
-    feedback.id = 'order-feedback';
-    feedback.setAttribute('aria-live','polite');
-    feedback.style.margin = '12px 0';
-    feedback.style.padding = '10px 12px';
-    feedback.style.borderRadius = '10px';
-    feedback.style.fontWeight = '600';
-    feedback.style.display = 'none'; // hidden by default
-    const payNote = document.querySelector('p.note');
-    if(payNote && payNote.parentNode){
-      payNote.parentNode.insertBefore(feedback, payNote.nextSibling);
-    } else {
-      form.parentNode.insertBefore(feedback, form.nextSibling);
-    }
+  // Simple inline feedback util (used only until VPOS redirect)
+  function showFeedback(msg, ok){
+    try {
+      const id = 'order-feedback';
+      let f = document.getElementById(id);
+      if(!f){
+        f = document.createElement('div');
+        f.id = id;
+        f.style.margin = '12px 0';
+        f.style.padding = '10px 12px';
+        f.style.borderRadius = '10px';
+        form.parentNode.insertBefore(f, form);
+      }
+      f.textContent = msg;
+      f.style.display = 'block';
+      f.style.background = ok ? '#e6ffed' : '#ffecec';
+      f.style.border = '1px solid ' + (ok ? '#21a353' : '#d33');
+      f.style.color = ok ? '#0b6b2b' : '#8a1f1f';
+    } catch(_) {}
   }
 
-  function showFeedback(text, ok=true){
-    feedback.textContent = text;
-    feedback.style.display = 'block';
-    feedback.style.background = ok ? '#e6ffed' : '#ffecec';
-    feedback.style.border = '1px solid ' + (ok ? '#21a353' : '#d33');
-    feedback.style.color = ok ? '#0b6b2b' : '#8a1f1f';
-  }
-
-  async function postJSON(url, data){
-    const r = await fetch(url, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    });
-    // Try JSON; fallback to text
-    const ct = r.headers.get('content-type') || '';
-    const payload = ct.includes('application/json') ? await r.json().catch(()=>({})) : await r.text().catch(()=>'');
-    if(!r.ok) throw new Error(typeof payload === 'string' ? payload : (payload.error || 'Request failed'));
-    return payload || {};
-  }
-
-  form.addEventListener('submit', async (e)=>{
-    if(IN_FLIGHT) return; IN_FLIGHT = true;
+  form.addEventListener('submit', function(e){
     e.preventDefault();
+    if(IN_FLIGHT) return;
+    IN_FLIGHT = true;
 
-    // basic collection
-    const fd = new FormData(form);
-    const data = {
-      email: (form.querySelector('[name=email]')||{}).value || '',
-      styles: (fd.get('styles')||'').toString(),   // <-- correct field name
-      style:  (fd.get('styles')||'').toString(),   // legacy compatibility
-      vocal: (form.querySelector('[name=vocal]')||{}).value || '',
-      language: (form.querySelector('[name=language]')||{}).value || '',
-      brief: (form.querySelector('[name=brief]')||{}).value || '',
-      consent: !!(form.querySelector('[name=consent]')||{}).checked,
-      package: (fd.get('package')||'basic').toString()
-    };
-
-    // disable form
-    const submitBtn = form.querySelector('button[type=submit], [type=submit]');
-    if (submitBtn){ submitBtn.disabled = true; submitBtn.dataset.prevText = submitBtn.textContent; submitBtn.textContent = 'Küldés...'; }
-
-    // Clear any legacy outputs
-    [resultBox, linksList, lyricsBox].forEach(el => { if(el){ el.hidden = true; el.innerHTML = ''; } });
-    showFeedback('Küldés folyamatban… Kérlek várj.', true);
+    const submitBtn = form.querySelector('button[type="submit"], .order-submit, #orderSubmit');
+    if(submitBtn){ submitBtn.dataset.prevText = submitBtn.textContent; submitBtn.disabled = true; submitBtn.textContent = 'Átirányítás a fizetésre...'; }
 
     try {
-      const res = await postJSON('/api/generate_song', data);
+      // Collect fields
+      const fd = new FormData(form);
+      const payload = {};
+      fd.forEach((v,k)=>{ payload[k]=typeof v==='string'?v:v.toString(); });
 
-      // Regardless of backend details, never render lyrics or links here.
-      // Only confirm that generation has started successfully.
-      const pkg = (data.package||'basic');
-      let okMsg = 'Köszönjük! Megrendelésed beérkezett. Hamarosan kapsz visszaigazolást e-mailben.';
-      showFeedback(okMsg, true);
+      // Create a real form POST -> backend (so backend can 302 redirect to VPOS)
+      const post = document.createElement('form');
+      post.method = 'POST';
+      post.action = '/api/vpos/start';
+      post.style.display = 'none';
+      for(const [k,v] of Object.entries(payload)){
+        const inp = document.createElement('input');
+        inp.type = 'hidden';
+        inp.name = k;
+        inp.value = v;
+        post.appendChild(inp);
+      }
+      document.body.appendChild(post);
+      post.submit();
+      // From here the browser navigates away to VPOS; no more UI work here.
 
-      // Trigger NovaBot success line (speaks when supported)
-      if (window.novaOrderSuccess) window.novaOrderSuccess();
-
-    } catch (err) {
-      console.error('generate_song failed:', err);
-
-      const badMsg = 'Sajnos most nem sikerült elküldeni. Kérlek próbáld újra néhány perc múlva.';
-      showFeedback(badMsg, false);
-
+    } catch(err){
+      console.error('vpos start failed:', err);
+      showFeedback('Sajnos most nem sikerült elindítani a fizetést. Próbáld újra kérlek.', false);
       if(window.novaOrderFail) window.novaOrderFail();
-    } finally {
-      if (submitBtn){ submitBtn.disabled = false; submitBtn.textContent = submitBtn.dataset.prevText || 'Megrendelem'; }
+      if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = submitBtn.dataset.prevText || 'Megrendelem'; }
       IN_FLIGHT = false;
     }
   });
