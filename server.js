@@ -1001,11 +1001,6 @@ app.post('/api/vpos/callback', express.json(), async (req, res) => {
     if (status === 'success' || status === 'paid' || status === 'ok') {
       // Fire-and-forget generation using existing pipeline endpoint to avoid breaking logic
       try {
-        await fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/api/generate_song', {
-          method: 'POST',
-          headers: { 'Content-Type':'application/json' },
-          body: JSON.stringify(rec.order || {})
-        });
       } catch (e) {
         console.error('[VPOS CALLBACK -> generate_song ERROR]', e);
       }
