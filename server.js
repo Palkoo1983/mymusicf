@@ -388,8 +388,9 @@ const sys2 = [
 const sys3 = [
   '=== HUNGARIAN LANGUAGE POLISH & COHERENCE RULES ===',
   '- Write the entire song in natural, grammatically correct Hungarian.',
-  '- Every line must form a full, meaningful sentence — avoid fragments or disconnected phrases.',
-  '- Ensure logical flow between lines; verses and choruses must connect coherently.',
+  '- Every line must form a full, meaningful sentence — always include both subject and predicate.',
+  '- Ensure logical flow between lines; verses and choruses must connect coherently to the same theme.',
+  '- Maintain natural Hungarian word order (subject–predicate–object), avoid inverted or awkward structures.',
   '- Use proper Hungarian suffixes and vowel harmony (no "-ban/-ben" mismatches).',
   '- Remove unnecessary spaces or blank lines.',
   '- Avoid double punctuation or repeated words (e.g., "fény fény" → "fény").',
@@ -399,17 +400,22 @@ const sys3 = [
   '- Convert any numeric digits to written Hungarian words (e.g., 10 → tíz, 2024 → kétezer-huszonnégy).',
   '- Exclude numbers from section headings (Verse, Chorus).',
   '- Keep poetic rhythm consistent with the style, but always semantically correct.',
+  '- If multiple styles are given, determine rhythm and phrasing from the first (dominant) style only.',
+  '- Do not force rhymes at the expense of meaning. Rhyme is optional, sense and fluency are mandatory.',
+  '- Maintain smooth rhyme and rhythm (AABB or ABAB patterns when natural).',
+  '- If a rhyme would create an illogical or unnatural phrase, remove or rephrase it naturally.',
   '- If style = wedding/romantic, include logical, coherent metaphors (e.g., naplemente, tenger, csillag, fény, szellő). Avoid random or nonsense imagery.',
   '- If style = funeral, use gentle and calm tone, gratitude and peace — no harsh or absurd images.',
-  '- Maintain smooth rhyme and rhythm (AABB or ABAB patterns when natural).',
   '- Avoid meaningless repetition or filler words.',
   '- Ensure tense consistency (past/present forms should not randomly change).',
-  '- Use rich, expressive but realistic imagery; avoid mixed or unrelated metaphors.',
+  '- Use rich, expressive but realistic imagery; avoid mixed or unrelated metaphors (e.g., "tenger" + "sivatag" in the same image).',
+  '- Ensure that all metaphors support the song’s emotional core and do not contradict each other.',
   '- Avoid invented or non-existent Hungarian words.',
-  '- All numeric or temporal expressions (years, ages) must be written in full words.',
+  '- All numeric or temporal expressions (years, ages) must be written in full words and keep Hungarian case endings intact.',
   '- Final chorus must repeat identically at the end.',
   '- The song must feel cohesive, fluent and emotionally expressive — never robotic or literal.'
 ].join('\n');
+
 // Explicit instruction: include all specific years, names, and places mentioned in the brief naturally in the lyrics.
 const briefIncludeRule = 'Include every specific year, name, and place mentioned in the brief naturally in the lyrics.';
 
