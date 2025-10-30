@@ -380,8 +380,11 @@ const sys2 = [
   '- For FUNERAL songs: each line should contain at least 7 words; tone must remain calm, serene, full of gratitude and light. Avoid slang and harsh rhythms.',
   '- For BIRTHDAY songs: each line should contain at least 7 words; the person’s name must appear naturally in every Chorus; keep rhythm joyful and positive.',
   '- UNIVERSAL RULES: vary sentence beginnings, ensure meaningful continuity, avoid nonsense or mixed metaphors, preserve natural Hungarian rhythm and vowel harmony, and ensure the final Chorus repeats identically at the end.',
-  '- IMPORTANT: onomatopoeia elements (like "la-la", "taps-taps", "bumm-bumm") are allowed ONLY when style = child.'
+  '- IMPORTANT: onomatopoeia elements (like "la-la", "taps-taps", "bumm-bumm") are allowed ONLY when style = child.',
+  '- APPLY ONLY ONE STYLE RULESET matching the most dominant genre from the client styles.',
+  '- If multiple genres are listed (e.g. "minimal techno, house, trance"), choose the one that best fits the rhythm and tone, and apply its minimum word rule consistently to all verses and choruses.'
 ].join('\n');
+
 const sys3 = [
   '=== HUNGARIAN LANGUAGE POLISH & COHERENCE RULES ===',
   '- Write the entire song in natural, grammatically correct Hungarian.',
@@ -407,6 +410,8 @@ const sys3 = [
   '- Final chorus must repeat identically at the end.',
   '- The song must feel cohesive, fluent and emotionally expressive — never robotic or literal.'
 ].join('\n');
+// Explicit instruction: include all specific years, names, and places mentioned in the brief naturally in the lyrics.
+const briefIncludeRule = 'Include every specific year, name, and place mentioned in the brief naturally in the lyrics.';
 
 // User prompt = input + stílusprofil
 const usr1 = [
@@ -415,6 +420,7 @@ const usr1 = [
   'Vocal: ' + vocal,
   'Language: ' + language,
   'Brief: ' + brief,
+   briefIncludeRule,
   '',
   '=== STYLE PROFILE ===',
   styleProfileText.trim()
@@ -475,16 +481,89 @@ let gptStyle = (
 if (!lyrics && raw) {
   lyrics = String(raw).trim();
 }
-// --- NORMALIZE GENRES ---
+ // --- convert numeric numbers to written Hungarian words (universal) ---
+function numToHungarian(n) {
+  const ones = ['nulla','egy','kettő','három','négy','öt','hat','hét','nyolc','kilenc'];
+  const tens = ['','tíz','húsz','harminc','negyven','ötven','hatvan','hetven','nyolcvan','kilencven'];
+
+  if (n < 10) return ones[n];
+  if (n < 20) {
+    if (n === 10) return 'tíz';
+    return 'tizen' + ones[n - 10];
+  }
+  if (n < 100) {
+    const t = Math.floor(n / 10);
+    const o = n % 10;
+    return tens[t] + (o ? ones[o] : '');
+  }
+  if (n < 1000) {
+    const h = Math.floor(n / 100);
+    const r = n % 100;
+    return (h > 1 ? ones[h] + 'száz' : 'száz') + (r ? numToHungarian(r) : '');
+  }
+  if (n < 2000) return 'ezer-' + numToHungarian(n - 1000);
+  if (n < 2100) return 'kétezer-' + numToHungarian(n - 2000);
+  if (n < 10000) {
+    const t = Math.floor(n / 1000);
+    const r = n % 1000;
+    return ones[t] + 'ezer' + (r ? '-' + numToHungarian(r) : '');
+  }
+  return String(n); // fallback for very large numbers
+}
+
+// replace all numbers (1–9999)
+lyrics = lyrics.replace(/\b(\d{1,4})\.?\b/g, (_, n) => numToHungarian(parseInt(n, 10)));
+
+// --- UNIVERSAL NORMALIZE GENRES (HU → EN) ---
 function normalizeGenre(g) {
-  return g
-    .toLowerCase()
-    .replace(/\brepp\b/g, 'rap')
-    .replace(/\bmagyar népdal\b/g, 'folk')
-    .replace(/\bhegedű\b/g, 'violin')
+  if (!g) return '';
+  return g.toLowerCase()
+    .replace(/\bmagyar népdal\b/g, 'hungarian folk')
+    .replace(/\bnépdal\b/g, 'folk')
+    .replace(/\bpop(zene)?\b/g, 'pop')
+    .replace(/\brock(zene)?\b/g, 'rock')
+    .replace(/\bmet[aá]l\b/g, 'metal')
+    .replace(/\bdiszk[oó]\b/g, 'disco')
+    .replace(/\btechno\b/g, 'techno')
+    .replace(/\bhouse\b/g, 'house')
+    .replace(/\btrance\b/g, 'trance')
+    .replace(/\bgoa\b/g, 'goa')
+    .replace(/\bdnb\b/g, 'drum and bass')
+    .replace(/\bdrum(?!mer)\b/g, 'drum and bass')
+    .replace(/\brap(p)?\b/g, 'rap')
+    .replace(/\bhip[\s-]?hop\b/g, 'hip hop')
+    .replace(/\br[&\s]?b\b/g, 'r&b')
+    .replace(/\bblues\b/g, 'blues')
+    .replace(/\bjazz\b/g, 'jazz')
+    .replace(/\breggae\b/g, 'reggae')
+    .replace(/\bklasszikus(zene)?\b/g, 'classical')
+    .replace(/\bkomolyzene\b/g, 'classical')
     .replace(/\bzongora\b/g, 'piano')
+    .replace(/\bheged[űu]\b/g, 'violin')
+    .replace(/\bgit[aá]r\b/g, 'guitar')
+    .replace(/\bdob(ok)?\b/g, 'drum')
+    .replace(/\bfuvola\b/g, 'flute')
+    .replace(/\bcsell[oó]\b/g, 'cello')
+    .replace(/\bmelankolikus\b/g, 'melancholic')
+    .replace(/\bérzelmes\b/g, 'emotional')
+    .replace(/\bkölt[oő]i\b/g, 'poetic')
+    .replace(/\bromantikus\b/g, 'romantic')
+    .replace(/\bvid[aá]m\b/g, 'happy')
+    .replace(/\bszomor[úu]\b/g, 'sad')
+    .replace(/\blass[uú]\b/g, 'slow')
+    .replace(/\bgyors\b/g, 'fast')
+    .replace(/\bhangszeres\b/g, 'instrumental')
+    .replace(/\bvok[aá]l(os)?\b/g, 'vocal')
+    .replace(/\bt[áa]nczene\b/g, 'dance')
+    .replace(/\belektronikus(zene)?\b/g, 'electronic')
+    .replace(/\bambient\b/g, 'ambient')
+    .replace(/\bfilmzene\b/g, 'soundtrack')
+    .replace(/\bszintetiz[aá]tor\b/g, 'synth')
+    .replace(/\bfolklo[ó]r\b/g, 'folk')
+    .replace(/\s+/g, ' ')
     .trim();
 }
+
     // Végső stílus Suno-hoz: védd a kliens által kért műfajokat + vokál tag
     function buildStyleEN(client, vocalNorm, styleEN){
       const protectedGenres = new Set([
@@ -495,7 +574,7 @@ function normalizeGenre(g) {
   'synthwave','vaporwave','trap','drill','hardstyle','progressive house',
   'deep house','electro house','future bass','dubstep','garage',
   'uk garage','breakbeat','phonk','k-pop','kpop','modern pop','emotional',
-  'poetic','drum','cello','flute','hungarian folk'
+  'poetic','drum','cello','flute','hungarian folk','guitar'
 ]);
 
     const base = (styleEN||'').split(/[,\|\/]+/).map(s => normalizeGenre(s)).filter(Boolean);
@@ -806,14 +885,15 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
     profile.overrides = { ...t.overrides };
   }
 
-  // Vocal finomhangolás – gyermekhang automatikus átvétel
-  if (vocalMode === 'child' && theme !== 'child') {
-    profile.theme = 'child';
-    const t = themeMods.child;
-    profile.tone = { ...profile.tone, ...t.tone };
-    profile.words = { ...profile.words, ...t.words };
-    profile.overrides = { ...t.overrides };
-  }
+  // Vocal finomhangolás – csak akkor vált child témára, ha mind a vokál, mind a brief gyerekes jellegű
+if (vocalMode === 'child' && theme !== 'child' && /(gyerek|ovis|mese|ját|iskolás|szülinap|vidám)/.test(b)) {
+  profile.theme = 'child';
+  const t = themeMods.child;
+  profile.tone = { ...profile.tone, ...t.tone };
+  profile.words = { ...profile.words, ...t.words };
+  profile.overrides = { ...t.overrides };
+}
+
 
   // Globális szabály: minden stílusban törekvés a változatosságra
   profile.universalRules = {
