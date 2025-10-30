@@ -510,9 +510,26 @@ function numToHungarian(n) {
   }
   return String(n); // fallback for very large numbers
 }
+// --- smarter numeric replacement with suffix support ---
+// Évszámok (0–2999) + ragozás (pl. 2014-ben → kétezer-tizennégyben)
+lyrics = lyrics.replace(/\b([12]?\d{3})([-–]?(?:ban|ben|as|es|os|ös|ik|tól|től|hoz|hez|höz|nak|nek|ra|re|ról|ről|ba|be))?\b/g, (match, num, suffix='') => {
+  const year = parseInt(num, 10);
+  if (isNaN(year) || year > 2999) return match; // biztonsági korlát
+  let text = '';
+  if (year < 1000) text = numToHungarian(year);
+  else {
+    const thousand = Math.floor(year / 1000);
+    const rest = year % 1000;
+    const base = thousand === 1 ? 'ezer' : 'kétezer';
+    text = base + (rest ? '-' + numToHungarian(rest) : '');
+  }
+  return text + (suffix || '');
+});
 
-// replace all numbers (1–9999) except those following "Verse" or "Chorus"
-lyrics = lyrics.replace(/(?<!Verse\s|Chorus\s)\b\d{1,4}\b/g, n => numToHungarian(parseInt(n, 10)));
+// Kis számok (1–999), de NE Verse/Chorus után
+lyrics = lyrics.replace(/(?<!Verse\s|Chorus\s)\b\d{1,3}\b/g, n => numToHungarian(parseInt(n, 10)));
+
+
 
 // --- UNIVERSAL NORMALIZE GENRES (HU → EN) ---
 function normalizeGenre(g) {
