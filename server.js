@@ -1,8 +1,6 @@
-// ESM server.js – FINAL (stable, no language polish)
-// - Minden nyelvi/polír/javító/regex alapú szövegátalakítás ELTÁVOLÍTVA
-// - GPT és Suno hívások, formátumkezelés (mp3/mp4/wav), Sheets loggolás MEGMARAD
-// - Nincsenek: fixHungarianGrammar, postProcessHU, HU/EN enforce, numbers→words, apply* stb.
-// - Express static + / + /healthz megvan; Stripe webhook raw body kezelése megmarad
+// ESM server.js – FINAL (stable, prompt-based polish active)
+// - Kód szintű polish függvények eltávolítva
+// - Prompt-szintű polish (sys2, sys3) aktív maradt
 
 import express from 'express';
 import cors from 'cors';
@@ -298,33 +296,6 @@ async function sunoStartV1(url, headers, body){
   return { ok:false, status:503, text:'start_unavailable_after_retries' };
 }
 
-/* ================== STYLE PRESERVE helper ================= */
-// Csak a kliens által kért angol műfajcímkék megőrzése (Suno-nak)
-function preserveClientGenres(styles, style_en, vocalTag){
-  const protectedGenres = [
-    'minimal techno','pop','rock','house','techno','trance','drum and bass','dnb','hip hop','hip-hop',
-    'r&b','rnb','soul','funk','jazz','blues','edm','electronic','ambient','lo-fi','lofi','metal','punk',
-    'indie','folk','country','reggaeton','reggae','synthwave','vaporwave','trap','drill','hardstyle',
-    'progressive house','deep house','electro house','future bass','dubstep','garage','uk garage','breakbeat','phonk'
-  ];
-  let out = (style_en || '').toLowerCase();
-  const src = (styles || '').toLowerCase();
-
-  const toKeep = [];
-  for (const g of protectedGenres){
-    if (src.includes(g) && !out.includes(g)){
-      toKeep.push(g);
-    }
-  }
-  if (toKeep.length){
-    out = (out ? out + ', ' : '') + toKeep.join(', ');
-  }
-  if (vocalTag && !out.includes(vocalTag)){
-    out = (out ? out + ', ' : '') + vocalTag;
-  }
-  return out.replace(/\s+/g,' ').trim();
-}
-
 /* ============ GPT → Suno generate (NO POLISH) ============ */
 app.post('/api/generate_song', async (req, res) => {
   try {
@@ -523,7 +494,8 @@ function normalizeGenre(g) {
   'lo-fi','lofi','metal','punk','indie','country','reggaeton','reggae',
   'synthwave','vaporwave','trap','drill','hardstyle','progressive house',
   'deep house','electro house','future bass','dubstep','garage',
-  'uk garage','breakbeat','phonk','k-pop','kpop'
+  'uk garage','breakbeat','phonk','k-pop','kpop','modern pop','emotional',
+  'poetic','drum','cello','flute','hungarian folk'
 ]);
 
     const base = (styleEN||'').split(/[,\|\/]+/).map(s => normalizeGenre(s)).filter(Boolean);
