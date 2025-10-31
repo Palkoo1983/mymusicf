@@ -384,41 +384,43 @@ function initBriefHelper() {
   });
 }
 
-/* ---------- Order form submit (ALWAYS show license modal) ---------- */
+/* ---------- Order form submit (NO WAIT, NO MODAL) ---------- */
 function initOrderForm() {
-  const orderForm   = qs('#orderForm');
-  const orderStatus = qs('#orderStatus');
-  const modal       = qs('#license-warning');
-  const acceptBtn   = qs('#licenseAccept');
-  const cancelBtn   = qs('#licenseCancel');
+  const orderForm = qs('#orderForm');
   if (!orderForm) return;
 
   // ne legyen natív navigáció – fetch küldi
   orderForm.setAttribute('action', 'javascript:void(0)');
 
- async function actuallySend(data) {
-  try {
-    // 🔹 Azonnal küldjük el a rendelést, de nem várjuk meg a választ
-    fetch('/api/order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-  } catch (err) {
-    console.error('Order send error (ignored):', err);
-  }
+  // Teljesen azonnali, "fire and forget" működés
+  orderForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  // 🔹 Azonnali visszajelzés a NovaBottól (siker)
-  try {
-    if (!(window.NB_NOTIFY_SOURCE === 'generate')) {
-      window.novaOrderSuccess && window.novaOrderSuccess();
+    const data = Object.fromEntries(new FormData(orderForm).entries());
+
+    // 🔹 Azonnal elküldjük a rendelést, nem várjuk meg a választ, nincs modal
+    try {
+      fetch('/api/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+    } catch (err) {
+      console.error('Order send error (ignored):', err);
     }
-  } catch (_) {}
 
-  // 🔹 Form ürítés, hogy újra lehessen rendelni
-  orderForm.reset();
+    // 🔹 Azonnali NovaBot visszajelzés (siker)
+    try {
+      if (!(window.NB_NOTIFY_SOURCE === 'generate')) {
+        window.novaOrderSuccess && window.novaOrderSuccess();
+      }
+    } catch (_) {}
+
+    // 🔹 Form ürítés, hogy rögtön új rendelés lehessen
+    orderForm.reset();
+  });
 }
-
 
   function showModal(){ if (modal){ modal.style.display='block'; modal.setAttribute('aria-hidden','false'); } }
   function hideModal(){ if (modal){ modal.style.display='none';  modal.setAttribute('aria-hidden','true'); } }
