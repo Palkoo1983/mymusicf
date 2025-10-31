@@ -396,25 +396,29 @@ function initOrderForm() {
   // ne legyen natív navigáció – fetch küldi
   orderForm.setAttribute('action', 'javascript:void(0)');
 
-  async function actuallySend(data) {
-    if (orderStatus) orderStatus.textContent = 'Küldés...';
-    try {
-      const json = await postJSON('/api/order', data);
-      if (orderStatus) { orderStatus.textContent = ''; orderStatus.style.display = 'none'; }
-      orderForm.reset();
-      // ✅ NOVABOT: SIKER
-      try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderSuccess && window.novaOrderSuccess(); } } catch(_){}
-      setTimeout(() => {
-        const desc = qs('#order textarea[name="brief"]');
-        if (desc) desc.dispatchEvent(new Event('input', { bubbles: true }));
-      }, 10);
-    } catch (err) {
-      if (orderStatus) orderStatus.textContent = 'Nem sikerült elküldeni. Próbáld újra később.';
-      console.error(err);
-      // ✅ NOVABOT: HIBA
-      try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderFail && window.novaOrderFail(); } } catch(_){}
-    }
+ async function actuallySend(data) {
+  try {
+    // 🔹 Azonnal küldjük el a rendelést, de nem várjuk meg a választ
+    fetch('/api/order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  } catch (err) {
+    console.error('Order send error (ignored):', err);
   }
+
+  // 🔹 Azonnali visszajelzés a NovaBottól (siker)
+  try {
+    if (!(window.NB_NOTIFY_SOURCE === 'generate')) {
+      window.novaOrderSuccess && window.novaOrderSuccess();
+    }
+  } catch (_) {}
+
+  // 🔹 Form ürítés, hogy újra lehessen rendelni
+  orderForm.reset();
+}
+
 
   function showModal(){ if (modal){ modal.style.display='block'; modal.setAttribute('aria-hidden','false'); } }
   function hideModal(){ if (modal){ modal.style.display='none';  modal.setAttribute('aria-hidden','true'); } }
