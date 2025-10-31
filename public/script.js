@@ -422,6 +422,7 @@ function initOrderForm() {
   });
 }
 
+
   function showModal(){ if (modal){ modal.style.display='block'; modal.setAttribute('aria-hidden','false'); } }
   function hideModal(){ if (modal){ modal.style.display='none';  modal.setAttribute('aria-hidden','true'); } }
 
