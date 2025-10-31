@@ -29,9 +29,6 @@
 <link rel="preconnect" href="https://www.youtube-nocookie.com" crossorigin>
 <link rel="preconnect" href="https://i.ytimg.com" crossorigin>
 
-<!-- removed inline UA-flag block -->
-<!-- removed inline UA-flag block -->
-
 <script>
 /* UA-flag SZINKRON – desktop safe, mobil WebView biztos */
 (function(){
@@ -186,7 +183,6 @@
 
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="theme-color" content="#F3CD76" />
   <title>EnZenem – Egyedi, profi zenék rendezvényekre</title>
 
   <!-- Lemez pörgés – minimal inline -->
@@ -503,16 +499,6 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     color: inherit;
   }
 </style>
-<style>
-  /* Csak a rövid cím (data-label) jelenjen meg a mintagombokon */
-  #order .nb-show-label { position: relative; }
-  #order .nb-show-label::before {
-    content: attr(data-label);
-    font: inherit;
-    color: inherit;
-  }
-</style>
-<!-- removed inline UA-flag block -->
 
 </head>
 <body class="gold-theme no-intro">
@@ -669,15 +655,18 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
         <input autocomplete="off" name="_hp" style="display:none" tabindex="-1" type="text"/>
         <div class="grid">
         <label class="gold-text">Csomag (fizetés bankkártyával: Visa vagy MasterCard)
-            <select name="package" required="">
-              <option value="basic">Alap (MP3)</option>
-              <option value="video">Videó csomag (MP4)</option>
-              <option value="premium">Prémium (WAV)</option>
-            </select>
-        <label class="gold-text">
-         Dal címe (opcionális)
-        <input name="title" type="text" placeholder="pl. Budai csillag">
-        </label>
+  <select name="package" required>
+    <option value="basic">Alap (MP3)</option>
+    <option value="video">Videó csomag (MP4)</option>
+    <option value="premium">Prémium (WAV)</option>
+  </select>
+</label>
+
+<label class="gold-text">
+  Dal címe (opcionális)
+  <input name="title" type="text" placeholder="pl. Budai csillag">
+</label>
+
           <label class="gold-text">E-mail (ahová a linket küldjük)
             <input name="email" placeholder="pelda@domain.hu" required="" type="email"/>
           </label>
