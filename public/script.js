@@ -32,7 +32,6 @@
     console.warn("Samsung detection error:", e);
   }
 })();
-
 // --- WebView + "Asztali webhely kérése" – DESKTOP-SAFE + THROTTLE + NO-OP ---
 (function () {
   try {
@@ -98,13 +97,15 @@
 })();
 ;
 
+
+
 /* =========================================================
    EnZenem – main script
    - Tab navigation (vinyl-tabs) + scroll to top
    - Package card selection
    - HOWTO -> ORDER (delegált) + example chips → placeholder
    - Brief helper (counter + quality, NO DUPLICATES) + examples on ORDER
-   - Contact form
+   - Order form (ALWAYS show license modal) + Contact form
    - Thanks overlay
    - Consent bar + License modal
    ========================================================= */
@@ -241,32 +242,33 @@ function initHowTo() {
     gotoOrder();
 
     // majd pici késleltetéssel beállítjuk a placeholdert
-    setTimeout(() => {
-      const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
-      if (!desc) return;
+  setTimeout(() => {
+  const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
+  if (!desc) return;
 
-      desc.placeholder = text;
-      desc.dispatchEvent(new Event('input', { bubbles: true }));
+  desc.placeholder = text;
+  desc.dispatchEvent(new Event('input', { bubbles: true }));
 
-      const isMobile = window.innerWidth < 640;
+  const isMobile = window.innerWidth < 640;
 
-      if (isMobile) {
-        try { desc.focus({ preventScroll: true }); } catch (_) {}
-        desc.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
-      } else {
-        // DESKTOP → görgetés a Megrendelés panel tetejére
-        const orderPanel = qs('#order');
-        if (orderPanel) {
-          orderPanel.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
-        }
-      }
-    }, 400);
+  if (isMobile) {
+    try { desc.focus({ preventScroll: true }); } catch (_) {}
+    desc.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+  } else {
+    // DESKTOP → görgetés a Megrendelés panel tetejére
+    const orderPanel = qs('#order');
+    if (orderPanel) {
+      orderPanel.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }
+}, 400);
+
   });
 }
 
@@ -370,7 +372,78 @@ function initBriefHelper() {
   desc.addEventListener('input', updateQuality);
   updateQuality();
 
-  // Itt NEM küldjük el a megrendelést – azt az enzenem-generate.js intézi
+  // Beküldés előtt ellenőrzés – 120 karakter alatt ne engedje
+  const form = desc.closest('form');
+  form?.addEventListener('submit', (e) => {
+    const len = (desc.value || '').trim().length;
+    if (len < 120) {
+      e.preventDefault();
+      alert('A Leírás túl rövid. Kérlek, adj több támpontot (kinek, alkalom, stílus, kulcsszavak, emlékek), hogy személyre szabhassuk a dalt.');
+      desc.focus();
+    }
+  });
+}
+
+/* ---------- Order form submit (ALWAYS show license modal) ---------- */
+function initOrderForm() {
+  const orderForm   = qs('#orderForm');
+  const orderStatus = qs('#orderStatus');
+  const modal       = qs('#license-warning');
+  const acceptBtn   = qs('#licenseAccept');
+  const cancelBtn   = qs('#licenseCancel');
+  if (!orderForm) return;
+
+  // ne legyen natív navigáció – fetch küldi
+  orderForm.setAttribute('action', 'javascript:void(0)');
+
+  async function actuallySend(data) {
+    if (orderStatus) orderStatus.textContent = 'Küldés...';
+    try {
+      const json = await postJSON('/api/order', data);
+      if (orderStatus) { orderStatus.textContent = ''; orderStatus.style.display = 'none'; }
+      orderForm.reset();
+      // ✅ NOVABOT: SIKER
+      try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderSuccess && window.novaOrderSuccess(); } } catch(_){}
+      setTimeout(() => {
+        const desc = qs('#order textarea[name="brief"]');
+        if (desc) desc.dispatchEvent(new Event('input', { bubbles: true }));
+      }, 10);
+    } catch (err) {
+      if (orderStatus) orderStatus.textContent = 'Nem sikerült elküldeni. Próbáld újra később.';
+      console.error(err);
+      // ✅ NOVABOT: HIBA
+      try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderFail && window.novaOrderFail(); } } catch(_){}
+    }
+  }
+
+  function showModal(){ if (modal){ modal.style.display='block'; modal.setAttribute('aria-hidden','false'); } }
+  function hideModal(){ if (modal){ modal.style.display='none';  modal.setAttribute('aria-hidden','true'); } }
+
+  orderForm.addEventListener('submit', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const data = Object.fromEntries(new FormData(orderForm).entries());
+
+    // MINDIG kérdezzünk rá (nincs cookie / localStorage)
+    showModal();
+
+    const onAccept = () => {
+      hideModal();
+      acceptBtn?.removeEventListener('click', onAccept);
+      cancelBtn?.removeEventListener('click', onCancel);
+      actuallySend(data);
+    };
+    const onCancel = () => {
+      hideModal();
+      if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
+      acceptBtn?.removeEventListener('click', onAccept);
+      cancelBtn?.removeEventListener('click', onCancel);
+      // ✅ NOVABOT: FELTÉTEL ELUTASÍTVA → HIBA üzenet
+      try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderFail && window.novaOrderFail(); } } catch(_){}
+    };
+
+    acceptBtn?.addEventListener('click', onAccept, { once:true });
+    cancelBtn?.addEventListener('click', onCancel, { once:true });
+  });
 }
 
 /* ---------- Contact form submit + thanks overlay (no redirect) ---------- */
@@ -429,8 +502,8 @@ function initLicenseModal() {
   const cancel = qs('#licenseCancel');
   if (!modal || !ok || !cancel) return;
 
-  // A tényleges megnyitást az Order submit flow intézi (enzenem-generate.js)
-  ok.addEventListener('click', () => {});
+  // A tényleges megnyitást az Order submit flow intézi.
+  ok.addEventListener('click', () => { /* submit flow kezeli */ });
   cancel.addEventListener('click', () => {
     modal.style.display = 'none';
     modal.setAttribute('aria-hidden', 'true');
@@ -443,6 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPackages();
   initHowTo();       // delegált HOWTO→ORDER
   initBriefHelper(); // ha az ORDER aktív lenne induláskor
+  initOrderForm();
   initContactForm();
   initConsent();
   initLicenseModal();
@@ -458,6 +532,36 @@ document.addEventListener('click', (e) => {
   if (btn) {
     btn.click();
     btn.focus();
+  }
+});
+
+// Köszönjük overlay „intelligens” megjelenítés
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('contactForm');
+  const statusEl = document.getElementById('contactStatus');
+  const overlay = document.getElementById('thanksOverlay');
+  const closeBtn = document.getElementById('overlayClose');
+
+  if (!overlay) return;
+
+  // 1) Ha a státusz szöveg „elküldve” állapotra vált, felugrik az overlay
+  if (statusEl) {
+    const obs = new MutationObserver(() => {
+      const t = (statusEl.textContent || '').toLowerCase();
+      if (t.includes('elküldve') || t.includes('köszönjük')) {
+        overlay.classList.remove('hidden');
+        overlay.classList.add('show');
+      }
+    });
+    obs.observe(statusEl, { childList: true, subtree: true, characterData: true });
+  }
+
+  // 3) Bezárás gomb – overlay eltűnik
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      overlay.classList.add('hidden');
+      overlay.classList.remove('show');
+    });
   }
 });
 
@@ -486,7 +590,20 @@ document.addEventListener('click', (e) => {
     }
   };
 })();
+// LOGÓ: a forgást a szülő wrapperre tesszük, az <img> marad fix méretű (tegnapi bevált fix)
+document.addEventListener('DOMContentLoaded', () => {
+  const logoImg = document.querySelector('.topbar .brand > img.spinning-vinyl, .site-logo img');
+  if (!logoImg) return;
 
+  // ha már be van csomagolva, nem csinálunk semmit
+  if (logoImg.closest('.spin-wrap')) return;
+
+  // wrapper létrehozása és beillesztése
+  const wrap = document.createElement('span');
+  wrap.className = 'spin-wrap';
+  logoImg.parentNode.insertBefore(wrap, logoImg);
+  wrap.appendChild(logoImg);
+});
 // LOGÓ: wrap + integer px. A lemezekhez NEM nyúlunk.
 document.addEventListener('DOMContentLoaded', () => {
   const logoImg = document.querySelector('.topbar .brand > img.spinning-vinyl, .site-logo img');
@@ -503,17 +620,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // MENÜ lemez aktuális szélességének mérése → integer px (sweet spot)
   const tab = document.querySelector('.vinyl-tabs .tab');
+  // fallback: ha nincs tab, használjuk a jelenlegi logo szélességét
   const baseW = tab ? tab.getBoundingClientRect().width : logoImg.getBoundingClientRect().width;
-  const size = Math.round(baseW);
+  const size = Math.round(baseW);           // egész px → nem recés
   wrap.style.width  = size + 'px';
   wrap.style.height = size + 'px';
 
+  // biztosan ne forogjon a kép, csak a wrap (felülírjuk inline is)
   logoImg.style.animation = 'none';
   logoImg.style.transform = 'none';
   logoImg.style.width  = '100%';
   logoImg.style.height = '100%';
 });
-
 // ORDER "Minta leírások" – futás közben beszúrjuk a szükséges CSS-t
 (function injectOrderExamplesStyles(){
   const id = 'order-example-hotfix';
@@ -548,7 +666,6 @@ document.addEventListener('DOMContentLoaded', () => {
   style.textContent = css;
   document.head.appendChild(style);
 })();
-
 // --- HOWTO példák: töltsük fel a hiányzó data-example-öket ---
 (function seedHowtoExamples(){
   const map = {
@@ -567,14 +684,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const chips = document.querySelectorAll('#howto .examples .chip');
   chips.forEach(btn => {
     if (!btn.hasAttribute('data-example')) {
-      const label = (btn.textContent || '').replace(/^[^\wÁÉÍÓÖŐÚÜŰáéíóöőúüű]+/, '').trim();
+      const label = (btn.textContent || '').replace(/^[^\wÁÉÍÓÖŐÚÜŰáéíóöőúüű]+/, '').trim(); // emoji lecsípése
       const key = Object.keys(map).find(k => label.includes(k));
       if (key) btn.setAttribute('data-example', map[key]);
     }
   });
 })();
-
-// === ORDER kötelező mezők: Nyelv + Leírás (min 120) – CAPTURE guard ===
+// === ORDER kötelező mezők: Nyelv + Leírás (min 120) – beküldés blokkolása ===
 (function hardenOrderValidation(){
   const form = document.getElementById('orderForm');
   if (!form) return;
@@ -582,12 +698,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const lang = form.querySelector('input[name="language"]');
   const desc = form.querySelector('textarea[name="brief"], textarea#brief, textarea');
 
+  // tegyük kötelezővé natívan is
   if (lang) lang.setAttribute('required', '');
   if (desc) { desc.setAttribute('required', ''); desc.setAttribute('minlength', '120'); }
 
+  // globális, CAPTURE fázisú submit-őr – megelőzi a többi listener működését
   document.addEventListener('submit', function(e){
     if (e.target !== form) return;
 
+    // alaphelyzet: nincs hiba
     if (lang) lang.setCustomValidity('');
     if (desc) desc.setCustomValidity('');
 
@@ -606,10 +725,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!ok){
       e.preventDefault();
-      e.stopPropagation();
-      form.reportValidity();
+      e.stopPropagation();           // ne fusson le semmilyen másik submit-handler
+      form.reportValidity();         // natív buborék/kiemelés
     }
-  }, true);
+  }, true); // ⬅ capture: igaz
 })();
 
 /* [GOLDEN WV PATCH v2] Mark video/sample as ready in WebView to avoid flash */

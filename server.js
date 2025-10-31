@@ -296,16 +296,13 @@ async function sunoStartV1(url, headers, body){
   return { ok:false, status:503, text:'start_unavailable_after_retries' };
 }
 
-// === ENZENEM: INSTANT-RESPONSE GENERATE SONG ENDPOINT (2025-10-31, CLEAN FIX) ===
+/* ============ GPT → Suno generate (NO POLISH) ============ */
 app.post('/api/generate_song', async (req, res) => {
   try {
-    const order = req.body || {};
-
-    // 🔹 Ügyfélnek azonnali visszajelzés
-    res.json({ ok:true, message:'Köszönjük! Megrendelésed feldolgozás alatt.' });
-
-    // 🔹 Háttérben fusson le ugyanaz a logika (nem függvényesen)
-    setImmediate(async () => {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
+    if (!rateLimit('gen:' + ip, 45000, 5)) {
+      return res.status(429).json({ ok:false, message:'Túl sok kérés. Próbáld később.' });
+    }
 
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
 
@@ -730,13 +727,9 @@ function normalizeGenre(g) {
 
     return res.json({ ok:true, lyrics, style: styleFinal, tracks });
 
-   } catch (err) {
-        console.error('[BG ERROR generate_song]', err);
-      }
-    });
-
   } catch (e) {
     console.error('[generate_song]', e);
+    return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
   }
 });
 
