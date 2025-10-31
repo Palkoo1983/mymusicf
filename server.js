@@ -296,13 +296,35 @@ async function sunoStartV1(url, headers, body){
   return { ok:false, status:503, text:'start_unavailable_after_retries' };
 }
 
-/* ============ GPT → Suno generate (NO POLISH) ============ */
+// === ENZENEM: INSTANT-RESPONSE GENERATE SONG ENDPOINT (2025-10-31) ===
 app.post('/api/generate_song', async (req, res) => {
-  try {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
-    if (!rateLimit('gen:' + ip, 45000, 5)) {
-      return res.status(429).json({ ok:false, message:'Túl sok kérés. Próbáld később.' });
+  const orderData = req.body || {};
+
+  // 1️⃣ azonnali válasz a frontendnek – ne várjon GPT / Suno / Sheets folyamatra
+  res.json({ message: 'Köszönjük! Megrendelésed feldolgozás alatt.' });
+
+  // 2️⃣ háttérfeldolgozás biztonságos try/catch-ben
+  (async () => {
+    try {
+      console.log('▶ [BG] Processing order for', orderData.email || 'unknown');
+
+      // 2/a dalszöveg generálás (ChatGPT)
+      const lyrics = await generateLyrics(orderData);
+
+      // 2/b zene generálás (Suno API)
+      const tracks = await generateMusic(orderData, lyrics);
+
+      // 2/c naplózás Google Sheet-be
+      await logToSheets(orderData, lyrics, tracks);
+
+      console.log('✅ [BG] Order complete for', orderData.email);
+    } catch (err) {
+      console.error('❌ [BG] Error in background processing:', err);
     }
+  })();
+});
+
+
 
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
 
