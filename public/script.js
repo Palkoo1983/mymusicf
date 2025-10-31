@@ -392,32 +392,33 @@ function initOrderForm() {
   // ne legyen natív navigáció – fetch küldi
   orderForm.setAttribute('action', 'javascript:void(0)');
 
-  // Teljesen azonnali, "fire and forget" működés
   orderForm.addEventListener('submit', (e) => {
     e.preventDefault();
     e.stopPropagation();
 
     const data = Object.fromEntries(new FormData(orderForm).entries());
 
-    // 🔹 Azonnal elküldjük a rendelést, nem várjuk meg a választ, nincs modal
-    try {
-      fetch('/api/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-    } catch (err) {
-      console.error('Order send error (ignored):', err);
-    }
+    // 🔹 Azonnal elküldjük, de biztonságos "fire-and-forget" módon
+    (async () => {
+      try {
+        await fetch('/api/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      } catch (err) {
+        console.error('Order send error (ignored):', err);
+      }
+    })();
 
-    // 🔹 Azonnali NovaBot visszajelzés (siker)
+    // 🔹 Azonnali NovaBot visszajelzés
     try {
       if (!(window.NB_NOTIFY_SOURCE === 'generate')) {
         window.novaOrderSuccess && window.novaOrderSuccess();
       }
     } catch (_) {}
 
-    // 🔹 Form ürítés, hogy rögtön új rendelés lehessen
+    // 🔹 Form ürítés
     orderForm.reset();
   });
 }
