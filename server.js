@@ -304,6 +304,14 @@ app.post('/api/generate_song', async (req, res) => {
       return res.status(429).json({ ok:false, message:'Túl sok kérés. Próbáld később.' });
     }
 
+
+    // 🔹 1️⃣ Ügyfél azonnali válasz – ne várja meg a hosszú folyamatot
+    res.json({ ok:true, message:"Köszönjük! Megrendelésed feldolgozás alatt." });
+
+    // 🔹 2️⃣ Háttérben elindítjuk ugyanazt a folyamatot (GPT → Suno → Sheet)
+    setImmediate(async () => {
+      try {
+
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
 
     // Map package/format
@@ -325,15 +333,20 @@ app.post('/api/generate_song', async (req, res) => {
     const SUNO_BASE_URL  = (process.env.SUNO_BASE_URL || '').replace(/\/+$/,'');
     const PUBLIC_URL     = (process.env.PUBLIC_URL || '').replace(/\/+$/,'');
 
-    if (!OPENAI_API_KEY) return res.status(500).json({ ok:false, message:'OPENAI_API_KEY hiányzik' });
-    if (!SUNO_API_KEY)   return res.status(500).json({ ok:false, message:'Suno API key hiányzik' });
-    if (!SUNO_BASE_URL)  return res.status(500).json({ ok:false, message:'SUNO_BASE_URL hiányzik' });
+    if (!OPENAI_API_KEY || !SUNO_API_KEY || !SUNO_BASE_URL) {
+  console.warn('[generate_song] Missing API keys or base URL.');
+  return;
+}
 
     // Idempotencia
     const key = makeKey({ title, styles, vocal, language, brief });
     const now = Date.now();
     const last = activeStarts.get(key) || 0;
-    if (now - last < 20000) return res.status(202).json({ ok:true, message:'Már folyamatban van egy azonos kérés.' });
+    if (now - last < 20000) {
+  console.warn('[generate_song] Duplicate request ignored.');
+  return;
+}
+
     activeStarts.set(key, now);
     setTimeout(() => activeStarts.delete(key), 60000);
 
@@ -452,10 +465,11 @@ const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
   })
 });
 
-    if(!oi1.ok){
-      const t = await oi1.text();
-      return res.status(502).json({ ok:false, message:'OpenAI error', detail:t });
-    }
+   if(!oi1.ok){
+  const t = await oi1.text();
+  console.warn('[generate_song] OpenAI error', t.slice(0,200));
+  return;
+}
     const j1 = await oi1.json();
 
 // --- ROBUSZTUS JSON + FALLBACK + POLISH ---
@@ -670,13 +684,17 @@ function normalizeGenre(g) {
       callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
     });
 
-    if (!startRes.ok) {
-      return res.status(502).json({ ok:false, message:'Suno start error', detail:startRes.text, status:startRes.status });
-    }
+   if (!startRes.ok) {
+  console.warn('[generate_song] Suno start error', startRes.status);
+  return;
+}
+
     const sj = startRes.json;
-    if (!sj || sj.code !== 200 || !sj.data || !sj.data.taskId) {
-      return res.status(502).json({ ok:false, message:'Suno start error – bad response', detail: JSON.stringify(sj) });
-    }
+  if (!sj || sj.code !== 200 || !sj.data || !sj.data.taskId) {
+  console.warn('[generate_song] Suno bad response', sj);
+  return;
+}
+
     const taskId = sj.data.taskId;
 
     // Poll up to 2 tracks
@@ -717,7 +735,10 @@ function normalizeGenre(g) {
         .slice(0, 2);
     }
 
-    if (!tracks.length) return res.status(502).json({ ok:false, message:'Suno did not return tracks in time.' });
+    if (!tracks.length) {
+  console.warn('[generate_song] No tracks returned in time.');
+  return;
+}
 
     try {
       const link1 = tracks[0]?.audio_url || '';
@@ -725,11 +746,13 @@ function normalizeGenre(g) {
       await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2, format });
     } catch (_e) { /* log only */ }
 
-    return res.json({ ok:true, lyrics, style: styleFinal, tracks });
+    } catch (err) {
+        console.error('[BG generate_song error]', err);
+      }
+    });
 
   } catch (e) {
-    console.error('[generate_song]', e);
-    return res.status(500).json({ ok:false, message:'Hiba történt', error: (e && e.message) || e });
+    console.error('[generate_song wrapper error]', e);
   }
 });
 
