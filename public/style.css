@@ -3020,3 +3020,92 @@ sessionStorage.setItem(KEY, '1');
   // néha tab-váltás után már engedélyezett lesz
   document.addEventListener('visibilitychange', () =>{if (document.visibilityState === 'visible' && sessionStorage.getItem(KEY) !== '1') unlock();
   }
+/* =========================================================
+   GOLDEN WEBVIEW PATCH v2 – MOBILE / SAMSUNG / AUDIO FIXES
+   ========================================================= */
+
+/* --- Általános mobil háttér (Chrome, Safari, Samsung Internet) --- */
+html.ua-mobilelike body,
+html.ua-androidwv body,
+html.ua-ioswv body,
+html.ua-samsung body {
+  background-color: #000 !important;
+  color: #f5f5f5;
+}
+
+/* --- Mobilon az audio-panel legyen látható, a video-panel rejtve --- */
+html.ua-mobilelike .video-panel,
+html.ua-androidwv .video-panel,
+html.ua-ioswv .video-panel,
+html.ua-samsung .video-panel {
+  display: none !important;
+}
+
+html.ua-mobilelike .audio-panel,
+html.ua-androidwv .audio-panel,
+html.ua-ioswv .audio-panel,
+html.ua-samsung .audio-panel {
+  display: block !important;
+}
+
+/* --- Desktop mód (normál böngésző) --- */
+html:not(.ua-mobilelike):not(.ua-androidwv):not(.ua-ioswv):not(.ua-samsung) .video-panel {
+  display: block !important;
+}
+
+html:not(.ua-mobilelike):not(.ua-androidwv):not(.ua-ioswv):not(.ua-samsung) .audio-panel {
+  display: none !important;
+}
+
+/* --- Samsung Internet specifikus vizuális korrekciók --- */
+html.ua-samsung body {
+  background-color: #000 !important;
+  overscroll-behavior-y: none;
+}
+
+html.ua-samsung .vinyl-tabs .tab {
+  text-shadow: 0 0 4px rgba(243,210,122,.5);
+  backdrop-filter: none;
+}
+
+html.ua-samsung .nova-bot {
+  position: fixed !important;
+  bottom: 0.5rem !important;
+  z-index: 9999 !important;
+}
+
+/* --- WebView / "Asztali nézet kérés" javítások --- */
+html.ua-webview .vinyl-tabs,
+html.ua-desktopreq .vinyl-tabs {
+  transform: scale(0.98);
+  transform-origin: top center;
+  transition: transform 0.3s ease;
+}
+
+html.ua-webview body,
+html.ua-desktopreq body {
+  background-color: #000 !important;
+}
+
+/* --- Audio / Video container finomítás --- */
+.video-panel, .audio-panel {
+  border: 1px solid rgba(243,210,122,0.3);
+  border-radius: 12px;
+  background-color: rgba(0,0,0,0.8);
+  box-shadow: 0 0 10px rgba(243,210,122,0.2);
+}
+
+.video-panel iframe,
+.audio-panel audio {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* --- NovaBot fix pozíció mobilon --- */
+html.ua-mobilelike #novabot,
+html.ua-samsung #novabot {
+  bottom: 0.5rem !important;
+  right: 1rem !important;
+  z-index: 9999 !important;
+}
