@@ -95,7 +95,6 @@
     addEventListener("orientationchange", applyFlagsCore);
   } catch(e) {}
 })();
-;
 
 
 
@@ -731,7 +730,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }, true); // ⬅ capture: igaz
 })();
 
-/* [GOLDEN WV PATCH v2] Mark video/sample as ready in WebView to avoid flash */
 (function(){
   function arm(el){
     if(!el) return;
