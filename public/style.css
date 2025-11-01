@@ -2374,3 +2374,6 @@ html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab:is(:hover,:focus-visible,:acti
     if (document.visibilityState === 'visible' && sessionStorage.getItem(KEY) !== '1') unlock();
   });
 })();
+.novabot-voice-status.visible {
+  display: block !important;
+}
