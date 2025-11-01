@@ -774,11 +774,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const mute = document.getElementById('nv-silent');
 
   // Chrome intent Samsungból → Chrome megnyitás
-  open?.addEventListener('click', (e) => {
-    e.preventDefault();
-    const target = window.location.href.replace(/^https?:\/\//, '');
-    window.location.href = `intent://${target}#Intent;scheme=https;package=com.android.chrome;end`;
-  });
+ open?.addEventListener('click', (e) => {
+  e.preventDefault();
+  const target = window.location.href.replace(/^https?:\/\//, '');
+  window.location.href = `intent://${target}#Intent;scheme=https;package=com.android.chrome;end`;
+});
 
   // Néma mód → elrejtés
   mute?.addEventListener('click', () => {
