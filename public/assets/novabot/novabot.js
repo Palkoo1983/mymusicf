@@ -364,3 +364,37 @@ window.novaOrderFail = function(){
 };
 
 })();
+
+// --- NovaBot voice fallback (only if no speech engine) ---
+document.addEventListener("DOMContentLoaded", () => {
+  const hasSpeech = "speechSynthesis" in window && window.speechSynthesis;
+  const isSamsung = /SamsungBrowser|wv/i.test(navigator.userAgent);
+
+  const panel = document.querySelector(".novabot-voice-status");
+  const openBtn = document.querySelector(".open-in-browser");
+  const muteBtn = document.querySelector(".mute-mode");
+
+  // Only show the panel if there is NO speech capability
+  if (!hasSpeech) {
+    panel?.classList.add("visible");
+  } else {
+    panel?.classList.remove("visible");
+  }
+
+  // If visible, handle the "Megnyitás böngészőben" button
+  if (openBtn) {
+    openBtn.addEventListener("click", () => {
+      if (isSamsung) {
+        const target = window.location.href.replace(/^https?:\/\//, "");
+        window.location.href = `intent://${target}#Intent;scheme=https;package=com.android.chrome;end`;
+      } else {
+        window.open(window.location.href, "_blank");
+      }
+    });
+  }
+
+  // Hide or disable the "Néma mód" button if there is no voice engine
+  if (!hasSpeech && muteBtn) {
+    muteBtn.style.display = "none";
+  }
+});
