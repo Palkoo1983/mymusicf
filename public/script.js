@@ -760,3 +760,28 @@ document.addEventListener('DOMContentLoaded', () => {
     init();
   }
 })();
+// === NovaBot fallback – stabil végleges verzió ===
+document.addEventListener('DOMContentLoaded', () => {
+  const bar = document.getElementById('nv-tts-fallback');
+  if (!bar) return;
+
+  // ha van TTS (speechSynthesis), akkor ne mutassa
+  const hasTTS = !!(window.speechSynthesis && typeof speechSynthesis.speak === 'function');
+  bar.style.display = hasTTS ? 'none' : 'block';
+
+  // --- Gombok ---
+  const open = document.getElementById('nv-open-browser');
+  const mute = document.getElementById('nv-silent');
+
+  // Chrome intent Samsungból → Chrome megnyitás
+  open?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const target = window.location.href.replace(/^https?:\/\//, '');
+    window.location.href = `intent://${target}#Intent;scheme=https;package=com.android.chrome;end`;
+  });
+
+  // Néma mód → elrejtés
+  mute?.addEventListener('click', () => {
+    bar.style.display = 'none';
+  });
+});
