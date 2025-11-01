@@ -271,6 +271,20 @@
       if(tryBind() || attempts>20) clearInterval(iv);
     }, 300);
   }
+// ---- Intro flight: KIKAPCSOLVA (stabil dokk) -------------------------
+function runIntroFlight(){
+  try { sessionStorage.setItem('nb_intro_done', '1'); } catch(e){}
+  const root = document.getElementById('novabot');
+  if (!root) return;
+  root.classList.remove('nb-flying', 'nb-inflight');
+  root.classList.add('nb-docked');
+  root.style.transform  = 'none';
+  root.style.transition = 'none';
+  root.style.left = '';
+  root.style.top = '';
+  root.style.right = '';
+  root.style.bottom = '';
+}
 
   // ---- init ------------------------------------------------------------
   function init(){
