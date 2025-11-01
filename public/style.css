@@ -102,7 +102,6 @@ body{
   from { opacity:0; transform:scale(.92) rotate(-12deg); filter:saturate(.7) brightness(.85); }
   to   { opacity:1; transform:scale(1) rotate(0deg);   filter:none; }
 }
-@keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
 
 /* --------- Menü „lemezek” (vinyl-tabs) --------- */
 .vinyl-tabs{
@@ -1321,9 +1320,6 @@ body.gold-theme::after{ content: none !important; }
   }
 }
 
-/* Biztos, ami biztos – a spin keyframes legyen definiálva */
-@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-
   /* ha valamiért nincs wrapper, essünk vissza az <img>-re */
   .topbar .brand > img.spinning-vinyl{
     width: 102px !important;
@@ -1417,10 +1413,6 @@ body.gold-theme::after{ content: none !important; }
 }
 
 /* Finom, folyamatos forgás */
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
 
 /* === EnZenem forgó logó animáció + mobilméret === */
 .topbar img,
@@ -1439,10 +1431,6 @@ body.gold-theme::after{ content: none !important; }
   }
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
 @media (max-width: 640px) {
   .spinning-vinyl,
   .enzenem-logo {
