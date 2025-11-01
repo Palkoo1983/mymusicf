@@ -1,4 +1,4 @@
-// === NovaBot Assistant v3.3 (stable dock + Samsung-only audio enable + talk visual + full-brief speech) ===
+// === NovaBot Assistant v3.3+ (stable dock + Samsung-only audio enable + talk visual + full-brief speech + smart voice fallback) ===
 (function(){
   const state = {
     bubbleOpen: false,
@@ -32,13 +32,11 @@
   // ---- TTS (Web Speech API) --------------------------------------------
   function speak(text){
     try{
-      // Samsung Internet: TTS csak felhasználói gesztus után
       if (!state.synth || !NB_AUDIO_ENABLED) {
         setSpeaking(false);
         return;
       }
 
-      // Voices betöltése (egyes böngészőkben csak később jön meg)
       const loadVoices = () => {
         const voices = state.synth.getVoices();
         if (voices && voices.length) {
@@ -57,7 +55,6 @@
       state.synth.cancel();
       const u = new SpeechSynthesisUtterance(text);
 
-      // magyar hang preferencia
       const hu = (voices||[]).find(v => /hu|hungar/i.test(v.lang));
       if (hu) u.voice = hu;
       u.lang = hu ? hu.lang : 'hu-HU';
@@ -80,13 +77,11 @@
     const root = document.createElement('div');
     root.id = 'novabot';
 
-    // bubble
     const bubble = document.createElement('div');
     bubble.className = 'novabot-bubble';
     bubble.innerHTML = '<span class="novabot-close" aria-label="Bezárás" title="Bezárás">×</span><div class="nb-text">Szia, én vagyok NovaBot 🤖 – segítek eligazodni! Kattints rám vagy a menükre, és elmondom, mit hol találsz.</div>';
     root.appendChild(bubble);
 
-    // avatar
     const avatarWrap = document.createElement('div');
     avatarWrap.className = 'novabot-avatar';
     avatarWrap.style.position = 'relative';
@@ -101,13 +96,12 @@
     glow.className = 'novabot-eyeGlow';
     avatarWrap.appendChild(glow);
 
-    // beszéd-hullám vizuál (kis pulzáló pont – CSS pozicionálja "száj" alá)
     const talk = document.createElement('div');
     talk.className = 'novabot-talkWave';
     avatarWrap.appendChild(talk);
 
     root.appendChild(avatarWrap);
-    
+
     // --- Voice fallback panel (only visible if no speech engine) ---
     const voicePanel = document.createElement('div');
     voicePanel.className = 'novabot-voice-status';
@@ -123,8 +117,7 @@
     document.body.appendChild(root);
 
     // ---- Hang engedélyezése gomb (CSAK Samsung Interneten) ----
-    /* Samsung hang gomb eltávolítva */
-if (false && NB_IS_SAMSUNG) {
+    if (false && NB_IS_SAMSUNG) {
       const soundBtn = document.createElement('button');
       soundBtn.type = 'button';
       soundBtn.className = 'novabot-sound-btn';
@@ -138,29 +131,22 @@ if (false && NB_IS_SAMSUNG) {
         soundBtn.classList.add('hide');
       };
 
-      // gomb kattintásra engedélyezünk
       soundBtn.addEventListener('click', (e)=>{
-        if (!e.isTrusted) return; // csak valódi érintés
+        if (!e.isTrusted) return;
         e.stopPropagation();
         enableAudio();
       });
 
-      // első user GESZTUSRA is (csak touchstart, és csak Samsungon)
       const firstGesture = (ev)=>{
         if (!ev.isTrusted) return;
         enableAudio();
         document.removeEventListener('touchstart', firstGesture, {passive:true});
       };
       document.addEventListener('touchstart', firstGesture, {passive:true});
-    } else {
-      // nem Samsung → azonnal engedélyezett, gomb sincs
-      // NB_AUDIO_ENABLED már true alapból
     }
 
-    // indulás: dokkolt jobb-alsó sarokban
     root.classList.add('nb-docked');
 
-    // interakciók
     avatarWrap.addEventListener('click', () => {
       toggleBubble(true);
       const msg = 'Szia, én vagyok NovaBot! Itt vagyok lent és segítek Neked. Próbáld ki a bakelit lemez füleket vagy kattints a Megrendelés lemezre.';
@@ -175,7 +161,6 @@ if (false && NB_IS_SAMSUNG) {
       if(state.synth) state.synth.cancel();
     });
 
-    // finom automata buborék indítás
     setTimeout(()=> toggleBubble(true), 1200);
   }
 
@@ -219,47 +204,28 @@ if (false && NB_IS_SAMSUNG) {
     document.addEventListener('click', (e)=>{
       const tab = e.target.closest('.vinyl-tabs .tab, [data-tab], [data-target], nav a, .nav a, .menu a, a[href^="#"]');
       if(!tab) return;
-
       const href  = tab.getAttribute('href') || '';
       const dt    = tab.getAttribute('data-target') || '';
       const dtab  = tab.getAttribute('data-tab') || '';
       const aria  = tab.getAttribute('aria-controls') || '';
       const id    = tab.id || '';
       const label = tab.textContent || tab.getAttribute('aria-label') || '';
-
       const hint = norm([href, dt, dtab, aria, id].join(' '));
       const text = norm(label);
-
-      if ( /how|hogyan|howto/.test(hint) || /hogyan/.test(text) ){
-        describeTab('hogyan');
-      }
-      else if ( /ar|arak|price|pricing|csomag/.test(hint) || /arak|csomag/.test(text) ){
-        describeTab('arak');
-      }
-      else if ( /order|rendel|megrendel/.test(hint) || /megrendeles|rendeles/.test(text) ){
-        describeTab('megrendeles');
-      }
-      else if ( /ref|minta|referenc/.test(hint) || /referencia|referenciak|minta/.test(text) ){
-        describeTab('referenciak');
-      }
-      else if ( /contact|kapcsol/.test(hint) || /kapcsolat/.test(text) ){
-        describeTab('kapcsolat');
-      }
-      else if ( /bemut|fooldal|home|intro/.test(hint) || /bemutatkozas|fooldal|home/.test(text) ){
-        describeTab('bemutatkozas');
-      }
-      else {
-        describeTab('');
-      }
+      if ( /how|hogyan|howto/.test(hint) || /hogyan/.test(text) ){ describeTab('hogyan'); }
+      else if ( /ar|arak|price|pricing|csomag/.test(hint) || /arak|csomag/.test(text) ){ describeTab('arak'); }
+      else if ( /order|rendel|megrendel/.test(hint) || /megrendeles|rendeles/.test(text) ){ describeTab('megrendeles'); }
+      else if ( /ref|minta|referenc/.test(hint) || /referencia|referenciak|minta/.test(text) ){ describeTab('referenciak'); }
+      else if ( /contact|kapcsol/.test(hint) || /kapcsolat/.test(text) ){ describeTab('kapcsolat'); }
+      else if ( /bemut|fooldal|home|intro/.test(hint) || /bemutatkozas|fooldal|home/.test(text) ){ describeTab('bemutatkozas'); }
+      else { describeTab(''); }
     }, true);
   }
 
-  // ---- BRIEF kiolvasása (Megrendelés) ---------------------------------
   function getOrderBriefText() {
     const cand =
       document.querySelector('#order textarea, #order [name*="leiras" i], #order [name*="description" i]') ||
       document.querySelector('[data-section*="order" i] textarea, [data-section*="megrendel" i] textarea');
-
     if (!cand) return "";
     return (
       cand.getAttribute('placeholder') ||
@@ -268,24 +234,17 @@ if (false && NB_IS_SAMSUNG) {
     ).trim();
   }
 
-  // ---- Mintagombok: TELJES placeholdert mondunk -----------------------
   function bindExampleChips(){
     document.addEventListener('click', (e)=>{
       const chip = e.target.closest('.example-chip, .example, .chip, .minta, .mintaleiras, [data-example], [data-minta]');
       if(!chip) return;
-
-      const inOrder = chip.closest('#order, [id*="order" i], [data-section*="order" i], [data-section*="megrendel" i], [data-target*="order" i], [href*="#order" i]');
+      const inOrder = chip.closest('#order, [id*="order" i], [data-section*="order" i], [data-section*="megrendel" i]');
       if(!inOrder) return;
-
       let full = (chip.getAttribute('data-example') || chip.getAttribute('data-minta') || chip.getAttribute('data-full') || '').trim();
-
-      // Ha másik script most állít placeholdert, várunk kicsit és újraolvasunk
       setTimeout(()=>{
         const briefNow = getOrderBriefText();
         if (briefNow) full = briefNow;
         if (!full) return;
-
-        // Buborék: rövid cím, hang: TELJES szöveg
         const label = (chip.getAttribute('data-label') || '').trim();
         setBubbleText(label || full);
         toggleBubble(true);
@@ -294,35 +253,6 @@ if (false && NB_IS_SAMSUNG) {
     }, true);
   }
 
-  // ---- (Opcióként marad) Play célpont kereső – ha később újra kell ----
-  function getPlayTarget(){
-    const sel = [
-      '.play-btn', '.video__play', '.video-play', '.hero-video .play',
-      'button[aria-label*="lejátsz" i]', 'button[aria-label*="lejatsz" i]',
-      '[data-action="play"]', '.plyr__control--overlaid', '.vjs-big-play-button'
-    ].join(',');
-    let el = document.querySelector(sel);
-    if (el) return el;
-    el = document.querySelector('#hero video, .hero video, video');
-    if (el) return el;
-    el = document.querySelector('#video, .video, [data-section*="video" i]');
-    return el || null;
-  }
-
-  // ---- Intro flight: KIKAPCSOLVA (stabil dokk) -------------------------
-  function runIntroFlight(){
-    // csak dokkoljunk stabilan jobb-alsó sarokba, nincs animáció
-    try { sessionStorage.setItem('nb_intro_done', '1'); } catch(e){}
-    const root = document.getElementById('novabot');
-    if (!root) return;
-    root.classList.remove('nb-flying', 'nb-inflight');
-    root.classList.add('nb-docked');
-    root.style.transform  = 'none';
-    root.style.transition = 'none';
-    root.style.left = ''; root.style.top = ''; root.style.right = ''; root.style.bottom = '';
-  }
-
-  // ---- Textarea fókusz hint -------------------------------------------
   function bindOrderTextarea(){
     const tryBind = () => {
       const el = qs('#order textarea, #order [name*="leiras" i], #order [name*="description" i]');
@@ -348,7 +278,34 @@ if (false && NB_IS_SAMSUNG) {
     bindTabs();
     bindExampleChips();
     bindOrderTextarea();
-    setTimeout(runIntroFlight, 700); // most no-op: stabil dokkolás
+    setTimeout(()=>runIntroFlight(),700);
+
+    // --- Voice fallback (csak ha nincs TTS) ---
+    const hasSpeech =
+      "speechSynthesis" in window &&
+      window.speechSynthesis &&
+      typeof window.speechSynthesis.speak === "function" &&
+      !/SamsungBrowser/i.test(navigator.userAgent);
+    const isSamsung = /SamsungBrowser|wv/i.test(navigator.userAgent);
+
+    const panel = document.querySelector(".novabot-voice-status");
+    const openBtn = document.querySelector(".open-in-browser");
+    const muteBtn = document.querySelector(".mute-mode");
+
+    if (!hasSpeech) panel?.classList.add("visible"); else panel?.classList.remove("visible");
+
+    if (openBtn) {
+      openBtn.addEventListener("click", () => {
+        if (isSamsung) {
+          const target = window.location.href.replace(/^https?:\/\//, "");
+          window.location.href = `intent://${target}#Intent;scheme=https;package=com.android.chrome;end`;
+        } else {
+          window.open(window.location.href, "_blank");
+        }
+      });
+    }
+
+    if (!hasSpeech && muteBtn) muteBtn.style.display = "none";
   }
 
   if(document.readyState === 'loading'){
@@ -356,58 +313,23 @@ if (false && NB_IS_SAMSUNG) {
   } else {
     init();
   }
-// === PUBLIC API – rendelés visszajelzések, buborékkal + TTS (ha elérhető) ===
-window.novaBotSay = function(text){
-  try {
-    setBubbleText(text);     // meglévő buborék szöveg
-    toggleBubble(true);      // buborék megjelenítése
-    speak(text);             // TTS (Chrome-ban szól, Samsungon csendben marad)
-  } catch (e) {
-    // ha bármiért nem érhető el a belső függvény, ne dobjunk hibát
-    console && console.warn && console.warn('NovaBotSay fallback:', e);
-  }
-};
 
-// Rövidített hívások a megrendelés siker/hiba ághoz
-window.novaOrderSuccess = function(){
-  window.novaBotSay('Éljen, megrendelésedet elküldted, 48 órán belül megkapod a dalodat.');
-};
-window.novaOrderFail = function(){
-  window.novaBotSay('Oh :(, megrendelésed nem sikerült, kérlek próbáld újra');
-};
+  // --- PUBLIC API ---
+  window.novaBotSay = function(text){
+    try {
+      setBubbleText(text);
+      toggleBubble(true);
+      speak(text);
+    } catch (e) {
+      console && console.warn && console.warn('NovaBotSay fallback:', e);
+    }
+  };
+
+  window.novaOrderSuccess = function(){
+    window.novaBotSay('Éljen, megrendelésedet elküldted, 48 órán belül megkapod a dalodat.');
+  };
+  window.novaOrderFail = function(){
+    window.novaBotSay('Oh :(, megrendelésed nem sikerült, kérlek próbáld újra');
+  };
 
 })();
-
-// --- NovaBot voice fallback (only if no speech engine) ---
-document.addEventListener("DOMContentLoaded", () => {
-  const hasSpeech = "speechSynthesis" in window && window.speechSynthesis;
-  const isSamsung = /SamsungBrowser|wv/i.test(navigator.userAgent);
-
-  const panel = document.querySelector(".novabot-voice-status");
-  const openBtn = document.querySelector(".open-in-browser");
-  const muteBtn = document.querySelector(".mute-mode");
-
-  // Only show the panel if there is NO speech capability
-  if (!hasSpeech) {
-    panel?.classList.add("visible");
-  } else {
-    panel?.classList.remove("visible");
-  }
-
-  // If visible, handle the "Megnyitás böngészőben" button
-  if (openBtn) {
-    openBtn.addEventListener("click", () => {
-      if (isSamsung) {
-        const target = window.location.href.replace(/^https?:\/\//, "");
-        window.location.href = `intent://${target}#Intent;scheme=https;package=com.android.chrome;end`;
-      } else {
-        window.open(window.location.href, "_blank");
-      }
-    });
-  }
-
-  // Hide or disable the "Néma mód" button if there is no voice engine
-  if (!hasSpeech && muteBtn) {
-    muteBtn.style.display = "none";
-  }
-});
