@@ -1,4 +1,5 @@
-// === NovaBot Assistant v3.3+ (stable dock + Samsung-only audio enable + talk visual + full-brief speech + smart voice fallback) ===
+// === NovaBot Assistant v3.3.2 FULL-LENGTH FIXED GOLDEN ===
+// stable dock + Samsung-only audio enable + talk visual + full-brief speech + smart voice fallback
 (function(){
   const state = {
     bubbleOpen: false,
@@ -54,7 +55,6 @@
 
       state.synth.cancel();
       const u = new SpeechSynthesisUtterance(text);
-
       const hu = (voices||[]).find(v => /hu|hungar/i.test(v.lang));
       if (hu) u.voice = hu;
       u.lang = hu ? hu.lang : 'hu-HU';
@@ -65,9 +65,22 @@
       u.onerror = ()=> setSpeaking(false);
 
       state.synth.speak(u);
-    }catch(e){
-      setSpeaking(false);
-    }
+    }catch(e){ setSpeaking(false); }
+  }
+
+  // ---- Intro flight: KIKAPCSOLVA (stabil dokk) -------------------------
+  function runIntroFlight(){
+    try { sessionStorage.setItem('nb_intro_done', '1'); } catch(e){}
+    const root = document.getElementById('novabot');
+    if (!root) return;
+    root.classList.remove('nb-flying', 'nb-inflight');
+    root.classList.add('nb-docked');
+    root.style.transform  = 'none';
+    root.style.transition = 'none';
+    root.style.left = '';
+    root.style.top = '';
+    root.style.right = '';
+    root.style.bottom = '';
   }
 
   // ---- UI létrehozás ---------------------------------------------------
@@ -99,7 +112,6 @@
     const talk = document.createElement('div');
     talk.className = 'novabot-talkWave';
     avatarWrap.appendChild(talk);
-
     root.appendChild(avatarWrap);
 
     // --- Voice fallback panel (only visible if no speech engine) ---
@@ -117,7 +129,7 @@
     document.body.appendChild(root);
 
     // ---- Hang engedélyezése gomb (CSAK Samsung Interneten) ----
-    if (false && NB_IS_SAMSUNG) {
+    if (NB_IS_SAMSUNG) {
       const soundBtn = document.createElement('button');
       soundBtn.type = 'button';
       soundBtn.className = 'novabot-sound-btn';
@@ -149,7 +161,7 @@
 
     avatarWrap.addEventListener('click', () => {
       toggleBubble(true);
-      const msg = 'Szia, én vagyok NovaBot! Itt vagyok lent és segítek Neked. Próbáld ki a bakelit lemez füleket vagy kattints a Megrendelés lemezre.';
+      const msg = 'Szia, én vagyok NovaBot! Itt lent segítek Neked. Próbáld ki a bakelit lemez füleket vagy kattints a Megrendelés fülre.';
       setBubbleText(msg);
       speak(msg);
       pointToHowTo();
@@ -164,11 +176,7 @@
     setTimeout(()=> toggleBubble(true), 1200);
   }
 
-  function setBubbleText(t){
-    const b = qs('.novabot-bubble .nb-text');
-    if(b) b.textContent = t;
-  }
-
+  function setBubbleText(t){ const b = qs('.novabot-bubble .nb-text'); if(b) b.textContent = t; }
   function toggleBubble(show){
     const b = qs('.novabot-bubble');
     if(!b) return;
@@ -181,9 +189,9 @@
     const map = {
       bemutatkozas: 'Ez a rész bemutatja, mivel foglalkozik a weboldalunk.',
       arak: 'Ebben a részben találhatóak választható zenei csomagjaink és ezek árai, díjai.',
-      referenciak: 'Itt találhatóak a weboldal tulajdonosának eredeti videói, példaként – hogy megtudd, milyen minőségre számíthatsz.',
-      megrendeles: 'Itt adhatod le a megrendelést. A mintaleírások segítenek a Leírás megfogalmazásában, görgess le és próbáld ki.',
-      hogyan: 'Itt röviden elmagyarázzuk, hogyan zajlik a folyamat, a tényleges vásárlást a Megrendelés fülön tudod megtenni.',
+      referenciak: 'Itt találhatóak a weboldal tulajdonosának eredeti videói.',
+      megrendeles: 'Itt adhatod le a megrendelést. A mintaleírások segítenek a Leírás megfogalmazásában.',
+      hogyan: 'Itt röviden elmagyarázzuk, hogyan zajlik a folyamat.',
       kapcsolat: 'Itt tudsz üzenni és kérdezni tőlünk.'
     };
     const text = map[name] || 'Ez a rész segít, hogy gyorsan eligazodj ezen a fülön.';
@@ -266,25 +274,8 @@
       return true;
     };
     let attempts = 0;
-    const iv = setInterval(()=>{
-      attempts++;
-      if(tryBind() || attempts>20) clearInterval(iv);
-    }, 300);
+    const iv = setInterval(()=>{ attempts++; if(tryBind() || attempts>20) clearInterval(iv); }, 300);
   }
-// ---- Intro flight: KIKAPCSOLVA (stabil dokk) -------------------------
-function runIntroFlight(){
-  try { sessionStorage.setItem('nb_intro_done', '1'); } catch(e){}
-  const root = document.getElementById('novabot');
-  if (!root) return;
-  root.classList.remove('nb-flying', 'nb-inflight');
-  root.classList.add('nb-docked');
-  root.style.transform  = 'none';
-  root.style.transition = 'none';
-  root.style.left = '';
-  root.style.top = '';
-  root.style.right = '';
-  root.style.bottom = '';
-}
 
   // ---- init ------------------------------------------------------------
   function init(){
@@ -345,5 +336,4 @@ function runIntroFlight(){
   window.novaOrderFail = function(){
     window.novaBotSay('Oh :(, megrendelésed nem sikerült, kérlek próbáld újra');
   };
-
 })();
