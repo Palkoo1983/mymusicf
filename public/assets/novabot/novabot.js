@@ -107,6 +107,19 @@
     avatarWrap.appendChild(talk);
 
     root.appendChild(avatarWrap);
+    
+    // --- Voice fallback panel (only visible if no speech engine) ---
+    const voicePanel = document.createElement('div');
+    voicePanel.className = 'novabot-voice-status';
+    voicePanel.innerHTML = `
+      <div class="nb-voice-msg">
+        <p>NovaBot hang nem elérhető ebben a böngészőben.</p>
+        <button type="button" class="open-in-browser">Megnyitás böngészőben</button>
+        <button type="button" class="mute-mode">Néma mód</button>
+      </div>`;
+    voicePanel.style.display = 'none';
+    root.appendChild(voicePanel);
+
     document.body.appendChild(root);
 
     // ---- Hang engedélyezése gomb (CSAK Samsung Interneten) ----
