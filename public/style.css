@@ -1701,7 +1701,7 @@ html.ua-samsung #contact-submit {
 @media only screen and (max-device-width: 1024px) and (min-width: 980px) {
   html, body {
     width: 1280px !important;          /* desktop layout */
-    transform: scale(0.75) !important; /* kijelzőhöz igazított */
+    transform: scale(0.9) !important; /* kijelzőhöz igazított */
     transform-origin: top center !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
@@ -1738,7 +1738,3 @@ html.ua-samsung #contact-submit {
     z-index: 3 !important;
   }
 }
-/* === END FIX === */
-  html, body {
-    transform: scale(0.9) !important;     /* finom nagyítás, hogy kitöltse a kijelzőt */
-  }
