@@ -1786,3 +1786,17 @@ html.ua-ipad .vinyl-tabs .tab span {
   font-weight: 600 !important;
 }
 /* === END FIX === */
+/* === Highlight visibility fix for Samsung & iPad WebView (Nova 2025-11-03b) === */
+html.ua-samsung .vinyl-tabs .tab.active::after,
+html.ua-ipad .vinyl-tabs .tab.active::after {
+  opacity: 1 !important;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 220, 130, 0.25) 0%,
+    rgba(255, 255, 200, 0.35) 40%,
+    rgba(255, 220, 130, 0.25) 80%,
+    transparent 100%
+  ) !important;
+  mix-blend-mode: normal !important;  /* fallback, hogy látható legyen */
+  box-shadow: inset 0 0 12px rgba(255, 220, 130, 0.3);
+}
