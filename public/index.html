@@ -11,9 +11,17 @@
 <style>
   :root{ --bg:#0d1b2a; }
   html, body { background:#0d1b2a; }
+
+  /* csak fő tartalom fagyasztás, nem az egész oldal! */
+  html.booting body > *:not(.topbar):not(.video-panel){
+    transition:none !important;
+    animation:none !important;
+  }
+
   html.booting .video-panel iframe,
   html.booting .video-panel video{ visibility:hidden !important; }
 </style>
+
 <script>
   (function(){
     var svh = window.innerHeight * 0.01;
