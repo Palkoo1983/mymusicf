@@ -496,20 +496,7 @@ z-index: 3; /* a glow biztosan a lemez és a span fölött legyen */
   image-rendering: auto;           /* böngészőknek jelzés: normál mintavételezés */
   -ms-interpolation-mode: bicubic; /* régi Edge/IE fallback – ártani nem árt */
 }
-/* Samsung Internet kompatibilitás fix */
-@supports (-webkit-touch-callout: none) {
-  body {
-    background-color: #0b0b0f;
-    color: #f5f5f7;
-  }
-  .tab.active, button, .chip {
-    -webkit-tap-highlight-color: transparent;
-  }
-  iframe {
-    border-radius: 12px;
-    overflow: hidden;
-  }
-}
+
 /* === Samsung Internet fix: valódi bakelit SVG textúrával + határozott arany glow === */
 .ua-samsung .vinyl-tabs .tab{
   background-color:#0b0b0b !important;
@@ -1290,10 +1277,6 @@ html, body{
   pointer-events: none !important;
 }
 
-/* Samsung Internet fix – NE állítsa át más árnyalatra */
-@supports (-webkit-touch-callout: none) {
-  body { background-color: #000 !important; }
-}
 
 /* gold-theme előző rétegeinek biztos lenullázása */
 body.gold-theme{
