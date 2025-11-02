@@ -1693,161 +1693,21 @@ html.ua-samsung #contact-submit {
   margin: 0 auto;
   display: block;
 }
-/* WebView-specifikus fixek, ugyanaz a logika mint mobilra */
-.is-webview .vinyl-tabs {
-  display: grid !important;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  padding: 0 8px;
-  justify-items: center;
-  align-items: center;
-}
-.is-webview .vinyl-tabs .tab {
-  --disc: 92px;
-  width: var(--disc);
-  height: var(--disc);
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  overflow: hidden;
-}
+/* === Mobile Chrome Desktop-View Fix v2 (Nova – 2025-11-02) === */
+/* Univerzális megoldás: minden mobil eszközön, ha portrait nézetben vagy,
+   megtartja a desktop arányokat (logó, menülemezek, video-panel). */
 
-.is-webview .sample-player,
-.is-webview .sample-dropdown {
-  position: static !important;
-  transform: none !important;
-  width: 100% !important;
-  margin: 8px 0 0 0 !important;
-}
-/* =========================
-   WEBVIEW / DESKTOP-MÓD – CÉLZOTT PATCH (DESKTOP-SAFE)
-   Csak itt él: html.ua-androidwv, html.ua-ioswv, html.ua-mobilelike.ua-desktopreq
-   ========================= */
+@media screen and (orientation: portrait) {
 
-/* 0) Globál: ne legyen vízszintes görgetés, normál szövegskála */
-html.ua-androidwv, html.ua-androidwv body,
-html.ua-ioswv,     html.ua-ioswv body,
-html.ua-mobilelike.ua-desktopreq, html.ua-mobilelike.ua-desktopreq body{
-  width:100% !important;
-  max-width:100% !important;
-  overflow-x:hidden !important;
-  -webkit-text-size-adjust:100%;
-  text-size-adjust:100%;
-}
-
-/* 1) Player/dropdown ne legyen abszolút, ne takarja a menüt */
-html.ua-androidwv .video-panel,
-html.ua-ioswv .video-panel,
-html.ua-mobilelike.ua-desktopreq .video-panel,
-html.ua-androidwv .sample-player,
-html.ua-ioswv .sample-player,
-html.ua-mobilelike.ua-desktopreq .sample-player,
-html.ua-androidwv .sample-dropdown,
-html.ua-ioswv .sample-dropdown,
-html.ua-mobilelike.ua-desktopreq .sample-dropdown{
-  position: static !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin: 8px 0 0 0 !important;
-  padding: 8px 8px 0 8px !important;
-  transform: none !important;
-  z-index: 2 !important;
-}
-
-/* 1/b) Iframe/videó méretezés – ne nőjön óriásira, álló shorts-hoz is ok */
-html.ua-androidwv .video-panel iframe,
-html.ua-androidwv .video-panel video,
-html.ua-ioswv .video-panel iframe,
-html.ua-ioswv .video-panel video,
-html.ua-mobilelike.ua-desktopreq .video-panel iframe,
-html.ua-mobilelike.ua-desktopreq .video-panel video{
-  display:block !important;
-  width:100% !important;
-  max-width:480px !important;   /* WebView-ben korlát */
-  aspect-ratio: 9 / 16;         /* shorts/álló videó */
-  height:auto !important;
-  margin: 0 auto !important;
-  position: relative !important;
-  z-index: 1 !important;
-}
-
-/* 2) Vinyl menü – mobil grid WebView + mobilon kért desktop-módban */
-html.ua-androidwv .vinyl-tabs,
-html.ua-ioswv .vinyl-tabs,
-html.ua-mobilelike.ua-desktopreq .vinyl-tabs{
-  display:grid !important;
-  grid-template-columns: repeat(3, 1fr) !important;
-  gap:10px !important;
-  padding:0 8px !important;
-  justify-items:center !important;
-  align-items:center !important;
-}
-
-html.ua-androidwv .vinyl-tabs .tab,
-html.ua-ioswv .vinyl-tabs .tab,
-html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab{
-  --disc: 92px;
-  width: var(--disc) !important;
-  height: var(--disc) !important;
-  display:grid !important;
-  place-items:center !important;
-  border-radius:50% !important;
-  overflow:hidden !important;
-  padding:0 !important;
-  transform: translateZ(0); /* Samsung reflow bug */
-}
-
-/* 2/b) Felirat – hogy a “Bemutatkozás” biztosan beférjen */
-html.ua-androidwv .vinyl-tabs .tab .label,
-html.ua-ioswv .vinyl-tabs .tab .label,
-html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab .label{
-  width:90% !important;
-  margin:0 auto !important;
-  text-align:center !important;
-  font-size: 13.5px !important;
-  line-height: 1.15 !important;
-  white-space: normal !important;
-  word-break: keep-all !important;
-  overflow-wrap: anywhere !important;
-}
-
-/* 3) Rétegezés – menü legyen a player fölött WebView-ben */
-html.ua-androidwv .topbar,
-html.ua-androidwv .vinyl-tabs,
-html.ua-ioswv .topbar,
-html.ua-ioswv .vinyl-tabs,
-html.ua-mobilelike.ua-desktopreq .topbar,
-html.ua-mobilelike.ua-desktopreq .vinyl-tabs{
-  position: relative !important;
-  z-index: 3 !important;
-}
-
-/* 4) “Bemutatkozás” tipó (szekció cimek és bekezdések WebView-ben) */
-html.ua-androidwv h1, html.ua-ioswv h1, html.ua-mobilelike.ua-desktopreq h1{
-  font-size: clamp(20px, 3.8vw, 28px) !important;
-}
-html.ua-androidwv h2, html.ua-ioswv h2, html.ua-mobilelike.ua-desktopreq h2{
-  font-size: clamp(18px, 3.2vw, 24px) !important;
-}
-html.ua-androidwv p, html.ua-ioswv p, html.ua-mobilelike.ua-desktopreq p,
-html.ua-androidwv .lead, html.ua-ioswv .lead, html.ua-mobilelike.ua-desktopreq .lead{
-  font-size: clamp(14px, 2.9vw, 17px) !important;
-  line-height: 1.45 !important;
-}
-/* === Mobile Chrome Desktop-View Fix v1 (Nova – 2025-11-02) === */
-/* Cél: ha mobil Chrome "Asztali webhely kérése" nézetben vagy,
-   minden arány (logó, menülemezek, video-panel) 1:1-ben nézzen ki, mint desktopon,
-   csak kicsinyítve a kijelző méretéhez igazítva. */
-
-@media (max-width: 900px) and (min-width: 768px) {
-
-  html, body {
-    transform: scale(1.35);                /* felnagyítja a teljes desktop layoutot */
-    transform-origin: top center;          /* középről induljon a skálázás */
-    overflow-x: hidden !important;         /* ne legyen vízszintes görgetés */
+  /* Egész oldal nagyítása – működik mobilon is */
+  html, body, #root, .site-wrapper {
+    zoom: 1.35 !important;                /* desktop layout felnagyítva */
+    transform: none !important;
+    transform-origin: center top !important;
+    overflow-x: hidden !important;
   }
 
-  /* Menü és logó – minden mindig a legfelső rétegben maradjon */
+  /* Menü és logó mindig felül, arányosan nagyobb */
   .topbar,
   .vinyl-tabs {
     position: relative !important;
@@ -1855,20 +1715,18 @@ html.ua-androidwv .lead, html.ua-ioswv .lead, html.ua-mobilelike.ua-desktopreq .
     transform: none !important;
   }
 
-  /* Logó: desktop arány visszaállítása (≈ +40%) */
   .topbar .brand > img.spinning-vinyl {
     width: 140px !important;
     height: 140px !important;
   }
 
-  /* Menülemezek: desktop méretarány (~+28%) */
   .vinyl-tabs .tab {
     width: 110px !important;
     height: 110px !important;
     margin: 4px !important;
+    inline-size: auto !important;         /* JS-inline méret felülírása */
   }
 
-  /* Felirat a lemezen – ne lógjon ki */
   .vinyl-tabs .tab span {
     font-size: clamp(13px, 2.9vw, 16px) !important;
     white-space: normal !important;
@@ -1877,27 +1735,24 @@ html.ua-androidwv .lead, html.ua-ioswv .lead, html.ua-mobilelike.ua-desktopreq .
     hyphens: auto;
   }
 
-  /* Video-panel: maradjon jobbra, de ne lógjon ki */
+  /* Video-panel: maradjon jobbra, ne takarjon, ne nyúljon túl */
   .video-panel {
     position: relative !important;
-    z-index: 5 !important;                 /* menü mögé helyezés */
-    max-width: 420px !important;           /* arányosított szélesség */
+    z-index: 5 !important;
+    max-width: 420px !important;
     margin-left: auto !important;
     margin-right: auto !important;
-    transform: scale(0.8) !important;      /* kisebb, hogy ne takarjon */
+    transform: scale(0.8) !important;
     transform-origin: top right !important;
   }
 
-  /* iframe ne csússzon túl a konténeren */
   .video-panel iframe {
     max-width: 100% !important;
     height: auto !important;
   }
 
-  /* Biztonsági fix – a fő tartalom ne mozduljon el */
   main, .panel {
     transform: none !important;
   }
 }
-/* === END Mobile Chrome Desktop-View Fix v1 === */
-
+/* === END Mobile Chrome Desktop-View Fix v2 === */
