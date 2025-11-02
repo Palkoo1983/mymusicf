@@ -109,11 +109,23 @@ function initTabs() {
   panels.forEach(p => (p.hidden = p !== activePanel));
 
   buttons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      activate(btn.dataset.target);
-    });
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+
+    const ua = navigator.userAgent.toLowerCase();
+    const isSamsungWV = ua.includes('samsungbrowser') || ua.includes('wv');
+
+    const doActivate = () => activate(btn.dataset.target);
+
+    // Samsung Internet / WebView esetén kicsi delay – így nem esik szét
+    if (isSamsungWV) {
+      setTimeout(() => requestAnimationFrame(doActivate), 80);
+    } else {
+      doActivate();
+    }
   });
+});
+
 }
 
 /* ---------- package cards (pricing) ---------- */
