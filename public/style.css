@@ -1665,3 +1665,16 @@ html.ua-samsung #intro .gold-text * {
   filter: none !important;
   mix-blend-mode: normal !important;
 }
+html.ua-samsung .panel.active#about {
+  display:block !important;
+  transform:none !important;
+  white-space:normal !important;
+  word-break:normal !important;
+  overflow-wrap:anywhere !important;
+  text-align:justify !important;
+  line-height:1.55 !important;
+  letter-spacing:0 !important;
+  padding:10px 18px !important;
+  margin:0 auto !important;
+  max-width:960px !important;
+}
