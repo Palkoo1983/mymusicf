@@ -1834,4 +1834,67 @@ html.ua-androidwv .lead, html.ua-ioswv .lead, html.ua-mobilelike.ua-desktopreq .
   font-size: clamp(14px, 2.9vw, 17px) !important;
   line-height: 1.45 !important;
 }
+/* === Mobile Chrome Desktop-View Fix v2 (Nova – 2025-11-02) === */
+/* Univerzális megoldás: minden mobil eszközön, ha portrait nézetben vagy,
+   megtartja a desktop arányokat (logó, menülemezek, video-panel). */
+
+@media screen and (orientation: portrait) {
+
+  /* Egész oldal nagyítása – működik mobilon is */
+  html, body, #root, .site-wrapper {
+    zoom: 1.35 !important;                /* desktop layout felnagyítva */
+    transform: none !important;
+    transform-origin: center top !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Menü és logó mindig felül, arányosan nagyobb */
+  .topbar,
+  .vinyl-tabs {
+    position: relative !important;
+    z-index: 50 !important;
+    transform: none !important;
+  }
+
+  .topbar .brand > img.spinning-vinyl {
+    width: 140px !important;
+    height: 140px !important;
+  }
+
+  .vinyl-tabs .tab {
+    width: 110px !important;
+    height: 110px !important;
+    margin: 4px !important;
+    inline-size: auto !important;         /* JS-inline méret felülírása */
+  }
+
+  .vinyl-tabs .tab span {
+    font-size: clamp(13px, 2.9vw, 16px) !important;
+    white-space: normal !important;
+    text-wrap: balance;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  /* Video-panel: maradjon jobbra, ne takarjon, ne nyúljon túl */
+  .video-panel {
+    position: relative !important;
+    z-index: 5 !important;
+    max-width: 420px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    transform: scale(0.8) !important;
+    transform-origin: top right !important;
+  }
+
+  .video-panel iframe {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  main, .panel {
+    transform: none !important;
+  }
+}
+/* === END Mobile Chrome Desktop-View Fix v2 === */
 
