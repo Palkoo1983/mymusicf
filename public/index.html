@@ -372,25 +372,51 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 </div>
   </div>
 
-  <script>
-    function playVideo(){ const id=document.getElementById("videoSelect").value; document.getElementById("videoFrame").src=`https://www.youtube.com/embed/${id}?autoplay=1`; }
-    function stopVideo(){ document.getElementById("videoFrame").src=""; }
-    /* Pozicionálás: félúton a lap teteje és a menüsáv alja között */
-    (function positionVideoPanel(){
-      function place(){
-        const panel=document.querySelector('.video-panel');
-        const menu=document.querySelector('.vinyl-tabs');
-        if(!panel||!menu) return;
-        const menuBottom=menu.offsetTop+menu.offsetHeight;
-        const panelH=panel.offsetHeight||0;
-        const desiredTop=Math.max(8,(menuBottom-panelH)/2);
-        panel.style.top=desiredTop+'px';
+ <script>
+  function playVideo() {
+    const id = document.getElementById("videoSelect").value;
+    document.getElementById("videoFrame").src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+  }
+
+  function stopVideo() {
+    document.getElementById("videoFrame").src = "";
+  }
+
+  /* Pozicionálás: félúton a lap teteje és a menüsáv alja között */
+  (function positionVideoPanel() {
+    function place() {
+      const panel = document.querySelector('.video-panel');
+      const menu  = document.querySelector('.vinyl-tabs');
+      if (!panel || !menu) return;
+
+      // --- ⛔ Samsung Internet / WebView fix ---
+      const ua = navigator.userAgent.toLowerCase();
+      const isMessenger = ua.includes('fban/messenger') || ua.includes('fb_iab');
+      const isSamsungWebView = (
+        (ua.includes('samsungbrowser') || ua.includes('wv')) && !isMessenger
+      );
+      if (isSamsungWebView) {
+        // Ne számoljuk újra a pozíciót → hagyjuk a CSS alaphelyzetet
+        panel.style.position = '';
+        panel.style.top = '';
+        panel.style.transform = '';
+        return;
       }
-      window.addEventListener('load',place);
-      window.addEventListener('resize',place);
-      document.addEventListener('DOMContentLoaded',place);
-    })();
-  </script>
+      // -----------------------------------------
+
+      const menuBottom = menu.offsetTop + menu.offsetHeight;
+      const panelH = panel.offsetHeight || 0;
+      const desiredTop = Math.max(8, (menuBottom - panelH) / 2);
+      panel.style.top = desiredTop + 'px';
+    }
+
+    // események
+    window.addEventListener('load', place);
+    window.addEventListener('resize', place);
+    document.addEventListener('DOMContentLoaded', place);
+  })();
+</script>
+
 
   <div class="bg-vinyl"></div>
 
