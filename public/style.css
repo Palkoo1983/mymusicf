@@ -1656,3 +1656,7 @@ html.ua-samsung .order-btn,
 html.ua-samsung .submit-btn {
   box-shadow: none !important;
 }
+html.ua-samsung .vinyl-tabs .tab,
+html.ua-ioswv .vinyl-tabs .tab {
+  overflow: visible !important;
+}
