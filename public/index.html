@@ -885,5 +885,14 @@ initOrderChipPatch();
 </script>
 
 <script src="/enzenem-generate.js?v=18"></script>
+  
+<script>
+document.querySelectorAll('.vinyl-tabs .tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.vinyl-tabs .tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+</script>
 
 </body></html>
