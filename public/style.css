@@ -1642,24 +1642,3 @@ html.ua-samsung .vinyl-tabs .tab,
 html.ua-ioswv .vinyl-tabs .tab {
   overflow: visible !important;
 }
-/* === Samsung Internet / WebView – Bemutatkozás szöveg fix === */
-@supports (-webkit-touch-callout: none) {
-  html.ua-samsung #about p,
-  html.ua-samsung #about div,
-  html.ua-samsung #about section {
-    display: block !important;
-    white-space: normal !important;
-    word-break: normal !important;
-    overflow-wrap: anywhere !important;
-    text-align: justify !important;
-    line-height: 1.55 !important;
-    letter-spacing: 0 !important;
-  }
-
-  /* extra spacing normalizálás – ne essen szét */
-  html.ua-samsung #about {
-    padding: 10px 18px !important;
-    margin: 0 auto !important;
-    max-width: 960px !important;
-  }
-}
