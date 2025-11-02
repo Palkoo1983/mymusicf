@@ -65,6 +65,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+<script>
+  (function () {
+    var ua = (navigator.userAgent || "").toLowerCase();
+    var html = document.documentElement;
+    var isMessenger = ua.includes('fban/messenger') || ua.includes('fb_iab');
+
+    // Samsung Internet mobil + WebView (Messenger KIZÁRVA)
+    if ((ua.includes('samsungbrowser') || ua.includes('wv')) && !isMessenger) {
+      html.classList.add('ua-samsung');
+    }
+
+    // iPad Safari / WebView
+    if (ua.includes('ipad') || (ua.includes('macintosh') && 'ontouchend' in document)) {
+      html.classList.add('ua-ipad');
+    }
+  })();
+</script>
 
   <!-- FŐ CSS -->
   <link rel="stylesheet" href="style.css?v=black1" />
