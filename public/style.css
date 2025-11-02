@@ -1739,3 +1739,6 @@ html.ua-samsung #contact-submit {
   }
 }
 /* === END FIX === */
+  html, body {
+    transform: scale(0.9) !important;     /* finom nagyítás, hogy kitöltse a kijelzőt */
+  }
