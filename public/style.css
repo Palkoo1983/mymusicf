@@ -437,7 +437,6 @@ z-index: 3; /* a glow biztosan a lemez és a span fölött legyen */
   text-shadow: 0 1px 1px rgba(0,0,0,.8);
 }
 
-
 /* LOGÓ – desktop 100×100, mobilon NAGYOBB és forog (a már meglévő .spinning-vinyl osztállyal) */
 @media (min-width:1025px){
   .topbar .brand > img.spinning-vinyl{
@@ -750,14 +749,12 @@ body.gold-theme::after{ content: none !important; }
   transition: box-shadow .2s, transform .2s, outline-color .2s;
 }
 
-
 /* hover hint for clickable package cards */
 .package-card:hover,[data-package]:hover{
   outline: 2px solid #d4af37;
   box-shadow: 0 0 0 3px rgba(212,175,55,.35), 0 12px 24px rgba(0,0,0,.18);
   transform: translateY(-2px);
 }
-
 
 /* Hover hint and selected glow for pricing cards */
 .card.package:hover{
@@ -1622,28 +1619,6 @@ html.ua-ipad .vinyl-tabs .tab {
   overflow: hidden !important;
   position: relative !important;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.6) !important;
-}
-
-html.ua-samsung .vinyl-tabs .tab::after,
-html.ua-ipad .vinyl-tabs .tab::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 240, 190, 0.15) 0%,
-    rgba(255, 255, 255, 0.05) 35%,
-    rgba(255, 240, 190, 0.25) 70%,
-    transparent 100%
-  );
-  mix-blend-mode: screen;
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.4s ease;
 }
 
 html.ua-samsung .vinyl-tabs .tab.active::after,
