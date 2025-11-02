@@ -1642,39 +1642,28 @@ html.ua-samsung .vinyl-tabs .tab,
 html.ua-ioswv .vinyl-tabs .tab {
   overflow: visible !important;
 }
-/* === Samsung Internet / WebView – Intro tipográfia visszaállítás (csak #intro) === */
-html.ua-samsung #intro,
-html.ua-samsung #intro * {
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: anywhere !important;   /* hosszú szavaknál ne csússzon */
-  letter-spacing: normal !important;
-  line-height: 1.55 !important;
-  font-size: inherit !important;
+/* === Samsung Internet / WebView – Bemutatkozás + tipográfia fix (végleges) === */
+@supports (-webkit-touch-callout: none) {
+  html.ua-samsung .panel.active#about {
+    display: block !important;
+    transform: none !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    text-align: justify !important;
+    line-height: 1.55 !important;
+    letter-spacing: 0 !important;
+    padding: 10px 18px !important;
+    margin: 0 auto !important;
+    max-width: 960px !important;
+    -webkit-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+    font-size: 1em !important;
+  }
+
+  html.ua-samsung #about strong,
+  html.ua-samsung #about b {
+    font-weight: 700 !important;
+  }
 }
 
-/* A #intro-n belüli arany feliratok (gold-text) ne legyenek "clip"-elve Samsungon */
-html.ua-samsung #intro .gold-text,
-html.ua-samsung #intro .gold-text * {
-  background: none !important;
-  -webkit-background-clip: initial !important;
-  background-clip: initial !important;
-  color: #f3d27a !important;
-  -webkit-text-fill-color: #f3d27a !important;
-  text-shadow: none !important;
-  filter: none !important;
-  mix-blend-mode: normal !important;
-}
-html.ua-samsung .panel.active#about {
-  display:block !important;
-  transform:none !important;
-  white-space:normal !important;
-  word-break:normal !important;
-  overflow-wrap:anywhere !important;
-  text-align:justify !important;
-  line-height:1.55 !important;
-  letter-spacing:0 !important;
-  padding:10px 18px !important;
-  margin:0 auto !important;
-  max-width:960px !important;
-}
