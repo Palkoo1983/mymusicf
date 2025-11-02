@@ -1694,10 +1694,64 @@ html.ua-samsung #contact-submit {
   display: block;
 }
 
-/* --- WebView desktop restore (Nova 2025-11-02) --- */
-/* Mobil Chrome asztali nézetben kényszerítsd a desktop stílust */
-html.ua-mobilelike.ua-desktopreq {
-  min-width: 992px !important;    /* így mindig a desktop CSS fut */
-  zoom: 1 !important;             /* ne legyen felnagyítva */
-  transform: none !important;     /* ne legyen eltolás */
+/* === FINAL DESKTOP-FORCED WEBVIEW PATCH (Nova 2025-11-02) === */
+/* Cél: mobil Chrome asztali nézet = 100% desktop kinézet, torzítás nélkül */
+
+html.ua-mobilelike.ua-desktopreq,
+html.ua-androidwv.ua-desktopreq,
+html.ua-ioswv.ua-desktopreq {
+  width: 1280px !important;           /* desktop szélesség */
+  height: auto !important;
+  transform: scale(0.7) !important;   /* kijelzőhöz arányos méret */
+  transform-origin: top center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  zoom: 1 !important;
 }
+
+/* Videó-panel a menü alá kerül */
+html.ua-mobilelike.ua-desktopreq .video-panel,
+html.ua-androidwv.ua-desktopreq .video-panel,
+html.ua-ioswv.ua-desktopreq .video-panel {
+  position: relative !important;
+  display: block !important;
+  margin: 30px auto 0 auto !important;
+  width: 480px !important;
+  max-width: 90vw !important;
+  z-index: 2 !important;
+}
+
+/* Menü és logó vissza desktop méretre */
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab,
+html.ua-androidwv.ua-desktopreq .vinyl-tabs .tab,
+html.ua-ioswv.ua-desktopreq .vinyl-tabs .tab {
+  width: 130px !important;
+  height: 130px !important;
+}
+
+html.ua-mobilelike.ua-desktopreq .topbar img.spinning-vinyl,
+html.ua-androidwv.ua-desktopreq .topbar img.spinning-vinyl,
+html.ua-ioswv.ua-desktopreq .topbar img.spinning-vinyl {
+  width: 150px !important;
+  height: 150px !important;
+}
+
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs,
+html.ua-androidwv.ua-desktopreq .vinyl-tabs,
+html.ua-ioswv.ua-desktopreq .vinyl-tabs {
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+/* Feliratok, hogy ne csússzanak ki */
+html.ua-mobilelike.ua-desktopreq .vinyl-tabs .tab span,
+html.ua-androidwv.ua-desktopreq .vinyl-tabs .tab span,
+html.ua-ioswv.ua-desktopreq .vinyl-tabs .tab span {
+  font-size: 14px !important;
+  line-height: 1.15 !important;
+  white-space: normal !important;
+  text-align: center !important;
+}
+
+/* === END FINAL PATCH === */
+
