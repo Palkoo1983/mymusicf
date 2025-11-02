@@ -1800,3 +1800,11 @@ html.ua-ipad .vinyl-tabs .tab.active::after {
   mix-blend-mode: normal !important;  /* fallback, hogy látható legyen */
   box-shadow: inset 0 0 12px rgba(255, 220, 130, 0.3);
 }
+/* === Samsung vinyl fix: arany keret eltávolítás (Golden Clean v2) === */
+html.ua-samsung .vinyl-tabs .tab,
+html.ua-samsung .btn,
+html.ua-samsung button,
+html.ua-samsung .order-btn,
+html.ua-samsung .submit-btn {
+  box-shadow: none !important;
+}
