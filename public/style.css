@@ -1666,4 +1666,25 @@ html.ua-ioswv .vinyl-tabs .tab {
     font-weight: 700 !important;
   }
 }
+/* === Samsung Internet / WebView – Gold Text fix (Bemutatkozás) === */
+@supports (-webkit-touch-callout: none) {
+  html.ua-samsung .gold-text,
+  html.ua-samsung .gold-text * {
+    color: #f3d27a !important;
+    -webkit-text-fill-color: #f3d27a !important;
+    background: none !important;
+    -webkit-background-clip: initial !important;
+    background-clip: initial !important;
+    text-shadow: none !important;
+    filter: none !important;
+    mix-blend-mode: normal !important;
+    font-weight: 600 !important;  /* visszaadja a kiemelés vastagságát */
+  }
+
+  /* ahol tényleg félkövér kell */
+  html.ua-samsung #about strong.gold-text,
+  html.ua-samsung #about b.gold-text {
+    font-weight: 700 !important;
+  }
+}
 
