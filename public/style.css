@@ -445,7 +445,6 @@ z-index: 3; /* a glow biztosan a lemez és a span fölött legyen */
   background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
 }
 
-
 /* finom vignetta – jóval enyhébb, ne sötétítsen túl */
 body.gold-theme::after{
   content:"";
@@ -474,7 +473,6 @@ body.gold-theme.gold-shimmer{
     auto, 400% 100%, auto;
   animation: goldSweepSoft 9s linear infinite;
 }
-
 
 /* enyhe vignetta a széleken – csak kicsit, hogy ne sötétítsen túl */
 body.gold-theme::after{
@@ -1106,7 +1104,6 @@ html, body{
   pointer-events: none !important;
 }
 
-
 /* gold-theme előző rétegeinek biztos lenullázása */
 body.gold-theme{
   background: #000 !important;
@@ -1171,10 +1168,8 @@ html body nav a.gold-text{
 }
 /* === Samsung Internet (ua-samsung) – minden glow/clip OFF, éles arany szöveg === */
 
-
 /* A gradient-clip-es arany szöveg helyett egyszerű, éles arany */
 html.ua-samsung .gold-text,
-
 
 /* Chip/btn hover/focus belső fény ki, hogy ne mosson */
 html.ua-samsung .examples .chip:hover,
@@ -1190,7 +1185,6 @@ html.ua-samsung .video-panel button:focus {
 /* Biztos, ami biztos: menüfülek felirata is sima arany */
 
 /* ========== iOS / iPhone / iPad fix – csak ott hat ========== */
-
 
     .vinyl-tabs .tab {
       --disc: 90px;
@@ -1284,8 +1278,6 @@ html.ua-samsung #contact button span {
 }
 /* Samsung Internet vizuális fixek – FRISSÍTETT */
 
-
-
 html.ua-samsung .vinyl-tabs .tab {
   --disc: 100px;
   width: var(--disc);
@@ -1298,8 +1290,6 @@ html.ua-samsung .vinyl-tabs .tab {
   overflow: hidden;
   padding: 0;
 }
-
-
 
 html.ua-samsung .btn,
 html.ua-samsung button,
@@ -1380,47 +1370,8 @@ html.ua-samsung #contact-submit {
     z-index: 3 !important;
   }
 }
-/* === Samsung & iPad Vinyl Fix – Interactive Highlight (Nova 2025-11-03) === */
-html.ua-samsung .vinyl-tabs .tab,
-html.ua-ipad .vinyl-tabs .tab {
-  background-image: url("/assets/vinyl_samsung_fix.svg") !important;
-  background-repeat: no-repeat !important;
-  background-size: cover !important;
-  background-position: center !important;
-  border-radius: 50% !important;
-  overflow: hidden !important;
-  position: relative !important;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.6) !important;
-}
 
-html.ua-samsung .vinyl-tabs .tab.active::after,
-html.ua-ipad .vinyl-tabs .tab.active::after {
-  opacity: 1;
-}
-
-html.ua-samsung .vinyl-tabs .tab span,
-html.ua-ipad .vinyl-tabs .tab span {
-  color: #f3d27a !important;
-  -webkit-text-fill-color: #f3d27a !important;
-  text-shadow: 0 0 2px #000 !important;
-  font-weight: 600 !important;
-}
-/* === END FIX === */
-/* === Highlight visibility fix for Samsung & iPad WebView (Nova 2025-11-03b) === */
-html.ua-samsung .vinyl-tabs .tab.active::after,
-html.ua-ipad .vinyl-tabs .tab.active::after {
-  opacity: 1 !important;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 220, 130, 0.25) 0%,
-    rgba(255, 255, 200, 0.35) 40%,
-    rgba(255, 220, 130, 0.25) 80%,
-    transparent 100%
-  ) !important;
-  mix-blend-mode: normal !important;  /* fallback, hogy látható legyen */
-  box-shadow: inset 0 0 12px rgba(255, 220, 130, 0.3);
-}
-/* === Samsung vinyl fix: arany keret eltávolítás (Golden Clean v2) === */
+ arany keret eltávolítás (Golden Clean v2) === */
 html.ua-samsung .vinyl-tabs .tab,
 html.ua-samsung .btn,
 html.ua-samsung button,
@@ -1435,16 +1386,7 @@ html.ua-ioswv .vinyl-tabs .tab {
 /* === Samsung Internet / WebView – Bemutatkozás + tipográfia fix (végleges) === */
 
 }
-/* === Samsung Internet / WebView – Gold Text fix (Bemutatkozás) === */
-
-
-  /* ahol tényleg félkövér kell */
-  html.ua-samsung #about strong.gold-text,
-  html.ua-samsung #about b.gold-text {
-    font-weight: 700 !important;
-  }
-}
-/* FIX: a gold-text NE változtassa meg a blokk elemek displayét */
+ a gold-text NE változtassa meg a blokk elemek displayét */
 li.gold-text { display: list-item !important; }           /* vissza a normál LI-t */
 p.gold-text,
 h1.gold-text, h2.gold-text, h3.gold-text,
@@ -1475,31 +1417,7 @@ html.ua-samsung span.gold-text{
 
 /* Blokk elemek maradjanak blokkban (ne inline-block) */
 
-/* === Samsung Internet WebView – Consolidated Fix (final) === */
-
-/* 1) gold-text: vissza az elemek saját display-ére + egységes arany szín  */
-html.ua-samsung .gold-text {
-  display: revert !important;                /* p → block, strong/a → inline, li → list-item */
-  background: none !important;
-  -webkit-background-clip: initial !important;
-  background-clip: initial !important;
-  -webkit-text-fill-color: #f3d27a !important;
-  color: #f3d27a !important;
-}
-/* beágyazott erősítések se kényszerítsenek inline-blockot */
-html.ua-samsung strong.gold-text,
-html.ua-samsung b.gold-text,
-html.ua-samsung a.gold-text,
-html.ua-samsung em.gold-text,
-html.ua-samsung span.gold-text {
-  display: inline !important;
-  -webkit-text-fill-color: #f3d27a !important;
-  color: #f3d27a !important;
-}
-/* form-címkék maradjanak blokkosak és arányosak */
-
-
-/* 2) Számozott lista visszaállítása a 'Hogyan működik' résznél */
+ visszaállítása a 'Hogyan működik' résznél */
 html.ua-samsung ol,
 html.ua-samsung ol li {
   list-style: decimal !important;
@@ -1516,21 +1434,3 @@ html.ua-samsung .vinyl-tabs .tab { display: grid; place-items: center; }
 
 }
 /* Samsung ne örökölje */
-
-
-
-
-/* === Samsung FINAL span fix (Nova 2025-11-03) === */
-html.ua-samsung .vinyl-tabs .tab span {
-  font-size: 13px;
-  font-weight: bold;
-  color: #f3d27a !important;
-  -webkit-text-fill-color: #f3d27a !important;
-  background: none !important;
-  background-clip: initial !important;
-  -webkit-background-clip: initial !important;
-  text-shadow: 0 0 1px #000 !important;
-  mix-blend-mode: normal !important;
-  line-height: 1.1;
-  text-align: center;
-}
