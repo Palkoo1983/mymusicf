@@ -1,3 +1,21 @@
+// === UA Detector for Samsung Internet / iPad WebView (Messenger excluded) – Nova 2025-11-03 ===
+(function() {
+  const ua = navigator.userAgent.toLowerCase();
+  const html = document.documentElement;
+
+  const isMessenger = ua.includes('fban/messenger') || ua.includes('fb_iab');
+
+  // Samsung Internet mobil + WebView (Messenger nélkül)
+  if ((ua.includes('samsungbrowser') || ua.includes('wv')) && !isMessenger) {
+    html.classList.add('ua-samsung');
+  }
+
+  // iPad Safari / WebView
+  if (ua.includes('ipad') || (ua.includes('macintosh') && 'ontouchend' in document)) {
+    html.classList.add('ua-ipad');
+  }
+})();
+
 // --- Betöltéskor NE állítsa vissza a böngésző a korábbi görgetési pozíciót ---
 (function() {
   if ('scrollRestoration' in history) {
@@ -721,15 +739,3 @@ document.addEventListener('DOMContentLoaded', () => {
     bar.style.display = 'none';
   });
 });
-// === EnZenem Order block visual balance (2025-11-03 Nova fix) ===
-(function() {
-  const qual = document.getElementById('enz-quality');
-  const exWrap = document.getElementById('enz-examples');
-  if (qual) {
-    qual.style.marginTop = '0.25em';
-    qual.style.padding = '0.25em';
-  }
-  if (exWrap) {
-    exWrap.style.marginTop = '0.25em';
-  }
-})();
