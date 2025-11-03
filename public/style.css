@@ -1489,19 +1489,7 @@ html.ua-samsung .vinyl-tabs .tab {
   padding: 0;
 }
 
-html.ua-samsung .vinyl-tabs .tab span {
-  font-size: 13px;
-  font-weight: bold;
-  color: #f3d27a !important;
-  -webkit-text-fill-color: #f3d27a !important;
-  background: none !important;
-  background-clip: initial !important;
-  -webkit-background-clip: initial !important;
-  text-shadow: 0 0 1px #000 !important;
-  mix-blend-mode: normal !important;
-  line-height: 1.1;
-  text-align: center;
-}
+
 
 html.ua-samsung .btn,
 html.ua-samsung button,
@@ -1636,22 +1624,7 @@ html.ua-ioswv .vinyl-tabs .tab {
 }
 /* === Samsung Internet / WebView – Bemutatkozás + tipográfia fix (végleges) === */
 @supports (-webkit-touch-callout: none) {
-  html.ua-samsung .panel.active#about {
-    display: block !important;
-    transform: none !important;
-    white-space: normal !important;
-    word-break: normal !important;
-    overflow-wrap: anywhere !important;
-    text-align: justify !important;
-    line-height: 1.55 !important;
-    letter-spacing: 0 !important;
-    padding: 10px 18px !important;
-    margin: 0 auto !important;
-    max-width: 960px !important;
-    -webkit-text-size-adjust: 100% !important;
-    text-size-adjust: 100% !important;
-    font-size: 1em !important;
-  }
+  
 
   html.ua-samsung #about strong,
   html.ua-samsung #about b {
@@ -1761,8 +1734,21 @@ html.ua-samsung .vinyl-tabs .tab { display: grid; place-items: center; }
   }
 }
 /* Samsung ne örökölje */
-html.ua-samsung .panel.active#about {
-  line-height: normal !important;
-  text-align: left !important;
-}
 
+
+
+
+/* === Samsung FINAL span fix (Nova 2025-11-03) === */
+html.ua-samsung .vinyl-tabs .tab span {
+  font-size: 13px;
+  font-weight: bold;
+  color: #f3d27a !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  background: none !important;
+  background-clip: initial !important;
+  -webkit-background-clip: initial !important;
+  text-shadow: 0 0 1px #000 !important;
+  mix-blend-mode: normal !important;
+  line-height: 1.1;
+  text-align: center;
+}
