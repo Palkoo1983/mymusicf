@@ -1726,33 +1726,50 @@ html.ua-samsung li.gold-text, html.ua-samsung label.gold-text,
 html.ua-samsung .note.gold-text{
   display: block !important;
 }
-/* --- Samsung WebView – Final Alignment Patch (Nova 2025-11-03) --- */
+/* === Samsung Internet WebView – Consolidated Fix (final) === */
 
-/* 1️⃣ Megrendelés fül: label.full.gold-text blokkos legyen */
-html.ua-samsung label.full.gold-text {
+/* 1) gold-text: vissza az elemek saját display-ére + egységes arany szín  */
+html.ua-samsung .gold-text {
+  display: revert !important;                /* p → block, strong/a → inline, li → list-item */
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  color: #f3d27a !important;
+}
+/* beágyazott erősítések se kényszerítsenek inline-blockot */
+html.ua-samsung strong.gold-text,
+html.ua-samsung b.gold-text,
+html.ua-samsung a.gold-text,
+html.ua-samsung em.gold-text,
+html.ua-samsung span.gold-text {
+  display: inline !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  color: #f3d27a !important;
+}
+/* form-címkék maradjanak blokkosak és arányosak */
+html.ua-samsung label.full.gold-text { 
   display: block !important;
   font-size: 1em !important;
   line-height: 1.35 !important;
-  color: #f3d27a !important;
 }
 
-/* 2️⃣ Hogyan működik – számozott lista visszaállítása */
+/* 2) Számozott lista visszaállítása a 'Hogyan működik' résznél */
 html.ua-samsung ol,
 html.ua-samsung ol li {
   list-style: decimal !important;
+  display: list-item !important;
   margin-left: 1.5em !important;
+  font-size: 1em !important;
 }
 
-/* 3️⃣ Menülemezek függőleges igazítása */
-html.ua-samsung .vinyl-tab span {
-  position: relative;
-  top: 0.05em;            /* finom középre igazítás az 1 sorosaknál */
-  display: inline-block;
-  line-height: normal !important;
-}
-
-/* 4️⃣ Biztonsági – ne romoljon el a desktop vagy mobilnézet */
-@supports not (-webkit-touch-callout: none) {
-  html.ua-samsung .vinyl-tab span { top: 0; }
+/* 3) Menülemezek feliratainak vertikális középre igazítása (helyes szelektor) */
+html.ua-samsung .vinyl-tabs .tab { display: grid; place-items: center; }
+html.ua-samsung .vinyl-tabs .tab span {
+  position: static !important;
+  transform: none !important;
+  display: block !important;
+  line-height: 1.05 !important;
+  text-align: center !important;
 }
 
