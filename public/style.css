@@ -81,7 +81,6 @@ body{
     shape-rendering: geometricPrecision;
     text-rendering: optimizeLegibility;
   }
-}
 
 /* Mobil: 92×92 */
 @media (max-width: 768px){
@@ -90,7 +89,6 @@ body{
     height: 92px !important;
     margin: 8px 16px !important;
   }
-}
 
 /* LOGÓ – NINCS arany glow a logón */
 .topbar .brand > img.spinning-vinyl{ position:relative; }
@@ -101,7 +99,6 @@ body{
 @keyframes vinyl-intro {
   from { opacity:0; transform:scale(.92) rotate(-12deg); filter:saturate(.7) brightness(.85); }
   to   { opacity:1; transform:scale(1) rotate(0deg);   filter:none; }
-}
 
 /* --------- Menü „lemezek” (vinyl-tabs) --------- */
 .vinyl-tabs{
@@ -137,7 +134,7 @@ body{
 main{ max-width:1100px; margin:18px auto; padding:6px 20px 60px; }
 .panel{ display:none; animation:fade .25s ease both }
 .panel.active{ display:block !important; transform:none !important; }
-@keyframes fade{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
+@keyframes fade{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}
 h2{ font-size:1.6rem; margin:18px 0 10px }
 p{ color:var(--ink); opacity:.92 }
 
@@ -200,7 +197,6 @@ footer{
   .vinyl-tabs{ justify-content:center }
   .form .grid{ grid-template-columns: 1fr }
   .contact-grid{ grid-template-columns: 1fr }
-}
 
 /* --------- ÁSZF sáv + Licenc modál (változatlan) --------- */
 .consent{
@@ -221,7 +217,6 @@ footer{
 @media (max-width: 640px){
   .consent{ flex-direction: column; align-items: stretch; }
   .consent .primary{ width: 100%; }
-}
 
 .license-modal{
   position: fixed; inset: 0; display: none; place-items: center;
@@ -270,22 +265,12 @@ footer{
   padding-top: 0 !important;
   margin: 0 auto !important;       /* középre */
 }
-.embed .video iframe{
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  border: 0 !important;
-  display: block !important;
-  border-radius: 8px;
-}
 .embed.small p{ text-align:center; }
 
 /* mobilon szűkebb a kártya/videó */
 @media (max-width: 768px){
   .embed.small{ max-width: 340px; }
   .embed .video{ max-width: 320px !important; }
-}
 /* === 1) MENÜ – VALÓDI FEKETE BAKELIT + ARANY GLOW, SZÖVEG LÁTSZIK === */
 .vinyl-tabs .tab{
   position: relative;
@@ -371,7 +356,6 @@ z-index: 3; /* a glow biztosan a lemez és a span fölött legyen */
 @media (max-width: 768px){
   .embed.small{ max-width: 360px !important; }
   .embed .video{ max-width: 340px !important; }
-}
 /* === MENÜ – FEKETE BAKELIT, NEM FEHÉR BELSŐ; SZÖVEG LÁTSZIK === */
 .vinyl-tabs .tab{
   position: relative;
@@ -442,12 +426,10 @@ z-index: 3; /* a glow biztosan a lemez és a span fölött legyen */
   .topbar .brand > img.spinning-vinyl{
     width:100px !important; height:100px !important;
   }
-}
 @media (max-width:768px){
   .topbar .brand > img.spinning-vinyl{
     width:112px !important; height:112px !important;  /* mobilon nagyobb */
   }
-}
 
 /* MENÜ LEMEZEK – valódi fekete bakelit (koncentrikus barázdák), felirat látszik */
 .vinyl-tabs .tab{
@@ -603,7 +585,6 @@ body.gold-theme .bg-vinyl{
 @keyframes goldSweepSoft {
   from { background-position: 0 0, -200% 0, 0 0; }
   to   { background-position: 0 0, 200% 0, 0 0; }
-}
 body.gold-theme.gold-shimmer{
   background-size:
     auto, 400% 100%, auto;
@@ -645,15 +626,6 @@ body.gold-theme{
     );
   /* a csillanás réteg világosítson, a többi normál */
   background-blend-mode: normal, screen, normal, normal;
-}
-
-/* enyhe vignetta a széleken – csak kicsit, hogy ne sötétítsen túl */
-body.gold-theme::after{
-  content:"";
-  position:fixed; inset:0; pointer-events:none; z-index:0;
-  background: radial-gradient(120% 120% at 50% 45%,
-              rgba(0,0,0,0) 62%,
-              rgba(0,0,0,.10) 100%);
 }
 
 /* a pont-minta aranyosítása (ha használod a .bg-vinyl-t) */
@@ -722,7 +694,6 @@ body.gold-theme{
 
 /* arany téma alatt ne rajzoljon textúrát / vignettát */
 body.gold-theme .bg-vinyl{ display: none !important; }
-body.gold-theme::after{ content: none !important; }
 
 /* brief counter */
 .brief-counter{font-size:.9rem;opacity:.8;margin-top:.25rem}
@@ -777,7 +748,6 @@ body.gold-theme::after{ content: none !important; }
     font-size: 1.2em; /* kicsit nagyobb */
     text-align: center;
   }
-}
 /* ===== VINYL MENU — desktop-only méretezés + középre igazítás ===== */
 
 /* Alap (mobil) – változatlan */
@@ -857,11 +827,6 @@ body.gold-theme::after{ content: none !important; }
     line-height: 1.2;
     text-align: center !important;
   }
-  .menu-label .line, .menu-caption .line,
-  .format-title .line, .pricing-title .line{
-    display: block !important;  /* egymás alatt */
-  }
-}
 /* ===== VINYL MENU — desktop override: 50% méret + jobbra igazítás ===== */
 @media (min-width: 992px){
 
@@ -899,7 +864,6 @@ body.gold-theme::after{ content: none !important; }
     margin: 0 !important;    /* ne középre igazítsa */
     display: block !important;
   }
-}
 /* ===== VINYL MENU — desktop finomhang: -30% méret, BALRA igazítás, cím nem lóg ki ===== */
 @media (min-width: 992px){
 
@@ -977,7 +941,6 @@ body.gold-theme::after{ content: none !important; }
   .format-title .line, .pricing-title .line{
     display: block !important;
   }
-}
 /* ===== LOGÓ = menülemez méret (desktop), nem nagyobb ===== */
 @media (min-width: 992px){
   .topbar .brand > img.spinning-vinyl,
@@ -992,11 +955,7 @@ body.gold-theme::after{ content: none !important; }
 
     /* élsimítás / kisebb pixelesedés */
     image-rendering: auto;
-  }
-}
-@media (min-width: 992px){
-  /* integer méret: így a böngésző nem “fél pixelt” skáláz */
-  :root{ --tabFinal: 120px; } /* ha szeretnéd: próbáld 116px vagy 128px értéken is */
+  } /* ha szeretnéd: próbáld 116px vagy 128px értéken is */
 
   .topbar .brand > img.spinning-vinyl,
   .site-logo img{
@@ -1009,7 +968,6 @@ body.gold-theme::after{ content: none !important; }
     transform-origin: 50% 50%;
     display: block !important;
   }
-}
 /* === LOGÓ ÉLESÍTÉS – tegnapi módszer: animáció a WRAPPEREN, a kép fix integer px === */
 @media (min-width: 992px){
   /* A wrapper forog → az <img>-et nem skálázzuk/forgatjuk minden frame-ben */
@@ -1032,13 +990,11 @@ body.gold-theme::after{ content: none !important; }
     display: block !important;
     image-rendering: auto !important; /* ne crisp-edges, ne pixelated */
   }
-}
 
 /* ha nincs meg valahol a spin keyframes, itt egy biztos definíció */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
-}
 /* === LOGÓ ÉLESÍTÉS – végső override: kép NEM forog, csak a wrapper; minden régi anim/méret felülírva === */
 @media (min-width: 992px){
   /* 1) a képről leszedjük az animációt és bármilyen transformot */
@@ -1073,7 +1029,6 @@ body.gold-theme::after{ content: none !important; }
     height: 100% !important;
     display: block !important;
   }
-}
 
   /* ha valamiért nincs wrapper, essünk vissza az <img>-re */
   .topbar .brand > img.spinning-vinyl{
@@ -1081,7 +1036,6 @@ body.gold-theme::after{ content: none !important; }
     height: 102px !important;
     image-rendering: auto !important;
   }
-}
 /* === LOGÓ ÉLESÍTÉS (desktop) — fix integer méret + csak a wrapper forog === */
 @media (min-width: 992px){
   /* 1) méret: próbáld 96px ↔ 104px között — integer px legyen */
@@ -1120,7 +1074,6 @@ body.gold-theme::after{ content: none !important; }
     animation: none !important;
     transform: none !important;
   }
-}
 /* === LOGÓ PONTOS MÉRET + FORGÁS A WRAPPEREN (desktop) === */
 @media (min-width: 992px){
   :root{
@@ -1147,7 +1100,6 @@ body.gold-theme::after{ content: none !important; }
     image-rendering: auto !important;
     display: block !important;
   }
-}
 /* ============================
    ENZENEM – Mobil logó tuning
    ============================ */
@@ -1165,7 +1117,6 @@ body.gold-theme::after{ content: none !important; }
     width: 190px;              /* ~+20% */
     animation: spin 12s linear infinite;
   }
-}
 
 /* Finom, folyamatos forgás */
 
@@ -1184,7 +1135,6 @@ body.gold-theme::after{ content: none !important; }
   .enzenem-logo {
     height: 64px;
   }
-}
 
 @media (max-width: 640px) {
   .spinning-vinyl,
@@ -1192,7 +1142,6 @@ body.gold-theme::after{ content: none !important; }
     width: 120px !important;
     height: 120px !important;
   }
-}
 
 /* ===== CSS-only mobile 'audio' mode (no HTML/JS changes) ===== */
 @media (max-width: 900px){
@@ -1230,7 +1179,6 @@ body.gold-theme::after{ content: none !important; }
     font-size: 14px !important;
     padding: 8px 10px !important;
   }
-}
 /* ==== ABSZOLÚT FEKETE HÁTTÉR – DIAG TESZT ==== */
 html, body{
   min-height:100%;
@@ -1392,8 +1340,6 @@ html.ua-samsung .vinyl-tabs .tab span {
       line-height: 1.1;
       text-align: center;
     }
-  }
-}
 /* ======== VIDEOPANEL gombok (PLAY/STOP) nagyobbak és kitöltik a videó alatti teret ======== */
 
 .video-panel .controls {
@@ -1414,10 +1360,6 @@ html.ua-samsung .vinyl-tabs .tab span {
   color: white;
   cursor: pointer;
   transition: background-color 0.3s ease;
-}
-
-.video-panel .controls button:hover {
-  background-color: var(--accent-dark);
 }
 /* ===== Videopanel gombok – teljes szélesség, erőltetve is ===== */
 
@@ -1589,7 +1531,6 @@ html.ua-samsung #contact-submit {
     position: relative !important;
     z-index: 3 !important;
   }
-}
 /* === Samsung & iPad Vinyl Fix – Interactive Highlight (Nova 2025-11-03) === */
 html.ua-samsung .vinyl-tabs .tab,
 html.ua-ipad .vinyl-tabs .tab {
@@ -1665,7 +1606,6 @@ html.ua-ioswv .vinyl-tabs .tab {
   html.ua-samsung #about b {
     font-weight: 700 !important;
   }
-}
 /* === Samsung Internet / WebView – Gold Text fix (Bemutatkozás) === */
 @supports (-webkit-touch-callout: none) {
   html.ua-samsung .gold-text,
@@ -1686,7 +1626,6 @@ html.ua-ioswv .vinyl-tabs .tab {
   html.ua-samsung #about b.gold-text {
     font-weight: 700 !important;
   }
-}
 /* FIX: a gold-text NE változtassa meg a blokk elemek displayét */
 li.gold-text { display: list-item !important; }           /* vissza a normál LI-t */
 p.gold-text,
@@ -1791,4 +1730,3 @@ html.ua-samsung .panel.active#about {
   line-height: normal !important;
   text-align: left !important;
 }
-
