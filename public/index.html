@@ -297,9 +297,14 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   }
 }
   </style>
-<style>
-@supports (-webkit-touch-callout: none) {
-  .vinyl-tabs {
+<!-- ==============================================================
+     iOS / WebView Safe Fix (2025-11-03 Nova) 
+     Cél: iPad és iOS-Safari tab-rács igazítás, 
+     Samsung Internet és Android WebView NEM örökli.
+================================================================= -->
+<style id="ios-only-fix">
+  html.ua-ipad .vinyl-tabs,
+  html.ua-ioswv .vinyl-tabs {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
@@ -308,7 +313,8 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     align-items: center;
   }
 
-  .vinyl-tabs .tab {
+  html.ua-ipad .vinyl-tabs .tab,
+  html.ua-ioswv .vinyl-tabs .tab {
     --disc: 92px !important;
     width: var(--disc) !important;
     height: var(--disc) !important;
@@ -318,7 +324,8 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     padding: 0 !important;
   }
 
-  .vinyl-tabs .tab span {
+  html.ua-ipad .vinyl-tabs .tab span,
+  html.ua-ioswv .vinyl-tabs .tab span {
     display: flex !important;
     align-items: center;
     justify-content: center;
@@ -329,15 +336,13 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     font-size: 13px !important;
     max-height: calc(1.1em * 2);
     overflow: hidden;
-
     white-space: normal !important;
     word-break: keep-all !important;
     overflow-wrap: normal !important;
     hyphens: none !important;
   }
-}
 </style>
-
+<!-- ============================================================= -->
 
 <!-- [GOLDEN WV PATCH v2] Anti-blink release -->
 <script>
