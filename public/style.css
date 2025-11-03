@@ -1772,4 +1772,23 @@ html.ua-samsung .vinyl-tabs .tab span {
   line-height: 1.05 !important;
   text-align: center !important;
 }
+/* === iOS-only typography isolation (2025-11-03 Nova fix) === */
+/* Ez megelőzi, hogy a Samsung WebView megörökölje az iOS tipográfiai szabályokat */
+@supports (-webkit-touch-callout: none) {
+  html.ua-ipad .panel.active#about,
+  html.ua-ioswv .panel.active#about {
+    display: block !important;
+    transform: none !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    text-align: justify !important;
+    line-height: 1.55 !important;
+  }
+}
+/* Samsung ne örökölje */
+html.ua-samsung .panel.active#about {
+  line-height: normal !important;
+  text-align: left !important;
+}
 
