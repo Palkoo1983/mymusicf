@@ -1726,4 +1726,33 @@ html.ua-samsung li.gold-text, html.ua-samsung label.gold-text,
 html.ua-samsung .note.gold-text{
   display: block !important;
 }
+/* --- Samsung WebView – Final Alignment Patch (Nova 2025-11-03) --- */
+
+/* 1️⃣ Megrendelés fül: label.full.gold-text blokkos legyen */
+html.ua-samsung label.full.gold-text {
+  display: block !important;
+  font-size: 1em !important;
+  line-height: 1.35 !important;
+  color: #f3d27a !important;
+}
+
+/* 2️⃣ Hogyan működik – számozott lista visszaállítása */
+html.ua-samsung ol,
+html.ua-samsung ol li {
+  list-style: decimal !important;
+  margin-left: 1.5em !important;
+}
+
+/* 3️⃣ Menülemezek függőleges igazítása */
+html.ua-samsung .vinyl-tab span {
+  position: relative;
+  top: 0.05em;            /* finom középre igazítás az 1 sorosaknál */
+  display: inline-block;
+  line-height: normal !important;
+}
+
+/* 4️⃣ Biztonsági – ne romoljon el a desktop vagy mobilnézet */
+@supports not (-webkit-touch-callout: none) {
+  html.ua-samsung .vinyl-tab span { top: 0; }
+}
 
