@@ -1644,7 +1644,7 @@ html.ua-ioswv .vinyl-tabs .tab {
 }
 /* === Samsung Internet / WebView – Bemutatkozás + tipográfia fix (végleges) === */
 @supports (-webkit-touch-callout: none) {
-  html.ua-samsung .panel.active#about {
+  html.ua-samsung .panel.active#intro {
     display: block !important;
     transform: none !important;
     white-space: normal !important;
@@ -1661,9 +1661,10 @@ html.ua-ioswv .vinyl-tabs .tab {
     font-size: 1em !important;
   }
 
-  html.ua-samsung #about strong,
-  html.ua-samsung #about b {
-    font-weight: 700 !important;
+  html.ua-samsung #intro strong,
+  html.ua-samsung #intro b {
+     font-size: inherit !important;
+     font-weight: 700 !important;
   }
 }
 /* === Samsung Internet / WebView – Gold Text fix (Bemutatkozás) === */
@@ -1682,9 +1683,10 @@ html.ua-ioswv .vinyl-tabs .tab {
   }
 
   /* ahol tényleg félkövér kell */
-  html.ua-samsung #about strong.gold-text,
-  html.ua-samsung #about b.gold-text {
-    font-weight: 700 !important;
+  html.ua-samsung #intro strong.gold-text,
+  html.ua-samsung #intro b.gold-text {
+     font-size: inherit !important;
+     font-weight: 700 !important;
   }
 }
 
