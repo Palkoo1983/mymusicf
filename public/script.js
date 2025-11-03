@@ -721,3 +721,15 @@ document.addEventListener('DOMContentLoaded', () => {
     bar.style.display = 'none';
   });
 });
+// === EnZenem Order block visual balance (2025-11-03 Nova fix) ===
+(function() {
+  const qual = document.getElementById('enz-quality');
+  const exWrap = document.getElementById('enz-examples');
+  if (qual) {
+    qual.style.marginTop = '0.25em';
+    qual.style.padding = '0.25em';
+  }
+  if (exWrap) {
+    exWrap.style.marginTop = '0.25em';
+  }
+})();
