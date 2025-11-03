@@ -1,47 +1,39 @@
-/* =========================================
-   EnZenem – DESKTOP CLEAN style.css
-   (Samsung/iOS/WebView/mobil és BLUE THEME törölve)
-   Fekete háttér + arany akcentus + fekete bakelit menü
-   ========================================= */
+/* =========================================================
+   EnZenem – DESKTOP GOLD/BLACK CLEAN
+   (nincs mobil / WebView / Samsung / iOS / kék téma)
+   ========================================================= */
 
-/* --------- Színek --------- */
+/* ---- Változók ---- */
 :root{
-  --ink:#f5f5f5;       /* fő szöveg – törtfehér */
-  --muted:#bdbdbd;     /* halvány szöveg */
-  --accent:#f3d27a;    /* arany */
+  --ink:#f5f5f5;
+  --muted:#bdbdbd;
+  --accent:#f3d27a;
+  --panel:#141414;
+  --border:rgba(255,255,255,.14);
   --shadow:0 10px 30px rgba(0,0,0,.35);
 }
 
-/* --------- Alapok --------- */
-*{ box-sizing:border-box }
-html, body{ height:100% }
-
-html{ scroll-padding-top:92px }
-section{ scroll-margin-top:92px }
+/* ---- Alapok ---- */
+*{box-sizing:border-box}
+html,body{height:100%}
+html{scroll-padding-top:92px}
+section{scroll-margin-top:92px}
 
 body{
   margin:0;
   font-family:Poppins,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
   color:var(--ink);
-  /* Fényes fekete háttér – visszafogott csillanás */
   background:
-    radial-gradient(900px 520px at 50% 6%,
-      rgba(255,255,255,0.08) 0%,
-      rgba(255,255,255,0.02) 35%,
-      rgba(255,255,255,0.00) 60%),
-    radial-gradient(800px 420px at 50% 98%,
-      rgba(255,255,255,0.06) 0%,
-      rgba(255,255,255,0.00) 65%),
-    linear-gradient(180deg, #0b0b0c 0%, #070708 50%, #0a0a0b 100%);
+    radial-gradient(900px 520px at 50% 6%, rgba(255,255,255,.08) 0%, rgba(255,255,255,0) 60%),
+    radial-gradient(800px 420px at 50% 98%, rgba(255,255,255,.06) 0%, rgba(255,255,255,0) 65%),
+    linear-gradient(180deg,#0b0b0c 0%,#070708 50%,#0a0a0b 100%);
   background-repeat:no-repeat,no-repeat,no-repeat;
   background-size:100% 440px,100% 360px,100% 100%;
   background-position:center top,center bottom,center top;
   background-color:#0a0a0b;
 }
 
-/* opcionális finom pont-textúra kikapcsolva: .bg-vinyl { … } nincs */
-
-/* --------- Topbar --------- */
+/* ---- Topbar ---- */
 .topbar{
   position:sticky; top:0; z-index:20;
   background:rgba(0,0,0,.55);
@@ -52,33 +44,28 @@ body{
   display:flex; align-items:center; gap:14px;
   padding:18px 22px 10px 22px;
 }
-.brand h1{ margin:0; font-size:1.35rem; letter-spacing:.3px }
-.brand p{ margin:2px 0 0 0; color:var(--muted); font-size:.9rem }
+.brand h1{margin:0; font-size:1.35rem; letter-spacing:.3px}
+.brand p{margin:2px 0 0 0; color:var(--muted); font-size:.9rem}
 
-/* LOGÓ – desktop 100×100 */
-@media (min-width:1025px){
-  .topbar .brand > img.spinning-vinyl{
-    width:100px !important;
-    height:100px !important;
-    margin:10px 22px !important;
-    animation: spin 8s linear infinite;
-    will-change:transform;
-    backface-visibility:hidden;
-    transform-origin:50% 50%;
-    image-rendering:auto;
-  }
+/* Logó – forog (100×100) */
+.topbar .brand > img.spinning-vinyl{
+  width:100px; height:100px;
+  margin:10px 22px;
+  animation:spin 8s linear infinite;
+  will-change:transform;
+  backface-visibility:hidden;
+  transform-origin:50% 50%;
 }
 
-/* --------- Menü „lemezek” (vinyl-tabs) --------- */
+/* ---- Menü „lemezek” ---- */
 .vinyl-tabs{
   display:flex; gap:16px; padding:12px 22px 16px 22px; flex-wrap:wrap;
 }
 .vinyl-tabs .tab{
   position:relative;
-  width:86px; height:86px; border-radius:50%;
-  display:grid; place-items:center; text-align:center; padding:8px;
+  width:110px; height:110px; border-radius:50%;
+  display:grid; place-items:center; text-align:center; padding:10px;
   color:var(--ink) !important;
-  /* Fekete bakelit: test + perem + barázdák + enyhe csillanás */
   background-image:
     repeating-radial-gradient(circle at 50% 50%,
       rgba(255,255,255,.07) 0 1px,
@@ -94,133 +81,112 @@ body{
   box-shadow:
     inset 0 0 0 3px #000,
     inset 0 0 0 6px #121212,
-    var(--shadow) !important;
-  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+    var(--shadow);
+  transition:transform .2s ease, box-shadow .2s ease, filter .2s ease;
 }
 .vinyl-tabs .tab span{
   position:relative; z-index:2;
   color:#eef4fb !important;
   text-shadow:0 1px 1px rgba(0,0,0,.8);
-  font-size:.78rem; line-height:1.1; text-align:center;
+  font-size:.82rem; line-height:1.1; text-align:center;
 }
 
-/* hover/focus/active: arany glow */
+/* Hover/active – arany „glow” + perem */
 .vinyl-tabs .tab::after{
   content:""; position:absolute; inset:-10%; border-radius:50%;
   pointer-events:none; opacity:0; transition:opacity .2s ease;
-  background: radial-gradient(closest-side,
+  background:radial-gradient(closest-side,
               rgba(255,230,140,.50),
               rgba(255,210,80,.22) 55%,
               rgba(0,0,0,0) 70%);
-  filter: blur(10px);
+  filter:blur(10px);
 }
 .vinyl-tabs .tab:hover,
 .vinyl-tabs .tab:focus-visible,
 .vinyl-tabs .tab.active{
-  transform: translateY(-2px);
+  transform:translateY(-2px);
   box-shadow:
     0 10px 28px rgba(255,209,102,.40),
     0 0 0 3px rgba(255,209,102,.18),
     inset 0 0 0 3px #000,
-    inset 0 0 0 6px #121212 !important;
+    inset 0 0 0 6px #121212;
 }
 .vinyl-tabs .tab:hover::after,
 .vinyl-tabs .tab:focus-visible::after,
-.vinyl-tabs .tab.active::after{ opacity:1 }
+.vinyl-tabs .tab.active::after{opacity:1}
 
-/* --------- Tartalom / tipográfia / kártyák --------- */
-main{ max-width:1100px; margin:18px auto; padding:6px 20px 60px }
-.panel{ display:none; animation:fade .25s ease both }
-.panel.active{ display:block !important }
-@keyframes fade{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
-h2{ font-size:1.6rem; margin:18px 0 10px }
-p{ color:var(--ink); opacity:.92 }
+/* ---- Tartalom ---- */
+main{max-width:1100px; margin:18px auto; padding:6px 20px 60px}
+.panel{display:none; animation:fade .25s ease both}
+.panel.active{display:block !important}
+@keyframes fade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+h2{font-size:1.6rem; margin:18px 0 10px}
+p{color:var(--ink); opacity:.92}
 
-.badges{ display:grid; gap:8px; margin:14px 0; padding:0 0 0 18px }
-.cards{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:16px }
+/* Kártyák */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px}
 .card{
-  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025));
-  border:1px solid rgba(255,255,255,.14);
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025));
+  border:1px solid var(--border);
   border-radius:18px; padding:16px; box-shadow:var(--shadow);
 }
-.card h3{ margin:8px 0 6px }
-.price{ color:#8bd3c7; font-weight:700 }
-.note{ color:var(--muted); font-size:.9rem }
+.card h3{margin:8px 0 6px}
+.note{color:var(--muted); font-size:.9rem}
 
-/* Űrlapok */
-.form{ display:grid; gap:14px }
-.form label{ display:grid; gap:6px; font-weight:600; font-size:.95rem }
-.form input, .form select, .form textarea{
+/* Űrlapok (Megrendelés/Kapcsolat) */
+.form{display:grid; gap:14px}
+.form label{display:grid; gap:6px; font-weight:600; font-size:.95rem}
+.form input,.form select,.form textarea{
   width:100%; padding:12px 12px; border-radius:12px;
   border:1px solid rgba(255,255,255,.22);
   background:rgba(20,20,20,.55); color:var(--ink);
   outline:none;
 }
-.form input:focus, .form select:focus, .form textarea:focus{
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255,209,102,.15);
+.form input:focus,.form select:focus,.form textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(255,209,102,.15);
 }
-.form .grid{ display:grid; grid-template-columns: repeat(2,1fr); gap:14px }
-.form .grid .full{ grid-column: 1 / -1 }
-.check{ align-items:center; grid-auto-flow:column; grid-template-columns: auto 1fr }
-.actions{ display:flex; align-items:center; gap:12px; margin-top:4px }
+.form .grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px}
+.form .grid .full{grid-column:1 / -1}
+.check{align-items:center; grid-auto-flow:column; grid-template-columns:auto 1fr}
+.actions{display:flex; align-items:center; gap:12px; margin-top:4px}
 .primary{
   padding:12px 16px; border-radius:12px; border:1px solid rgba(255,255,255,.22);
-  background: linear-gradient(180deg, #1d1d1f, #0f0f11);
+  background:linear-gradient(180deg,#1d1d1f,#0f0f11);
   color:var(--ink); cursor:pointer; font-weight:700;
-  box-shadow: var(--shadow);
+  box-shadow:var(--shadow);
 }
-.form-status{ color:var(--accent); min-height:1.2em }
+.form-status{color:var(--accent); min-height:1.2em}
 
-/* --------- REFERENCIÁK – 16:9 és középre --------- */
-.embeds{ display:block !important }
+/* ---- Referenciák: 16:9, középre ---- */
+.embeds{display:block !important}
 .embed.small{
-  max-width: 760px !important;
-  margin: 0 auto 18px !important;
-  padding: 10px !important;
-  display:flex !important; flex-direction:column !important; align-items:center !important;
+  max-width:760px; margin:0 auto 18px; padding:10px;
+  display:flex; flex-direction:column; align-items:center;
 }
 .embed .video{
-  position: relative !important;
-  width: 100% !important;
-  max-width: 720px !important;
-  aspect-ratio: 16 / 9 !important;
-  padding-top: 0 !important;
-  margin: 0 auto !important;
+  position:relative; width:100%; max-width:720px;
+  aspect-ratio:16 / 9; padding-top:0; margin:0 auto;
 }
 .embed .video iframe{
-  position:absolute !important; inset:0 !important;
-  width:100% !important; height:100% !important; border:0 !important;
-  display:block !important; border-radius:8px;
+  position:absolute; inset:0; width:100%; height:100%; border:0; display:block; border-radius:8px;
 }
-.embed.small p{ text-align:center !important }
+.embed.small p{text-align:center}
 
-/* --------- Lábléc --------- */
+/* ---- Lábléc ---- */
 footer{
   text-align:center; padding:30px 12px; color:var(--muted);
-  border-top:1px solid rgba(255,255,255,.18)
+  border-top:1px solid rgba(255,255,255,.18);
 }
 
-/* --------- Arany szöveg (desktop) --------- */
+/* ---- Arany szöveg ---- */
 .gold-text{
   display:inline-block;
-  background-image: linear-gradient(
-    180deg,
-    #ffe7a3 0%,
-    #f8d267 22%,
-    #d4af37 45%,
-    #b8891b 60%,
-    #f3d27a 78%,
-    #a6791a 100%
-  );
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-  -webkit-text-fill-color:transparent;
-  text-shadow:
-    0 0 8px rgba(255,215,130,0.35),
-    0 2px 6px rgba(0,0,0,0.45);
+  background-image:linear-gradient(180deg,#ffe7a3 0%,#f8d267 22%,#d4af37 45%,#b8891b 60%,#f3d27a 78%,#a6791a 100%);
+  -webkit-background-clip:text; background-clip:text;
+  color:transparent; -webkit-text-fill-color:transparent;
+  text-shadow:0 0 8px rgba(255,215,130,.35), 0 2px 6px rgba(0,0,0,.45);
 }
 
-/* --------- Animációk --------- */
-@keyframes spin{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
+/* ---- Animációk ---- */
+@keyframes spin{from{transform:rotate(0)} to{transform:rotate(360deg)}}
