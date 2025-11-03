@@ -1687,4 +1687,14 @@ html.ua-ioswv .vinyl-tabs .tab {
     font-weight: 700 !important;
   }
 }
+/* FIX: a gold-text NE változtassa meg a blokk elemek displayét */
+li.gold-text { display: list-item !important; }           /* vissza a normál LI-t */
+p.gold-text,
+h1.gold-text, h2.gold-text, h3.gold-text,
+h4.gold-text, h5.gold-text, h6.gold-text { display:block !important; }
+
+/* (opcionális, szebb) – a gold-text csak inline elemeknél legyen inline-block */
+.gold-text:not(li):not(p):not(h1):not(h2):not(h3):not(h4):not(h5):not(h6){
+  display:inline-block;
+}
 
