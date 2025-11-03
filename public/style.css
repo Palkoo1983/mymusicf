@@ -1654,18 +1654,17 @@ html.ua-ioswv .vinyl-tabs .tab {
     text-size-adjust: 100% !important;
   }
 
-  html.ua-samsung .panel.active#about,
-  html.ua-samsung .panel.active#order,
-  html.ua-androidwv .panel.active#about,
-  html.ua-androidwv .panel.active#order {
-    display: block !important;
-    transform: none !important;
-    white-space: normal !important;
-    word-break: normal !important;
-    overflow-wrap: anywhere !important;
-    text-align: justify !important;
-    line-height: 1.55 !important;
-  }
+  html.ua-samsung .panel.active,
+  html.ua-androidwv .panel.active {
+  display: block !important;
+  transform: none !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+  text-align: justify !important;
+  line-height: 1.55 !important;
+}
+
 
   html.ua-samsung label.gold-text,
   html.ua-samsung p.gold-text,
@@ -1692,3 +1691,8 @@ html.ua-ioswv .vinyl-tabs .tab {
   }
 }
 /* =========================================================== */
+main .panel.active {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
