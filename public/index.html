@@ -940,5 +940,10 @@ document.querySelectorAll('.vinyl-tabs .tab').forEach(btn=>{
     document.documentElement.classList.remove('booting');
   });
 </script>
+<script>
+if (/wv|samsungbrowser/i.test(navigator.userAgent)) {
+  document.documentElement.style.webkitTextSizeAdjust = '100%';
+}
+</script>
 
 </body></html>
