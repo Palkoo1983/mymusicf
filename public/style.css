@@ -1,109 +1,3 @@
-/* =========================================
-   EnZenem – TELJES style.css (BLUE THEME)
-   – Kék háttér, arany akcentus
-   – Topbar logó: desktop 100×100, mobil 92×92
-   – Menülemezek: fekete vinyl + arany glow hover/aktív
-   – Referenciák: 16:9, középre igazítva, kompakt keret
-   ========================================= */
-
-* { box-sizing: border-box }
-
-/* --------- Színek --------- */
-:root{
-  --bg1:#0d1b2a;   /* mélyebb kék */
-  --bg2:#123254;   /* közép kék */
-  --bg3:#16436f;   /* világosabb kék */
-  --ink:#eef4fb;   /* fő szöveg – törtfehér kékes */
-  --muted:#bcd0e6; /* halvány szöveg */
-  --accent:#ffd166; /* arany */
-  --accent2:#06d6a0;
-  --shadow:0 10px 30px rgba(0,0,0,.35);
-}
-
-/* --------- Alapok --------- */
-html, body { height: 100%; }
-html { scroll-padding-top: 92px; }
-section { scroll-margin-top: 92px; }
-
-body{
-  margin:0;
-  font-family:Poppins,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
-  color:var(--ink);
-  background:
-    radial-gradient(1100px 600px at 70% -10%, rgba(255,255,255,.10), transparent 60%),
-    radial-gradient(ellipse at center, var(--bg3) 0%, var(--bg2) 48%, var(--bg1) 100%);
-  overflow-x:hidden;
-}
-
-/* finom háttér textúra */
-.bg-vinyl{
-  position:fixed; inset:0;
-  background-image:
-    radial-gradient(circle at center, rgba(255,255,255,.07) 0 1px, transparent 1px),
-    radial-gradient(circle at center, rgba(255,255,255,.04) 0 2px, transparent 2px);
-  background-size: 6px 6px, 12px 12px;
-  opacity:.28;
-  pointer-events:none;
-}
-
-/* --------- Topbar --------- */
-.topbar{
-  position:sticky; top:0; z-index:20;
-  background:rgba(13,27,42,.55);
-  backdrop-filter:blur(10px);
-  border-bottom:1px solid rgba(188,208,230,.18);
-}
-
-.brand{
-  display:flex; align-items:center; gap:14px;
-  padding:18px 22px 10px 22px;
-}
-.brand h1{ margin:0; font-size:1.35rem; letter-spacing:.3px }
-.brand p{ margin:2px 0 0 0; color:var(--muted); font-size:.9rem }
-
-/* --------- LOGÓ: pontosan a HTML-ben szereplő elemre célozva --------- */
-/* Desktop: 100×100 */
-@media (min-width: 1025px){
-  .topbar .brand > img.spinning-vinyl{
-    width: 100px !important;
-    height: 100px !important;
-    margin: 10px 22px !important;
-    animation:
-      vinyl-intro var(--vinyl-intro, 1.3s) ease-out var(--vinyl-intro-delay, 0s) both,
-      spin var(--vinyl-spin, 8s) linear infinite calc(var(--vinyl-intro, 1.3s) + var(--vinyl-intro-delay, 0s)) !important;
-    will-change: transform;
-    transform: translate3d(0,0,0);
-    transform-origin: 50% 50%;
-    contain: paint;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    image-rendering: auto;
-    shape-rendering: geometricPrecision;
-    text-rendering: optimizeLegibility;
-  }
-}
-
-/* Mobil: 92×92 */
-@media (max-width: 768px){
-  .topbar .brand > img.spinning-vinyl{
-    width: 92px !important;
-    height: 92px !important;
-    margin: 8px 16px !important;
-  }
-}
-
-/* LOGÓ – NINCS arany glow a logón */
-.topbar .brand > img.spinning-vinyl{ position:relative; }
-.topbar .brand > img.spinning-vinyl::after{ content:none !important; }
-
-/* Intro + spin keyframes (logó és bármi más használhatja) */
-:root{ --vinyl-spin: 8s; --vinyl-intro: 1.3s; --vinyl-intro-delay: 0s; }
-@keyframes vinyl-intro {
-  from { opacity:0; transform:scale(.92) rotate(-12deg); filter:saturate(.7) brightness(.85); }
-  to   { opacity:1; transform:scale(1) rotate(0deg);   filter:none; }
-}
-
-/* --------- Menü „lemezek” (vinyl-tabs) --------- */
 .vinyl-tabs{
   display:flex; gap:16px; padding:12px 22px 16px 22px; flex-wrap:wrap;
 }
@@ -550,36 +444,7 @@ z-index: 3; /* a glow biztosan a lemez és a span fölött legyen */
   border-color: rgba(255,210,100,.16);
   background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
 }
-/* === GOLD THEME – világos, pezsgős arany (Samsung-safe) =================== */
-/* használat: <body class="gold-theme"> */
-body.gold-theme{
-  /* 0) biztos alap – ha bármi nem rajzolódik, akkor se legyen sötét */
-  background-color: #FFE8A3; /* világos arany-alap */
 
-  /* 1) fémes arany rétegek – kifejezetten világos tónusokkal */
-  background-image:
-    /* nagyon enyhe szemcse (aránylag világos) */
-    repeating-linear-gradient(
-      45deg,
-      rgba(255, 245, 210, .06) 0 2px,
-      rgba(255, 245, 210, 0)   2px 4px
-    ),
-    /* keskeny csillanás-sáv bal-fentről */
-    linear-gradient(125deg,
-      rgba(255, 255, 255, .35) 0%,
-      rgba(255, 255, 255, .10) 18%,
-      rgba(255, 255, 255, 0)   38%
-    ),
-    /* fő arany átmenet – VILÁGOS tónusok, nincs sötétbarna */
-    radial-gradient(1100px 650px at 60% -10%,
-      #FFF7CF 0%,
-      #FFECA4 28%,
-      #FFE38A 50%,
-      #FFD873 70%,
-      #FFC957 100%
-    );
-  background-blend-mode: normal, screen, normal;
-}
 
 /* finom vignetta – jóval enyhébb, ne sötétítsen túl */
 body.gold-theme::after{
@@ -609,43 +474,7 @@ body.gold-theme.gold-shimmer{
     auto, 400% 100%, auto;
   animation: goldSweepSoft 9s linear infinite;
 }
-/* === GOLD THEME – közepes kontraszt, olvasható felirat ==================== */
-body.gold-theme{
-  /* biztonsági alap, ha egy réteg nem rajzolódik */
-  background-color:#F3CD76;
 
-  /* rétegek: enyhe textúra + csillanás + két nagy arany átmenet */
-  background-image:
-    /* finom szemcse – alig látszik, nem sötétít */
-    repeating-linear-gradient(
-      45deg,
-      rgba(255,240,200,.06) 0 2px,
-      rgba(255,240,200,0)   2px 4px
-    ),
-    /* keskeny csillanás bal-fentről – világosít (screen) */
-    linear-gradient(125deg,
-      rgba(255,255,255,.22) 0%,
-      rgba(255,255,255,.10) 18%,
-      rgba(255,255,255,0)   40%
-    ),
-    /* fő világos→közepes arany felülről-jobbról */
-    radial-gradient(1100px 700px at 70% -10%,
-      #FFF1B8 0%,
-      #FFE08A 35%,
-      #F9C85E 60%,
-      #E8B247 85%,
-      #D79A2E 100%
-    ),
-    /* közép→mély arany alulról-balról, hogy legyen kontraszt */
-    radial-gradient(1200px 800px at -10% 110%,
-      #8F6A1A 0%,
-      #A97B1E 35%,
-      #C28D25 65%,
-      rgba(0,0,0,0) 100%
-    );
-  /* a csillanás réteg világosítson, a többi normál */
-  background-blend-mode: normal, screen, normal, normal;
-}
 
 /* enyhe vignetta a széleken – csak kicsit, hogy ne sötétítsen túl */
 body.gold-theme::after{
@@ -1341,10 +1170,7 @@ html body nav a.gold-text{
   -webkit-text-fill-color: transparent !important;
 }
 /* === Samsung Internet (ua-samsung) – minden glow/clip OFF, éles arany szöveg === */
-html.ua-samsung * {
-  text-shadow: none !important;
-  filter: none !important;
-}
+
 
 /* A gradient-clip-es arany szöveg helyett egyszerű, éles arany */
 html.ua-samsung .gold-text,
@@ -1364,16 +1190,7 @@ html.ua-samsung .video-panel button:focus {
 /* Biztos, ami biztos: menüfülek felirata is sima arany */
 
 /* ========== iOS / iPhone / iPad fix – csak ott hat ========== */
-@supports (-webkit-touch-callout: none) {
-  @media (max-width: 640px) {
-    .vinyl-tabs {
-      display: grid !important;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      padding: 0 8px;
-      justify-items: center;
-      align-items: center;
-    }
+
 
     .vinyl-tabs .tab {
       --disc: 90px;
@@ -1467,14 +1284,7 @@ html.ua-samsung #contact button span {
 }
 /* Samsung Internet vizuális fixek – FRISSÍTETT */
 
-html.ua-samsung .vinyl-tabs {
-  display: grid !important;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  justify-items: center;
-  align-items: center;
-  padding: 0 8px;
-}
+
 
 html.ua-samsung .vinyl-tabs .tab {
   --disc: 100px;
@@ -1623,28 +1433,10 @@ html.ua-ioswv .vinyl-tabs .tab {
   overflow: visible !important;
 }
 /* === Samsung Internet / WebView – Bemutatkozás + tipográfia fix (végleges) === */
-@supports (-webkit-touch-callout: none) {
-  
 
-  html.ua-samsung #about strong,
-  html.ua-samsung #about b {
-    font-weight: 700 !important;
-  }
 }
 /* === Samsung Internet / WebView – Gold Text fix (Bemutatkozás) === */
-@supports (-webkit-touch-callout: none) {
-  html.ua-samsung .gold-text,
-  html.ua-samsung .gold-text * {
-    color: #f3d27a !important;
-    -webkit-text-fill-color: #f3d27a !important;
-    background: none !important;
-    -webkit-background-clip: initial !important;
-    background-clip: initial !important;
-    text-shadow: none !important;
-    filter: none !important;
-    mix-blend-mode: normal !important;
-    font-weight: 600 !important;  /* visszaadja a kiemelés vastagságát */
-  }
+
 
   /* ahol tényleg félkövér kell */
   html.ua-samsung #about strong.gold-text,
@@ -1721,17 +1513,7 @@ html.ua-samsung .vinyl-tabs .tab { display: grid; place-items: center; }
 
 /* === iOS-only typography isolation (2025-11-03 Nova fix) === */
 /* Ez megelőzi, hogy a Samsung WebView megörökölje az iOS tipográfiai szabályokat */
-@supports (-webkit-touch-callout: none) {
-  html.ua-ipad .panel.active#about,
-  html.ua-ioswv .panel.active#about {
-    display: block !important;
-    transform: none !important;
-    white-space: normal !important;
-    word-break: normal !important;
-    overflow-wrap: anywhere !important;
-    text-align: justify !important;
-    line-height: 1.55 !important;
-  }
+
 }
 /* Samsung ne örökölje */
 
