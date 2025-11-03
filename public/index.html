@@ -24,7 +24,7 @@
 
 <script>
   (function(){
-    var svh = window.innerHeight * 0.01;
+    var svh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) * 0.01;
     document.documentElement.style.setProperty('--svh', svh+'px');
     document.documentElement.classList.add('booting');
     addEventListener('resize', function(){
