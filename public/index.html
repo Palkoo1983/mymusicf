@@ -544,61 +544,97 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
       </p>
     </section>
 
-    <section class="panel" id="order">
-      <h2 class="gold-text">Megrendelés</h2>
-      <form class="form" id="orderForm">
-        <input autocomplete="off" name="_hp" style="display:none" tabindex="-1" type="text"/>
-        <div class="grid">
-        <label class="gold-text">Csomag (fizetés bankkártyával: Visa vagy MasterCard)
-  <select name="package" required>
-    <option value="basic">Alap (MP3)</option>
-    <option value="video">Videó csomag (MP4)</option>
-    <option value="premium">Prémium (WAV)</option>
-  </select>
-</label>
+   <section class="panel" id="order">
+  <h2><span class="gold-text">Megrendelés</span></h2>
 
-<label class="gold-text">
-  Dal címe (opcionális)
-  <input name="title" type="text" placeholder="pl. Budai csillag">
-</label>
+  <form class="form" id="orderForm">
+    <input autocomplete="off" name="_hp" style="display:none" tabindex="-1" type="text" />
 
-          <label class="gold-text">E-mail (ahová a linket küldjük)
-            <input name="email" placeholder="pelda@domain.hu" required="" type="email"/>
-          </label>
-          <label class="gold-text">Zenei stílus (írható is)
-           <input list="style-list" name="styles" placeholder="pl. pop / rock / musical / minimal techno / house / saját megjelölés" required type="text">
-            <datalist id="style-list">
-              <option value="Pop"><option value="Rock"><option value="Opera"><option value="Akusztikus"><option value="Filmzene"><option value="Lo-fi">
-            </datalist>
-          </label>
-          <label class="gold-text">Ének
-           <select name="vocal" required>
-  <option value="female">Női</option>
-  <option value="male">Férfi</option>
-  <option value="duet">Vegyes (férfi és női duett)</option>
-  <option value="child">Gyermek ének</option>
-  <option value="robot">„Gépi”/szintetikus ének</option>
-  <option value="instrumental">Instrumentális (ének nélkül)</option>
-  </select>
-          </label>
-          <label class="gold-text">Nyelv (pl. magyar, angol, német, holland, stb..)
-            <input name="language" placeholder="pl. magyar / angol / német / holland / stb.." type="text"/>
-          </label>
-          <label class="full gold-text">Leírás / miről szóljon a dal?
-            <textarea name="brief" placeholder="Milyen történetet, érzést, üzenetet közvetítsen a dal? Írd le az emlékeiteket, milyen az a személy(ek) akinek a dal íródik. Esküvőre a kettőtök történetét, születésnapra a személy tulajdonságait, életkorát, stb.." rows="5"></textarea>
-          </label>
-          <label class="check full gold-text">
-            <input name="consent" required="" type="checkbox"/>
-            Beleegyezem, hogy az adataimat a megrendelés feldolgozásához felhasználjátok. (Részletek: <a href="adatkezeles.html" class="gold-text" target="_blank">Adatkezelés</a>, <a href="aszf.html" class="gold-text" target="_blank">ÁSZF</a>)
-          </label>
-        </div>
-        <div class="actions">
-          <button class="primary" type="submit"><span class="gold-text">Megrendelés leadása</span></button>
-          <span class="form-status gold-text" id="orderStatus"></span>
-        </div>
-      </form>
-      <p class="note gold-text">Fizetés: előre. A megrendelés gomb megnyomásával átirányítunk a fizetési terminálra. Amennyiben sikeres a fizetés, csak akkor kapjuk meg a megrendelést.</p>
-    </section>
+    <div class="grid">
+
+      <label>
+        <span class="gold-text">Csomag (fizetés bankkártyával: Visa vagy MasterCard)</span>
+        <select name="package" required>
+          <option value="basic">Alap (MP3)</option>
+          <option value="video">Videó csomag (MP4)</option>
+          <option value="premium">Prémium (WAV)</option>
+        </select>
+      </label>
+
+      <label>
+        <span class="gold-text">Dal címe (opcionális)</span>
+        <input name="title" type="text" placeholder="pl. Budai csillag" />
+      </label>
+
+      <label>
+        <span class="gold-text">E-mail (ahová a linket küldjük)</span>
+        <input name="email" placeholder="pelda@domain.hu" required type="email" />
+      </label>
+
+      <label>
+        <span class="gold-text">Zenei stílus (írható is)</span>
+        <input list="style-list" name="styles" placeholder="pl. pop / rock / musical / minimal techno / house / saját megjelölés" required type="text" />
+        <datalist id="style-list">
+          <option value="Pop">
+          <option value="Rock">
+          <option value="Opera">
+          <option value="Akusztikus">
+          <option value="Filmzene">
+          <option value="Lo-fi">
+        </datalist>
+      </label>
+
+      <label>
+        <span class="gold-text">Ének</span>
+        <select name="vocal" required>
+          <option value="female">Női</option>
+          <option value="male">Férfi</option>
+          <option value="duet">Vegyes (férfi és női duett)</option>
+          <option value="child">Gyermek ének</option>
+          <option value="robot">„Gépi”/szintetikus ének</option>
+          <option value="instrumental">Instrumentális (ének nélkül)</option>
+        </select>
+      </label>
+
+      <label>
+        <span class="gold-text">Nyelv (pl. magyar, angol, német, holland, stb..)</span>
+        <input name="language" placeholder="pl. magyar / angol / német / holland / stb.." type="text" />
+      </label>
+
+      <label class="full">
+        <span class="gold-text">Leírás / miről szóljon a dal?</span>
+        <textarea name="brief" rows="5"
+          placeholder="Milyen történetet, érzést, üzenetet közvetítsen a dal? Írd le az emlékeiteket, milyen az a személy(ek) akinek a dal íródik. Esküvőre a kettőtök történetét, születésnapra a személy tulajdonságait, életkorát, stb."></textarea>
+      </label>
+
+      <label class="check full">
+        <input name="consent" required type="checkbox" />
+        <span class="gold-text">
+          Beleegyezem, hogy az adataimat a megrendelés feldolgozásához felhasználjátok.
+          (Részletek:
+          <a href="adatkezeles.html" class="gold-text" target="_blank">Adatkezelés</a>,
+          <a href="aszf.html" class="gold-text" target="_blank">ÁSZF</a>)
+        </span>
+      </label>
+
+    </div>
+
+    <div class="actions">
+      <button class="primary" type="submit">
+        <span class="gold-text">Megrendelés leadása</span>
+      </button>
+      <span class="form-status gold-text" id="orderStatus"></span>
+    </div>
+  </form>
+
+  <p class="note">
+    <span class="gold-text">
+      Fizetés: előre. A megrendelés gomb megnyomásával átirányítunk a fizetési terminálra.
+      Amennyiben sikeres a fizetés, csak akkor kapjuk meg a megrendelést.
+    </span>
+  </p>
+</section>
+
 
     <section class="panel" id="refs">
       <h2 class="gold-text">Referenciák</h2>
