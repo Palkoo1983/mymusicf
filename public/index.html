@@ -297,14 +297,9 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   }
 }
   </style>
-<!-- ==============================================================
-     iOS / WebView Safe Fix (2025-11-03 Nova) 
-     Cél: iPad és iOS-Safari tab-rács igazítás, 
-     Samsung Internet és Android WebView NEM örökli.
-================================================================= -->
-<style id="ios-only-fix">
-  html.ua-ipad .vinyl-tabs,
-  html.ua-ioswv .vinyl-tabs {
+<style>
+@supports (-webkit-touch-callout: none) {
+  .vinyl-tabs {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
@@ -313,8 +308,7 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     align-items: center;
   }
 
-  html.ua-ipad .vinyl-tabs .tab,
-  html.ua-ioswv .vinyl-tabs .tab {
+  .vinyl-tabs .tab {
     --disc: 92px !important;
     width: var(--disc) !important;
     height: var(--disc) !important;
@@ -324,8 +318,7 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     padding: 0 !important;
   }
 
-  html.ua-ipad .vinyl-tabs .tab span,
-  html.ua-ioswv .vinyl-tabs .tab span {
+  .vinyl-tabs .tab span {
     display: flex !important;
     align-items: center;
     justify-content: center;
@@ -336,13 +329,15 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     font-size: 13px !important;
     max-height: calc(1.1em * 2);
     overflow: hidden;
+
     white-space: normal !important;
     word-break: keep-all !important;
     overflow-wrap: normal !important;
     hyphens: none !important;
   }
+}
 </style>
-<!-- ============================================================= -->
+
 
 <!-- [GOLDEN WV PATCH v2] Anti-blink release -->
 <script>
@@ -557,15 +552,8 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 
     <div class="grid">
 
-     <section class="panel" id="order">
-  <h2 class="gold-text">Megrendelés</h2>
-
-  <form class="form" id="orderForm">
-    <input autocomplete="off" name="_hp" style="display:none" tabindex="-1" type="text" />
-
-    <div class="grid">
-      <label class="gold-text">
-        Csomag (fizetés bankkártyával: Visa vagy MasterCard)
+      <label>
+        <span class="gold-text">Csomag (fizetés bankkártyával: Visa vagy MasterCard)</span>
         <select name="package" required>
           <option value="basic">Alap (MP3)</option>
           <option value="video">Videó csomag (MP4)</option>
@@ -573,25 +561,19 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
         </select>
       </label>
 
-      <label class="gold-text">
-        Dal címe (opcionális)
+      <label>
+        <span class="gold-text">Dal címe (opcionális)</span>
         <input name="title" type="text" placeholder="pl. Budai csillag" />
       </label>
 
-      <label class="gold-text">
-        E-mail (ahová a linket küldjük)
+      <label>
+        <span class="gold-text">E-mail (ahová a linket küldjük)</span>
         <input name="email" placeholder="pelda@domain.hu" required type="email" />
       </label>
 
-      <label class="gold-text">
-        Zenei stílus (írható is)
-        <input
-          list="style-list"
-          name="styles"
-          placeholder="pl. pop / rock / musical / minimal techno / house / saját megjelölés"
-          required
-          type="text"
-        />
+      <label>
+        <span class="gold-text">Zenei stílus (írható is)</span>
+        <input list="style-list" name="styles" placeholder="pl. pop / rock / musical / minimal techno / house / saját megjelölés" required type="text" />
         <datalist id="style-list">
           <option value="Pop">
           <option value="Rock">
@@ -602,8 +584,8 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
         </datalist>
       </label>
 
-      <label class="gold-text">
-        Ének
+      <label>
+        <span class="gold-text">Ének</span>
         <select name="vocal" required>
           <option value="female">Női</option>
           <option value="male">Férfi</option>
@@ -614,27 +596,27 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
         </select>
       </label>
 
-      <label class="gold-text">
-        Nyelv (pl. magyar, angol, német, holland, stb..)
+      <label>
+        <span class="gold-text">Nyelv (pl. magyar, angol, német, holland, stb..)</span>
         <input name="language" placeholder="pl. magyar / angol / német / holland / stb.." type="text" />
       </label>
 
-      <label class="full gold-text">
-        Leírás / miről szóljon a dal?
-        <textarea
-          name="brief"
-          rows="5"
-          placeholder="Milyen történetet, érzést, üzenetet közvetítsen a dal? Írd le az emlékeiteket, milyen az a személy(ek) akinek a dal íródik. Esküvőre a kettőtök történetét, születésnapra a személy tulajdonságait, életkorát, stb."
-        ></textarea>
+      <label class="full">
+        <span class="gold-text">Leírás / miről szóljon a dal?</span>
+        <textarea name="brief" rows="5"
+          placeholder="Milyen történetet, érzést, üzenetet közvetítsen a dal? Írd le az emlékeiteket, milyen az a személy(ek) akinek a dal íródik. Esküvőre a kettőtök történetét, születésnapra a személy tulajdonságait, életkorát, stb."></textarea>
       </label>
 
-      <label class="check full gold-text">
+      <label class="check full">
         <input name="consent" required type="checkbox" />
-        Beleegyezem, hogy az adataimat a megrendelés feldolgozásához felhasználjátok.
-        (Részletek:
-        <a href="adatkezeles.html" class="gold-text" target="_blank">Adatkezelés</a>,
-        <a href="aszf.html" class="gold-text" target="_blank">ÁSZF</a>)
+        <span class="gold-text">
+          Beleegyezem, hogy az adataimat a megrendelés feldolgozásához felhasználjátok.
+          (Részletek:
+          <a href="adatkezeles.html" class="gold-text" target="_blank">Adatkezelés</a>,
+          <a href="aszf.html" class="gold-text" target="_blank">ÁSZF</a>)
+        </span>
       </label>
+
     </div>
 
     <div class="actions">
@@ -645,12 +627,13 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     </div>
   </form>
 
-  <p class="note gold-text">
-    Fizetés: előre. A megrendelés gomb megnyomásával átirányítunk a fizetési terminálra.
-    Amennyiben sikeres a fizetés, csak akkor kapjuk meg a megrendelést.
+  <p class="note">
+    <span class="gold-text">
+      Fizetés: előre. A megrendelés gomb megnyomásával átirányítunk a fizetési terminálra.
+      Amennyiben sikeres a fizetés, csak akkor kapjuk meg a megrendelést.
+    </span>
   </p>
 </section>
-
 
 
     <section class="panel" id="refs">

@@ -1642,57 +1642,153 @@ html.ua-samsung .vinyl-tabs .tab,
 html.ua-ioswv .vinyl-tabs .tab {
   overflow: visible !important;
 }
-/* ===========================================================
-   === Samsung Internet / WebView – Consolidated Fix (final) ===
-   Nova 2025-11-03 — Egységesített, stabil verzió
-   =========================================================== */
-
+/* === Samsung Internet / WebView – Bemutatkozás + tipográfia fix (végleges) === */
 @supports (-webkit-touch-callout: none) {
-  html.ua-samsung body,
-  html.ua-androidwv body {
+  html.ua-samsung .panel.active#about {
+    display: block !important;
+    transform: none !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    text-align: justify !important;
+    line-height: 1.55 !important;
+    letter-spacing: 0 !important;
+    padding: 10px 18px !important;
+    margin: 0 auto !important;
+    max-width: 960px !important;
     -webkit-text-size-adjust: 100% !important;
     text-size-adjust: 100% !important;
+    font-size: 1em !important;
   }
 
-  html.ua-samsung .panel.active,
-  html.ua-androidwv .panel.active {
+  html.ua-samsung #about strong,
+  html.ua-samsung #about b {
+    font-weight: 700 !important;
+  }
+}
+/* === Samsung Internet / WebView – Gold Text fix (Bemutatkozás) === */
+@supports (-webkit-touch-callout: none) {
+  html.ua-samsung .gold-text,
+  html.ua-samsung .gold-text * {
+    color: #f3d27a !important;
+    -webkit-text-fill-color: #f3d27a !important;
+    background: none !important;
+    -webkit-background-clip: initial !important;
+    background-clip: initial !important;
+    text-shadow: none !important;
+    filter: none !important;
+    mix-blend-mode: normal !important;
+    font-weight: 600 !important;  /* visszaadja a kiemelés vastagságát */
+  }
+
+  /* ahol tényleg félkövér kell */
+  html.ua-samsung #about strong.gold-text,
+  html.ua-samsung #about b.gold-text {
+    font-weight: 700 !important;
+  }
+}
+/* FIX: a gold-text NE változtassa meg a blokk elemek displayét */
+li.gold-text { display: list-item !important; }           /* vissza a normál LI-t */
+p.gold-text,
+h1.gold-text, h2.gold-text, h3.gold-text,
+h4.gold-text, h5.gold-text, h6.gold-text { display:block !important; }
+
+/* (opcionális, szebb) – a gold-text csak inline elemeknél legyen inline-block */
+.gold-text:not(li):not(p):not(h1):not(h2):not(h3):not(h4):not(h5):not(h6){
+  display:inline-block;
+}
+/* --- Samsung WebView: gold-text autosize fix (inline ne legyen inline-block) --- */
+html.ua-samsung .gold-text,
+html.ua-samsung .gold-text *{
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  color: #f3d27a !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  text-shadow: none !important;
+}
+
+/* Inline elemek maradjanak inline → nem kapcsol ki az autosize */
+html.ua-samsung b.gold-text,
+html.ua-samsung strong.gold-text,
+html.ua-samsung a.gold-text,
+html.ua-samsung em.gold-text,
+html.ua-samsung span.gold-text{
+  display: inline !important;
+  font-weight: 700; /* strong/b erősebb legyen */
+}
+
+/* Blokk elemek maradjanak blokkban (ne inline-block) */
+html.ua-samsung p.gold-text,
+html.ua-samsung h1.gold-text, html.ua-samsung h2.gold-text, html.ua-samsung h3.gold-text,
+html.ua-samsung h4.gold-text, html.ua-samsung h5.gold-text, html.ua-samsung h6.gold-text,
+html.ua-samsung li.gold-text, html.ua-samsung label.gold-text, 
+html.ua-samsung .note.gold-text{
   display: block !important;
+}
+/* === Samsung Internet WebView – Consolidated Fix (final) === */
+
+/* 1) gold-text: vissza az elemek saját display-ére + egységes arany szín  */
+html.ua-samsung .gold-text {
+  display: revert !important;                /* p → block, strong/a → inline, li → list-item */
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  color: #f3d27a !important;
+}
+/* beágyazott erősítések se kényszerítsenek inline-blockot */
+html.ua-samsung strong.gold-text,
+html.ua-samsung b.gold-text,
+html.ua-samsung a.gold-text,
+html.ua-samsung em.gold-text,
+html.ua-samsung span.gold-text {
+  display: inline !important;
+  -webkit-text-fill-color: #f3d27a !important;
+  color: #f3d27a !important;
+}
+/* form-címkék maradjanak blokkosak és arányosak */
+html.ua-samsung label.full.gold-text { 
+  display: block !important;
+  font-size: 1em !important;
+  line-height: 1.35 !important;
+}
+
+/* 2) Számozott lista visszaállítása a 'Hogyan működik' résznél */
+html.ua-samsung ol,
+html.ua-samsung ol li {
+  list-style: decimal !important;
+  display: list-item !important;
+  margin-left: 1.5em !important;
+  font-size: 1em !important;
+}
+
+/* 3) Menülemezek feliratainak vertikális középre igazítása (helyes szelektor) */
+html.ua-samsung .vinyl-tabs .tab { display: grid; place-items: center; }
+html.ua-samsung .vinyl-tabs .tab span {
+  position: static !important;
   transform: none !important;
-  white-space: normal !important;
-  word-break: normal !important;
-  overflow-wrap: anywhere !important;
-  text-align: justify !important;
-  line-height: 1.55 !important;
-}
-
-
-  html.ua-samsung label.gold-text,
-  html.ua-samsung p.gold-text,
-  html.ua-samsung p.note.gold-text,
-  html.ua-samsung li.gold-text,
-  html.ua-samsung strong.gold-text {
-    font-size: 1rem !important;
-    line-height: 1.45 !important;
-  }
-
-  html.ua-samsung .vinyl-tabs .tab span {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    line-height: 1.2 !important;
-    font-size: 13px !important;
-    white-space: normal !important;
-  }
-
-  html.ua-samsung .vinyl-tabs .tab {
-    display: grid !important;
-    place-items: center !important;
-  }
-}
-/* =========================================================== */
-main .panel.active {
   display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+  line-height: 1.05 !important;
+  text-align: center !important;
 }
+/* === iOS-only typography isolation (2025-11-03 Nova fix) === */
+/* Ez megelőzi, hogy a Samsung WebView megörökölje az iOS tipográfiai szabályokat */
+@supports (-webkit-touch-callout: none) {
+  html.ua-ipad .panel.active#about,
+  html.ua-ioswv .panel.active#about {
+    display: block !important;
+    transform: none !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    text-align: justify !important;
+    line-height: 1.55 !important;
+  }
+}
+/* Samsung ne örökölje */
+html.ua-samsung .panel.active#about {
+  line-height: normal !important;
+  text-align: left !important;
+}
+
