@@ -932,5 +932,16 @@ if (/wv|samsungbrowser/i.test(navigator.userAgent)) {
   document.documentElement.style.webkitTextSizeAdjust = '100%';
 }
 </script>
+<script>
+window.addEventListener('load', () => {
+  const nv = document.querySelector('.nv-bot, .nv-bot-anchor');
+  if (nv) {
+    nv.style.position = 'fixed';
+    nv.style.right = '16px';
+    nv.style.bottom = '16px';
+    nv.style.zIndex = '9999';
+  }
+});
+</script>
 
 </body></html>
