@@ -7,13 +7,25 @@
 <meta name="theme-color" content="#0d1b2a"> <!-- maradhat, ez a felső sáv színe Androidon -->
 
 <style>
-  html { opacity: 0; transition: opacity .2s ease-out; }
+  :root { --bg:#0d1b2a; }
+  html, body {
+    background:#0d1b2a !important;
+    color-scheme: light;
+  }
+  html {
+    opacity: 0;
+    transition: opacity .2s ease-out;
+  }
 </style>
+
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    requestAnimationFrame(() => document.documentElement.style.opacity = '1');
+  window.addEventListener('load', () => {
+    requestAnimationFrame(() => {
+      document.documentElement.style.opacity = '1';
+    });
   });
 </script>
+
   
 <!-- [GOLDEN WV PATCH v2] Anti-blink base -->
 
