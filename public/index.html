@@ -932,19 +932,16 @@ if (/wv|samsungbrowser/i.test(navigator.userAgent)) {
   document.documentElement.style.webkitTextSizeAdjust = '100%';
 }
 </script>
-<script>
-window.addEventListener('load', () => {
-  const nv = document.getElementById('novabot');
-  if (nv) {
-    nv.style.setProperty('position', 'fixed', 'important');
-    nv.style.setProperty('right', '16px', 'important');
-    nv.style.setProperty('bottom', '16px', 'important');
-    nv.style.setProperty('z-index', '9999', 'important');
-    nv.style.setProperty('pointer-events', 'auto', 'important');
-    nv.style.setProperty('opacity', '1', 'important');
-    nv.style.setProperty('visibility', 'visible', 'important');
-  }
-});
-</script>
+#novabot {
+  position: fixed !important;
+  inset: auto !important;
+  right: 16px !important;
+  bottom: 16px !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+  z-index: 99999 !important;
+  will-change: transform;
+}
 
 </body></html>
