@@ -777,3 +777,24 @@ document.addEventListener('DOMContentLoaded', () => {
     bar.style.display = 'none';
   });
 });
+// === Árkijelzés animáció – Nova 2025-11-04 ===
+document.addEventListener('DOMContentLoaded', () => {
+  const orderBtn = document.querySelector('.primary[type="submit"], .form .primary');
+  if (!orderBtn) return;
+
+  // kis fényes pulzálás árfrissítéskor
+  const animatePrice = () => {
+    orderBtn.classList.add('price-update');
+    setTimeout(() => orderBtn.classList.remove('price-update'), 600);
+  };
+
+  // ha valaki kézbesítési opcióra kattint
+  const deliveryButtons = document.querySelectorAll('.delivery-btn');
+  deliveryButtons.forEach(btn => {
+    btn.addEventListener('click', animatePrice);
+  });
+
+  // ha valaki csomagot vált
+  const pkgSelect = document.querySelector('select[name="package"]');
+  if (pkgSelect) pkgSelect.addEventListener('change', animatePrice);
+});
