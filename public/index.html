@@ -339,39 +339,6 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     color: inherit;
   }
 </style>
-<!-- [Final Anti-Blink Polish v1] -->
-<style>
-  html {
-    backface-visibility: hidden;
-    will-change: scroll-position;
-    scroll-behavior: smooth;
-  }
-  body {
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-  }
-</style>
-
-<!-- Betűk azonnal swap-elő módban -->
-<link
-  href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
-  rel="stylesheet"
-  fetchpriority="high"
-/>
-
-<script>
-  // apró késleltetés finomítva – 10ms a korábbi 20 helyett
-  (function(){
-    function release(){
-      requestAnimationFrame(() => {
-        setTimeout(() => document.documentElement.classList.remove('booting'), 10);
-      });
-    }
-    if (document.readyState === 'complete') release();
-    else window.addEventListener('load', release, { once: true });
-  })();
-</script>
-
 </head>
 <body class="gold-theme">
   <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
