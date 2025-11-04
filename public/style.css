@@ -1442,7 +1442,6 @@ html body .vinyl-tabs .tab span.gold-text{
 /* Ha gombban/primary-ben is fehérre kényszerítik a színt */
 html body button .gold-text,
 html body .btn .gold-text,
-html body .primary .gold-text,
 html body nav a.gold-text{
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
