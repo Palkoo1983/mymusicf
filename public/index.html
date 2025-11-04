@@ -12,16 +12,17 @@
     background:#0d1b2a !important;
     color-scheme: light;
   }
-  html {
+
+  /* csak a tartalom fade-eljen be, ne az egész háttér */
+  body {
     opacity: 0;
-    transition: opacity .2s ease-out;
+    transition: opacity .35s ease-out;
   }
 </style>
-
 <script>
   window.addEventListener('load', () => {
     requestAnimationFrame(() => {
-      document.documentElement.style.opacity = '1';
+      document.body.style.opacity = '1';
     });
   });
 </script>
