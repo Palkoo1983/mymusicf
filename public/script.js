@@ -653,7 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // tegyük kötelezővé natívan is
   if (lang) lang.setAttribute('required', '');
-  if (desc) { desc.setAttribute('required', ''); desc.setAttribute('minlength', '120'); }
+  if (desc) { desc.setAttribute('required', ''); desc.setAttribute('minlength', '120'); desc.setAttribute('maxlength', '4000'); }
 
   // globális, CAPTURE fázisú submit-őr – megelőzi a többi listener működését
   document.addEventListener('submit', function(e){
