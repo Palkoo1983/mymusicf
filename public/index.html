@@ -11,11 +11,9 @@
     background: #0d1b2a !important;
     color-scheme: light;
   }
-  /* Azonnali háttér és scroll stabilitás a teljes első frame-re */
-  html {
-    backface-visibility: hidden;
-    transform: translateZ(0);
-  }
+ /* Opcionális: görgetés előkészítése villanás nélkül, transform nélkül */
+html { will-change: scroll-position; }
+
 </style>
 <script>
   document.documentElement.style.visibility = 'hidden';
@@ -932,19 +930,5 @@ if (/wv|samsungbrowser/i.test(navigator.userAgent)) {
   document.documentElement.style.webkitTextSizeAdjust = '100%';
 }
 </script>
-<style>
-  /* === NovaBot fixálás – univerzális, minden böngészőre === */
-  #novabot {
-    position: fixed !important;
-    right: 16px !important;
-    bottom: 16px !important;
-    z-index: 9999 !important;
-    margin: 0 !important;
-    pointer-events: auto !important;
-  }
-  #novabot .novabot-avatar {
-    position: relative !important;
-  }
-</style>
 
 </body></html>
