@@ -932,5 +932,19 @@ if (/wv|samsungbrowser/i.test(navigator.userAgent)) {
   document.documentElement.style.webkitTextSizeAdjust = '100%';
 }
 </script>
+<style>
+  /* === NovaBot fixálás – univerzális, minden böngészőre === */
+  #novabot {
+    position: fixed !important;
+    right: 16px !important;
+    bottom: 16px !important;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    pointer-events: auto !important;
+  }
+  #novabot .novabot-avatar {
+    position: relative !important;
+  }
+</style>
 
 </body></html>
