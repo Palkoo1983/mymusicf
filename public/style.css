@@ -242,17 +242,17 @@ p{ color:var(--ink); opacity:.92 }
   vertical-align: middle;
   box-sizing: border-box;
   cursor: pointer;
-  transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+  transition: all .18s ease-out;
 }
 
-/* Hover – csak halvány arany fény, nem fed rá */
-.delivery-btn:hover {
+/* Hover csak a nem aktív gombokon legyen látványos */
+.delivery-btn:hover:not(.active) {
   background: rgba(212, 175, 55, 0.25);
   border-color: #e8c45a;
   color: #ffeeb3;
 }
 
-/* Aktív (kiválasztott) – áttetsző arany, szöveg jól olvasható */
+/* Aktív (kiválasztott) gomb — áttetsző arany, mindig jól olvasható szöveg */
 .delivery-btn.active {
   background: rgba(212, 175, 55, 0.35);
   border-color: #f1d36d;
@@ -260,12 +260,14 @@ p{ color:var(--ink); opacity:.92 }
   box-shadow: 0 0 6px rgba(255, 220, 120, 0.25);
 }
 
-/* Biztonsági fix: hover ne maradjon más gombon */
-.delivery-buttons:hover .delivery-btn:not(:hover):not(.active) {
-  background: rgba(6, 24, 44, 0.55);
-  color: #f3d27a;
-  border-color: #d4af37;
+/* Hover fix – ne villogjon, ha egy active fölött vagy */
+.delivery-btn.active:hover {
+  background: rgba(212, 175, 55, 0.35);
+  border-color: #f1d36d;
+  color: #06182c;
+  box-shadow: 0 0 6px rgba(255, 220, 120, 0.25);
 }
+
 
 .form .grid{ display:grid; grid-template-columns: repeat(2,1fr); gap:14px }
 .form .grid .full{ grid-column: 1 / -1 }
