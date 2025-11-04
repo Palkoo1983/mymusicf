@@ -18,8 +18,11 @@
 <!-- [GOLDEN WV PATCH v2] Anti-blink base -->
 
 <style>
-  :root{ --bg:#0d1b2a; }
-  html, body { background:#0d1b2a; }
+  :root { --bg:#0d1b2a; }
+  html, body {
+    background:#0d1b2a !important;
+    color-scheme: light;               /* iOS / WebKit ne tegyen fehér átmenetet */
+  }
 
   /* csak fő tartalom fagyasztás, nem az egész oldal! */
   html.booting body > *:not(.topbar):not(.video-panel){
@@ -28,8 +31,11 @@
   }
 
   html.booting .video-panel iframe,
-  html.booting .video-panel video{ visibility:hidden !important; }
+  html.booting .video-panel video{
+    visibility:hidden !important;
+  }
 </style>
+
 
 <script>
   (function(){
@@ -358,14 +364,13 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
         }, 20);
       });
     }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', release, {once:true});
-    } else {
+    if (document.readyState === 'complete') {
       release();
+    } else {
+      window.addEventListener('load', release, {once:true});
     }
   })();
 </script>
-
   <link rel="stylesheet" href="./assets/novabot/novabot.css">
 <style>
   /* Csak a rövid cím (data-label) jelenjen meg a mintagombokon */
