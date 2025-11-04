@@ -398,6 +398,19 @@ function initOrderForm() {
     cancelBtn?.addEventListener('click', onCancel, { once:true });
   });
 }
+// === Kézbesítési opciók kiválasztása ===
+document.addEventListener('DOMContentLoaded', () => {
+  const buttons = document.querySelectorAll('.delivery-btn');
+  const hidden  = document.querySelector('input[name="delivery_extra"]');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      hidden.value = btn.dataset.extra;
+    });
+  });
+});
 
 /* ---------- Contact form submit + thanks overlay (no redirect) ---------- */
 function initContactForm() {
