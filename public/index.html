@@ -934,12 +934,15 @@ if (/wv|samsungbrowser/i.test(navigator.userAgent)) {
 </script>
 <script>
 window.addEventListener('load', () => {
-  const nv = document.querySelector('.nv-bot, .nv-bot-anchor');
+  const nv = document.getElementById('novabot');
   if (nv) {
-    nv.style.position = 'fixed';
-    nv.style.right = '16px';
-    nv.style.bottom = '16px';
-    nv.style.zIndex = '9999';
+    nv.style.setProperty('position', 'fixed', 'important');
+    nv.style.setProperty('right', '16px', 'important');
+    nv.style.setProperty('bottom', '16px', 'important');
+    nv.style.setProperty('z-index', '9999', 'important');
+    nv.style.setProperty('pointer-events', 'auto', 'important');
+    nv.style.setProperty('opacity', '1', 'important');
+    nv.style.setProperty('visibility', 'visible', 'important');
   }
 });
 </script>
