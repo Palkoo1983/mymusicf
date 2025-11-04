@@ -7,59 +7,23 @@
 <meta name="theme-color" content="#0d1b2a"> <!-- maradhat, ez a felső sáv színe Androidon -->
 
 <style>
-  :root { --bg:#0d1b2a; }
   html, body {
-    background:#0d1b2a !important;
+    background: #0d1b2a !important;
     color-scheme: light;
   }
-
-  /* csak a tartalom fade-eljen be, ne az egész háttér */
-  body {
-    opacity: 0;
-    transition: opacity .35s ease-out;
+  /* Azonnali háttér és scroll stabilitás a teljes első frame-re */
+  html {
+    backface-visibility: hidden;
+    transform: translateZ(0);
   }
 </style>
 <script>
-  window.addEventListener('load', () => {
-    requestAnimationFrame(() => {
-      document.body.style.opacity = '1';
-    });
+  document.documentElement.style.visibility = 'hidden';
+  requestAnimationFrame(() => {
+    document.documentElement.style.visibility = 'visible';
   });
 </script>
 
-  
-<!-- [GOLDEN WV PATCH v2] Anti-blink base -->
-
-<style>
-  :root { --bg:#0d1b2a; }
-  html, body {
-    background:#0d1b2a !important;
-    color-scheme: light;               /* iOS / WebKit ne tegyen fehér átmenetet */
-  }
-
-  /* csak fő tartalom fagyasztás, nem az egész oldal! */
-  html.booting body > *:not(.topbar):not(.video-panel){
-    transition:none !important;
-    animation:none !important;
-  }
-
-  html.booting .video-panel iframe,
-  html.booting .video-panel video{
-    visibility:hidden !important;
-  }
-</style>
-
-
-<script>
-  (function(){
-    var svh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty('--svh', svh+'px');
-    document.documentElement.classList.add('booting');
-    addEventListener('resize', function(){
-      document.documentElement.style.setProperty('--svh', (window.innerHeight*0.01)+'px');
-    }, {passive:true});
-  })();
-</script>
 
 <link rel="preconnect" href="https://www.youtube-nocookie.com" crossorigin>
 <link rel="preconnect" href="https://i.ytimg.com" crossorigin>
@@ -366,24 +330,6 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 }
 </style>
 
-
-<!-- [GOLDEN WV PATCH v2] Anti-blink release -->
-<script>
-  (function(){
-    function release(){
-      requestAnimationFrame(function(){
-        setTimeout(function(){
-          document.documentElement.classList.remove('booting');
-        }, 20);
-      });
-    }
-    if (document.readyState === 'complete') {
-      release();
-    } else {
-      window.addEventListener('load', release, {once:true});
-    }
-  })();
-</script>
   <link rel="stylesheet" href="./assets/novabot/novabot.css">
 <style>
   /* Csak a rövid cím (data-label) jelenjen meg a mintagombokon */
