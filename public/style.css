@@ -217,21 +217,22 @@ p{ color:var(--ink); opacity:.92 }
 
 .delivery-btn {
   flex: 1 1 auto;
-  padding: 11px 14px;            /* finomhangolt, hogy pont egyezzen az inputtal */
-  border-radius: 12px;           /* egyezik a select kerekítésével */
+  padding: 10px 14px;              /* inputtal közel azonos */
+  border-radius: 12px;
   border: 1px solid #d4af37;
   background: rgba(6,24,44,.45);
   color: #f3d27a;
   font-weight: 600;
   font-size: .95rem;
-  line-height: 1.4;              /* optikai baseline az inputéhoz */
-  height: 44px;                  /* input/select magasságával megegyező */
-  display: inline-flex;          /* ugyanúgy viselkedik, mint az input */
-  align-items: center;
+  line-height: 1.35;
+  height: 44px;                    /* ugyanakkora doboz, mint a select */
+  display: inline-flex;
+  align-items: flex-start;         /* ← szöveg baseline-hoz igazítva */
   justify-content: center;
-  vertical-align: middle;        /* tökéletes baseline-igazítás */
+  padding-top: 12px;               /* finom optikai emelés */
   box-sizing: border-box;
   cursor: pointer;
+  vertical-align: middle;          /* select-hez igazítja az egész blokkot */
   transition: background .2s, color .2s;
 }
 
