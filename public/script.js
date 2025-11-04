@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
   submitBtn.style.transition = 'opacity 0.25s ease';
   submitBtn.style.opacity = '0';
   setTimeout(() => {
-    submitBtn.textContent = `Megrendelés – ${formatFt(total)}`;
+   submitBtn.innerHTML = `<span class="gold-text">Megrendelés – ${formatFt(total)}</span>`;
     submitBtn.style.opacity = '1';
     // villanás-animáció újraindítása
     submitBtn.classList.remove('price-update');
