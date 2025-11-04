@@ -407,12 +407,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updatePriceLabel() {
-    const pkg = pkgSel.value;
-    const extra = parseInt(hidden.value || '0', 10);
-    const base = basePrices[pkg] || 0;
-    const total = base + extra;
+  const pkg = pkgSel.value;
+  const extra = parseInt(hidden.value || '0', 10);
+  const base = basePrices[pkg] || 0;
+  const total = base + extra;
+
+  // finom szöveg fade
+  submitBtn.style.transition = 'opacity 0.25s ease';
+  submitBtn.style.opacity = '0';
+  setTimeout(() => {
     submitBtn.textContent = `Megrendelés – ${formatFt(total)}`;
-  }
+    submitBtn.style.opacity = '1';
+    // villanás-animáció újraindítása
+    submitBtn.classList.remove('price-update');
+    void submitBtn.offsetWidth; // force reflow
+    submitBtn.classList.add('price-update');
+  }, 200);
+}
+
 
   // 1️⃣ Kezdeti érték → 48 óra aktívként + ár kijelzés
   const defaultBtn = Array.from(buttons).find(b => b.dataset.extra === '0');
@@ -797,4 +809,25 @@ document.addEventListener('DOMContentLoaded', () => {
   // ha valaki csomagot vált
   const pkgSelect = document.querySelector('select[name="package"]');
   if (pkgSelect) pkgSelect.addEventListener('change', animatePrice);
+});
+// === Megrendelés-gombhoz finom görgetés, hogy látszódjon az animáció ===
+document.addEventListener('DOMContentLoaded', () => {
+  const orderBtn = document.querySelector('.primary[type="submit"], .form .primary');
+  if (!orderBtn) return;
+
+  function scrollToOrderBtn() {
+    const rect = orderBtn.getBoundingClientRect();
+    const visible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+    if (!visible) {
+      orderBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  const deliveryButtons = document.querySelectorAll('.delivery-btn');
+  const pkgSelect = document.querySelector('select[name="package"]');
+
+  deliveryButtons.forEach(btn => {
+    btn.addEventListener('click', scrollToOrderBtn);
+  });
+  if (pkgSelect) pkgSelect.addEventListener('change', scrollToOrderBtn);
 });
