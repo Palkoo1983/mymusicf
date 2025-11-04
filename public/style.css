@@ -217,12 +217,18 @@ p{ color:var(--ink); opacity:.92 }
 
 .delivery-btn {
   flex: 1 1 auto;
-  padding: 10px 14px;
+  height: 48px;                /* pontosan egyszintben a select-tel */
+  padding: 12px 14px;          /* egységes belső tér */
   border-radius: 10px;
   border: 1px solid #d4af37;
   background: rgba(6,24,44,.45);
   color: #f3d27a;
   font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  display: flex;               /* szöveg függőleges középre */
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: background .2s, color .2s;
 }
