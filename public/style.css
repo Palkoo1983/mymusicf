@@ -208,25 +208,28 @@ p{ color:var(--ink); opacity:.92 }
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(255,209,102,.15);
 }
-.delivery-options{
-  display:grid;
-  gap:6px;
-  font-weight:600;
-  font-size:.95rem;
+/* --- Kézbesítési blokk, a Csomag mezőhöz igazítva --- */
+.delivery-options {
+  display: grid;
+  font-weight: 600;
+  font-size: .95rem;
+  gap: 4px;                  /* kisebb, mint 6px → optikailag azonos magasság */
+  margin-top: 1px;           /* finom korrekció a baseline-hoz */
 }
 
 .delivery-buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 6px;
+  margin-top: 0;             /* eltávolítjuk a duplázódást */
 }
 
+/* --- Gombok --- */
 .delivery-btn {
   flex: 1 1 auto;
-  height: 44px;                /* az input/select vizuális magassága */
-  padding: 10px 14px;          /* belső tér a selecthez igazítva */
-  border-radius: 12px;         /* mint az input/select */
+  height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
   border: 1px solid #d4af37;
   background: rgba(6,24,44,.45);
   color: #f3d27a;
@@ -236,7 +239,7 @@ p{ color:var(--ink); opacity:.92 }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  vertical-align: middle;      /* baseline-igazítás a selecthez */
+  vertical-align: middle;
   box-sizing: border-box;
   cursor: pointer;
   transition: background .2s, color .2s;
@@ -247,6 +250,7 @@ p{ color:var(--ink); opacity:.92 }
   background: #d4af37;
   color: #06182c;
 }
+
 
 
 .form .grid{ display:grid; grid-template-columns: repeat(2,1fr); gap:14px }
