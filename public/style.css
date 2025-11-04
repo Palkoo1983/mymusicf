@@ -164,7 +164,20 @@ p{ color:var(--ink); opacity:.92 }
   font-size: .95rem;
 }
 
-.form input, .form select, .form textarea {
+.form input, .form select {
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(188,208,230,.22);
+  background: rgba(6,24,44,.45);
+  color: var(--ink);
+  outline: none;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* csak a TEXTAREA kapja a scrollos fixet */
+.form textarea {
   width: 100%;
   padding: 12px 12px;
   border-radius: 12px;
@@ -173,19 +186,17 @@ p{ color:var(--ink); opacity:.92 }
   color: var(--ink);
   outline: none;
 
-  /* --- FIX A KILÓGÁSRA ÉS A JOBB OLDALI KATTINTHATATLANSÁGRA --- */
-  overflow: auto;               /* scroll jelenjen meg, ne lógjon ki */
-  overflow-wrap: break-word;    /* sortörés hosszú soroknál */
-  word-break: break-word;       /* kompatibilitás régi motorokhoz */
-  white-space: pre-wrap;        /* megtartja a sortörést, de tördel is */
-  line-height: 1.5;             /* kényelmes sorköz */
-  box-sizing: border-box;       /* padding beleszámít a szélességbe */
-  max-width: 100%;              /* ne nyúljon túl semmin */
-/* --- ÚJ VÉGSŐ FINOMÍTÁS --- */
-  height: auto;                 /* engedi belül újraszámítani magasságot */
-  min-height: 5em;              /* 5 sor fix, de nem kevesebb */
-  max-height: 20em;             /* 20 sor után scroll, nem nő tovább */
-  display: block;               /* fixen block elem, nem inline-grid */
+  overflow: auto;              /* belső scroll */
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  box-sizing: border-box;
+  max-width: 100%;
+
+  height: auto;
+  min-height: 5em;             /* ≈ 5 sor */
+  display: block;
 }
 
 .form input:focus, .form select:focus, .form textarea:focus{
