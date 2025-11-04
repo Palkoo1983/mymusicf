@@ -1804,15 +1804,3 @@ html.ua-ioswv .vinyl-tabs .tab {
   40%  { box-shadow: 0 0 12px rgba(243,210,122,.7); transform: scale(1.03); }
   100% { box-shadow: 0 0 0 rgba(243,210,122,0); transform: scale(1); }
 }
-#novabot.nb-docked {
-  position: fixed !important;
-  right: 16px !important;
-  bottom: 16px !important;
-  top: auto !important;
-  left: auto !important;
-  transform: none !important;
-  z-index: 99999 !important;
-  margin: 0 !important;
-  pointer-events: auto !important;
-}
-
