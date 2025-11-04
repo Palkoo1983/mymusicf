@@ -230,9 +230,9 @@ p{ color:var(--ink); opacity:.92 }
   height: 44px;
   padding: 10px 14px;
   border-radius: 12px;
-  border: 1px solid #d4af37;
-  background: rgba(6,24,44,.45);
-  color: #f3d27a;
+  border: 1px solid #caa64b;          /* finomabb aranykeret */
+  background: rgba(13,27,42,.55);     /* kissé mélyebb háttér */
+  color: #e7c978;                     /* melegebb, olvasható arany betűszín */
   font-weight: 600;
   font-size: .95rem;
   line-height: 1.35;
@@ -242,14 +242,17 @@ p{ color:var(--ink); opacity:.92 }
   vertical-align: middle;
   box-sizing: border-box;
   cursor: pointer;
-  transition: background .2s, color .2s;
+  transition: all .25s ease;
 }
 
 .delivery-btn:hover,
 .delivery-btn.active {
-  background: #d4af37;
-  color: #06182c;
+  background: linear-gradient(180deg, #f0d16a, #d4af37); /* lágy arany átmenet */
+  color: #0d1b2a;                                        /* sötétkék szöveg */
+  border-color: #e8c45a;                                 /* enyhe glow-hatás */
+  box-shadow: 0 0 8px rgba(255,215,90,.35);              /* diszkrét arany fény */
 }
+
 
 
 
