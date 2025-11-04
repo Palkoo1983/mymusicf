@@ -159,6 +159,11 @@ p{ color:var(--ink); opacity:.92 }
   border:1px solid rgba(188,208,230,.22);
   background:rgba(6,24,44,.45); color:var(--ink);
   outline:none;
+  /* --- ÚJ SOROK --- */
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
+  max-width: 100%;
 }
 .form input:focus, .form select:focus, .form textarea:focus{
   border-color: var(--accent);
