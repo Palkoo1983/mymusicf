@@ -213,8 +213,8 @@ p{ color:var(--ink); opacity:.92 }
   display: grid;
   font-weight: 600;
   font-size: .95rem;
-  gap: 4px;                  /* kisebb, mint 6px → optikailag azonos magasság */
-  margin-top: 1px;           /* finom korrekció a baseline-hoz */
+  gap: 6px;
+  transform: translateY(-2px);   /* <<< ez hozza pontosan egy szintbe */
 }
 
 .delivery-buttons {
