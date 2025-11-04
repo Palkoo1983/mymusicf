@@ -39,18 +39,6 @@
 })();
 // ==========================================================================
 
-// Samsung Internet detektálás – biztosan lefut
-(function () {
-  try {
-    var ua = navigator.userAgent || "";
-    if (ua.includes("SamsungBrowser")) {
-      document.documentElement.classList.add("ua-samsung");
-    }
-  } catch (e) {
-    console.warn("Samsung detection error:", e);
-  }
-})();
-
 /* ---------- helpers ---------- */
 async function postJSON(url, data) {
   const res = await fetch(url, {
@@ -398,19 +386,56 @@ function initOrderForm() {
     cancelBtn?.addEventListener('click', onCancel, { once:true });
   });
 }
-// === Kézbesítési opciók kiválasztása ===
+// === Kézbesítési opciók kiválasztása + árfrissítés a Megrendelés gombon ===
 document.addEventListener('DOMContentLoaded', () => {
   const buttons = document.querySelectorAll('.delivery-btn');
   const hidden  = document.querySelector('input[name="delivery_extra"]');
+  const pkgSel  = document.querySelector('select[name="package"]');
+  const submitBtn = document.querySelector('#orderForm button[type="submit"], #orderForm .primary');
 
+  if (!pkgSel || !submitBtn || !hidden) return;
+
+  // Alapárak (Ft)
+  const basePrices = {
+    basic: 10500,   // MP3
+    video: 21000,   // MP4
+    premium: 35000  // WAV
+  };
+
+  function formatFt(n) {
+    return n.toLocaleString('hu-HU') + ' Ft';
+  }
+
+  function updatePriceLabel() {
+    const pkg = pkgSel.value;
+    const extra = parseInt(hidden.value || '0', 10);
+    const base = basePrices[pkg] || 0;
+    const total = base + extra;
+    submitBtn.textContent = `Megrendelés – ${formatFt(total)}`;
+  }
+
+  // 1️⃣ Kezdeti érték → 48 óra aktívként + ár kijelzés
+  const defaultBtn = Array.from(buttons).find(b => b.dataset.extra === '0');
+  if (defaultBtn) {
+    defaultBtn.classList.add('active');
+    hidden.value = '0';
+  }
+  updatePriceLabel();
+
+  // 2️⃣ Ha csomag váltás történik
+  pkgSel.addEventListener('change', updatePriceLabel);
+
+  // 3️⃣ Ha kézbesítési opcióra kattintanak
   buttons.forEach(btn => {
     btn.addEventListener('click', () => {
       buttons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       hidden.value = btn.dataset.extra;
+      updatePriceLabel();
     });
   });
 });
+
 
 /* ---------- Contact form submit + thanks overlay (no redirect) ---------- */
 function initContactForm() {
