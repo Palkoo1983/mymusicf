@@ -312,7 +312,11 @@ app.post('/api/generate_song', async (req, res) => {
     setImmediate(async () => {
       try {
 
-    let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
+   let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '', delivery_extra = '' } = req.body || {};
+   // Kézbesítési idő konvertálás (Sheet-be olvasható formában)
+  if (delivery_extra === '0') delivery_extra = '48 óra (alap)';
+  else if (delivery_extra === '3000') delivery_extra = '24 óra (+3000 Ft)';
+  else if (delivery_extra === '6500') delivery_extra = '6 óra (+6500 Ft)';
 
     // Map package/format
     const pkg = (req.body && (req.body.package||req.body.format)) ? String((req.body.package||req.body.format)).toLowerCase() : 'basic';
@@ -658,10 +662,11 @@ function normalizeGenre(g) {
     if (!isMP3) {
       try {
         await safeAppendOrderRow({
-          email: req.body.email || '',
-          styles, vocal, language, brief, lyrics,
-          link1: '', link2: '', format
-        });
+        email: req.body.email || '',
+        styles, vocal, language, brief, lyrics,
+        link1: '', link2: '', format,
+        delivery_extra
+});
       } catch (_e) {
         console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
       }
@@ -743,7 +748,12 @@ function normalizeGenre(g) {
     try {
       const link1 = tracks[0]?.audio_url || '';
       const link2 = tracks[1]?.audio_url || '';
-      await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2, format });
+     await safeAppendOrderRow({
+     email: req.body.email || '',
+    styles, vocal, language, brief, lyrics,
+    link1, link2, format,
+    delivery_extra
+});
     } catch (_e) { /* log only */ }
 
     } catch (err) {
