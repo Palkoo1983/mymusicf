@@ -743,7 +743,9 @@ function normalizeGenre(g) {
     try {
       const link1 = tracks[0]?.audio_url || '';
       const link2 = tracks[1]?.audio_url || '';
-      await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2, format });
+      await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2, format,
+      delivery: req.body.delivery_label || '' 
+    });
     } catch (_e) { /* log only */ }
 
     } catch (err) {
