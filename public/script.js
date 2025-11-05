@@ -383,6 +383,7 @@ function initOrderForm() {
     cancelBtn?.removeEventListener('click', onCancel);
     actuallySend(data);
   };
+
   const onCancel = () => {
     hideModal();
     if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
@@ -398,38 +399,6 @@ function initOrderForm() {
   acceptBtn?.addEventListener('click', onAccept, { once: true });
   cancelBtn?.addEventListener('click', onCancel, { once: true });
 });
-
-  // 🔹 FormData összeállítása + kézbesítési idő garantált beillesztése
-  const fd = new FormData(orderForm);
-  fd.set('delivery_extra', deliveryVal);
-
-  const data = Object.fromEntries(fd.entries());
-  console.log('[DEBUG delivery_extra]', deliveryVal); // ideiglenesen maradhat
-
-  showModal();
-
-  const onAccept = () => {
-    hideModal();
-    acceptBtn?.removeEventListener('click', onAccept);
-    cancelBtn?.removeEventListener('click', onCancel);
-    actuallySend(data);
-  };
-  const onCancel = () => {
-    hideModal();
-    if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
-    acceptBtn?.removeEventListener('click', onAccept);
-    cancelBtn?.removeEventListener('click', onCancel);
-    try {
-      if (!(window.NB_NOTIFY_SOURCE === 'generate')) {
-        window.novaOrderFail && window.novaOrderFail();
-      }
-    } catch (_){}
-  };
-
-  acceptBtn?.addEventListener('click', onAccept, { once: true });
-  cancelBtn?.addEventListener('click', onCancel, { once: true });
-});
-
 
     // MINDIG kérdezzünk rá (nincs cookie / localStorage)
     showModal();
