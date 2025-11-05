@@ -162,12 +162,11 @@ app.post('/api/order', (req, res) => {
     jobs.push({
       to: o.email,
       subject: 'EnZenem – Megrendelés fogadva',
-      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést! A megrendelését megkaptuk, és 48 órán belül elküldjük Önnek, egyedi professzionális zenéjét.
+      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést! A megrendelését megkaptuk, és 36 órán belül elküldjük Önnek a videó letöltési linkjét.
 Ha bármilyen kérdése merül fel, szívesen segítünk!</p><p>Üdv,<br/>EnZenem</p>`
     });
   }
   queueEmails(jobs);
-  
   res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett. Hamarosan kapsz visszaigazolást e-mailben.' });
 });
 
@@ -661,7 +660,7 @@ function normalizeGenre(g) {
         await safeAppendOrderRow({
           email: req.body.email || '',
           styles, vocal, language, brief, lyrics,
-          link1: '', link2: '', format, delivery: req.body.delivery_label || req.body.delivery || ''
+          link1: '', link2: '', format, delivery: req.body.delivery_label || ''
         });
       } catch (_e) {
         console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
@@ -745,7 +744,7 @@ function normalizeGenre(g) {
       const link1 = tracks[0]?.audio_url || '';
       const link2 = tracks[1]?.audio_url || '';
       await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2, format,
-      delivery: req.body.delivery_label || req.body.delivery || '' 
+      delivery: req.body.delivery_label || '' 
     });
     } catch (_e) { /* log only */ }
 
