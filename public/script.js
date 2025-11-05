@@ -113,6 +113,7 @@ function initTabs() {
     }
   });
 });
+
 }
 
 /* ---------- package cards (pricing) ---------- */
@@ -359,46 +360,32 @@ function initOrderForm() {
   function showModal(){ if (modal){ modal.style.display='block'; modal.setAttribute('aria-hidden','false'); } }
   function hideModal(){ if (modal){ modal.style.display='none';  modal.setAttribute('aria-hidden','true'); } }
 
- orderForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
+  orderForm.addEventListener('submit', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const data = Object.fromEntries(new FormData(orderForm).entries());
 
-  // 🔹 Mindig a legfrissebb aktív gombot olvassuk be
-  const activeBtn = document.querySelector('.delivery-btn.active');
-  const deliveryVal = activeBtn ? activeBtn.dataset.extra : '0';
+    // MINDIG kérdezzünk rá (nincs cookie / localStorage)
+    showModal();
 
-  // 🔹 FormData összeállítása + kézbesítési idő garantált beillesztése
-  const fd = new FormData(orderForm);
-  fd.set('delivery_extra', deliveryVal);
+    const onAccept = () => {
+      hideModal();
+      acceptBtn?.removeEventListener('click', onAccept);
+      cancelBtn?.removeEventListener('click', onCancel);
+      actuallySend(data);
+    };
+    const onCancel = () => {
+      hideModal();
+      if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
+      acceptBtn?.removeEventListener('click', onAccept);
+      cancelBtn?.removeEventListener('click', onCancel);
+      // ✅ NOVABOT: FELTÉTEL ELUTASÍTVA → HIBA üzenet
+      try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderFail && window.novaOrderFail(); } } catch(_){}
+    };
 
-  const data = Object.fromEntries(fd.entries());
-  console.log('[DEBUG delivery_extra]', deliveryVal); // ideiglenesen maradhat
-
-  showModal();
-
-  const onAccept = () => {
-    hideModal();
-    acceptBtn?.removeEventListener('click', onAccept);
-    cancelBtn?.removeEventListener('click', onCancel);
-    actuallySend(data);
-  };
-
-  const onCancel = () => {
-    hideModal();
-    if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
-    acceptBtn?.removeEventListener('click', onAccept);
-    cancelBtn?.removeEventListener('click', onCancel);
-    try {
-      if (!(window.NB_NOTIFY_SOURCE === 'generate')) {
-        window.novaOrderFail && window.novaOrderFail();
-      }
-    } catch (_){}
-  };
-
-  acceptBtn?.addEventListener('click', onAccept, { once: true });
-  cancelBtn?.addEventListener('click', onCancel, { once: true });
-});
-
+    acceptBtn?.addEventListener('click', onAccept, { once:true });
+    cancelBtn?.addEventListener('click', onCancel, { once:true });
+  });
+}
 // === Kézbesítési opciók kiválasztása + árfrissítés a Megrendelés gombon ===
 document.addEventListener('DOMContentLoaded', () => {
   const buttons = document.querySelectorAll('.delivery-btn');
@@ -460,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
-}
+
 
 /* ---------- Contact form submit + thanks overlay (no redirect) ---------- */
 function initContactForm() {

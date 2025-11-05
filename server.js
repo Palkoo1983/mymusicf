@@ -143,46 +143,32 @@ app.get('/api/test-mail', (req, res) => {
 });
 
 /* =================== Order / Contact ====================== */
-app.post('/api/order', async (req, res) => {
+app.post('/api/order', (req, res) => {
   const o = req.body || {};
   const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
-
-  // --- Kézbesítési idő konverzió ---
-  if (o.delivery_extra === '0') o.delivery_extra = '48 óra (alap)';
-  else if (o.delivery_extra === '3000') o.delivery_extra = '24 óra (+3000 Ft)';
-  else if (o.delivery_extra === '6500') o.delivery_extra = '6 óra (+6500 Ft)';
-  else if (!o.delivery_extra) o.delivery_extra = '48 óra (alap)';
-
- 
-  // --- E-mail értesítések ---
   const orderHtml = `
     <h2>Új megrendelés</h2>
     <ul>
       <li><b>E-mail:</b> ${o.email || ''}</li>
+      <li><b>Esemény:</b> ${o.event_type || ''}</li>
       <li><b>Stílus:</b> ${o.style || ''}</li>
       <li><b>Ének:</b> ${o.vocal || ''}</li>
       <li><b>Nyelv:</b> ${o.language || ''}</li>
-      <li><b>Kézbesítési idő:</b> ${o.delivery_extra}</li>
     </ul>
     <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
   `;
-
   const jobs = [{ to: owner, subject: 'Új dal megrendelés', html: orderHtml, replyTo: o.email || undefined }];
   if (o.email) {
     jobs.push({
       to: o.email,
       subject: 'EnZenem – Megrendelés fogadva',
-      html: `<p>Kedves Megrendelő!</p>
-      <p>Köszönjük a megkeresést! A megrendelését megkaptuk és 48 órán belül elküldjük Önnek az elkészített, professzionális zeneszámát.</p>
-      <p>Kézbesítési idő: <b>${o.delivery_extra}</b></p>
-      <p>Üdv,<br/>EnZenem</p>`
+      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést! A megrendelését megkaptuk, és 36 órán belül elküldjük Önnek a videó letöltési linkjét.
+Ha bármilyen kérdése merül fel, szívesen segítünk!</p><p>Üdv,<br/>EnZenem</p>`
     });
   }
   queueEmails(jobs);
-
-  res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett és rögzítettük a rendszerben.' });
+  res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett. Hamarosan kapsz visszaigazolást e-mailben.' });
 });
-
 
 app.post('/api/contact', (req, res) => {
   const c = req.body || {};
@@ -326,11 +312,7 @@ app.post('/api/generate_song', async (req, res) => {
     setImmediate(async () => {
       try {
 
-   let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '', delivery_extra = '' } = req.body || {};
-   // Kézbesítési idő konvertálás (Sheet-be olvasható formában)
-  if (delivery_extra === '0') delivery_extra = '48 óra (alap)';
-  else if (delivery_extra === '3000') delivery_extra = '24 óra (+3000 Ft)';
-  else if (delivery_extra === '6500') delivery_extra = '6 óra (+6500 Ft)';
+    let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
 
     // Map package/format
     const pkg = (req.body && (req.body.package||req.body.format)) ? String((req.body.package||req.body.format)).toLowerCase() : 'basic';
@@ -676,11 +658,10 @@ function normalizeGenre(g) {
     if (!isMP3) {
       try {
         await safeAppendOrderRow({
-        email: req.body.email || '',
-        styles, vocal, language, brief, lyrics,
-        link1: '', link2: '', format,
-        delivery_extra
-});
+          email: req.body.email || '',
+          styles, vocal, language, brief, lyrics,
+          link1: '', link2: '', format
+        });
       } catch (_e) {
         console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
       }
@@ -762,12 +743,7 @@ function normalizeGenre(g) {
     try {
       const link1 = tracks[0]?.audio_url || '';
       const link2 = tracks[1]?.audio_url || '';
-     await safeAppendOrderRow({
-     email: req.body.email || '',
-    styles, vocal, language, brief, lyrics,
-    link1, link2, format,
-    delivery_extra
-});
+      await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2, format });
     } catch (_e) { /* log only */ }
 
     } catch (err) {
