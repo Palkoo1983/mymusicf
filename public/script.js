@@ -456,7 +456,7 @@ buttons.forEach(btn => {
     updatePriceLabel();
   });
 });
-
+});
 /* ---------- Contact form submit + thanks overlay (no redirect) ---------- */
 function initContactForm() {
   const contactForm   = qs('#contactForm');
