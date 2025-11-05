@@ -370,11 +370,17 @@ if (delivLabel) data.delivery_label = delivLabel.value;
     showModal();
 
     const onAccept = () => {
-      hideModal();
-      acceptBtn?.removeEventListener('click', onAccept);
-      cancelBtn?.removeEventListener('click', onCancel);
-      actuallySend(data);
-    };
+  hideModal();
+
+  // 🟡 Frissítsük a kézbesítési címkét a legutóbbi gombnyomás után
+  const delivLabel = document.querySelector('input[name="delivery_label"]');
+  if (delivLabel) data.delivery_label = delivLabel.value || '';
+
+  acceptBtn?.removeEventListener('click', onAccept);
+  cancelBtn?.removeEventListener('click', onCancel);
+  actuallySend(data);
+};
+
     const onCancel = () => {
       hideModal();
       if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
