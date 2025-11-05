@@ -149,7 +149,7 @@ async function ensureHeaderFreezeCF(title) {
     const a = arr.map(norm);
     const b = [
       "időpont","e-mail","stílus(ok)","ének","nyelv",
-      "brief","dalszöveg","link #1","link #2","formátum","Kézbesítés"
+      "brief","dalszöveg","link #1","link #2","formátum","kézbesítés"
     ];
     // pontos egyezés kell az első 10 cellára
     for (let i=0;i<b.length;i++){
