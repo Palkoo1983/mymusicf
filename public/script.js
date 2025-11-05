@@ -363,6 +363,7 @@ function initOrderForm() {
   orderForm.addEventListener('submit', (e) => {
     e.preventDefault(); e.stopPropagation();
     const data = Object.fromEntries(new FormData(orderForm).entries());
+  data.delivery_extra = document.querySelector('input[name="delivery_extra"]').value || '0';
 
     // MINDIG kérdezzünk rá (nincs cookie / localStorage)
     showModal();
