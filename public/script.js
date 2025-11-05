@@ -390,6 +390,7 @@ function initOrderForm() {
 document.addEventListener('DOMContentLoaded', () => {
   const buttons = document.querySelectorAll('.delivery-btn');
   const hidden  = document.querySelector('input[name="delivery_extra"]');
+  const hiddenLabel = document.querySelector('input[name="delivery_label"]'); 
   const pkgSel  = document.querySelector('select[name="package"]');
   const submitBtn = document.querySelector('#orderForm button[type="submit"], #orderForm .primary');
 
@@ -426,28 +427,35 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
 
-  // 1️⃣ Kezdeti érték → 48 óra aktívként + ár kijelzés
-  const defaultBtn = Array.from(buttons).find(b => b.dataset.extra === '0');
-  if (defaultBtn) {
-    defaultBtn.classList.add('active');
-    hidden.value = '0';
+ // 1️⃣ Alapértelmezett: 48 óra aktívként + ár kijelzés + címke
+const defaultBtn = Array.from(buttons).find(b => b.dataset.extra === '0');
+if (defaultBtn) {
+  defaultBtn.classList.add('active');
+  hidden.value = '0';
+  if (hiddenLabel) {
+    hiddenLabel.value = defaultBtn.textContent.trim(); // 🟡 ÚJ – címke beállítás
   }
-  updatePriceLabel();
+}
+updatePriceLabel();
 
-  // 2️⃣ Ha csomag váltás történik
-  pkgSel.addEventListener('change', updatePriceLabel);
+// 2️⃣ Ha csomag váltás történik
+pkgSel.addEventListener('change', updatePriceLabel);
 
-  // 3️⃣ Ha kézbesítési opcióra kattintanak
-  buttons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      buttons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      hidden.value = btn.dataset.extra;
-      updatePriceLabel();
-    });
+// 3️⃣ Ha kézbesítési opcióra kattintanak
+buttons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    buttons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    hidden.value = btn.dataset.extra;
+
+    // 🟡 ÚJ – frissítjük a kézbesítési címkét is
+    if (hiddenLabel) {
+      hiddenLabel.value = btn.textContent.trim();
+    }
+
+    updatePriceLabel();
   });
 });
-
 
 /* ---------- Contact form submit + thanks overlay (no redirect) ---------- */
 function initContactForm() {
