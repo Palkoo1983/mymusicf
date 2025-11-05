@@ -143,32 +143,63 @@ app.get('/api/test-mail', (req, res) => {
 });
 
 /* =================== Order / Contact ====================== */
-app.post('/api/order', (req, res) => {
+app.post('/api/order', async (req, res) => {
   const o = req.body || {};
   const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
+
+  // --- Kézbesítési idő konverzió ---
+  if (o.delivery_extra === '0') o.delivery_extra = '48 óra (alap)';
+  else if (o.delivery_extra === '3000') o.delivery_extra = '24 óra (+3000 Ft)';
+  else if (o.delivery_extra === '6500') o.delivery_extra = '6 óra (+6500 Ft)';
+  else if (!o.delivery_extra) o.delivery_extra = '48 óra (alap)';
+
+  // --- Sheets-be mentés ---
+  try {
+    await safeAppendOrderRow({
+      email: o.email || '',
+      styles: o.style || '',
+      vocal: o.vocal || '',
+      language: o.language || '',
+      brief: o.brief || '',
+      lyrics: '',
+      link1: '',
+      link2: '',
+      format: (o.package || 'mp3').toLowerCase(),
+      delivery_extra: o.delivery_extra
+    });
+  } catch (err) {
+    console.warn('[SHEETS_APPEND_WARN]', err?.message || err);
+  }
+
+  // --- E-mail értesítések ---
   const orderHtml = `
     <h2>Új megrendelés</h2>
     <ul>
       <li><b>E-mail:</b> ${o.email || ''}</li>
-      <li><b>Esemény:</b> ${o.event_type || ''}</li>
       <li><b>Stílus:</b> ${o.style || ''}</li>
       <li><b>Ének:</b> ${o.vocal || ''}</li>
       <li><b>Nyelv:</b> ${o.language || ''}</li>
+      <li><b>Kézbesítési idő:</b> ${o.delivery_extra}</li>
     </ul>
     <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
   `;
+
   const jobs = [{ to: owner, subject: 'Új dal megrendelés', html: orderHtml, replyTo: o.email || undefined }];
   if (o.email) {
     jobs.push({
       to: o.email,
       subject: 'EnZenem – Megrendelés fogadva',
-      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést! A megrendelését megkaptuk, és 36 órán belül elküldjük Önnek a videó letöltési linkjét.
-Ha bármilyen kérdése merül fel, szívesen segítünk!</p><p>Üdv,<br/>EnZenem</p>`
+      html: `<p>Kedves Megrendelő!</p>
+      <p>Köszönjük a megkeresést! A megrendelését megkaptuk és 48 órán belül elküldjük Önnek az elkészített, professzionális zeneszámát.</p>
+      <p>Kézbesítési idő: <b>${o.delivery_extra}</b></p>
+      <p>Üdv,<br/>EnZenem</p>`
     });
   }
   queueEmails(jobs);
-  res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett. Hamarosan kapsz visszaigazolást e-mailben.' });
+
+  res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett és rögzítettük a rendszerben.' });
 });
+
 
 app.post('/api/contact', (req, res) => {
   const c = req.body || {};
