@@ -48,7 +48,7 @@ function getBudapestNow() {
 
 const HEADER = [
   "Időpont","E-mail","Stílus(ok)","Ének","Nyelv",
-  "Brief","Dalszöveg","Link #1","Link #2","Formátum"
+  "Brief","Dalszöveg","Link #1","Link #2","Formátum","Kézbesítés"
 ];
 
 /** Lap meta + sheetId lekérés title alapján */
@@ -72,7 +72,7 @@ async function createDailySheetFully(title) {
   try {
     await gs.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
-      range: `${title}!A1:J1`,
+      range: `${title}!A1:K1`,
       valueInputOption: "RAW",
       requestBody: { values: [HEADER] }
     });
@@ -132,12 +132,12 @@ async function ensureHeaderFreezeCF(title) {
   const sheetId = await getSheetIdByTitle(title);
   if (!sheetId) return;
 
-  // 1) Olvassuk az A1:J1-et
+  // 1) Olvassuk az A1:K1-et
   let row = [];
   try {
     const r = await gs.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: `${title}!A1:J1`
+      range: `${title}!A1:K1`
     });
     row = r.data.values?.[0] || [];
   } catch (_) { row = []; }
@@ -149,7 +149,7 @@ async function ensureHeaderFreezeCF(title) {
     const a = arr.map(norm);
     const b = [
       "időpont","e-mail","stílus(ok)","ének","nyelv",
-      "brief","dalszöveg","link #1","link #2","formátum"
+      "brief","dalszöveg","link #1","link #2","formátum","Kézbesítés"
     ];
     // pontos egyezés kell az első 10 cellára
     for (let i=0;i<b.length;i++){
@@ -178,11 +178,11 @@ async function ensureHeaderFreezeCF(title) {
       console.warn("[INSERT top row warn]", e?.message || e);
     }
 
-    // 3) Fejléc kiírása A1:J1-be
+    // 3) Fejléc kiírása A1:K1-be
     try {
       await gs.spreadsheets.values.update({
         spreadsheetId: SHEET_ID,
-        range: `${title}!A1:J1`,
+        range: `${title}!A1:K1`,
         valueInputOption: "RAW",
         requestBody: { values: [HEADER] }
       });
@@ -256,13 +256,17 @@ export async function safeAppendOrderRow(order = {}) {
     }
 
     const {
-      email = "", styles = "", vocal = "", language = "hu",
-      brief = "", lyrics = "", link1 = "", link2 = "", format = ""
-    } = order;
+  email = "", styles = "", vocal = "", language = "hu",
+  brief = "", lyrics = "", link1 = "", link2 = "", format = "",
+  delivery = ""                            // ⬅️ ÚJ
+} = order;
 
-    const values = [[
-      iso, email, styles, vocal, language, brief, lyrics, link1, link2, (format || "").toLowerCase()
-    ]];
+const values = [[
+  iso, email, styles, vocal, language, brief, lyrics, link1, link2,
+  (format || "").toLowerCase(),
+  delivery                                  // ⬅️ ÚJ – (K) oszlop
+]];
+
 
     // KULCS: mindig A2-től append → fejléc sosem tolódik, sor A–J-be megy
     await gs.spreadsheets.values.append({
