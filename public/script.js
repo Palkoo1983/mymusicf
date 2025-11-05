@@ -363,6 +363,8 @@ function initOrderForm() {
   orderForm.addEventListener('submit', (e) => {
     e.preventDefault(); e.stopPropagation();
     const data = Object.fromEntries(new FormData(orderForm).entries());
+const delivLabel = document.querySelector('input[name="delivery_label"]');
+if (delivLabel) data.delivery_label = delivLabel.value;
 
     // MINDIG kérdezzünk rá (nincs cookie / localStorage)
     showModal();
