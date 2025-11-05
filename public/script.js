@@ -113,7 +113,6 @@ function initTabs() {
     }
   });
 });
-
 }
 
 /* ---------- package cards (pricing) ---------- */
@@ -461,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
-
+}
 
 /* ---------- Contact form submit + thanks overlay (no redirect) ---------- */
 function initContactForm() {
