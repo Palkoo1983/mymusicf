@@ -421,7 +421,6 @@ function initOrderForm() {
     acceptBtn?.addEventListener('click', onAccept, { once:true });
     cancelBtn?.addEventListener('click', onCancel, { once:true });
   });
-}
 // === Kézbesítési opciók kiválasztása + árfrissítés a Megrendelés gombon ===
 document.addEventListener('DOMContentLoaded', () => {
   const buttons = document.querySelectorAll('.delivery-btn');
