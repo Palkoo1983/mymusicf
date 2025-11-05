@@ -660,7 +660,7 @@ function normalizeGenre(g) {
         await safeAppendOrderRow({
           email: req.body.email || '',
           styles, vocal, language, brief, lyrics,
-          link1: '', link2: '', format
+          link1: '', link2: '', format, delivery: req.body.delivery_label || ''
         });
       } catch (_e) {
         console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
