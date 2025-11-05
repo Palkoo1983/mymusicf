@@ -362,8 +362,13 @@ function initOrderForm() {
 
   orderForm.addEventListener('submit', (e) => {
     e.preventDefault(); e.stopPropagation();
-    const data = Object.fromEntries(new FormData(orderForm).entries());
-  data.delivery_extra = document.querySelector('input[name="delivery_extra"]').value || '0';
+  const data = Object.fromEntries(new FormData(orderForm).entries());
+
+// 🔥 extra biztosítás – mindig a legfrissebb gombértéket olvassa ki
+const activeBtn = document.querySelector('.delivery-btn.active');
+if (activeBtn) data.delivery_extra = activeBtn.dataset.extra;
+else data.delivery_extra = document.querySelector('input[name="delivery_extra"]').value || '0';
+
 
     // MINDIG kérdezzünk rá (nincs cookie / localStorage)
     showModal();
