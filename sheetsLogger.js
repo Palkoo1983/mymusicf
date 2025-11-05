@@ -32,7 +32,6 @@ function getBudapestNow() {
   }).formatToParts(new Date());
   const p = Object.fromEntries(fmt.map(x => [x.type, x.value]));
   const ymd = `${p.year}-${p.month}-${p.day}`;
-  // offset kozmetika (Sheetsnek mindegy)
   const offPart = new Intl.DateTimeFormat("en", {
     timeZone: tz, timeZoneName: "shortOffset", hour: "2-digit"
   }).formatToParts(new Date()).find(x => x.type === "timeZoneName")?.value || "GMT+0";
@@ -48,7 +47,7 @@ function getBudapestNow() {
 
 const HEADER = [
   "Időpont","E-mail","Stílus(ok)","Ének","Nyelv",
-  "Brief","Dalszöveg","Link #1","Link #2","Formátum"
+  "Brief","Dalszöveg","Link #1","Link #2","Formátum","Kézbesítési idő"
 ];
 
 /** Lap meta + sheetId lekérés title alapján */
@@ -72,7 +71,7 @@ async function createDailySheetFully(title) {
   try {
     await gs.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
-      range: `${title}!A1:J1`,
+      range: `${title}!A1:K1`,
       valueInputOption: "RAW",
       requestBody: { values: [HEADER] }
     });
@@ -93,8 +92,8 @@ async function createDailySheetFully(title) {
     });
   } catch (e) { console.warn("[FREEZE warn]", e?.message || e); }
 
-  // CF szabály (kétféle képlettel próbálkozunk – vessző és pontosvessző)
-  const cfRanges = [{ sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: 10 }]; // A2:J
+  // CF szabály
+  const cfRanges = [{ sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: 11 }]; // A2:K
   const cfRequests = (formula) => [{
     addConditionalFormatRule: {
       rule: {
@@ -111,13 +110,13 @@ async function createDailySheetFully(title) {
   try {
     await gs.spreadsheets.batchUpdate({
       spreadsheetId: SHEET_ID,
-      requestBody: { requests: cfRequests('=OR($J2="mp4",$J2="wav")') } // EN
+      requestBody: { requests: cfRequests('=OR($J2="mp4",$J2="wav")') }
     });
   } catch (e1) {
     try {
       await gs.spreadsheets.batchUpdate({
         spreadsheetId: SHEET_ID,
-        requestBody: { requests: cfRequests('=OR($J2="mp4";$J2="wav")') } // HU ; elválasztó
+        requestBody: { requests: cfRequests('=OR($J2="mp4";$J2="wav")') }
       });
     } catch (e2) {
       console.warn("[CF add warn]", e1?.message || e1, "| fallback:", e2?.message || e2);
@@ -132,26 +131,24 @@ async function ensureHeaderFreezeCF(title) {
   const sheetId = await getSheetIdByTitle(title);
   if (!sheetId) return;
 
-  // 1) Olvassuk az A1:J1-et
+  // 1) Olvassuk az A1:K1-et
   let row = [];
   try {
     const r = await gs.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: `${title}!A1:J1`
+      range: `${title}!A1:K1`
     });
     row = r.data.values?.[0] || [];
   } catch (_) { row = []; }
 
-  // Segédfüggvény: a jelenlegi sor tényleg a várt fejléc-e?
   const isHeaderMatch = (arr) => {
     if (!arr || arr.length === 0) return false;
     const norm = (x="") => x.toString().trim().toLowerCase();
     const a = arr.map(norm);
     const b = [
       "időpont","e-mail","stílus(ok)","ének","nyelv",
-      "brief","dalszöveg","link #1","link #2","formátum"
+      "brief","dalszöveg","link #1","link #2","formátum","kézbesítési idő"
     ];
-    // pontos egyezés kell az első 10 cellára
     for (let i=0;i<b.length;i++){
       if ((a[i]||"") !== b[i]) return false;
     }
@@ -161,7 +158,6 @@ async function ensureHeaderFreezeCF(title) {
   const needInsertHeaderRow = !isHeaderMatch(row);
 
   if (needInsertHeaderRow) {
-    // 2) Beszúrunk egy új sort a tetejére (index 0), hogy ne írjunk felül semmit
     try {
       await gs.spreadsheets.batchUpdate({
         spreadsheetId: SHEET_ID,
@@ -178,11 +174,10 @@ async function ensureHeaderFreezeCF(title) {
       console.warn("[INSERT top row warn]", e?.message || e);
     }
 
-    // 3) Fejléc kiírása A1:J1-be
     try {
       await gs.spreadsheets.values.update({
         spreadsheetId: SHEET_ID,
-        range: `${title}!A1:J1`,
+        range: `${title}!A1:K1`,
         valueInputOption: "RAW",
         requestBody: { values: [HEADER] }
       });
@@ -191,7 +186,6 @@ async function ensureHeaderFreezeCF(title) {
     }
   }
 
-  // 4) Első sor fagyasztása (idempotens)
   try {
     await gs.spreadsheets.batchUpdate({
       spreadsheetId: SHEET_ID,
@@ -208,8 +202,7 @@ async function ensureHeaderFreezeCF(title) {
     console.warn("[FREEZE ensure warn]", e?.message || e);
   }
 
-  // 5) CF szabály: próbálkozunk vesszővel és pontosvesszővel is (lokálfüggetlen)
-  const cfRanges = [{ sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: 10 }]; // A2:J
+  const cfRanges = [{ sheetId, startRowIndex: 1, startColumnIndex: 0, endColumnIndex: 11 }]; // A2:K
   const cfReq = (formula) => [{
     addConditionalFormatRule: {
       rule: {
@@ -226,13 +219,13 @@ async function ensureHeaderFreezeCF(title) {
   try {
     await gs.spreadsheets.batchUpdate({
       spreadsheetId: SHEET_ID,
-      requestBody: { requests: cfReq('=OR($J2="mp4",$J2="wav")') } // EN, ,
+      requestBody: { requests: cfReq('=OR($J2="mp4",$J2="wav")') }
     });
   } catch (e1) {
     try {
       await gs.spreadsheets.batchUpdate({
         spreadsheetId: SHEET_ID,
-        requestBody: { requests: cfReq('=OR($J2="mp4";$J2="wav")') } // HU, ;
+        requestBody: { requests: cfReq('=OR($J2="mp4";$J2="wav")') }
       });
     } catch (e2) {
       console.warn("[CF ensure warn]", e1?.message || e1, "| fallback:", e2?.message || e2);
@@ -240,8 +233,7 @@ async function ensureHeaderFreezeCF(title) {
   }
 }
 
-
-/** Fő: napi fül biztosítása + fejléc + freeze + CF + APPEND A2-től (A–J) */
+/** Fő: napi fül biztosítása + fejléc + freeze + CF + APPEND A2-től (A–K) */
 export async function safeAppendOrderRow(order = {}) {
   try {
     const gs = sheets();
@@ -257,14 +249,15 @@ export async function safeAppendOrderRow(order = {}) {
 
     const {
       email = "", styles = "", vocal = "", language = "hu",
-      brief = "", lyrics = "", link1 = "", link2 = "", format = ""
+      brief = "", lyrics = "", link1 = "", link2 = "",
+      format = "", delivery_extra = ""
     } = order;
 
     const values = [[
-      iso, email, styles, vocal, language, brief, lyrics, link1, link2, (format || "").toLowerCase()
+      iso, email, styles, vocal, language, brief, lyrics, link1, link2,
+      (format || "").toLowerCase(), delivery_extra || "48 óra (alap)"
     ]];
 
-    // KULCS: mindig A2-től append → fejléc sosem tolódik, sor A–J-be megy
     await gs.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
       range: `${title}!A2`,
@@ -279,5 +272,4 @@ export async function safeAppendOrderRow(order = {}) {
   }
 }
 
-// kompatibilitás
 export async function appendOrderRow(o = {}) { return safeAppendOrderRow(o); }
