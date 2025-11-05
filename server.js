@@ -162,11 +162,31 @@ app.post('/api/order', (req, res) => {
     jobs.push({
       to: o.email,
       subject: 'EnZenem – Megrendelés fogadva',
-      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést! A megrendelését megkaptuk, és 36 órán belül elküldjük Önnek a videó letöltési linkjét.
+      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést! A megrendelését megkaptuk, és 48 órán belül elküldjük Önnek, egyedi professzionális zenéjét.
 Ha bármilyen kérdése merül fel, szívesen segítünk!</p><p>Üdv,<br/>EnZenem</p>`
     });
   }
   queueEmails(jobs);
+    // 🟡 Google Sheets-be mentés (kézbesítési idővel)
+  try {
+    setImmediate(async () => {
+      await safeAppendOrderRow({
+        email: o.email || '',
+        styles: o.style || '',
+        vocal: o.vocal || '',
+        language: o.language || 'hu',
+        brief: o.brief || '',
+        lyrics: '', // itt nincs generált dalszöveg
+        link1: '',
+        link2: '',
+        format: (o.package || '').toLowerCase() || 'mp3',
+        delivery: o.delivery_label || o.delivery || ''
+      });
+    });
+  } catch (e) {
+    console.warn('[SHEET ORDER WARN]', e?.message || e);
+  }
+
   res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett. Hamarosan kapsz visszaigazolást e-mailben.' });
 });
 
