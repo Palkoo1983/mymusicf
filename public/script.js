@@ -360,14 +360,75 @@ function initOrderForm() {
   function showModal(){ if (modal){ modal.style.display='block'; modal.setAttribute('aria-hidden','false'); } }
   function hideModal(){ if (modal){ modal.style.display='none';  modal.setAttribute('aria-hidden','true'); } }
 
-  orderForm.addEventListener('submit', (e) => {
-    e.preventDefault(); e.stopPropagation();
-  const data = Object.fromEntries(new FormData(orderForm).entries());
+ orderForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
 
-// 🔥 extra biztosítás – mindig a legfrissebb gombértéket olvassa ki
-const activeBtn = document.querySelector('.delivery-btn.active');
-if (activeBtn) data.delivery_extra = activeBtn.dataset.extra;
-else data.delivery_extra = document.querySelector('input[name="delivery_extra"]').value || '0';
+  // 🔹 Mindig a legfrissebb aktív gombot olvassuk be
+  const activeBtn = document.querySelector('.delivery-btn.active');
+  const deliveryVal = activeBtn ? activeBtn.dataset.extra : '0';
+
+  // 🔹 FormData összeállítása + kézbesítési idő garantált beillesztése
+  const fd = new FormData(orderForm);
+  fd.set('delivery_extra', deliveryVal);
+
+  const data = Object.fromEntries(fd.entries());
+  console.log('[DEBUG delivery_extra]', deliveryVal); // ideiglenesen maradhat
+
+  showModal();
+
+  const onAccept = () => {
+    hideModal();
+    acceptBtn?.removeEventListener('click', onAccept);
+    cancelBtn?.removeEventListener('click', onCancel);
+    actuallySend(data);
+  };
+  const onCancel = () => {
+    hideModal();
+    if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
+    acceptBtn?.removeEventListener('click', onAccept);
+    cancelBtn?.removeEventListener('click', onCancel);
+    try {
+      if (!(window.NB_NOTIFY_SOURCE === 'generate')) {
+        window.novaOrderFail && window.novaOrderFail();
+      }
+    } catch (_){}
+  };
+
+  acceptBtn?.addEventListener('click', onAccept, { once: true });
+  cancelBtn?.addEventListener('click', onCancel, { once: true });
+});
+
+  // 🔹 FormData összeállítása + kézbesítési idő garantált beillesztése
+  const fd = new FormData(orderForm);
+  fd.set('delivery_extra', deliveryVal);
+
+  const data = Object.fromEntries(fd.entries());
+  console.log('[DEBUG delivery_extra]', deliveryVal); // ideiglenesen maradhat
+
+  showModal();
+
+  const onAccept = () => {
+    hideModal();
+    acceptBtn?.removeEventListener('click', onAccept);
+    cancelBtn?.removeEventListener('click', onCancel);
+    actuallySend(data);
+  };
+  const onCancel = () => {
+    hideModal();
+    if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
+    acceptBtn?.removeEventListener('click', onAccept);
+    cancelBtn?.removeEventListener('click', onCancel);
+    try {
+      if (!(window.NB_NOTIFY_SOURCE === 'generate')) {
+        window.novaOrderFail && window.novaOrderFail();
+      }
+    } catch (_){}
+  };
+
+  acceptBtn?.addEventListener('click', onAccept, { once: true });
+  cancelBtn?.addEventListener('click', onCancel, { once: true });
+});
 
 
     // MINDIG kérdezzünk rá (nincs cookie / localStorage)
