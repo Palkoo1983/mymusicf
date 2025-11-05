@@ -153,24 +153,7 @@ app.post('/api/order', async (req, res) => {
   else if (o.delivery_extra === '6500') o.delivery_extra = '6 óra (+6500 Ft)';
   else if (!o.delivery_extra) o.delivery_extra = '48 óra (alap)';
 
-  // --- Sheets-be mentés ---
-  try {
-    await safeAppendOrderRow({
-      email: o.email || '',
-      styles: o.style || '',
-      vocal: o.vocal || '',
-      language: o.language || '',
-      brief: o.brief || '',
-      lyrics: '',
-      link1: '',
-      link2: '',
-      format: (o.package || 'mp3').toLowerCase(),
-      delivery_extra: o.delivery_extra
-    });
-  } catch (err) {
-    console.warn('[SHEETS_APPEND_WARN]', err?.message || err);
-  }
-
+ 
   // --- E-mail értesítések ---
   const orderHtml = `
     <h2>Új megrendelés</h2>
