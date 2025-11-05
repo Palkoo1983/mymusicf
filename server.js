@@ -167,26 +167,7 @@ Ha bármilyen kérdése merül fel, szívesen segítünk!</p><p>Üdv,<br/>EnZene
     });
   }
   queueEmails(jobs);
-    // 🟡 Google Sheets-be mentés (kézbesítési idővel)
-  try {
-    setImmediate(async () => {
-      await safeAppendOrderRow({
-        email: o.email || '',
-        styles: o.style || '',
-        vocal: o.vocal || '',
-        language: o.language || 'hu',
-        brief: o.brief || '',
-        lyrics: '', // itt nincs generált dalszöveg
-        link1: '',
-        link2: '',
-        format: (o.package || '').toLowerCase() || 'mp3',
-        delivery: o.delivery_label || o.delivery || ''
-      });
-    });
-  } catch (e) {
-    console.warn('[SHEET ORDER WARN]', e?.message || e);
-  }
-
+  
   res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett. Hamarosan kapsz visszaigazolást e-mailben.' });
 });
 
@@ -680,7 +661,7 @@ function normalizeGenre(g) {
         await safeAppendOrderRow({
           email: req.body.email || '',
           styles, vocal, language, brief, lyrics,
-          link1: '', link2: '', format, delivery: req.body.delivery_label || ''
+          link1: '', link2: '', format, delivery: req.body.delivery_label || req.body.delivery || ''
         });
       } catch (_e) {
         console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
@@ -764,7 +745,7 @@ function normalizeGenre(g) {
       const link1 = tracks[0]?.audio_url || '';
       const link2 = tracks[1]?.audio_url || '';
       await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2, format,
-      delivery: req.body.delivery_label || '' 
+      delivery: req.body.delivery_label || req.body.delivery || '' 
     });
     } catch (_e) { /* log only */ }
 
