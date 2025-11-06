@@ -924,10 +924,15 @@ try {
     }
     queueEmails(jobs);
     console.log('[MAIL:QUEUED from /api/generate_song]', { to: o.email });
-  } catch (err) {
+   } catch (err) {
     console.warn('[MAIL:QUEUE_FAIL from /api/generate_song]', err?.message || err);
   }
-} catch (_e) { /* log only */ }
+
+} catch (outerErr) {
+  console.error('[BG generate_song error]', outerErr);
+}
+
+}); // lezárja az app.post('/api/generate_song', ...)
 
 
 /* ================== DIAG endpoints ======================== */
