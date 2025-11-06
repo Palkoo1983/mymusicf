@@ -394,15 +394,15 @@ if (delivLabel) data.delivery_label = delivLabel.value;
     cancelBtn?.addEventListener('click', onCancel, { once:true });
   });
 }
-// === Kézbesítési opciók kiválasztása + árfrissítés a Megrendelés gombon ===
+// === Kézbesítési opciók kiválasztása + árfrissítés a Megrendelés gombon (javított delegált verzió) ===
 document.addEventListener('DOMContentLoaded', () => {
-  const buttons = document.querySelectorAll('.delivery-btn');
-  const hidden  = document.querySelector('input[name="delivery_extra"]');
-  const hiddenLabel = document.querySelector('input[name="delivery_label"]'); 
-  const pkgSel  = document.querySelector('select[name="package"]');
-  const submitBtn = document.querySelector('#orderForm button[type="submit"], #orderForm .primary');
+  const container   = document.querySelector('.delivery-buttons');
+  const hiddenExtra = document.querySelector('input[name="delivery_extra"]');
+  const hiddenLabel = document.querySelector('input[name="delivery_label"]');
+  const pkgSel      = document.querySelector('select[name="package"]');
+  const submitBtn   = document.querySelector('#orderForm button[type="submit"], #orderForm .primary');
 
-  if (!pkgSel || !submitBtn || !hidden) return;
+  if (!container || !pkgSel || !submitBtn || !hiddenExtra) return;
 
   // Alapárak (Ft)
   const basePrices = {
@@ -411,60 +411,50 @@ document.addEventListener('DOMContentLoaded', () => {
     premium: 35000  // WAV
   };
 
-  function formatFt(n) {
-    return n.toLocaleString('hu-HU') + ' Ft';
-  }
+  const formatFt = (n) => (Number(n)||0).toLocaleString('hu-HU') + ' Ft';
 
   function updatePriceLabel() {
-  const pkg = pkgSel.value;
-  const extra = parseInt(hidden.value || '0', 10);
-  const base = basePrices[pkg] || 0;
-  const total = base + extra;
+    const pkg   = pkgSel.value;
+    const extra = parseInt(hiddenExtra.value || '0', 10);
+    const base  = basePrices[pkg] || 0;
+    const total = base + extra;
 
-  // finom szöveg fade
-  submitBtn.style.transition = 'opacity 0.25s ease';
-  submitBtn.style.opacity = '0';
-  setTimeout(() => {
-   submitBtn.innerHTML = `<span class="gold-text">Megrendelés – ${formatFt(total)}</span>`;
-    submitBtn.style.opacity = '1';
-    // villanás-animáció újraindítása
-    submitBtn.classList.remove('price-update');
-    void submitBtn.offsetWidth; // force reflow
-    submitBtn.classList.add('price-update');
-  }, 200);
-}
-
-
- // 1️⃣ Alapértelmezett: 48 óra aktívként + ár kijelzés + címke
-const defaultBtn = Array.from(buttons).find(b => b.dataset.extra === '0');
-if (defaultBtn) {
-  defaultBtn.classList.add('active');
-  hidden.value = '0';
-  if (hiddenLabel) {
-    hiddenLabel.value = defaultBtn.textContent.trim(); // 🟡 ÚJ – címke beállítás
+    submitBtn.style.transition = 'opacity 0.25s ease';
+    submitBtn.style.opacity = '0';
+    setTimeout(() => {
+      submitBtn.innerHTML = `<span class="gold-text">Megrendelés – ${formatFt(total)}</span>`;
+      submitBtn.style.opacity = '1';
+      submitBtn.classList.remove('price-update');
+      void submitBtn.offsetWidth; // force reflow
+      submitBtn.classList.add('price-update');
+    }, 200);
   }
-}
-updatePriceLabel();
 
-// 2️⃣ Ha csomag váltás történik
-pkgSel.addEventListener('change', updatePriceLabel);
-
-// 3️⃣ Ha kézbesítési opcióra kattintanak
-buttons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    buttons.forEach(b => b.classList.remove('active'));
+  function setActive(btn) {
+    container.querySelectorAll('.delivery-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    hidden.value = btn.dataset.extra;
-
-    // 🟡 ÚJ – frissítjük a kézbesítési címkét is
-    if (hiddenLabel) {
-      hiddenLabel.value = btn.textContent.trim();
-    }
-
+    hiddenExtra.value = btn.dataset.extra || '0';
+    if (hiddenLabel) hiddenLabel.value = (btn.textContent || '').trim();
     updatePriceLabel();
+  }
+
+  // Alapértelmezett (48h)
+  const defaultBtn = container.querySelector('.delivery-btn[data-extra="0"]');
+  if (defaultBtn) setActive(defaultBtn);
+  else updatePriceLabel();
+
+  // Delegált eseménykezelő – garantáltan csak egy gomb aktív marad
+  container.addEventListener('click', (e) => {
+    const btn = e.target.closest('.delivery-btn');
+    if (!btn || !container.contains(btn)) return;
+    e.preventDefault();
+    setActive(btn);
   });
+
+  // Csomagváltáskor újraszámolás
+  pkgSel.addEventListener('change', updatePriceLabel);
 });
-});
+
 /* ---------- Contact form submit + thanks overlay (no redirect) ---------- */
 function initContactForm() {
   const contactForm   = qs('#contactForm');
