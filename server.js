@@ -759,145 +759,176 @@ function normalizeGenre(g) {
   return t.trim();
 }
 
-
-    // Ha nem MP3: nincs Suno, csak Sheets + visszaadás
-    if (!isMP3) {
-      try {
-        await safeAppendOrderRow({
-          email: req.body.email || '',
-          styles, vocal, language, brief, lyrics,
-          link1: '', link2: '', format, delivery: req.body.delivery_label || req.body.delivery || ''
-        });
-      } catch (_e) {
-        console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
-      }
-      lyrics = normalizeSectionHeadingsSafeStrict(lyrics);
-    }
-
-    // === SUNO API CALL (MP3 only) ===
-    const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
-      'Authorization': 'Bearer ' + SUNO_API_KEY,
-      'Content-Type': 'application/json'
-    }, {
-      customMode: true,
-      model: 'V5',
-      instrumental: (vocal === 'instrumental'),
-      title: title,
-      style: styleFinal,
-      prompt: lyrics,
-      callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
+  // === HANDLE NON-MP3 FORMATS (no Suno, just Sheets + Email) ===
+if (!isMP3) {
+  try {
+    await safeAppendOrderRow({
+      email: req.body.email || '',
+      styles, vocal, language, brief, lyrics,
+      link1: '', link2: '', format,
+      delivery: req.body.delivery_label || req.body.delivery || ''
     });
+  } catch (_e) {
+    console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
+  }
 
-   if (!startRes.ok) {
+  lyrics = normalizeSectionHeadingsSafeStrict(lyrics);
+
+  // --- E-mail értesítések minden nem-MP3 formátumra ---
+  try {
+    const o = req.body || {};
+    const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
+    const orderHtml = `
+      <h2>Új dal generálás (nem-MP3 formátum)</h2>
+      <ul>
+        <li><b>E-mail:</b> ${o.email || ''}</li>
+        <li><b>Stílus:</b> ${o.styles || ''}</li>
+        <li><b>Ének:</b> ${o.vocal || ''}</li>
+        <li><b>Nyelv:</b> ${o.language || ''}</li>
+        <li><b>Formátum:</b> ${format.toUpperCase()}</li>
+        <li><b>Kézbesítés:</b> ${o.delivery_label || o.delivery || ''}</li>
+      </ul>
+      <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
+    `;
+    const jobs = [
+      { to: owner, subject: 'EnZenem – Dal generálás (nem-MP3)', html: orderHtml, replyTo: o.email || undefined }
+    ];
+    if (o.email) {
+      jobs.push({
+        to: o.email,
+        subject: 'EnZenem – Megrendelés feldolgozva',
+        html: `<p>Kedves Megrendelő!</p>
+               <p>Köszönjük! A dalgenerálás sikeresen rögzítésre került (${format.toUpperCase()} formátum), és bekerült a rendszerbe.</p>
+               <p>A választott kézbesítési időn belül (<b>${o.delivery_label || o.delivery || '48 óra (alap)'}</b>) megkapod az egyedi zenédet.</p>
+               <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>`
+      });
+    }
+    queueEmails(jobs);
+    console.log('[MAIL:QUEUED non-MP3]', { to: o.email, format });
+  } catch (err) {
+    console.warn('[MAIL:QUEUE_FAIL non-MP3]', err?.message || err);
+  }
+
+  // 🔸 Stop here — no Suno call
+  return;
+}
+
+// === SUNO API CALL (MP3 only) ===
+const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
+  'Authorization': 'Bearer ' + SUNO_API_KEY,
+  'Content-Type': 'application/json'
+}, {
+  customMode: true,
+  model: 'V5',
+  instrumental: (vocal === 'instrumental'),
+  title: title,
+  style: styleFinal,
+  prompt: lyrics,
+  callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
+});
+
+if (!startRes.ok) {
   console.warn('[generate_song] Suno start error', startRes.status);
   return;
 }
 
-    const sj = startRes.json;
-  if (!sj || sj.code !== 200 || !sj.data || !sj.data.taskId) {
+const sj = startRes.json;
+if (!sj || sj.code !== 200 || !sj.data || !sj.data.taskId) {
   console.warn('[generate_song] Suno bad response', sj);
   return;
 }
 
-    const taskId = sj.data.taskId;
+const taskId = sj.data.taskId;
 
-    // Poll up to 2 tracks
-    const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 160);
-    const intervalMs  = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 2000));
-    let attempts = 0, tracks = [];
-    while (tracks.length < 2 && attempts < maxAttempts) {
-      attempts++;
-      await new Promise(r => setTimeout(r, intervalMs));
-      const pr = await fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
-        method:'GET',
-        headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY }
-      });
-      if (!pr.ok) continue;
-      const st = await pr.json();
-      if (!st || st.code !== 200) continue;
-      const items = (st.data && st.data.response && st.data.response.sunoData) || [];
-      tracks = items.flatMap(d => {
-          const urls = [];
-          const a1 = d.audioUrl || d.url || d.audio_url;
-          const a2 = d.audioUrl2 || d.url2 || d.audio_url_2;
-          if (a1) urls.push(a1);
-          if (a2) urls.push(a2);
-          if (Array.isArray(d.clips)) {
-            for (const c of d.clips) {
-              if (c?.audioUrl || c?.audio_url) urls.push(c.audioUrl || c.audio_url);
-              if (c?.audioUrlAlt || c?.audio_url_alt) urls.push(c.audioUrlAlt || c.audio_url_alt);
-            }
-          }
-          return urls.map(u => ({ title: d.title || title, audio_url: u, image_url: d.imageUrl || d.coverUrl }));
-        })
-        .map(x => ({ ...x, audio_url: String(x.audio_url||'').trim() }))
-        .filter(x => !!x.audio_url && /^https?:\/\//i.test(x.audio_url))
-        .reduce((acc, cur) => {
-          if (!acc.find(t => t.audio_url === cur.audio_url)) acc.push(cur);
-          return acc;
-        }, [])
-        .slice(0, 2);
-    }
+// === POLL SUNO FOR RESULTS ===
+const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 160);
+const intervalMs  = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 2000));
+let attempts = 0, tracks = [];
+while (tracks.length < 2 && attempts < maxAttempts) {
+  attempts++;
+  await new Promise(r => setTimeout(r, intervalMs));
+  const pr = await fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
+    method:'GET',
+    headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY }
+  });
+  if (!pr.ok) continue;
+  const st = await pr.json();
+  if (!st || st.code !== 200) continue;
+  const items = (st.data && st.data.response && st.data.response.sunoData) || [];
+  tracks = items.flatMap(d => {
+      const urls = [];
+      const a1 = d.audioUrl || d.url || d.audio_url;
+      const a2 = d.audioUrl2 || d.url2 || d.audio_url_2;
+      if (a1) urls.push(a1);
+      if (a2) urls.push(a2);
+      if (Array.isArray(d.clips)) {
+        for (const c of d.clips) {
+          if (c?.audioUrl || c?.audio_url) urls.push(c.audioUrl || c.audio_url);
+          if (c?.audioUrlAlt || c?.audio_url_alt) urls.push(c.audioUrlAlt || c.audio_url_alt);
+        }
+      }
+      return urls.map(u => ({ title: d.title || title, audio_url: u, image_url: d.imageUrl || d.coverUrl }));
+    })
+    .map(x => ({ ...x, audio_url: String(x.audio_url||'').trim() }))
+    .filter(x => !!x.audio_url && /^https?:\/\//i.test(x.audio_url))
+    .reduce((acc, cur) => {
+      if (!acc.find(t => t.audio_url === cur.audio_url)) acc.push(cur);
+      return acc;
+    }, [])
+    .slice(0, 2);
+}
 
-    if (!tracks.length) {
+if (!tracks.length) {
   console.warn('[generate_song] No tracks returned in time.');
   return;
 }
 
-      try {
-      const link1 = tracks[0]?.audio_url || '';
-      const link2 = tracks[1]?.audio_url || '';
-      await safeAppendOrderRow({
-        email: req.body.email || '',
-        styles, vocal, language, brief, lyrics,
-        link1, link2, format,
-        delivery: req.body.delivery_label || req.body.delivery || ''
+// === APPEND + EMAIL AFTER SUNO SUCCESS ===
+try {
+  const link1 = tracks[0]?.audio_url || '';
+  const link2 = tracks[1]?.audio_url || '';
+  await safeAppendOrderRow({
+    email: req.body.email || '',
+    styles, vocal, language, brief, lyrics,
+    link1, link2, format,
+    delivery: req.body.delivery_label || req.body.delivery || ''
+  });
+
+  // --- Email értesítések, mint az /api/order végpontban ---
+  try {
+    const o = req.body || {};
+    const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
+    const orderHtml = `
+      <h2>Új dal generálás (VPOS / API)</h2>
+      <ul>
+        <li><b>E-mail:</b> ${o.email || ''}</li>
+        <li><b>Stílus:</b> ${o.styles || ''}</li>
+        <li><b>Ének:</b> ${o.vocal || ''}</li>
+        <li><b>Nyelv:</b> ${o.language || ''}</li>
+        <li><b>Kézbesítés:</b> ${o.delivery_label || o.delivery || ''}</li>
+      </ul>
+      <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
+    `;
+    const jobs = [
+      { to: owner, subject: 'EnZenem – Új dal generálás (VPOS)', html: orderHtml, replyTo: o.email || undefined }
+    ];
+    if (o.email) {
+      jobs.push({
+        to: o.email,
+        subject: 'EnZenem – Megrendelés feldolgozva',
+        html: `<p>Kedves Megrendelő!</p>
+               <p>Köszönjük! A dalgenerálás sikeresen lefutott, és a linkek bekerültek a rendszerbe.</p>
+               <p>A választott kézbesítési időn belül (<b>${o.delivery_label || o.delivery || '48 óra (alap)'}</b>) megkapod az egyedi zenédet.</p>
+               <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>`
       });
-
-      // --- Email értesítések, mint az /api/order végpontban ---
-      try {
-        const o = req.body || {};
-        const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
-        const orderHtml = `
-          <h2>Új dal generálás (VPOS / API)</h2>
-          <ul>
-            <li><b>E-mail:</b> ${o.email || ''}</li>
-            <li><b>Stílus:</b> ${o.styles || ''}</li>
-            <li><b>Ének:</b> ${o.vocal || ''}</li>
-            <li><b>Nyelv:</b> ${o.language || ''}</li>
-            <li><b>Kézbesítés:</b> ${o.delivery_label || o.delivery || ''}</li>
-          </ul>
-          <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
-        `;
-        const jobs = [
-          { to: owner, subject: 'EnZenem – Új dal generálás (VPOS)', html: orderHtml, replyTo: o.email || undefined }
-        ];
-        if (o.email) {
-          jobs.push({
-            to: o.email,
-            subject: 'EnZenem – Megrendelés feldolgozva',
-            html: `<p>Kedves Megrendelő!</p>
-                   <p>Köszönjük! A dalgenerálás sikeresen lefutott, és a linkek bekerültek a rendszerbe.</p>
-                   <p>A választott kézbesítési időn belül (<b>${o.delivery_label || o.delivery || '48 óra (alap)'}</b>) megkapod az egyedi zenédet.</p>
-                   <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>`
-          });
-        }
-        queueEmails(jobs);
-        console.log('[MAIL:QUEUED from /api/generate_song]', { to: o.email });
-      } catch (err) {
-        console.warn('[MAIL:QUEUE_FAIL from /api/generate_song]', err?.message || err);
-      }
-    } catch (_e) { /* log only */ }
-
-    } catch (err) {
-        console.error('[BG generate_song error]', err);
-      }
-    });
-
-  } catch (e) {
-    console.error('[generate_song wrapper error]', e);
+    }
+    queueEmails(jobs);
+    console.log('[MAIL:QUEUED from /api/generate_song]', { to: o.email });
+  } catch (err) {
+    console.warn('[MAIL:QUEUE_FAIL from /api/generate_song]', err?.message || err);
   }
-});
+} catch (_e) { /* log only */ }
+
 
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
