@@ -58,20 +58,22 @@
     e.preventDefault();
 
     // basic collection
-    const fd = new FormData(form);
-    const data = {
-      email: (form.querySelector('[name=email]')||{}).value || '',
-      styles: (fd.get('styles')||'').toString(),   // <-- correct field name
-      style:  (fd.get('styles')||'').toString(),   // legacy compatibility
-      vocal: (form.querySelector('[name=vocal]')||{}).value || '',
-      language: (form.querySelector('[name=language]')||{}).value || '',
-      brief: (form.querySelector('[name=brief]')||{}).value || '',
-      consent: !!(form.querySelector('[name=consent]')||{}).checked,
-      package: (fd.get('package')||'basic').toString(),
-      // 🟡 Kézbesítési mezők hozzáadása a JSON-hoz
-     data.delivery_label = (form.querySelector('[name=delivery_label]')||{}).value || '',
-     data.delivery_extra = (form.querySelector('[name=delivery_extra]')||{}).value || '0'
-    };
+const fd = new FormData(form);
+const data = {
+  email: (form.querySelector('[name=email]')||{}).value || '',
+  styles: (fd.get('styles')||'').toString(),   // <-- correct field name
+  style:  (fd.get('styles')||'').toString(),   // legacy compatibility
+  vocal: (form.querySelector('[name=vocal]')||{}).value || '',
+  language: (form.querySelector('[name=language]')||{}).value || '',
+  brief: (form.querySelector('[name=brief]')||{}).value || '',
+  consent: !!(form.querySelector('[name=consent]')||{}).checked,
+  package: (fd.get('package')||'basic').toString(),
+
+  // 🟡 Kézbesítési mezők hozzáadása a JSON-hoz
+  delivery_label: (form.querySelector('[name=delivery_label]')||{}).value || '',
+  delivery_extra: (form.querySelector('[name=delivery_extra]')||{}).value || '0'
+};
+
 
     // disable form
     const submitBtn = form.querySelector('button[type=submit], [type=submit]');
