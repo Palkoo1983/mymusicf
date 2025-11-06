@@ -6,6 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import Stripe from 'stripe';
 import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
 
 dotenv.config();
@@ -41,6 +42,7 @@ const ENV = {
   RESEND_ONLY: (process.env.RESEND_ONLY || '').toString().toLowerCase() === 'true'
 };
 
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 /* ================== Middleware / static ================= */
 app.use(cors());
@@ -134,151 +136,147 @@ function queueEmails(tasks) {
 }
 
 /* =================== Test mail endpoint =================== */
+app.get('/api/test-mail', (req, res) => {
+  const to = ENV.TO_EMAIL || ENV.SMTP_USER;
+  queueEmails([{ to, subject: 'EnZenem – gyors teszt', html: '<p>Gyors tesztlevél.</p>' }]);
+  res.json({ ok: true, message: 'Teszt e-mail ütemezve: ' + to });
+});
+
+/* =================== Order / Contact ====================== */
 app.post('/api/order', (req, res) => {
   const o = req.body || {};
   const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
-  const delivery = o.delivery_label || o.delivery || '48 óra (alap)';
-
-  // 🔧 hozzáadjuk a hiányzó mezőt, hogy a háttérlogika ne dobjon hibát
-  o.styles = o.styles || o.style || '';
-
   const orderHtml = `
     <h2>Új megrendelés</h2>
     <ul>
       <li><b>E-mail:</b> ${o.email || ''}</li>
-      <li><b>Stílus:</b> ${o.styles}</li>
+      <li><b>Esemény:</b> ${o.event_type || ''}</li>
+      <li><b>Stílus:</b> ${o.style || ''}</li>
       <li><b>Ének:</b> ${o.vocal || ''}</li>
       <li><b>Nyelv:</b> ${o.language || ''}</li>
-      <li><b>Formátum:</b> ${o.format || ''}</li>
-      <li><b>Kézbesítési idő:</b> ${delivery}</li>
     </ul>
     <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
   `;
-
-  const jobs = [
-    { to: owner, subject: 'Új dal megrendelés', html: orderHtml, replyTo: o.email || undefined }
-  ];
-
+  const jobs = [{ to: owner, subject: 'Új dal megrendelés', html: orderHtml, replyTo: o.email || undefined }];
   if (o.email) {
     jobs.push({
       to: o.email,
       subject: 'EnZenem – Megrendelés fogadva',
-      html: `
-        <p>Kedves Megrendelő!</p>
-        <p>Köszönjük a megrendelést! A megrendelésed beérkezett, és a választott kézbesítési időn belül (<b>${delivery}</b>) elkészítjük az egyedi zenédet.</p>
-        <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>
-      `
+      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést! A megrendelését megkaptuk, és 48 órán belül elküldjük Önnek, egyedi professzionális zenéjét.
+Ha bármilyen kérdése merül fel, szívesen segítünk!</p><p>Üdv,<br/>EnZenem</p>`
     });
   }
-
   queueEmails(jobs);
-  console.log('[MAIL:ORDER_SENT]', { to: o.email || '(n/a)', delivery });
-  res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett.' });
+  
+  res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett. Hamarosan kapsz visszaigazolást e-mailben.' });
 });
 
-// =================== TEST VPOS FLOW (with visible amount log) ===================
-app.post('/api/payment/create', async (req, res) => {
-  try {
-    global.lastOrderData = req.body;
-    const data = req.body || {};
-    const total =
-      (data.package === 'video' ? 21000 :
-      data.package === 'premium' ? 35000 :
-      10500) + parseInt(data.delivery_extra || '0', 10);
+app.post('/api/contact', (req, res) => {
+  const c = req.body || {};
+  const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
+  const html = `
+    <h2>Új üzenet</h2>
+    <ul>
+      <li><b>Név:</b> ${c.name || ''}</li>
+      <li><b>E-mail:</b> ${c.email || ''}</li>
+    </ul>
+    <p>${(c.message || '').replace(/\n/g, '<br/>')}</p>
+  `;
+  const jobs = [{ to: owner, subject: 'EnZenem – Üzenet', html, replyTo: c.email || undefined }];
+  if (c.email) jobs.push({ to: c.email, subject: 'EnZenem – Üzenet fogadva', html: '<p>Köszönjük az üzenetet, hamarosan válaszolunk.</p>' });
+  queueEmails(jobs);
+  res.json({ ok: true, message: 'Üzeneted elküldve. Köszönjük a megkeresést!' });
+});
 
-    // Logoljunk a konzolba is, hogy lássuk mi ment a VPOS-nak
-    console.log(`[VPOS CREATE] Fizetés indítva: ${total} Ft | Csomag: ${data.package}, Kézbesítés: ${data.delivery_label}`);
+/* =================== Stripe (optional) ==================== */
+const PRICE = {
+  basic:  Number(process.env.PRICE_BASIC || 19900),
+  premium:Number(process.env.PRICE_PREMIUM || 34900),
+  video:  Number(process.env.PRICE_VIDEO || 49900)
+};
+const CURRENCY = (process.env.CURRENCY || 'huf').toLowerCase();
 
-    // Tesztfizetési oldalak (lehet saját domainen is)
-    const successUrl = `${process.env.PUBLIC_URL || ''}/testpay.html?result=success&amount=${total}`;
-    const failUrl = `${process.env.PUBLIC_URL || ''}/testpay.html?result=fail&amount=${total}`;
-
-    // Az ügyfél ezt kapja vissza – benne az összeg is látható
-    res.json({ ok: true, successUrl, failUrl, total });
-  } catch (e) {
-    console.error('[VPOS CREATE ERROR]', e);
-    res.status(500).json({ ok: false, message: 'Nem sikerült a fizetési folyamat indítása.' });
+app.post('/api/checkout', async (req, res) => {
+  try{
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
+    if(!rateLimit('checkout:'+ip, 60000, 10)) return res.status(429).json({ok:false, message:'Túl sok kérés. Próbáld később.'});
+    const o = req.body || {};
+    if(o._hp) return res.status(400).json({ ok:false, message:'Hiba.' });
+    if(!stripe){ return res.status(503).json({ ok:false, message:'Fizetés ideiglenesen nem elérhető.' }); }
+    const pack = (o.package || 'basic').toLowerCase();
+    const amount = PRICE[pack] || PRICE.basic;
+    const lineItem = {
+      price_data: {
+        currency: CURRENCY,
+        unit_amount: Math.max(200, amount),
+        product_data: { name: `EnZenem – ${pack} csomag` }
+      },
+      quantity: 1
+    };
+    const metadata = {
+      email: o.email || '', event_type: o.event_type || '', style: o.style || '',
+      vocal: o.vocal || '', language: o.language || '', brief: (o.brief || '').slice(0, 1500), package: pack
+    };
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [lineItem],
+      success_url: (process.env.PUBLIC_URL || '') + '/success.html',
+      cancel_url: (process.env.PUBLIC_URL || '') + '/cancel.html',
+      metadata
+    });
+    res.json({ ok:true, url: session.url });
+  }catch(e){
+    console.error('[CHECKOUT ERROR]', e);
+    res.status(500).json({ ok:false, message:'Nem sikerült a fizetési oldal létrehozása.' });
   }
 });
 
-// A „fizetési oldalt” is mi szimuláljuk (frontend is itt tudja megnyitni)
-app.get('/testpay.html', (req, res) => {
-  const amount = req.query.amount || '0';
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="hu">
-    <head>
-      <meta charset="UTF-8">
-      <title>VPOS Tesztfizetés</title>
-      <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background:#0d1b2a; color:#fff; }
-        .btn { display:inline-block; padding:15px 25px; margin:10px; font-size:18px; border-radius:8px; cursor:pointer; text-decoration:none; }
-        .ok { background:#21a353; color:#fff; }
-        .fail { background:#b33; color:#fff; }
-      </style>
-    </head>
-    <body>
-      <h1>VPOS Tesztfizetés</h1>
-      <p>Összeg: <b>${amount} Ft</b></p>
-      <p>Válassz eredményt:</p>
-      <a class="btn ok" href="/api/payment/callback?status=success&amount=${amount}">✅ Sikeres fizetés</a>
-      <a class="btn fail" href="/api/payment/callback?status=fail&amount=${amount}">❌ Sikertelen fizetés</a>
-    </body>
-    </html>
-  `);
-});
-
-// Callback – a tesztfizetés befejezése után
-app.get('/api/payment/callback', async (req, res) => {
-  const status = req.query.status || 'fail';
-  const amount = req.query.amount || '0';
-
-  if (status === 'success') {
-    console.log('[VPOS CALLBACK] Fizetés sikeres, indítjuk a dal generálást...');
-
-    // 🔸 Automatikus dalgenerálás, ha van mentett megrendelés
-    if (!global.lastOrderData) {
-      console.warn('[VPOS CALLBACK] Nincs mentett lastOrderData – nem indítjuk a generálást.');
+app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  if(!stripe){ return res.status(400).end(); }
+  let event;
+  try {
+    if(process.env.STRIPE_WEBHOOK_SECRET){
+      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } else {
-      try {
-        // Biztosítsuk, hogy mindig a fő domainre küldje
-      const base = process.env.PUBLIC_URL || 'https://www.enzenem.hu';
-      const apiUrl = `${base}/api/generate_song`;
-
-        console.log('[VPOS CALLBACK] Generálás indítása:', apiUrl);
-
-        await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(global.lastOrderData),
-        });
-
-        console.log('[VPOS CALLBACK] Dal generálás elindítva (POST /api/generate_song).');
-      } catch (err) {
-        console.error('[VPOS CALLBACK] Hiba a dalgenerálás indításakor:', err);
+      event = JSON.parse(req.body.toString('utf8'));
+    }
+  } catch (err) {
+    console.error('[WEBHOOK VERIFY FAIL]', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  try{
+    if(event.type === 'checkout.session.completed'){
+      const s = event.data.object;
+      const md = s.metadata || {};
+      const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
+      const email = md.email || s.customer_details?.email;
+      const orderHtml = `
+        <h2>Fizetett megrendelés</h2>
+        <ul>
+          <li><b>E-mail:</b> ${email || ''}</li>
+          <li><b>Esemény:</b> ${md.event_type || ''}</li>
+          <li><b>Stílus:</b> ${md.style || ''}</li>
+          <li><b>Ének:</b> ${md.vocal || ''}</li>
+          <li><b>Nyelv:</b> ${md.language || ''}</li>
+          <li><b>Csomag:</b> ${md.package || ''}</li>
+          <li><b>Összeg:</b> ${(s.amount_total/100).toFixed(0)} ${s.currency?.toUpperCase()}</li>
+        </ul>
+        <p><b>Brief:</b><br/>${(md.brief || '').replace(/\n/g,'<br/>')}</p>
+        <p><i>Stripe session: ${s.id}</i></p>
+      `;
+      await sendMailFast({ to: owner, subject: 'EnZenem – Fizetett megrendelés', html: orderHtml, replyTo: email || undefined });
+      if(email){
+        await sendMailFast({ to: email, subject: 'EnZenem – Fizetés sikeres', html: '<p>Köszönjük a fizetést! Hamarosan jelentkezünk a részletekkel.</p>' });
       }
     }
-
-    // 🔸 Visszajelzés a felhasználónak
-    return res.send(`
-      <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
-        <h2>✅ Fizetés sikeres!</h2>
-        <p>A választott kézbesítési időn belül megkapod a dalodat.</p>
-        <a href="/" style="color:#21a353;text-decoration:none">Vissza a főoldalra</a>
-      </body></html>
-    `);
-  } else {
-    console.log('[VPOS CALLBACK] Fizetés sikertelen.');
-    return res.send(`
-      <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
-        <h2>❌ Fizetés sikertelen!</h2>
-        <p>Kérjük, próbáld meg újra.</p>
-        <a href="/" style="color:#b33;text-decoration:none">Vissza a főoldalra</a>
-      </body></html>
-    `);
+    res.json({received: true});
+  }catch(e){
+    console.error('[WEBHOOK HANDLER ERROR]', e);
+    res.status(500).end();
   }
 });
-
 
 /* ================== SUNO HELPERS ========================= */
 async function sunoStartV1(url, headers, body){
@@ -754,47 +752,13 @@ function normalizeGenre(g) {
     } catch (err) {
         console.error('[BG generate_song error]', err);
       }
+    });
 
- // --- E-mail értesítések a dalgenerálásról ---
-try {
-  const b = req.body || {};
-  const clientEmail = b.email || '';
-  const adminEmail  = ENV.TO_EMAIL || ENV.SMTP_USER || '';
-  const styles = b.styles || b.style || '';
-  const vocal = b.vocal || '';
-  const format = (b.package || b.format || '').toString().toLowerCase();
-  const delivery = b.delivery_label || b.delivery || '48 óra (alap)';
-  const subjectAdmin = 'EnZenem – Dalgenerálás elindítva';
-  const subjectClient = 'EnZenem – Megrendelés feldolgozva';
-
-  const htmlAdmin = `
-    <h3>Új dalgenerálás sikeresen elindítva</h3>
-    <ul>
-      <li><b>E-mail:</b> ${clientEmail}</li>
-      <li><b>Stílus:</b> ${styles}</li>
-      <li><b>Vokál:</b> ${vocal}</li>
-      <li><b>Formátum:</b> ${format}</li>
-      <li><b>Kézbesítés:</b> ${delivery}</li>
-    </ul>
-  `;
-
-  const htmlClient = `
-    <p>Kedves Megrendelő!</p>
-    <p>Köszönjük a megrendelést! A dalgenerálás sikeresen elindult.</p>
-    <p>A választott kézbesítési időn belül (<b>${delivery}</b>) megkapod a dalodat.</p>
-    <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>
-  `;
-
-  queueEmails([
-    { to: adminEmail, subject: subjectAdmin, html: htmlAdmin },
-    { to: clientEmail, subject: subjectClient, html: htmlClient }
-  ]);
-
-  console.log('[MAIL:QUEUED]', { to: clientEmail, delivery });
-} catch (e) {
-  console.warn('[MAIL:QUEUE_FAIL]', e?.message || e);
-}
+  } catch (e) {
+    console.error('[generate_song wrapper error]', e);
+  }
 });
+
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
   res.json({ ok:true, diag:{
