@@ -3,7 +3,7 @@
 // - Prompt-szintű polish (sys2, sys3) aktív maradt
 
 import express from 'express';
-import cors from 'corconsole.error('[BG generate_song error]'s';
+import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
