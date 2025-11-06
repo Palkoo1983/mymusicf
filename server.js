@@ -3,7 +3,7 @@
 // - Prompt-szintű polish (sys2, sys3) aktív maradt
 
 import express from 'express';
-import cors from 'cors';
+import cors from 'corconsole.error('[BG generate_song error]'s';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
@@ -972,6 +972,13 @@ try {
   console.error('[BG generate_song error]', outerErr);
 }
 
+// === ZÁRÁSOK – kötelező a deployhoz ===
+    }); // ← lezárja a setImmediate(async () => { ... })
+  } catch (err) {
+    console.error('[generate_song route]', err);
+    res.status(500).json({ ok: false, error: err?.message || 'Server error' });
+  }
+}); // ← lezárja az app.post('/api/generate_song', ...)
 
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
