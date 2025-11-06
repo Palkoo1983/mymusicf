@@ -139,6 +139,45 @@ app.get('/api/test-mail', (req, res) => {
   queueEmails([{ to, subject: 'EnZenem – gyors teszt', html: '<p>Gyors tesztlevél.</p>' }]);
   res.json({ ok: true, message: 'Teszt e-mail ütemezve: ' + to });
 });
+/* =================== Order / Contact ====================== */
+app.post('/api/order', (req, res) => {
+  const o = req.body || {};
+  const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
+  const delivery = o.delivery_label || o.delivery || '48 óra (alap)';
+
+  const orderHtml = `
+    <h2>Új megrendelés</h2>
+    <ul>
+      <li><b>E-mail:</b> ${o.email || ''}</li>
+      <li><b>Stílus:</b> ${o.style || ''}</li>
+      <li><b>Ének:</b> ${o.vocal || ''}</li>
+      <li><b>Nyelv:</b> ${o.language || ''}</li>
+      <li><b>Formátum:</b> ${o.format || ''}</li>
+      <li><b>Kézbesítési idő:</b> ${delivery}</li>
+    </ul>
+    <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
+  `;
+
+  const jobs = [
+    { to: owner, subject: 'Új dal megrendelés', html: orderHtml, replyTo: o.email || undefined }
+  ];
+
+  if (o.email) {
+    jobs.push({
+      to: o.email,
+      subject: 'EnZenem – Megrendelés fogadva',
+      html: `
+        <p>Kedves Megrendelő!</p>
+        <p>Köszönjük a megrendelést! A megrendelésed beérkezett, és a választott kézbesítési időn belül (<b>${delivery}</b>) elkészítjük az egyedi zenédet.</p>
+        <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>
+      `
+    });
+  }
+
+  queueEmails(jobs);
+  console.log('[MAIL:ORDER_SENT]', { to: o.email || '(n/a)', delivery });
+  res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett.' });
+});
 
 
 app.post('/api/contact', (req, res) => {
