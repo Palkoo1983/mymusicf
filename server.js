@@ -134,22 +134,19 @@ function queueEmails(tasks) {
 }
 
 /* =================== Test mail endpoint =================== */
-app.get('/api/test-mail', (req, res) => {
-  const to = ENV.TO_EMAIL || ENV.SMTP_USER;
-  queueEmails([{ to, subject: 'EnZenem – gyors teszt', html: '<p>Gyors tesztlevél.</p>' }]);
-  res.json({ ok: true, message: 'Teszt e-mail ütemezve: ' + to });
-});
-/* =================== Order / Contact ====================== */
 app.post('/api/order', (req, res) => {
   const o = req.body || {};
   const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
   const delivery = o.delivery_label || o.delivery || '48 óra (alap)';
 
+  // 🔧 hozzáadjuk a hiányzó mezőt, hogy a háttérlogika ne dobjon hibát
+  o.styles = o.styles || o.style || '';
+
   const orderHtml = `
     <h2>Új megrendelés</h2>
     <ul>
       <li><b>E-mail:</b> ${o.email || ''}</li>
-      <li><b>Stílus:</b> ${o.style || ''}</li>
+      <li><b>Stílus:</b> ${o.styles}</li>
       <li><b>Ének:</b> ${o.vocal || ''}</li>
       <li><b>Nyelv:</b> ${o.language || ''}</li>
       <li><b>Formátum:</b> ${o.format || ''}</li>
@@ -178,7 +175,6 @@ app.post('/api/order', (req, res) => {
   console.log('[MAIL:ORDER_SENT]', { to: o.email || '(n/a)', delivery });
   res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett.' });
 });
-
 
 app.post('/api/contact', (req, res) => {
   const c = req.body || {};
