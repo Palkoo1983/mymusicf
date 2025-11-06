@@ -145,6 +145,7 @@ app.get('/api/test-mail', (req, res) => {
 /* =================== Order / Contact ====================== */
 app.post('/api/order', (req, res) => {
   const o = req.body || {};
+  global.lastOrderData = req.body;
   const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
   const orderHtml = `
     <h2>Új megrendelés</h2>
@@ -277,23 +278,26 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
     res.status(500).end();
   }
 });
-/* =================== TEST VPOS FLOW =================== */
-// Ez a blokk szimulálja a VPOS fizetést két gombos visszatérési oldallal.
-// A frontend az /api/payment/create végpontot hívja, és redirect URL-t kap vissza.
 
+// =================== TEST VPOS FLOW (with visible amount log) ===================
 app.post('/api/payment/create', async (req, res) => {
   try {
+    global.lastOrderData = req.body;
     const data = req.body || {};
     const total =
       (data.package === 'video' ? 21000 :
       data.package === 'premium' ? 35000 :
       10500) + parseInt(data.delivery_extra || '0', 10);
 
+    // Logoljunk a konzolba is, hogy lássuk mi ment a VPOS-nak
+    console.log(`[VPOS CREATE] Fizetés indítva: ${total} Ft | Csomag: ${data.package}, Kézbesítés: ${data.delivery_label}`);
+
     // Tesztfizetési oldalak (lehet saját domainen is)
     const successUrl = `${process.env.PUBLIC_URL || ''}/testpay.html?result=success&amount=${total}`;
     const failUrl = `${process.env.PUBLIC_URL || ''}/testpay.html?result=fail&amount=${total}`;
 
-    res.json({ ok: true, successUrl, failUrl });
+    // Az ügyfél ezt kapja vissza – benne az összeg is látható
+    res.json({ ok: true, successUrl, failUrl, total });
   } catch (e) {
     console.error('[VPOS CREATE ERROR]', e);
     res.status(500).json({ ok: false, message: 'Nem sikerült a fizetési folyamat indítása.' });
@@ -340,7 +344,10 @@ app.get('/api/payment/callback', async (req, res) => {
       console.warn('[VPOS CALLBACK] Nincs mentett lastOrderData – nem indítjuk a generálást.');
     } else {
       try {
-        const apiUrl = `${process.env.PUBLIC_URL || 'http://localhost:10000'}/api/generate_song`;
+        // Biztosítsuk, hogy mindig a fő domainre küldje
+      const base = process.env.PUBLIC_URL || 'https://www.enzenem.hu';
+      const apiUrl = `${base}/api/generate_song`;
+
         console.log('[VPOS CALLBACK] Generálás indítása:', apiUrl);
 
         await fetch(apiUrl, {
