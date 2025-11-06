@@ -932,7 +932,7 @@ try {
   console.error('[BG generate_song error]', outerErr);
 }
 
-}); // lezárja az app.post('/api/generate_song', ...)
+}); 
 
 
 /* ================== DIAG endpoints ======================== */
