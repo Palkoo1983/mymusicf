@@ -794,8 +794,6 @@ try {
   console.warn('[MAIL:QUEUE_FAIL]', e?.message || e);
 }
 
-  });
-
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
   res.json({ ok:true, diag:{
