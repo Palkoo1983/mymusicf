@@ -736,12 +736,7 @@ function normalizeGenre(g) {
     } catch (err) {
         console.error('[BG generate_song error]', err);
       }
-    });
-
-  } catch (e) {
-    console.error('[generate_song wrapper error]', e);
-  }
-// --- E-mail értesítések a dalgenerálásról ---
+    // --- E-mail értesítések a dalgenerálásról ---
 try {
   const clientEmail = req.body.email || '';
   const adminEmail  = ENV.TO_EMAIL || ENV.SMTP_USER || '';
@@ -769,8 +764,14 @@ try {
   console.log('[MAIL:QUEUED]', { to: clientEmail });
 } catch (e) {
   console.warn('[MAIL:QUEUE_FAIL]', e?.message || e);
-}
-});
+}  
+    });
+
+  } catch (e) {
+    console.error('[generate_song wrapper error]', e);
+  }
+  });
+
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
   res.json({ ok:true, diag:{
