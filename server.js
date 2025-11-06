@@ -7,8 +7,6 @@ import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
-import fetch from 'node-fetch';
-global.fetch = fetch;
 
 dotenv.config();
 
