@@ -844,12 +844,49 @@ function normalizeGenre(g) {
   return;
 }
 
-    try {
+      try {
       const link1 = tracks[0]?.audio_url || '';
       const link2 = tracks[1]?.audio_url || '';
-      await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2, format,
-      delivery: req.body.delivery_label || req.body.delivery || '' 
-    });
+      await safeAppendOrderRow({
+        email: req.body.email || '',
+        styles, vocal, language, brief, lyrics,
+        link1, link2, format,
+        delivery: req.body.delivery_label || req.body.delivery || ''
+      });
+
+      // --- Email értesítések, mint az /api/order végpontban ---
+      try {
+        const o = req.body || {};
+        const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
+        const orderHtml = `
+          <h2>Új dal generálás (VPOS / API)</h2>
+          <ul>
+            <li><b>E-mail:</b> ${o.email || ''}</li>
+            <li><b>Stílus:</b> ${o.styles || ''}</li>
+            <li><b>Ének:</b> ${o.vocal || ''}</li>
+            <li><b>Nyelv:</b> ${o.language || ''}</li>
+            <li><b>Kézbesítés:</b> ${o.delivery_label || o.delivery || ''}</li>
+          </ul>
+          <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
+        `;
+        const jobs = [
+          { to: owner, subject: 'EnZenem – Új dal generálás (VPOS)', html: orderHtml, replyTo: o.email || undefined }
+        ];
+        if (o.email) {
+          jobs.push({
+            to: o.email,
+            subject: 'EnZenem – Megrendelés feldolgozva',
+            html: `<p>Kedves Megrendelő!</p>
+                   <p>Köszönjük! A dalgenerálás sikeresen lefutott, és a linkek bekerültek a rendszerbe.</p>
+                   <p>A választott kézbesítési időn belül (<b>${o.delivery_label || o.delivery || '48 óra (alap)'}</b>) megkapod az egyedi zenédet.</p>
+                   <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>`
+          });
+        }
+        queueEmails(jobs);
+        console.log('[MAIL:QUEUED from /api/generate_song]', { to: o.email });
+      } catch (err) {
+        console.warn('[MAIL:QUEUE_FAIL from /api/generate_song]', err?.message || err);
+      }
     } catch (_e) { /* log only */ }
 
     } catch (err) {
