@@ -742,6 +742,35 @@ function normalizeGenre(g) {
     console.error('[generate_song wrapper error]', e);
   }
 });
+// --- E-mail értesítések a dalgenerálásról ---
+try {
+  const clientEmail = req.body.email || '';
+  const adminEmail  = ENV.TO_EMAIL || ENV.SMTP_USER || '';
+  const subject = 'EnZenem – Megrendelés feldolgozva';
+  const htmlClient = `
+    <p>Kedves Megrendelő!</p>
+    <p>Köszönjük a megrendelést! A választott kézbesítési időn belül megkapod a dalodat.</p>
+    <p>Amint elkészült, e-mailben érkeznek a letöltési linkek.</p>
+    <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>
+  `;
+  const htmlAdmin = `
+    <h3>Új dalgenerálás sikeresen elindítva</h3>
+    <ul>
+      <li><b>E-mail:</b> ${clientEmail}</li>
+      <li><b>Stílus:</b> ${styles}</li>
+      <li><b>Vokál:</b> ${vocal}</li>
+      <li><b>Formátum:</b> ${format}</li>
+      <li><b>Kézbesítés:</b> ${req.body.delivery_label || req.body.delivery || ''}</li>
+    </ul>
+  `;
+  queueEmails([
+    { to: adminEmail, subject, html: htmlAdmin },
+    { to: clientEmail, subject, html: htmlClient }
+  ]);
+  console.log('[MAIL:QUEUED]', { to: clientEmail });
+} catch (e) {
+  console.warn('[MAIL:QUEUE_FAIL]', e?.message || e);
+}
 
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
