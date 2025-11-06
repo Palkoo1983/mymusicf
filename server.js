@@ -6,7 +6,6 @@ import express from 'express';
 import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-import Stripe from 'stripe';
 import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
 
 dotenv.config();
@@ -42,7 +41,6 @@ const ENV = {
   RESEND_ONLY: (process.env.RESEND_ONLY || '').toString().toLowerCase() === 'true'
 };
 
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 /* ================== Middleware / static ================= */
 app.use(cors());
@@ -142,35 +140,6 @@ app.get('/api/test-mail', (req, res) => {
   res.json({ ok: true, message: 'Teszt e-mail ütemezve: ' + to });
 });
 
-/* =================== Order / Contact ====================== */
-app.post('/api/order', (req, res) => {
-  const o = req.body || {};
-  global.lastOrderData = req.body;
-  const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
-  const orderHtml = `
-    <h2>Új megrendelés</h2>
-    <ul>
-      <li><b>E-mail:</b> ${o.email || ''}</li>
-      <li><b>Esemény:</b> ${o.event_type || ''}</li>
-      <li><b>Stílus:</b> ${o.style || ''}</li>
-      <li><b>Ének:</b> ${o.vocal || ''}</li>
-      <li><b>Nyelv:</b> ${o.language || ''}</li>
-    </ul>
-    <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
-  `;
-  const jobs = [{ to: owner, subject: 'Új dal megrendelés', html: orderHtml, replyTo: o.email || undefined }];
-  if (o.email) {
-    jobs.push({
-      to: o.email,
-      subject: 'EnZenem – Megrendelés fogadva',
-      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést! A megrendelését megkaptuk, és 48 órán belül elküldjük Önnek, egyedi professzionális zenéjét.
-Ha bármilyen kérdése merül fel, szívesen segítünk!</p><p>Üdv,<br/>EnZenem</p>`
-    });
-  }
-  queueEmails(jobs);
-  
-  res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett. Hamarosan kapsz visszaigazolást e-mailben.' });
-});
 
 app.post('/api/contact', (req, res) => {
   const c = req.body || {};
@@ -187,96 +156,6 @@ app.post('/api/contact', (req, res) => {
   if (c.email) jobs.push({ to: c.email, subject: 'EnZenem – Üzenet fogadva', html: '<p>Köszönjük az üzenetet, hamarosan válaszolunk.</p>' });
   queueEmails(jobs);
   res.json({ ok: true, message: 'Üzeneted elküldve. Köszönjük a megkeresést!' });
-});
-
-/* =================== Stripe (optional) ==================== */
-const PRICE = {
-  basic:  Number(process.env.PRICE_BASIC || 19900),
-  premium:Number(process.env.PRICE_PREMIUM || 34900),
-  video:  Number(process.env.PRICE_VIDEO || 49900)
-};
-const CURRENCY = (process.env.CURRENCY || 'huf').toLowerCase();
-
-app.post('/api/checkout', async (req, res) => {
-  try{
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
-    if(!rateLimit('checkout:'+ip, 60000, 10)) return res.status(429).json({ok:false, message:'Túl sok kérés. Próbáld később.'});
-    const o = req.body || {};
-    if(o._hp) return res.status(400).json({ ok:false, message:'Hiba.' });
-    if(!stripe){ return res.status(503).json({ ok:false, message:'Fizetés ideiglenesen nem elérhető.' }); }
-    const pack = (o.package || 'basic').toLowerCase();
-    const amount = PRICE[pack] || PRICE.basic;
-    const lineItem = {
-      price_data: {
-        currency: CURRENCY,
-        unit_amount: Math.max(200, amount),
-        product_data: { name: `EnZenem – ${pack} csomag` }
-      },
-      quantity: 1
-    };
-    const metadata = {
-      email: o.email || '', event_type: o.event_type || '', style: o.style || '',
-      vocal: o.vocal || '', language: o.language || '', brief: (o.brief || '').slice(0, 1500), package: pack
-    };
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['card'],
-      line_items: [lineItem],
-      success_url: (process.env.PUBLIC_URL || '') + '/success.html',
-      cancel_url: (process.env.PUBLIC_URL || '') + '/cancel.html',
-      metadata
-    });
-    res.json({ ok:true, url: session.url });
-  }catch(e){
-    console.error('[CHECKOUT ERROR]', e);
-    res.status(500).json({ ok:false, message:'Nem sikerült a fizetési oldal létrehozása.' });
-  }
-});
-
-app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  if(!stripe){ return res.status(400).end(); }
-  let event;
-  try {
-    if(process.env.STRIPE_WEBHOOK_SECRET){
-      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-    } else {
-      event = JSON.parse(req.body.toString('utf8'));
-    }
-  } catch (err) {
-    console.error('[WEBHOOK VERIFY FAIL]', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-  try{
-    if(event.type === 'checkout.session.completed'){
-      const s = event.data.object;
-      const md = s.metadata || {};
-      const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
-      const email = md.email || s.customer_details?.email;
-      const orderHtml = `
-        <h2>Fizetett megrendelés</h2>
-        <ul>
-          <li><b>E-mail:</b> ${email || ''}</li>
-          <li><b>Esemény:</b> ${md.event_type || ''}</li>
-          <li><b>Stílus:</b> ${md.style || ''}</li>
-          <li><b>Ének:</b> ${md.vocal || ''}</li>
-          <li><b>Nyelv:</b> ${md.language || ''}</li>
-          <li><b>Csomag:</b> ${md.package || ''}</li>
-          <li><b>Összeg:</b> ${(s.amount_total/100).toFixed(0)} ${s.currency?.toUpperCase()}</li>
-        </ul>
-        <p><b>Brief:</b><br/>${(md.brief || '').replace(/\n/g,'<br/>')}</p>
-        <p><i>Stripe session: ${s.id}</i></p>
-      `;
-      await sendMailFast({ to: owner, subject: 'EnZenem – Fizetett megrendelés', html: orderHtml, replyTo: email || undefined });
-      if(email){
-        await sendMailFast({ to: email, subject: 'EnZenem – Fizetés sikeres', html: '<p>Köszönjük a fizetést! Hamarosan jelentkezünk a részletekkel.</p>' });
-      }
-    }
-    res.json({received: true});
-  }catch(e){
-    console.error('[WEBHOOK HANDLER ERROR]', e);
-    res.status(500).end();
-  }
 });
 
 // =================== TEST VPOS FLOW (with visible amount log) ===================
