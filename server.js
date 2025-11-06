@@ -756,6 +756,7 @@ function normalizeGenre(g) {
     } catch (err) {
         console.error('[BG generate_song error]', err);
       }
+      });
  // --- E-mail értesítések a dalgenerálásról ---
 try {
   const b = req.body || {};
