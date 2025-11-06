@@ -176,23 +176,6 @@ app.post('/api/order', (req, res) => {
   res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett.' });
 });
 
-app.post('/api/contact', (req, res) => {
-  const c = req.body || {};
-  const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
-  const html = `
-    <h2>Új üzenet</h2>
-    <ul>
-      <li><b>Név:</b> ${c.name || ''}</li>
-      <li><b>E-mail:</b> ${c.email || ''}</li>
-    </ul>
-    <p>${(c.message || '').replace(/\n/g, '<br/>')}</p>
-  `;
-  const jobs = [{ to: owner, subject: 'EnZenem – Üzenet', html, replyTo: c.email || undefined }];
-  if (c.email) jobs.push({ to: c.email, subject: 'EnZenem – Üzenet fogadva', html: '<p>Köszönjük az üzenetet, hamarosan válaszolunk.</p>' });
-  queueEmails(jobs);
-  res.json({ ok: true, message: 'Üzeneted elküldve. Köszönjük a megkeresést!' });
-});
-
 // =================== TEST VPOS FLOW (with visible amount log) ===================
 app.post('/api/payment/create', async (req, res) => {
   try {
@@ -771,17 +754,18 @@ function normalizeGenre(g) {
     } catch (err) {
         console.error('[BG generate_song error]', err);
       }
-    // --- E-mail értesítések a dalgenerálásról ---
+ // --- E-mail értesítések a dalgenerálásról ---
 try {
-  const clientEmail = req.body.email || '';
+  const b = req.body || {};
+  const clientEmail = b.email || '';
   const adminEmail  = ENV.TO_EMAIL || ENV.SMTP_USER || '';
-  const subject = 'EnZenem – Megrendelés feldolgozva';
-  const htmlClient = `
-    <p>Kedves Megrendelő!</p>
-    <p>Köszönjük a megrendelést! A választott kézbesítési időn belül megkapod a dalodat.</p>
-    <p>Amint elkészült, e-mailben érkeznek a letöltési linkek.</p>
-    <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>
-  `;
+  const styles = b.styles || b.style || '';
+  const vocal = b.vocal || '';
+  const format = (b.package || b.format || '').toString().toLowerCase();
+  const delivery = b.delivery_label || b.delivery || '48 óra (alap)';
+  const subjectAdmin = 'EnZenem – Dalgenerálás elindítva';
+  const subjectClient = 'EnZenem – Megrendelés feldolgozva';
+
   const htmlAdmin = `
     <h3>Új dalgenerálás sikeresen elindítva</h3>
     <ul>
@@ -789,22 +773,27 @@ try {
       <li><b>Stílus:</b> ${styles}</li>
       <li><b>Vokál:</b> ${vocal}</li>
       <li><b>Formátum:</b> ${format}</li>
-      <li><b>Kézbesítés:</b> ${req.body.delivery_label || req.body.delivery || ''}</li>
+      <li><b>Kézbesítés:</b> ${delivery}</li>
     </ul>
   `;
+
+  const htmlClient = `
+    <p>Kedves Megrendelő!</p>
+    <p>Köszönjük a megrendelést! A dalgenerálás sikeresen elindult.</p>
+    <p>A választott kézbesítési időn belül (<b>${delivery}</b>) megkapod a dalodat.</p>
+    <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>
+  `;
+
   queueEmails([
-    { to: adminEmail, subject, html: htmlAdmin },
-    { to: clientEmail, subject, html: htmlClient }
+    { to: adminEmail, subject: subjectAdmin, html: htmlAdmin },
+    { to: clientEmail, subject: subjectClient, html: htmlClient }
   ]);
-  console.log('[MAIL:QUEUED]', { to: clientEmail });
+
+  console.log('[MAIL:QUEUED]', { to: clientEmail, delivery });
 } catch (e) {
   console.warn('[MAIL:QUEUE_FAIL]', e?.message || e);
-}  
-    });
+}
 
-  } catch (e) {
-    console.error('[generate_song wrapper error]', e);
-  }
   });
 
 /* ================== DIAG endpoints ======================== */
