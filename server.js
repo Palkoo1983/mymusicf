@@ -772,8 +772,6 @@ function normalizeGenre(g) {
         console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
       }
       lyrics = normalizeSectionHeadingsSafeStrict(lyrics);
-
-      return res.json({ ok: true, lyrics, style: styleFinal, tracks: [], format });
     }
 
     // === SUNO API CALL (MP3 only) ===
