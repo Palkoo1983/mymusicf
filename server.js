@@ -759,13 +759,19 @@ function normalizeGenre(g) {
   return t.trim();
 }
 
-  // === HANDLE NON-MP3 FORMATS (no Suno, just Sheets + Email) ===
+// === HANDLE NON-MP3 FORMATS (no Suno, just Sheets + Email) ===
 if (!isMP3) {
   try {
     await safeAppendOrderRow({
       email: req.body.email || '',
-      styles, vocal, language, brief, lyrics,
-      link1: '', link2: '', format,
+      styles,
+      vocal,
+      language,
+      brief,
+      lyrics,
+      link1: '',
+      link2: '',
+      format,
       delivery: req.body.delivery_label || req.body.delivery || ''
     });
   } catch (_e) {
@@ -791,7 +797,12 @@ if (!isMP3) {
       <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
     `;
     const jobs = [
-      { to: owner, subject: 'EnZenem – Dal generálás (nem-MP3)', html: orderHtml, replyTo: o.email || undefined }
+      {
+        to: owner,
+        subject: 'EnZenem – Dal generálás (nem-MP3)',
+        html: orderHtml,
+        replyTo: o.email || undefined
+      }
     ];
     if (o.email) {
       jobs.push({
@@ -814,18 +825,22 @@ if (!isMP3) {
 }
 
 // === SUNO API CALL (MP3 only) ===
-const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
-  'Authorization': 'Bearer ' + SUNO_API_KEY,
-  'Content-Type': 'application/json'
-}, {
-  customMode: true,
-  model: 'V5',
-  instrumental: (vocal === 'instrumental'),
-  title: title,
-  style: styleFinal,
-  prompt: lyrics,
-  callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
-});
+const startRes = await sunoStartV1(
+  SUNO_BASE_URL + '/api/v1/generate',
+  {
+    Authorization: 'Bearer ' + SUNO_API_KEY,
+    'Content-Type': 'application/json'
+  },
+  {
+    customMode: true,
+    model: 'V5',
+    instrumental: vocal === 'instrumental',
+    title,
+    style: styleFinal,
+    prompt: lyrics,
+    callBackUrl: PUBLIC_URL ? PUBLIC_URL + '/api/suno/callback' : undefined
+  }
+);
 
 if (!startRes.ok) {
   console.warn('[generate_song] Suno start error', startRes.status);
@@ -842,20 +857,30 @@ const taskId = sj.data.taskId;
 
 // === POLL SUNO FOR RESULTS ===
 const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 160);
-const intervalMs  = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 2000));
-let attempts = 0, tracks = [];
+const intervalMs = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 2000));
+let attempts = 0;
+let tracks = [];
+
 while (tracks.length < 2 && attempts < maxAttempts) {
   attempts++;
-  await new Promise(r => setTimeout(r, intervalMs));
-  const pr = await fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
-    method:'GET',
-    headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY }
-  });
+  await new Promise((r) => setTimeout(r, intervalMs));
+
+  const pr = await fetch(
+    SUNO_BASE_URL +
+      '/api/v1/generate/record-info?taskId=' +
+      encodeURIComponent(taskId),
+    {
+      method: 'GET',
+      headers: { Authorization: 'Bearer ' + SUNO_API_KEY }
+    }
+  );
   if (!pr.ok) continue;
   const st = await pr.json();
   if (!st || st.code !== 200) continue;
+
   const items = (st.data && st.data.response && st.data.response.sunoData) || [];
-  tracks = items.flatMap(d => {
+  tracks = items
+    .flatMap((d) => {
       const urls = [];
       const a1 = d.audioUrl || d.url || d.audio_url;
       const a2 = d.audioUrl2 || d.url2 || d.audio_url_2;
@@ -863,16 +888,22 @@ while (tracks.length < 2 && attempts < maxAttempts) {
       if (a2) urls.push(a2);
       if (Array.isArray(d.clips)) {
         for (const c of d.clips) {
-          if (c?.audioUrl || c?.audio_url) urls.push(c.audioUrl || c.audio_url);
-          if (c?.audioUrlAlt || c?.audio_url_alt) urls.push(c.audioUrlAlt || c.audio_url_alt);
+          if (c?.audioUrl || c?.audio_url)
+            urls.push(c.audioUrl || c.audio_url);
+          if (c?.audioUrlAlt || c?.audio_url_alt)
+            urls.push(c.audioUrlAlt || c.audio_url_alt);
         }
       }
-      return urls.map(u => ({ title: d.title || title, audio_url: u, image_url: d.imageUrl || d.coverUrl }));
+      return urls.map((u) => ({
+        title: d.title || title,
+        audio_url: u,
+        image_url: d.imageUrl || d.coverUrl
+      }));
     })
-    .map(x => ({ ...x, audio_url: String(x.audio_url||'').trim() }))
-    .filter(x => !!x.audio_url && /^https?:\/\//i.test(x.audio_url))
+    .map((x) => ({ ...x, audio_url: String(x.audio_url || '').trim() }))
+    .filter((x) => !!x.audio_url && /^https?:\/\//i.test(x.audio_url))
     .reduce((acc, cur) => {
-      if (!acc.find(t => t.audio_url === cur.audio_url)) acc.push(cur);
+      if (!acc.find((t) => t.audio_url === cur.audio_url)) acc.push(cur);
       return acc;
     }, [])
     .slice(0, 2);
@@ -889,12 +920,17 @@ try {
   const link2 = tracks[1]?.audio_url || '';
   await safeAppendOrderRow({
     email: req.body.email || '',
-    styles, vocal, language, brief, lyrics,
-    link1, link2, format,
+    styles,
+    vocal,
+    language,
+    brief,
+    lyrics,
+    link1,
+    link2,
+    format,
     delivery: req.body.delivery_label || req.body.delivery || ''
   });
 
-  // --- Email értesítések, mint az /api/order végpontban ---
   try {
     const o = req.body || {};
     const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
@@ -910,7 +946,12 @@ try {
       <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
     `;
     const jobs = [
-      { to: owner, subject: 'EnZenem – Új dal generálás (VPOS)', html: orderHtml, replyTo: o.email || undefined }
+      {
+        to: owner,
+        subject: 'EnZenem – Új dal generálás (VPOS)',
+        html: orderHtml,
+        replyTo: o.email || undefined
+      }
     ];
     if (o.email) {
       jobs.push({
@@ -924,15 +965,12 @@ try {
     }
     queueEmails(jobs);
     console.log('[MAIL:QUEUED from /api/generate_song]', { to: o.email });
-   } catch (err) {
+  } catch (err) {
     console.warn('[MAIL:QUEUE_FAIL from /api/generate_song]', err?.message || err);
   }
-
 } catch (outerErr) {
   console.error('[BG generate_song error]', outerErr);
 }
-
-}); 
 
 
 /* ================== DIAG endpoints ======================== */
