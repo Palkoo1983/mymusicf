@@ -68,6 +68,9 @@
       brief: (form.querySelector('[name=brief]')||{}).value || '',
       consent: !!(form.querySelector('[name=consent]')||{}).checked,
       package: (fd.get('package')||'basic').toString()
+      // 🟡 Kézbesítési mezők hozzáadása a JSON-hoz
+     data.delivery_label = (form.querySelector('[name=delivery_label]')||{}).value || '';
+     data.delivery_extra = (form.querySelector('[name=delivery_extra]')||{}).value || '0';
     };
 
     // disable form
