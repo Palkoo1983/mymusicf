@@ -334,13 +334,32 @@ app.get('/api/payment/callback', async (req, res) => {
 
   if (status === 'success') {
     console.log('[VPOS CALLBACK] Fizetés sikeres, indítjuk a dal generálást...');
-    // Itt hívhatjuk meg a /api/generate_song-ot automatikusan:
-    // fetch(`${process.env.PUBLIC_URL || ''}/api/generate_song`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(lastOrderData) });
 
+    // 🔸 Automatikus dalgenerálás, ha van mentett megrendelés
+    if (!global.lastOrderData) {
+      console.warn('[VPOS CALLBACK] Nincs mentett lastOrderData – nem indítjuk a generálást.');
+    } else {
+      try {
+        const apiUrl = `${process.env.PUBLIC_URL || 'http://localhost:10000'}/api/generate_song`;
+        console.log('[VPOS CALLBACK] Generálás indítása:', apiUrl);
+
+        await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(global.lastOrderData),
+        });
+
+        console.log('[VPOS CALLBACK] Dal generálás elindítva (POST /api/generate_song).');
+      } catch (err) {
+        console.error('[VPOS CALLBACK] Hiba a dalgenerálás indításakor:', err);
+      }
+    }
+
+    // 🔸 Visszajelzés a felhasználónak
     return res.send(`
       <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
         <h2>✅ Fizetés sikeres!</h2>
-        <p>A dalgenerálás elindult. Köszönjük a megrendelést!</p>
+        <p>A választott kézbesítési időn belül megkapod a dalodat.</p>
         <a href="/" style="color:#21a353;text-decoration:none">Vissza a főoldalra</a>
       </body></html>
     `);
@@ -355,6 +374,7 @@ app.get('/api/payment/callback', async (req, res) => {
     `);
   }
 });
+
 
 /* ================== SUNO HELPERS ========================= */
 async function sunoStartV1(url, headers, body){
