@@ -502,10 +502,6 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     </a>
   </p>
 </section>
-
-
-
-
     <section class="panel" id="pricing">
       <h2 class="gold-text">Árak &amp; Csomagok</h2>
       <div class="promo-banner"><span class="gold-text">Nyitási akció — 30 napig — 30% kedvezmény</span></div>
@@ -573,7 +569,6 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   </p>
 </section>
 
-
     <section class="panel" id="order">
       <h2 class="gold-text">Megrendelés</h2>
       <form class="form" id="orderForm">
@@ -604,24 +599,52 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   <input name="email" placeholder="pelda@domain.hu" required type="email" />
 </label>
 
-<label class="gold-text">Zenei stílus (írható is)
-  <input list="style-list" name="style" id="style"
+<label class="gold-text">
+  Zenei stílus (írható is)
+  <input list="style-list"
+         name="styles"
          placeholder="pl. pop / rock / minimal techno / house / romantikus"
-         required type="text" />
+         required
+         type="text">
   <datalist id="style-list">
+    <!-- 🎵 POP / MAINSTREAM -->
     <option value="Pop">
-    <option value="Rock">
+    <option value="Romantikus pop">
+    <option value="Lírai ballada">
+    <option value="R&B">
+    <option value="Disco">
+
+    <!-- 🎧 ELEKTRONIKUS / TÁNC -->
+    <option disabled>──────────</option>
     <option value="Minimal techno">
     <option value="House">
-    <option value="Romantikus">
-    <option value="Gyerekdal">
+    <option value="Modern elektronikus">
+    <option value="Drum and bass">
+
+    <!-- 🎸 ROCK / ALTERNATÍV -->
+    <option disabled>──────────</option>
+    <option value="Rock">
     <option value="Metál">
+    <option value="Alternatív">
+
+    <!-- 🧒 GYEREK / ÉRZELMES -->
+    <option disabled>──────────</option>
+    <option value="Gyerekdal">
+    <option value="Akusztikus">
     <option value="Lírai">
-    <option value="R&B">
+    <option value="Romantikus">
+
+    <!-- 🎤 URBAN / SZÖVEGKÖZPONTÚ -->
+    <option disabled>──────────</option>
+    <option value="Rap">
+
+    <!-- 🎄 ÜNNEPI -->
+    <option disabled>──────────</option>
     <option value="Karácsonyi pop">
     <option value="Ünnepi akusztikus">
   </datalist>
 </label>
+
 
 
 <label class="gold-text">Ének
