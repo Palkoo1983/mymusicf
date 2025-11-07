@@ -512,7 +512,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initOrderForm();
   initContactForm();
   initConsent();
-  initLicenseModal();
 });
 
 // Anchor → tab váltás
