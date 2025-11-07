@@ -135,6 +135,42 @@ function queueEmails(tasks) {
   });
 }
 
+/* =================== Test mail endpoint =================== */
+app.get('/api/test-mail', (req, res) => {
+  const to = ENV.TO_EMAIL || ENV.SMTP_USER;
+  queueEmails([{ to, subject: 'EnZenem – gyors teszt', html: '<p>Gyors tesztlevél.</p>' }]);
+  res.json({ ok: true, message: 'Teszt e-mail ütemezve: ' + to });
+});
+
+/* =================== Order / Contact ====================== */
+app.post('/api/order', (req, res) => {
+  const o = req.body || {};
+  const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
+  const orderHtml = `
+    <h2>Új megrendelés</h2>
+    <ul>
+      <li><b>E-mail:</b> ${o.email || ''}</li>
+      <li><b>Esemény:</b> ${o.event_type || ''}</li>
+      <li><b>Stílus:</b> ${o.style || ''}</li>
+      <li><b>Ének:</b> ${o.vocal || ''}</li>
+      <li><b>Nyelv:</b> ${o.language || ''}</li>
+    </ul>
+    <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
+  `;
+  const jobs = [{ to: owner, subject: 'Új dal megrendelés', html: orderHtml, replyTo: o.email || undefined }];
+  if (o.email) {
+    jobs.push({
+      to: o.email,
+      subject: 'EnZenem – Megrendelés fogadva',
+      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést! A megrendelését megkaptuk, és 48 órán belül elküldjük Önnek, egyedi professzionális zenéjét.
+Ha bármilyen kérdése merül fel, szívesen segítünk!</p><p>Üdv,<br/>EnZenem</p>`
+    });
+  }
+  queueEmails(jobs);
+  
+  res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett. Hamarosan kapsz visszaigazolást e-mailben.' });
+});
+
 app.post('/api/contact', (req, res) => {
   const c = req.body || {};
   const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
@@ -152,110 +188,95 @@ app.post('/api/contact', (req, res) => {
   res.json({ ok: true, message: 'Üzeneted elküldve. Köszönjük a megkeresést!' });
 });
 
+/* =================== Stripe (optional) ==================== */
+const PRICE = {
+  basic:  Number(process.env.PRICE_BASIC || 19900),
+  premium:Number(process.env.PRICE_PREMIUM || 34900),
+  video:  Number(process.env.PRICE_VIDEO || 49900)
+};
+const CURRENCY = (process.env.CURRENCY || 'huf').toLowerCase();
 
-// =================== TEST VPOS FLOW (with visible amount log) ===================
-app.post('/api/payment/create', async (req, res) => {
-  try {
-    global.lastOrderData = req.body;
-    const data = req.body || {};
-    const total =
-      (data.package === 'video' ? 21000 :
-      data.package === 'premium' ? 35000 :
-      10500) + parseInt(data.delivery_extra || '0', 10);
-
-    // Logoljunk a konzolba is, hogy lássuk mi ment a VPOS-nak
-    console.log(`[VPOS CREATE] Fizetés indítva: ${total} Ft | Csomag: ${data.package}, Kézbesítés: ${data.delivery_label}`);
-
-    // Tesztfizetési oldalak (lehet saját domainen is)
-    const successUrl = `${process.env.PUBLIC_URL || ''}/testpay.html?result=success&amount=${total}`;
-    const failUrl = `${process.env.PUBLIC_URL || ''}/testpay.html?result=fail&amount=${total}`;
-
-    // Az ügyfél ezt kapja vissza – benne az összeg is látható
-    res.json({ ok: true, successUrl, failUrl, total });
-  } catch (e) {
-    console.error('[VPOS CREATE ERROR]', e);
-    res.status(500).json({ ok: false, message: 'Nem sikerült a fizetési folyamat indítása.' });
+app.post('/api/checkout', async (req, res) => {
+  try{
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
+    if(!rateLimit('checkout:'+ip, 60000, 10)) return res.status(429).json({ok:false, message:'Túl sok kérés. Próbáld később.'});
+    const o = req.body || {};
+    if(o._hp) return res.status(400).json({ ok:false, message:'Hiba.' });
+    if(!stripe){ return res.status(503).json({ ok:false, message:'Fizetés ideiglenesen nem elérhető.' }); }
+    const pack = (o.package || 'basic').toLowerCase();
+    const amount = PRICE[pack] || PRICE.basic;
+    const lineItem = {
+      price_data: {
+        currency: CURRENCY,
+        unit_amount: Math.max(200, amount),
+        product_data: { name: `EnZenem – ${pack} csomag` }
+      },
+      quantity: 1
+    };
+    const metadata = {
+      email: o.email || '', event_type: o.event_type || '', style: o.style || '',
+      vocal: o.vocal || '', language: o.language || '', brief: (o.brief || '').slice(0, 1500), package: pack
+    };
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [lineItem],
+      success_url: (process.env.PUBLIC_URL || '') + '/success.html',
+      cancel_url: (process.env.PUBLIC_URL || '') + '/cancel.html',
+      metadata
+    });
+    res.json({ ok:true, url: session.url });
+  }catch(e){
+    console.error('[CHECKOUT ERROR]', e);
+    res.status(500).json({ ok:false, message:'Nem sikerült a fizetési oldal létrehozása.' });
   }
 });
 
-// A „fizetési oldalt” is mi szimuláljuk (frontend is itt tudja megnyitni)
-app.get('/testpay.html', (req, res) => {
-  const amount = req.query.amount || '0';
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="hu">
-    <head>
-      <meta charset="UTF-8">
-      <title>VPOS Tesztfizetés</title>
-      <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background:#0d1b2a; color:#fff; }
-        .btn { display:inline-block; padding:15px 25px; margin:10px; font-size:18px; border-radius:8px; cursor:pointer; text-decoration:none; }
-        .ok { background:#21a353; color:#fff; }
-        .fail { background:#b33; color:#fff; }
-      </style>
-    </head>
-    <body>
-      <h1>VPOS Tesztfizetés</h1>
-      <p>Összeg: <b>${amount} Ft</b></p>
-      <p>Válassz eredményt:</p>
-      <a class="btn ok" href="/api/payment/callback?status=success&amount=${amount}">✅ Sikeres fizetés</a>
-      <a class="btn fail" href="/api/payment/callback?status=fail&amount=${amount}">❌ Sikertelen fizetés</a>
-    </body>
-    </html>
-  `);
-});
-
-// Callback – a tesztfizetés befejezése után
-app.get('/api/payment/callback', async (req, res) => {
-  const status = req.query.status || 'fail';
-  const amount = req.query.amount || '0';
-
-  if (status === 'success') {
-    console.log('[VPOS CALLBACK] Fizetés sikeres, indítjuk a dal generálást...');
-
-    // 🔸 Automatikus dalgenerálás, ha van mentett megrendelés
-    if (!global.lastOrderData) {
-      console.warn('[VPOS CALLBACK] Nincs mentett lastOrderData – nem indítjuk a generálást.');
+app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  if(!stripe){ return res.status(400).end(); }
+  let event;
+  try {
+    if(process.env.STRIPE_WEBHOOK_SECRET){
+      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } else {
-      try {
-        // Biztosítsuk, hogy mindig a fő domainre küldje
-      const base = process.env.PUBLIC_URL || 'https://www.enzenem.hu';
-      const apiUrl = `${base}/api/generate_song`;
-
-        console.log('[VPOS CALLBACK] Generálás indítása:', apiUrl);
-
-        await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(global.lastOrderData),
-        });
-
-        console.log('[VPOS CALLBACK] Dal generálás elindítva (POST /api/generate_song).');
-      } catch (err) {
-        console.error('[VPOS CALLBACK] Hiba a dalgenerálás indításakor:', err);
+      event = JSON.parse(req.body.toString('utf8'));
+    }
+  } catch (err) {
+    console.error('[WEBHOOK VERIFY FAIL]', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  try{
+    if(event.type === 'checkout.session.completed'){
+      const s = event.data.object;
+      const md = s.metadata || {};
+      const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
+      const email = md.email || s.customer_details?.email;
+      const orderHtml = `
+        <h2>Fizetett megrendelés</h2>
+        <ul>
+          <li><b>E-mail:</b> ${email || ''}</li>
+          <li><b>Esemény:</b> ${md.event_type || ''}</li>
+          <li><b>Stílus:</b> ${md.style || ''}</li>
+          <li><b>Ének:</b> ${md.vocal || ''}</li>
+          <li><b>Nyelv:</b> ${md.language || ''}</li>
+          <li><b>Csomag:</b> ${md.package || ''}</li>
+          <li><b>Összeg:</b> ${(s.amount_total/100).toFixed(0)} ${s.currency?.toUpperCase()}</li>
+        </ul>
+        <p><b>Brief:</b><br/>${(md.brief || '').replace(/\n/g,'<br/>')}</p>
+        <p><i>Stripe session: ${s.id}</i></p>
+      `;
+      await sendMailFast({ to: owner, subject: 'EnZenem – Fizetett megrendelés', html: orderHtml, replyTo: email || undefined });
+      if(email){
+        await sendMailFast({ to: email, subject: 'EnZenem – Fizetés sikeres', html: '<p>Köszönjük a fizetést! Hamarosan jelentkezünk a részletekkel.</p>' });
       }
     }
-
-    // 🔸 Visszajelzés a felhasználónak
-    return res.send(`
-      <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
-        <h2>✅ Fizetés sikeres!</h2>
-        <p>A választott kézbesítési időn belül megkapod a dalodat.</p>
-        <a href="/" style="color:#21a353;text-decoration:none">Vissza a főoldalra</a>
-      </body></html>
-    `);
-  } else {
-    console.log('[VPOS CALLBACK] Fizetés sikertelen.');
-    return res.send(`
-      <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
-        <h2>❌ Fizetés sikertelen!</h2>
-        <p>Kérjük, próbáld meg újra.</p>
-        <a href="/" style="color:#b33;text-decoration:none">Vissza a főoldalra</a>
-      </body></html>
-    `);
+    res.json({received: true});
+  }catch(e){
+    console.error('[WEBHOOK HANDLER ERROR]', e);
+    res.status(500).end();
   }
 });
-
 
 /* ================== SUNO HELPERS ========================= */
 async function sunoStartV1(url, headers, body){
@@ -481,54 +502,53 @@ let gptStyle = (
 if (!lyrics && raw) {
   lyrics = String(raw).trim();
 }
-// --- convert numeric numbers to written Hungarian words (universal) ---
+ // --- convert numeric numbers to written Hungarian words (universal) ---
 function numToHungarian(n) {
   const ones = ['nulla','egy','kettő','három','négy','öt','hat','hét','nyolc','kilenc'];
   const tens = ['','tíz','húsz','harminc','negyven','ötven','hatvan','hetven','nyolcvan','kilencven'];
 
   if (n < 10) return ones[n];
-  if (n < 20) { if (n === 10) return 'tíz'; return 'tizen' + ones[n - 10]; }
-  if (n < 100) { const t = Math.floor(n / 10); const o = n % 10; return tens[t] + (o ? ones[o] : ''); }
-  if (n < 1000) { const h = Math.floor(n / 100); const r = n % 100; return (h > 1 ? ones[h] + 'száz' : 'száz') + (r ? numToHungarian(r) : ''); }
+  if (n < 20) {
+    if (n === 10) return 'tíz';
+    return 'tizen' + ones[n - 10];
+  }
+  if (n < 100) {
+    const t = Math.floor(n / 10);
+    const o = n % 10;
+    return tens[t] + (o ? ones[o] : '');
+  }
+  if (n < 1000) {
+    const h = Math.floor(n / 100);
+    const r = n % 100;
+    return (h > 1 ? ones[h] + 'száz' : 'száz') + (r ? numToHungarian(r) : '');
+  }
   if (n < 2000) return 'ezer-' + numToHungarian(n - 1000);
   if (n < 2100) return 'kétezer-' + numToHungarian(n - 2000);
-  if (n < 10000) { const t = Math.floor(n / 1000); const r = n % 1000; return ones[t] + 'ezer' + (r ? '-' + numToHungarian(r) : ''); }
+  if (n < 10000) {
+    const t = Math.floor(n / 1000);
+    const r = n % 1000;
+    return ones[t] + 'ezer' + (r ? '-' + numToHungarian(r) : '');
+  }
   return String(n); // fallback for very large numbers
 }
-
 // --- smarter numeric replacement with suffix support ---
 // Évszámok (0–2999) + ragozás (pl. 2014-ben → kétezer-tizennégyben)
-lyrics = lyrics.replace(
-  /\b([12]?\d{3})([-–]?(?:ban|ben|as|es|os|ös|ik|tól|től|hoz|hez|höz|nak|nek|ra|re|ról|ről|ba|be))?\b/g,
-  (match, num, suffix='') => {
-    const year = parseInt(num, 10);
-    if (isNaN(year) || year > 2999) return match; // biztonsági korlát
-    let text = '';
-    if (year < 1000) text = numToHungarian(year);
-    else {
-      const thousand = Math.floor(year / 1000);
-      const rest = year % 1000;
-      const base = thousand === 1 ? 'ezer' : 'kétezer';
-      text = base + (rest ? '-' + numToHungarian(rest) : '');
-    }
-    return text + (suffix || '');
+lyrics = lyrics.replace(/\b([12]?\d{3})([-–]?(?:ban|ben|as|es|os|ös|ik|tól|től|hoz|hez|höz|nak|nek|ra|re|ról|ről|ba|be))?\b/g, (match, num, suffix='') => {
+  const year = parseInt(num, 10);
+  if (isNaN(year) || year > 2999) return match; // biztonsági korlát
+  let text = '';
+  if (year < 1000) text = numToHungarian(year);
+  else {
+    const thousand = Math.floor(year / 1000);
+    const rest = year % 1000;
+    const base = thousand === 1 ? 'ezer' : 'kétezer';
+    text = base + (rest ? '-' + numToHungarian(rest) : '');
   }
-);
+  return text + (suffix || '');
+});
 
-// Kis számok (1–999), de NE a (Verse N)/(Chorus) címsorokban – lookbehind NÉLKÜL
-function replaceSmallNumbersOutsideHeadings(text) {
-  if (!text) return text;
-  const lines = String(text).split(/\r?\n/);
-  return lines.map(line => {
-    const trimmed = line.trim();
-    // Ha szakaszcím (Verse 1–4 vagy Chorus), ne módosítsunk
-    if (/^\(?(?:Verse\s+[1-4]|Chorus)\)?\s*:?\s*$/i.test(trimmed)) return line;
-    // Egyéb sorokban 1–3 jegyű számok cseréje
-    return line.replace(/\b\d{1,3}\b/g, n => numToHungarian(parseInt(n, 10)));
-  }).join('\n');
-}
-
-lyrics = replaceSmallNumbersOutsideHeadings(lyrics);
+// Kis számok (1–999), de NE Verse/Chorus után
+lyrics = lyrics.replace(/(?<!Verse\s|Chorus\s)\b\d{1,3}\b/g, n => numToHungarian(parseInt(n, 10)));
 
 
 
@@ -634,226 +654,110 @@ function normalizeGenre(g) {
   return t.trim();
 }
 
-// === HANDLE NON-MP3 FORMATS (no Suno, just Sheets + Email) ===
-if (!isMP3) {
-  try {
-    await safeAppendOrderRow({
-      email: req.body.email || '',
-      styles,
-      vocal,
-      language,
-      brief,
-      lyrics,
-      link1: '',
-      link2: '',
-      format,
-      delivery: req.body.delivery_label || req.body.delivery || ''
-    });
-  } catch (_e) {
-    console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
-  }
 
-  lyrics = normalizeSectionHeadingsSafeStrict(lyrics);
-
-  // --- E-mail értesítések minden nem-MP3 formátumra ---
-  try {
-    const o = req.body || {};
-    const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
-    const orderHtml = `
-      <h2>Új dal generálás (nem-MP3 formátum)</h2>
-      <ul>
-        <li><b>E-mail:</b> ${o.email || ''}</li>
-        <li><b>Stílus:</b> ${o.styles || ''}</li>
-        <li><b>Ének:</b> ${o.vocal || ''}</li>
-        <li><b>Nyelv:</b> ${o.language || ''}</li>
-        <li><b>Formátum:</b> ${format.toUpperCase()}</li>
-        <li><b>Kézbesítés:</b> ${o.delivery_label || o.delivery || ''}</li>
-      </ul>
-      <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
-    `;
-    const jobs = [
-      {
-        to: owner,
-        subject: 'EnZenem – Dal generálás (nem-MP3)',
-        html: orderHtml,
-        replyTo: o.email || undefined
+    // Ha nem MP3: nincs Suno, csak Sheets + visszaadás
+    if (!isMP3) {
+      try {
+        await safeAppendOrderRow({
+          email: req.body.email || '',
+          styles, vocal, language, brief, lyrics,
+          link1: '', link2: '', format, delivery: req.body.delivery_label || req.body.delivery || ''
+        });
+      } catch (_e) {
+        console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
       }
-    ];
-    if (o.email) {
-      jobs.push({
-        to: o.email,
-        subject: 'EnZenem – Megrendelés feldolgozva',
-        html: `<p>Kedves Megrendelő!</p>
-               <p>Köszönjük! A dalgenerálás sikeresen rögzítésre került (${format.toUpperCase()} formátum), és bekerült a rendszerbe.</p>
-               <p>A választott kézbesítési időn belül (<b>${o.delivery_label || o.delivery || '48 óra (alap)'}</b>) megkapod az egyedi zenédet.</p>
-               <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>`
-      });
+      lyrics = normalizeSectionHeadingsSafeStrict(lyrics);
+
+      return res.json({ ok: true, lyrics, style: styleFinal, tracks: [], format });
     }
-    queueEmails(jobs);
-    console.log('[MAIL:QUEUED non-MP3]', { to: o.email, format });
-  } catch (err) {
-    console.warn('[MAIL:QUEUE_FAIL non-MP3]', err?.message || err);
-  }
 
-  // 🔸 Stop here — no Suno call
-  return;
-}
+    // === SUNO API CALL (MP3 only) ===
+    const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
+      'Authorization': 'Bearer ' + SUNO_API_KEY,
+      'Content-Type': 'application/json'
+    }, {
+      customMode: true,
+      model: 'V5',
+      instrumental: (vocal === 'instrumental'),
+      title: title,
+      style: styleFinal,
+      prompt: lyrics,
+      callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
+    });
 
-// === SUNO API CALL (MP3 only) ===
-const startRes = await sunoStartV1(
-  SUNO_BASE_URL + '/api/v1/generate',
-  {
-    Authorization: 'Bearer ' + SUNO_API_KEY,
-    'Content-Type': 'application/json'
-  },
-  {
-    customMode: true,
-    model: 'V5',
-    instrumental: vocal === 'instrumental',
-    title,
-    style: styleFinal,
-    prompt: lyrics,
-    callBackUrl: PUBLIC_URL ? PUBLIC_URL + '/api/suno/callback' : undefined
-  }
-);
-
-if (!startRes.ok) {
+   if (!startRes.ok) {
   console.warn('[generate_song] Suno start error', startRes.status);
   return;
 }
 
-const sj = startRes.json;
-if (!sj || sj.code !== 200 || !sj.data || !sj.data.taskId) {
+    const sj = startRes.json;
+  if (!sj || sj.code !== 200 || !sj.data || !sj.data.taskId) {
   console.warn('[generate_song] Suno bad response', sj);
   return;
 }
 
-const taskId = sj.data.taskId;
+    const taskId = sj.data.taskId;
 
-// === POLL SUNO FOR RESULTS ===
-const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 160);
-const intervalMs = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 2000));
-let attempts = 0;
-let tracks = [];
-
-while (tracks.length < 2 && attempts < maxAttempts) {
-  attempts++;
-  await new Promise((r) => setTimeout(r, intervalMs));
-
-  const pr = await fetch(
-    SUNO_BASE_URL +
-      '/api/v1/generate/record-info?taskId=' +
-      encodeURIComponent(taskId),
-    {
-      method: 'GET',
-      headers: { Authorization: 'Bearer ' + SUNO_API_KEY }
+    // Poll up to 2 tracks
+    const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 160);
+    const intervalMs  = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 2000));
+    let attempts = 0, tracks = [];
+    while (tracks.length < 2 && attempts < maxAttempts) {
+      attempts++;
+      await new Promise(r => setTimeout(r, intervalMs));
+      const pr = await fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
+        method:'GET',
+        headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY }
+      });
+      if (!pr.ok) continue;
+      const st = await pr.json();
+      if (!st || st.code !== 200) continue;
+      const items = (st.data && st.data.response && st.data.response.sunoData) || [];
+      tracks = items.flatMap(d => {
+          const urls = [];
+          const a1 = d.audioUrl || d.url || d.audio_url;
+          const a2 = d.audioUrl2 || d.url2 || d.audio_url_2;
+          if (a1) urls.push(a1);
+          if (a2) urls.push(a2);
+          if (Array.isArray(d.clips)) {
+            for (const c of d.clips) {
+              if (c?.audioUrl || c?.audio_url) urls.push(c.audioUrl || c.audio_url);
+              if (c?.audioUrlAlt || c?.audio_url_alt) urls.push(c.audioUrlAlt || c.audio_url_alt);
+            }
+          }
+          return urls.map(u => ({ title: d.title || title, audio_url: u, image_url: d.imageUrl || d.coverUrl }));
+        })
+        .map(x => ({ ...x, audio_url: String(x.audio_url||'').trim() }))
+        .filter(x => !!x.audio_url && /^https?:\/\//i.test(x.audio_url))
+        .reduce((acc, cur) => {
+          if (!acc.find(t => t.audio_url === cur.audio_url)) acc.push(cur);
+          return acc;
+        }, [])
+        .slice(0, 2);
     }
-  );
-  if (!pr.ok) continue;
-  const st = await pr.json();
-  if (!st || st.code !== 200) continue;
 
-  const items = (st.data && st.data.response && st.data.response.sunoData) || [];
-  tracks = items
-    .flatMap((d) => {
-      const urls = [];
-      const a1 = d.audioUrl || d.url || d.audio_url;
-      const a2 = d.audioUrl2 || d.url2 || d.audio_url_2;
-      if (a1) urls.push(a1);
-      if (a2) urls.push(a2);
-      if (Array.isArray(d.clips)) {
-        for (const c of d.clips) {
-          if (c?.audioUrl || c?.audio_url)
-            urls.push(c.audioUrl || c.audio_url);
-          if (c?.audioUrlAlt || c?.audio_url_alt)
-            urls.push(c.audioUrlAlt || c.audio_url_alt);
-        }
-      }
-      return urls.map((u) => ({
-        title: d.title || title,
-        audio_url: u,
-        image_url: d.imageUrl || d.coverUrl
-      }));
-    })
-    .map((x) => ({ ...x, audio_url: String(x.audio_url || '').trim() }))
-    .filter((x) => !!x.audio_url && /^https?:\/\//i.test(x.audio_url))
-    .reduce((acc, cur) => {
-      if (!acc.find((t) => t.audio_url === cur.audio_url)) acc.push(cur);
-      return acc;
-    }, [])
-    .slice(0, 2);
-}
-
-if (!tracks.length) {
+    if (!tracks.length) {
   console.warn('[generate_song] No tracks returned in time.');
   return;
 }
 
-// === APPEND + EMAIL AFTER SUNO SUCCESS ===
-try {
-  const link1 = tracks[0]?.audio_url || '';
-  const link2 = tracks[1]?.audio_url || '';
-  await safeAppendOrderRow({
-    email: req.body.email || '',
-    styles,
-    vocal,
-    language,
-    brief,
-    lyrics,
-    link1,
-    link2,
-    format,
-    delivery: req.body.delivery_label || req.body.delivery || ''
-  });
+    try {
+      const link1 = tracks[0]?.audio_url || '';
+      const link2 = tracks[1]?.audio_url || '';
+      await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2, format,
+      delivery: req.body.delivery_label || req.body.delivery || '' 
+    });
+    } catch (_e) { /* log only */ }
 
-  try {
-    const o = req.body || {};
-    const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
-    const orderHtml = `
-      <h2>Új dal generálás (VPOS / API)</h2>
-      <ul>
-        <li><b>E-mail:</b> ${o.email || ''}</li>
-        <li><b>Stílus:</b> ${o.styles || ''}</li>
-        <li><b>Ének:</b> ${o.vocal || ''}</li>
-        <li><b>Nyelv:</b> ${o.language || ''}</li>
-        <li><b>Kézbesítés:</b> ${o.delivery_label || o.delivery || ''}</li>
-      </ul>
-      <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
-    `;
-    const jobs = [
-      {
-        to: owner,
-        subject: 'EnZenem – Új dal generálás (VPOS)',
-        html: orderHtml,
-        replyTo: o.email || undefined
+    } catch (err) {
+        console.error('[BG generate_song error]', err);
       }
-    ];
-    if (o.email) {
-      jobs.push({
-        to: o.email,
-        subject: 'EnZenem – Megrendelés feldolgozva',
-        html: `<p>Kedves Megrendelő!</p>
-               <p>Köszönjük! A dalgenerálás sikeresen lefutott, és a linkek bekerültek a rendszerbe.</p>
-               <p>A választott kézbesítési időn belül (<b>${o.delivery_label || o.delivery || '48 óra (alap)'}</b>) megkapod az egyedi zenédet.</p>
-               <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>`
-      });
-    }
-    queueEmails(jobs);
-    console.log('[MAIL:QUEUED from /api/generate_song]', { to: o.email });
-  } catch (err) {
-    console.warn('[MAIL:QUEUE_FAIL from /api/generate_song]', err?.message || err);
-  }
-} catch (outerErr) {
-  console.error('[BG generate_song error]', outerErr);
-}
+    });
 
-// === ZÁRÁSOK – kötelező a deployhoz ===
-}); // ← lezárja a setImmediate(async () => { ... })
-} catch (err) {
-  console.error('[generate_song route]', err);
-  res.status(500).json({ ok: false, error: err?.message || 'Server error' });
-}
-}); // ← lezárja az app.post('/api/generate_song', ...)
+  } catch (e) {
+    console.error('[generate_song wrapper error]', e);
+  }
+});
 
 /* ================== DIAG endpoints ======================== */
 app.get('/api/generate_song/ping', (req, res) => {
