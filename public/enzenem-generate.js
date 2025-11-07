@@ -52,52 +52,62 @@
     return payload || {};
   }
 
-  // 🔹 Új fizetési folyamat – régi /generate_song helyett
-  form.addEventListener('submit', async (e)=>{
-    if(IN_FLIGHT) return; IN_FLIGHT = true;
-    e.preventDefault();
+ // 🔹 Új fizetési folyamat – admin e-mail + VPOS indítás
+form.addEventListener('submit', async (e) => {
+  if (IN_FLIGHT) return;
+  IN_FLIGHT = true;
+  e.preventDefault();
 
-    const fd = new FormData(form);
-    const data = {
-      email: (form.querySelector('[name=email]')||{}).value || '',
-      styles: (fd.get('styles')||'').toString(),
-      style:  (fd.get('styles')||'').toString(),
-      vocal: (form.querySelector('[name=vocal]')||{}).value || '',
-      language: (form.querySelector('[name=language]')||{}).value || '',
-      brief: (form.querySelector('[name=brief]')||{}).value || '',
-      consent: !!(form.querySelector('[name=consent]')||{}).checked,
-      package: (fd.get('package')||'basic').toString(),
-      delivery_label: (form.querySelector('[name=delivery_label]')||{}).value || '',
-      delivery_extra: (form.querySelector('[name=delivery_extra]')||{}).value || '0'
-    };
+  const fd = new FormData(form);
+  const data = {
+    email: (form.querySelector('[name=email]') || {}).value || '',
+    styles: (fd.get('styles') || '').toString(),
+    style: (fd.get('styles') || '').toString(),
+    vocal: (form.querySelector('[name=vocal]') || {}).value || '',
+    language: (form.querySelector('[name=language]') || {}).value || '',
+    brief: (form.querySelector('[name=brief]') || {}).value || '',
+    consent: !!(form.querySelector('[name=consent]') || {}).checked,
+    package: (fd.get('package') || 'basic').toString(),
+    delivery_label: (form.querySelector('[name=delivery_label]') || {}).value || '',
+    delivery_extra: (form.querySelector('[name=delivery_extra]') || {}).value || '0'
+  };
 
-    const submitBtn = form.querySelector('button[type=submit], [type=submit]');
-    if (submitBtn){
-      submitBtn.disabled = true;
-      submitBtn.dataset.prevText = submitBtn.textContent;
-      submitBtn.textContent = 'Fizetés indítása...';
-    }
+  const submitBtn = form.querySelector('button[type=submit], [type=submit]');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.dataset.prevText = submitBtn.textContent;
+    submitBtn.textContent = 'Fizetés indítása...';
+  }
 
-    [resultBox, linksList, lyricsBox].forEach(el => { if(el){ el.hidden = true; el.innerHTML = ''; } });
-    showFeedback('Kapcsolódás a fizetési rendszerhez...', true);
-
-    try {
-      const res = await postJSON('/api/payment/create', data);
-      if (res.ok && res.successUrl){
-        showFeedback('Átirányítás a fizetési oldalra...', true);
-        window.location.href = res.successUrl;
-      } else {
-        showFeedback('Nem sikerült elindítani a fizetést.', false);
-      }
-    } catch (err) {
-      console.error('VPOS create failed:', err);
-      showFeedback('Hiba történt a fizetés indításakor.', false);
-    } finally {
-      if (submitBtn){
-        submitBtn.disabled = false;
-        submitBtn.textContent = submitBtn.dataset.prevText || 'Megrendelés';
-      }
-      IN_FLIGHT = false;
-    }
+  [resultBox, linksList, lyricsBox].forEach(el => {
+    if (el) { el.hidden = true; el.innerHTML = ''; }
   });
+  showFeedback('Kapcsolódás a fizetési rendszerhez...', true);
+
+  try {
+    // 🟡 1️⃣ Admin e-mail azonnal (megrendelés leadásakor)
+    await postJSON('/api/order', data);
+    console.log('[ORDER] Admin értesítés elküldve');
+
+    // 🟢 2️⃣ Fizetési folyamat indítása
+    const res = await postJSON('/api/payment/create', data);
+    if (res.ok && res.successUrl) {
+      showFeedback('Átirányítás a fizetési oldalra...', true);
+      window.location.href = res.successUrl;
+    } else {
+      showFeedback('Nem sikerült elindítani a fizetést.', false);
+    }
+
+  } catch (err) {
+    console.error('VPOS create failed:', err);
+    showFeedback('Hiba történt a fizetés indításakor.', false);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = submitBtn.dataset.prevText || 'Megrendelés';
+    }
+    IN_FLIGHT = false;
+  }
+});
 })();
+
