@@ -266,32 +266,59 @@ function initBriefHelper() {
   'Karácsonyra szeretnék egy dalt a családomnak. Minden évben együtt díszítjük a fát, és anya sütit süt, apa meg hamisan énekel, de imádjuk érte. A másik emlék, amit a dalban hallanék, amikor a nappaliban táncoltunk szilveszterkor a kedvenc zenénkre, és mindenki nevetett.'
 ];
 
-    const exTitle = document.createElement('div');
-    exTitle.textContent = 'Minta leírások:';
-    exTitle.style.marginTop = '10px';
-    exTitle.style.fontSize = '13px';
-    exTitle.style.color = '#b6b6c3';
-    info.insertAdjacentElement('afterend', exTitle);
+  const exTitle = document.createElement('div');
+exTitle.textContent = 'Minta leírások:';
+exTitle.style.marginTop = '10px';
+exTitle.style.fontSize = '13px';
+exTitle.style.color = '#b6b6c3';
+info.insertAdjacentElement('afterend', exTitle);
 
-    examples.forEach(t => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = (t.slice(0, 24) + '… példa');
-      b.className = 'chip';
-      b.style.padding = '6px 10px';
-      b.style.borderRadius = '999px';
-      b.style.border = '1px solid #2a2b3a';
-      b.style.background = '#10111a';
-      b.style.color = '#f4f4f7';
-      b.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        // csak placeholder – a value-t sosem írjuk!
-        desc.placeholder = t;
-        try { desc.focus({ preventScroll: true }); } catch(_) {}
-      });
-      exWrap.appendChild(b);
-    });
+examples.forEach((t, i) => {
+  const b = document.createElement('button');
+  b.type = 'button';
+
+  // 🎯 Előre definiált, személyes és fix címkék (ikon + név + esemény)
+  const labels = [
+    "🎂 Nóra – születésnap",
+    "💍 Kata & Máté – esküvő",
+    "❤️ Bence – évforduló",
+    "👋 Zoli – búcsúztató",
+    "🏢 András – céges rendezvény",
+    "🧒 Lili – gyerekdal",
+    "☕ Feri – nyugdíj",
+    "🌸 Eszter – jobbulás",
+    "💞 Anna – lánykérés",
+    "🎓 Tamás – diploma",
+    "🎁 Ünnepi dal"
+  ];
+
+  // 🔸 Címke szöveg a labels tömbből (biztonsági fallback-kel)
+  b.textContent = labels[i] || `Minta ${i + 1}`;
+  b.className = 'chip';
+  b.style.padding = '6px 10px';
+  b.style.borderRadius = '999px';
+  b.style.border = '1px solid #2a2b3a';
+  b.style.background = '#10111a';
+  b.style.color = '#f3d27a'; // arany szín
+  b.style.fontWeight = '500';
+  b.style.letterSpacing = '0.3px';
+  b.style.transition = 'box-shadow 0.2s ease, border-color 0.2s ease';
+
+  // ✨ Hover kiemelés
+  b.addEventListener('mouseenter', () => b.style.boxShadow = '0 0 8px rgba(212,175,55,0.3)');
+  b.addEventListener('mouseleave', () => b.style.boxShadow = 'none');
+
+  // 🔹 Kattintás → minta leírás beillesztése
+  b.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    desc.placeholder = t;
+    try { desc.focus({ preventScroll: true }); } catch (_) {}
+  });
+
+  exWrap.appendChild(b);
+});
+
 
     exTitle.insertAdjacentElement('afterend', exWrap);
   }
