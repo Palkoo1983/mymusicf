@@ -329,7 +329,9 @@ function initBriefHelper() {
 function initOrderForm() {
   const orderForm   = qs('#orderForm');
   const orderStatus = qs('#orderStatus');
-  
+  const modal       = qs('#license-warning');
+  const acceptBtn   = qs('#licenseAccept');
+  const cancelBtn   = qs('#licenseCancel');
   if (!orderForm) return;
 
   // ne legyen natív navigáció – fetch küldi
@@ -355,8 +357,8 @@ function initOrderForm() {
     }
   }
 
-   }
-   }
+  function showModal(){ if (modal){ modal.style.display='block'; modal.setAttribute('aria-hidden','false'); } }
+  function hideModal(){ if (modal){ modal.style.display='none';  modal.setAttribute('aria-hidden','true'); } }
 
   orderForm.addEventListener('submit', (e) => {
     e.preventDefault(); e.stopPropagation();
@@ -365,13 +367,32 @@ const delivLabel = document.querySelector('input[name="delivery_label"]');
 if (delivLabel) data.delivery_label = delivLabel.value;
 
     // MINDIG kérdezzünk rá (nincs cookie / localStorage)
-    actuallySend(data);
+    showModal();
 
-    
+    const onAccept = () => {
+  hideModal();
 
-    
+  // 🟡 Frissítsük a kézbesítési címkét a legutóbbi gombnyomás után
+  const delivLabel = document.querySelector('input[name="delivery_label"]');
+  if (delivLabel) data.delivery_label = delivLabel.value || '';
 
-          });
+  acceptBtn?.removeEventListener('click', onAccept);
+  cancelBtn?.removeEventListener('click', onCancel);
+  actuallySend(data);
+};
+
+    const onCancel = () => {
+      hideModal();
+      if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
+      acceptBtn?.removeEventListener('click', onAccept);
+      cancelBtn?.removeEventListener('click', onCancel);
+      // ✅ NOVABOT: FELTÉTEL ELUTASÍTVA → HIBA üzenet
+      try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderFail && window.novaOrderFail(); } } catch(_){}
+    };
+
+    acceptBtn?.addEventListener('click', onAccept, { once:true });
+    cancelBtn?.addEventListener('click', onCancel, { once:true });
+  });
 }
 // === Kézbesítési opciók kiválasztása + árfrissítés a Megrendelés gombon (javított delegált verzió) ===
 document.addEventListener('DOMContentLoaded', () => {
@@ -483,7 +504,45 @@ function initConsent() {
   });
 }
 
-);
+/* ---------- License modal ---------- */
+function initLicenseModal() {
+  const modal  = qs('#license-warning');
+  const ok     = qs('#licenseAccept');
+  const cancel = qs('#licenseCancel');
+  if (!modal || !ok || !cancel) return;
+
+  // A tényleges megnyitást az Order submit flow intézi.
+  ok.addEventListener('click', () => { /* submit flow kezeli */ });
+  cancel.addEventListener('click', () => {
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+  });
+}
+
+/* ---------- boot ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  initTabs();
+  initPackages();
+  initHowTo();       // delegált HOWTO→ORDER
+  initBriefHelper(); // ha az ORDER aktív lenne induláskor
+  initOrderForm();
+  initContactForm();
+  initConsent();
+  initLicenseModal();
+});
+
+// Anchor → tab váltás
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a[data-jump]');
+  if (!a) return;
+  e.preventDefault();
+  const target = a.getAttribute('data-jump');
+  const btn = document.querySelector(`.vinyl-tabs .tab[data-target="${target}"]`);
+  if (btn) {
+    btn.click();
+    btn.focus();
+  }
+});
 
 // Köszönjük overlay „intelligens” megjelenítés
 document.addEventListener('DOMContentLoaded', () => {
