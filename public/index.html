@@ -600,45 +600,68 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   <input name="title" type="text" placeholder="pl. Budai csillag">
 </label>
 
-          <label class="gold-text">E-mail (ahová a linket küldjük)
-            <input name="email" placeholder="pelda@domain.hu" required="" type="email"/>
-          </label>
-          <label class="gold-text">Zenei stílus (írható is)
-           <input list="style-list" name="styles" placeholder="pl. pop / rock / musical / minimal techno / house / saját megjelölés" required type="text">
-            <datalist id="style-list">
-  <!-- 🎵 POP / MAINSTREAM -->
-  <option value="Pop">
-  <option value="Romantikus pop">
-  <option value="Lírai ballada">
-  <option value="R&B">
-  <option value="Disco">
+  <label class="gold-text">E-mail (ahová a zenét küldjük)
+  <input name="email" placeholder="pelda@domain.hu" required type="email" />
+</label>
 
-  <!-- 🎧 ELEKTRONIKUS / TÁNC -->
-  <option disabled>──────────</option>
-  <option value="Minimal techno">
-  <option value="House">
-  <option value="Modern elektronikus">
-  <option value="Drum and bass">
+<label class="gold-text">Zenei stílus (írható is)
+  <input list="style-list" name="style" id="style"
+         placeholder="pl. pop / rock / minimal techno / house / romantikus"
+         class="gold-text"
+         style="background:#000; color:#f3d27a; border:1px solid #d4af37; padding:8px; border-radius:6px;"
+         required type="text" />
 
-  <!-- 🎸 ROCK / ALTERNATÍV -->
-  <option disabled>──────────</option>
-  <option value="Rock">
-  <option value="Metál">
-  <option value="Alternatív">
+  <datalist id="style-list">
+    <!-- 🎵 POP / MAINSTREAM -->
+    <option value="Pop">
+    <option value="Romantikus pop">
+    <option value="Lírai ballada">
+    <option value="R&B">
+    <option value="Disco">
 
-  <!-- 🧒 GYEREK / ÉRZELMES -->
-  <option disabled>──────────</option>
-  <option value="Gyerekdal">
-  <option value="Akusztikus">
-  <option value="Lírai">
-  <option value="Romantikus">
+    <!-- 🎧 ELEKTRONIKUS / TÁNC -->
+    <option disabled>──────────</option>
+    <option value="Minimal techno">
+    <option value="House">
+    <option value="Modern elektronikus">
+    <option value="Drum and bass">
 
-  <!-- 🎤 URBAN / SZÖVEGKÖZPONTÚ -->
-  <option disabled>──────────</option>
-  <option value="Rap">
-</datalist>
+    <!-- 🎸 ROCK / ALTERNATÍV -->
+    <option disabled>──────────</option>
+    <option value="Rock">
+    <option value="Metál">
+    <option value="Alternatív">
 
-          </label>
+    <!-- 🧒 GYEREK / ÉRZELMES -->
+    <option disabled>──────────</option>
+    <option value="Gyerekdal">
+    <option value="Akusztikus">
+    <option value="Lírai">
+    <option value="Romantikus">
+
+    <!-- 🎤 URBAN / SZÖVEGKÖZPONTÚ -->
+    <option disabled>──────────</option>
+    <option value="Rap">
+
+    <!-- 🎄 ÜNNEPI -->
+    <option disabled>──────────</option>
+    <option value="Karácsonyi pop">
+    <option value="Ünnepi akusztikus">
+  </datalist>
+</label>
+
+<label class="gold-text">Ének
+  <select name="vocal" required>
+    <option value="female">Női</option>
+    <option value="male">Férfi</option>
+    <option value="duet">Vegyes (férfi és női duett)</option>
+    <option value="child">Gyermek ének</option>
+    <option value="robot">„Gépi”/szintetikus ének</option>
+    <option value="instrumental">Instrumentális (ének nélkül)</option>
+  </select>
+</label>
+
+
           <label class="gold-text">Ének
            <select name="vocal" required>
   <option value="female">Női</option>
@@ -760,20 +783,21 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 /* ===== GOLDEN – minta gombok csonkamentesítése (SAFE) ===== */
 
 /* 1) Golden cím-mapping – ezt használjuk minden gombnál */
-const NB_EXAMPLE_LABELS = [
-  { re: /szuletesnap/i,                   label: "Születésnapra" },
-  { re: /evfordulo/i,                     label: "Évfordulóra" },
-  { re: /ballagas/i,                      label: "Ballagásra" },
-  { re: /eljegyz|esk|hazassag/i,          label: "Eljegyzés/Esküvő" },
-  { re: /lanykeres/i,                     label: "Lánykéréshez" },
-  { re: /bucsuztato|bucsuztatas/i,        label: "Búcsúztatóra" },
-  { re: /rendezveny|ceges|party|buli/i,   label: "Rendezvényre" },
-  { re: /gyerek|gyermek|kislany|kisfiu/i, label: "Gyerekdal" },
-  { re: /nevnap/i,                        label: "Névnapra" },
-  { re: /jobbulas|gyogyul|get well/i,     label: "Jobbulást kívánó dal" },
-  { re: /nyugdij|nyugdijba/i,             label: "Nyugdíjba vonuló kollégának" },
-  { re: /karacsony|unnep|szilveszter/i,   label: "Ünnepre" }
+const NB_EXAMPLE_LABELS = [ 
+  { re: /szuletesnap/i,                   label: "🎂 Nóra – születésnap" },
+  { re: /evfordulo/i,                     label: "❤️ Bence – évforduló" },
+  { re: /ballagas|diploma/i,              label: "🎓 Tamás – diploma" },
+  { re: /eljegyz|esk|hazassag/i,          label: "💍 Kata & Máté – esküvő" },
+  { re: /lanykeres/i,                     label: "💞 Anna – lánykérés" },
+  { re: /bucsuztato|bucsuztatas/i,        label: "👋 Zoli – búcsúztató" },
+  { re: /rendezveny|ceges|party|buli/i,   label: "🏢 András – céges rendezvény" },
+  { re: /gyerek|gyermek|kislany|kisfiu/i, label: "🧒 Lili – gyerekdal" },
+  { re: /nevnap/i,                        label: "🌷 Névnapra" },
+  { re: /jobbulas|gyogyul|get well/i,     label: "🌸 Eszter – jobbulás" },
+  { re: /nyugdij|nyugdijba/i,             label: "☕ Feri – nyugdíj" },
+  { re: /karacsony|unnep|szilveszter/i,   label: "🎁 Ünnepi dal" }
 ];
+
 
 /* Golden cím a teljes szövegből – ÉKEZETMENTESÍTÉSSEL */
 function nbLabelFrom(fullText, fallback=""){
