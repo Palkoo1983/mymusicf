@@ -383,7 +383,6 @@ if (delivLabel) data.delivery_label = delivLabel.value;
     acceptBtn?.addEventListener('click', onAccept, { once:true });
     cancelBtn?.addEventListener('click', onCancel, { once:true });
   });
-}
 // === Kézbesítési opciók kiválasztása + árfrissítés a Megrendelés gombon (javított delegált verzió) ===
 document.addEventListener('DOMContentLoaded', () => {
   const container   = document.querySelector('.delivery-buttons');
