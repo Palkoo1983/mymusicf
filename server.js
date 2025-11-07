@@ -847,11 +847,11 @@ try {
 }
 
 // === ZÁRÁSOK – kötelező a deployhoz ===
-    }); // ← lezárja a setImmediate(async () => { ... })
-  } catch (err) {
-    console.error('[generate_song route]', err);
-    res.status(500).json({ ok: false, error: err?.message || 'Server error' });
-  }
+}); // ← lezárja a setImmediate(async () => { ... })
+} catch (err) {
+  console.error('[generate_song route]', err);
+  res.status(500).json({ ok: false, error: err?.message || 'Server error' });
+}
 }); // ← lezárja az app.post('/api/generate_song', ...)
 
 /* ================== DIAG endpoints ======================== */
