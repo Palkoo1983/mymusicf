@@ -41,7 +41,6 @@ const ENV = {
   RESEND_ONLY: (process.env.RESEND_ONLY || '').toString().toLowerCase() === 'true'
 };
 
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 /* ================== Middleware / static ================= */
 app.use(cors());
@@ -142,33 +141,42 @@ app.get('/api/test-mail', (req, res) => {
 });
 
 /* =================== Order / Contact ====================== */
+// === ADMIN EMAIL: rendelés után azonnal ===
 app.post('/api/order', (req, res) => {
   const o = req.body || {};
-  global.lastOrderData = req.body;
+  global.lastOrderData = req.body; // mentjük a VPOS visszahíváshoz
+
   const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
   const orderHtml = `
-    <h2>Új megrendelés</h2>
+    <h2>Új dal megrendelés</h2>
     <ul>
       <li><b>E-mail:</b> ${o.email || ''}</li>
-      <li><b>Esemény:</b> ${o.event_type || ''}</li>
-      <li><b>Stílus:</b> ${o.style || ''}</li>
+      <li><b>Csomag/Formátum:</b> ${(o.package || o.format || 'basic').toString().toUpperCase()}</li>
+      <li><b>Stílus(ok):</b> ${o.styles || o.style || ''}</li>
       <li><b>Ének:</b> ${o.vocal || ''}</li>
       <li><b>Nyelv:</b> ${o.language || ''}</li>
+      <li><b>Kézbesítés:</b> ${o.delivery_label || o.delivery || '48 óra'}</li>
     </ul>
     <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
   `;
-  const jobs = [{ to: owner, subject: 'Új dal megrendelés', html: orderHtml, replyTo: o.email || undefined }];
-  if (o.email) {
-    jobs.push({
-      to: o.email,
-      subject: 'EnZenem – Megrendelés fogadva',
-      html: `<p>Kedves Megrendelő!</p><p>Köszönjük a megkeresést! A megrendelését megkaptuk, és 48 órán belül elküldjük Önnek, egyedi professzionális zenéjét.
-Ha bármilyen kérdése merül fel, szívesen segítünk!</p><p>Üdv,<br/>EnZenem</p>`
-    });
-  }
+
+  // 💌 Admin azonnali értesítése
+  const jobs = [
+    {
+      to: owner,
+      subject: 'EnZenem – Új dal megrendelés',
+      html: orderHtml,
+      replyTo: o.email || undefined
+    }
+  ];
+
   queueEmails(jobs);
-  
-  res.json({ ok: true, message: 'Köszönjük! Megrendelésed beérkezett. Hamarosan kapsz visszaigazolást e-mailben.' });
+
+  // Válasz az ügyfélnek a frontendre (nem e-mail!)
+  res.json({
+    ok: true,
+    message: 'Köszönjük! Megrendelésed beérkezett és feldolgozás alatt van.'
+  });
 });
 
 app.post('/api/contact', (req, res) => {
@@ -271,6 +279,37 @@ app.get('/api/payment/callback', async (req, res) => {
         console.error('[VPOS CALLBACK] Hiba a dalgenerálás indításakor:', err);
       }
     }
+// === ÜGYFÉL-EMAIL SIKERES FIZETÉS UTÁN (delivery time-mel) ===
+try {
+  const o = (global.lastOrderData || {});
+  const customer = (o.email || '');
+  if (customer) {
+    const deliveryLabel = (o.delivery_label || o.delivery || '48 óra');
+    // package/format normalizálás csak a levélhez
+    const pkg = (o.package || o.format || 'basic').toString().toLowerCase();
+    const format = pkg === 'video' ? 'MP4' : (pkg === 'premium' ? 'WAV' : 'MP3');
+
+    const customerHtml = `
+      <p>Kedves Megrendelő!</p>
+      <p>Köszönjük a sikeres fizetést. A megrendelésed rögzítettük.</p>
+      <ul>
+        <li><b>Formátum:</b> ${format}</li>
+        <li><b>Kézbesítési idő:</b> ${deliveryLabel}</li>
+      </ul>
+      <p>A választott kézbesítési időn belül (<b>${deliveryLabel}</b>) megkapod az egyedi zenédet/videódat.</p>
+      <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>
+    `;
+
+    queueEmails([
+      { to: customer, subject: 'EnZenem – Megrendelés visszaigazolás (sikeres fizetés)', html: customerHtml }
+    ]);
+    console.log('[MAIL:QUEUED customer after VPOS success]', { to: customer, deliveryLabel, format });
+  } else {
+    console.warn('[VPOS CALLBACK] Nincs ügyfél e-mail cím a lastOrderData-ban, nem küldünk ügyféllevelet.');
+  }
+} catch (e) {
+  console.warn('[VPOS CALLBACK] Ügyfél-email küldési hiba:', e?.message || e);
+}
 
     // 🔸 Visszajelzés a felhasználónak
     return res.send(`
