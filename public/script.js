@@ -242,28 +242,29 @@ function initBriefHelper() {
     exWrap.style.gap = '8px';
     exWrap.style.marginTop = '8px';
 
-    const examples = [
+  const examples = [
   'A nővéremnek, Nórának szeretnék születésnapi dalt. 46 éves, és mindig is imádta a táncolós zenéket. Emlékszem, amikor a nappaliban táncoltunk a kedvenc számaira, és mindenki nevetett. Jó lenne, ha a dalban benne lenne az a nyári este is, amikor együtt túráztunk a Csóványoson, és végignevettük az éjszakát.',
   
-  'Kata és Máté esküvőjére szeretnék egy romantikus dalt. Az első közös balatoni nyaralásukon ismerkedtek meg igazán, amikor eláztak a viharban, de táncoltak a parton. A lánykérés Toszkánában volt, naplementében, a dombtetőn — ezt az érzést szeretném viszont hallani a dalban.',
+  'Kata és Máté esküvőjére szeretnék egy romantikus dalt. Az első közös balatoni nyaralásukon ismerkedtek meg igazán, amikor eláztak a viharban, de táncoltak a parton. A lánykérés Toszkánában volt, naplementében, a dombtetőn – ezt az érzést szeretném viszont hallani a dalban.',
   
-  'A házassági évfordulónkra szeretném meglepni a férjemet, Bencét, egy dallal. Az első randinkon eltévedtünk a Városligetben, és a padon ettük meg a fagyit nevetve. A másik emlék, amikor a lakásfelújítás közben pizzát ettünk a padlón ülve, és sírtunk a nevetéstől.',
+  'A házassági évfordulónkra szeretném meglepni a férjemet, Bencét, egy dallal. Az első randinkon eltévedtünk a Városligetben, és végül a padon ettük meg a fagyit nevetve. A másik emlék, amikor a lakásfelújítás közben pizzát ettünk a padlón ülve, és sírtunk a nevetéstől.',
   
-  'Egy búcsúztatóra szeretnék dalt a kollégánknak, Zolinak, aki mindig összetartotta a csapatot. Egyszer, amikor elromlott a nyomtató, ő oldotta meg egy gémkapoccsal és kávéval. A másik pillanat, amikor karácsony előtt mindenkinek sütit hozott, és a legnagyobb nevetése volt az irodában.',
+  'Egy búcsúztatóra szeretnék dalt a kollégánknak, Zolinak, aki mindig összetartotta a csapatot. Egyszer, amikor elromlott a nyomtató, ő oldotta meg egy gémkapoccsal és kávéval. A másik pillanat, amit beletennék, amikor karácsony előtt mindenkinek sütit hozott, és a legnagyobb nevetése volt az irodában.',
   
-  'A munkahelyi évzárónkra kérek egy dalt a csapatunknak, amit András vezet. Volt egy közös projektünk, ahol éjszakába nyúlóan dolgoztunk, de közben zenét hallgattunk és táncoltunk. A másik emlék, amikor megnyertük a céges versenyt, és pezsgővel öntöttük le a főnököt – ez a mi kis legendánk.',
+  'A munkahelyi évzárónkra kérek egy dalt. Volt egy közös projektünk Andrással, ahol éjszakába nyúlóan dolgoztunk, de közben zenét hallgattunk és táncoltunk. A másik emlék, amikor megnyertük a céges versenyt, és pezsgővel öntöttük le a főnököt – ezt a hangulatot szeretném viszont hallani.',
   
-  'A kislányomnak, Lilinek szeretnék születésnapi dalt. Minden reggel a tükör előtt táncol a hajkefével a kezében, és saját dalt énekel. A másik kedvenc történetünk, amikor a parkban elesett a biciklivel, de felállt és azt mondta: „Semmi baj, anya, a hősök nem sírnak!”',
+  'A hatéves kislányomnak, Lilinek szeretnék egy dalt. Minden reggel a tükör előtt táncol a hajkefével a kezében, és saját dalt énekel. A másik kedvenc történetünk, amikor a parkban elesett a biciklivel, de felállt és azt mondta: „Semmi baj, anya, a hősök nem sírnak!”',
   
   'Egy nyugdíjba vonuló kollégának, Ferinek kérek dalt. Ő volt az, aki minden hétfő reggel kávét vitt mindenkinek, és mindig azt mondta: „Ez is csak egy új kezdet.” Egyszer a céges kiránduláson ő szervezte meg a karaoke estét, és senki nem felejti el, ahogy Elvis Presley-t énekelt.',
   
   'A barátnőmnek, Eszternek szeretnék jobbulást kívánni egy dallal. Amikor a kórházban volt, nevetve mondta, hogy ha jobban lesz, elmegyünk táncolni, mint régen. A másik emlék, amikor eltévedtünk a Balaton-felvidéken, de az volt az egyik legszebb napunk – szeretném, ha a dal erőt adna neki.',
   
-  'A lánykérésemhez szeretnék dalt, mert Párizsban fogom megkérni Anna kezét az Eiffel-torony előtt. Az első közös utunk is ide vezetett, akkor még csak barátok voltunk. A másik pillanat, amikor először táncoltunk az esőben a Montmartre lépcsőin – ez biztosan beleillene a dalba.',
+  'A lánykérésemhez szeretnék dalt, mert Párizsban fogom megkérni Anna kezét az Eiffel-torony előtt. Az első közös utunk is ide vezetett, akkor még csak barátok voltunk. A másik pillanat, amit szeretnék viszont hallani, amikor először táncoltunk az esőben a Montmartre lépcsőin.',
   
-  'A fiamnak, Tamásnak kérek dalt a diplomaosztójára. Emlékszem, ahogy éjszakákon át tanult a konyhaasztalnál, és kávéval próbált ébren maradni. A másik pillanat, amit megőriztem, amikor gyerekként azt mondta: „Anya, egyszer nagy ember leszek” — és most tényleg az lett.'
+  'A fiamnak, Tamásnak kérek dalt a diplomaosztójára. Emlékszem, ahogy éjszakákon át tanult a konyhaasztalnál, és kávéval próbált ébren maradni. A másik pillanat, amit megőriztem, amikor gyerekként azt mondta: „Anya, egyszer nagy ember leszek” — és most tényleg az lett.',
+  
+  'Karácsonyra szeretnék egy dalt a családomnak. Minden évben együtt díszítjük a fát, és anya sütit süt, apa meg hamisan énekel, de imádjuk érte. A másik emlék, amit a dalban hallanék, amikor a nappaliban táncoltunk szilveszterkor a kedvenc zenénkre, és mindenki nevetett.'
 ];
-
 
     const exTitle = document.createElement('div');
     exTitle.textContent = 'Minta leírások:';
@@ -687,7 +688,9 @@ const map = {
   
   "Lánykérés": "A lánykérésemhez szeretnék dalt, mert Párizsban fogom megkérni Anna kezét az Eiffel-torony előtt. Az első közös utunk is ide vezetett, akkor még csak barátok voltunk. A másik pillanat, amikor először táncoltunk az esőben a Montmartre lépcsőin – ez biztosan beleillene a dalba.",
   
-  "Ballagás/Diploma": "A fiamnak, Tamásnak kérek dalt a diplomaosztójára. Emlékszem, ahogy éjszakákon át tanult a konyhaasztalnál, és kávéval próbált ébren maradni. A másik pillanat, amit megőriztem, amikor gyerekként azt mondta: ‘Anya, egyszer nagy ember leszek’ — és most tényleg az lett."
+  "Ballagás/Diploma": "A fiamnak, Tamásnak kérek dalt a diplomaosztójára. Emlékszem, ahogy éjszakákon át tanult a konyhaasztalnál, és kávéval próbált ébren maradni. A másik pillanat, amit megőriztem, amikor gyerekként azt mondta: ‘Anya, egyszer nagy ember leszek’ — és most tényleg az lett.",
+  
+  "Ünnep": "Karácsonyra szeretnék egy dalt a családomnak. Minden évben együtt díszítjük a fát, és anya sütit süt, apa meg hamisan énekel, de imádjuk érte. A másik emlék, amit a dalban hallanék, amikor a nappaliban táncoltunk szilveszterkor a kedvenc zenénkre, és mindenki nevetett."
 };
 
 
