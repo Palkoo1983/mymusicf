@@ -481,53 +481,54 @@ let gptStyle = (
 if (!lyrics && raw) {
   lyrics = String(raw).trim();
 }
- // --- convert numeric numbers to written Hungarian words (universal) ---
+// --- convert numeric numbers to written Hungarian words (universal) ---
 function numToHungarian(n) {
   const ones = ['nulla','egy','kettő','három','négy','öt','hat','hét','nyolc','kilenc'];
   const tens = ['','tíz','húsz','harminc','negyven','ötven','hatvan','hetven','nyolcvan','kilencven'];
 
   if (n < 10) return ones[n];
-  if (n < 20) {
-    if (n === 10) return 'tíz';
-    return 'tizen' + ones[n - 10];
-  }
-  if (n < 100) {
-    const t = Math.floor(n / 10);
-    const o = n % 10;
-    return tens[t] + (o ? ones[o] : '');
-  }
-  if (n < 1000) {
-    const h = Math.floor(n / 100);
-    const r = n % 100;
-    return (h > 1 ? ones[h] + 'száz' : 'száz') + (r ? numToHungarian(r) : '');
-  }
+  if (n < 20) { if (n === 10) return 'tíz'; return 'tizen' + ones[n - 10]; }
+  if (n < 100) { const t = Math.floor(n / 10); const o = n % 10; return tens[t] + (o ? ones[o] : ''); }
+  if (n < 1000) { const h = Math.floor(n / 100); const r = n % 100; return (h > 1 ? ones[h] + 'száz' : 'száz') + (r ? numToHungarian(r) : ''); }
   if (n < 2000) return 'ezer-' + numToHungarian(n - 1000);
   if (n < 2100) return 'kétezer-' + numToHungarian(n - 2000);
-  if (n < 10000) {
-    const t = Math.floor(n / 1000);
-    const r = n % 1000;
-    return ones[t] + 'ezer' + (r ? '-' + numToHungarian(r) : '');
-  }
+  if (n < 10000) { const t = Math.floor(n / 1000); const r = n % 1000; return ones[t] + 'ezer' + (r ? '-' + numToHungarian(r) : ''); }
   return String(n); // fallback for very large numbers
 }
+
 // --- smarter numeric replacement with suffix support ---
 // Évszámok (0–2999) + ragozás (pl. 2014-ben → kétezer-tizennégyben)
-lyrics = lyrics.replace(/\b([12]?\d{3})([-–]?(?:ban|ben|as|es|os|ös|ik|tól|től|hoz|hez|höz|nak|nek|ra|re|ról|ről|ba|be))?\b/g, (match, num, suffix='') => {
-  const year = parseInt(num, 10);
-  if (isNaN(year) || year > 2999) return match; // biztonsági korlát
-  let text = '';
-  if (year < 1000) text = numToHungarian(year);
-  else {
-    const thousand = Math.floor(year / 1000);
-    const rest = year % 1000;
-    const base = thousand === 1 ? 'ezer' : 'kétezer';
-    text = base + (rest ? '-' + numToHungarian(rest) : '');
+lyrics = lyrics.replace(
+  /\b([12]?\d{3})([-–]?(?:ban|ben|as|es|os|ös|ik|tól|től|hoz|hez|höz|nak|nek|ra|re|ról|ről|ba|be))?\b/g,
+  (match, num, suffix='') => {
+    const year = parseInt(num, 10);
+    if (isNaN(year) || year > 2999) return match; // biztonsági korlát
+    let text = '';
+    if (year < 1000) text = numToHungarian(year);
+    else {
+      const thousand = Math.floor(year / 1000);
+      const rest = year % 1000;
+      const base = thousand === 1 ? 'ezer' : 'kétezer';
+      text = base + (rest ? '-' + numToHungarian(rest) : '');
+    }
+    return text + (suffix || '');
   }
-  return text + (suffix || '');
-});
+);
 
-// Kis számok (1–999), de NE Verse/Chorus után
-lyrics = lyrics.replace(/(?<!Verse\s|Chorus\s)\b\d{1,3}\b/g, n => numToHungarian(parseInt(n, 10)));
+// Kis számok (1–999), de NE a (Verse N)/(Chorus) címsorokban – lookbehind NÉLKÜL
+function replaceSmallNumbersOutsideHeadings(text) {
+  if (!text) return text;
+  const lines = String(text).split(/\r?\n/);
+  return lines.map(line => {
+    const trimmed = line.trim();
+    // Ha szakaszcím (Verse 1–4 vagy Chorus), ne módosítsunk
+    if (/^\(?(?:Verse\s+[1-4]|Chorus)\)?\s*:?\s*$/i.test(trimmed)) return line;
+    // Egyéb sorokban 1–3 jegyű számok cseréje
+    return line.replace(/\b\d{1,3}\b/g, n => numToHungarian(parseInt(n, 10)));
+  }).join('\n');
+}
+
+lyrics = replaceSmallNumbersOutsideHeadings(lyrics);
 
 
 
