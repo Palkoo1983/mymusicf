@@ -145,6 +145,7 @@ app.get('/api/test-mail', (req, res) => {
 /* =================== Order / Contact ====================== */
 app.post('/api/order', (req, res) => {
   const o = req.body || {};
+  global.lastOrderData = req.body;
   const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
   const orderHtml = `
     <h2>Új megrendelés</h2>
@@ -277,6 +278,110 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
     res.status(500).end();
   }
 });
+
+// =================== TEST VPOS FLOW (with visible amount log) ===================
+app.post('/api/payment/create', async (req, res) => {
+  try {
+    global.lastOrderData = req.body;
+    const data = req.body || {};
+    const total =
+      (data.package === 'video' ? 21000 :
+      data.package === 'premium' ? 35000 :
+      10500) + parseInt(data.delivery_extra || '0', 10);
+
+    // Logoljunk a konzolba is, hogy lássuk mi ment a VPOS-nak
+    console.log(`[VPOS CREATE] Fizetés indítva: ${total} Ft | Csomag: ${data.package}, Kézbesítés: ${data.delivery_label}`);
+
+    // Tesztfizetési oldalak (lehet saját domainen is)
+    const successUrl = `${process.env.PUBLIC_URL || ''}/testpay.html?result=success&amount=${total}`;
+    const failUrl = `${process.env.PUBLIC_URL || ''}/testpay.html?result=fail&amount=${total}`;
+
+    // Az ügyfél ezt kapja vissza – benne az összeg is látható
+    res.json({ ok: true, successUrl, failUrl, total });
+  } catch (e) {
+    console.error('[VPOS CREATE ERROR]', e);
+    res.status(500).json({ ok: false, message: 'Nem sikerült a fizetési folyamat indítása.' });
+  }
+});
+
+// A „fizetési oldalt” is mi szimuláljuk (frontend is itt tudja megnyitni)
+app.get('/testpay.html', (req, res) => {
+  const amount = req.query.amount || '0';
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="hu">
+    <head>
+      <meta charset="UTF-8">
+      <title>VPOS Tesztfizetés</title>
+      <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background:#0d1b2a; color:#fff; }
+        .btn { display:inline-block; padding:15px 25px; margin:10px; font-size:18px; border-radius:8px; cursor:pointer; text-decoration:none; }
+        .ok { background:#21a353; color:#fff; }
+        .fail { background:#b33; color:#fff; }
+      </style>
+    </head>
+    <body>
+      <h1>VPOS Tesztfizetés</h1>
+      <p>Összeg: <b>${amount} Ft</b></p>
+      <p>Válassz eredményt:</p>
+      <a class="btn ok" href="/api/payment/callback?status=success&amount=${amount}">✅ Sikeres fizetés</a>
+      <a class="btn fail" href="/api/payment/callback?status=fail&amount=${amount}">❌ Sikertelen fizetés</a>
+    </body>
+    </html>
+  `);
+});
+
+// Callback – a tesztfizetés befejezése után
+app.get('/api/payment/callback', async (req, res) => {
+  const status = req.query.status || 'fail';
+  const amount = req.query.amount || '0';
+
+  if (status === 'success') {
+    console.log('[VPOS CALLBACK] Fizetés sikeres, indítjuk a dal generálást...');
+
+    // 🔸 Automatikus dalgenerálás, ha van mentett megrendelés
+    if (!global.lastOrderData) {
+      console.warn('[VPOS CALLBACK] Nincs mentett lastOrderData – nem indítjuk a generálást.');
+    } else {
+      try {
+        // Biztosítsuk, hogy mindig a fő domainre küldje
+      const base = process.env.PUBLIC_URL || 'https://www.enzenem.hu';
+      const apiUrl = `${base}/api/generate_song`;
+
+        console.log('[VPOS CALLBACK] Generálás indítása:', apiUrl);
+
+        await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(global.lastOrderData),
+        });
+
+        console.log('[VPOS CALLBACK] Dal generálás elindítva (POST /api/generate_song).');
+      } catch (err) {
+        console.error('[VPOS CALLBACK] Hiba a dalgenerálás indításakor:', err);
+      }
+    }
+
+    // 🔸 Visszajelzés a felhasználónak
+    return res.send(`
+      <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
+        <h2>✅ Fizetés sikeres!</h2>
+        <p>A választott kézbesítési időn belül megkapod a dalodat.</p>
+        <a href="/" style="color:#21a353;text-decoration:none">Vissza a főoldalra</a>
+      </body></html>
+    `);
+  } else {
+    console.log('[VPOS CALLBACK] Fizetés sikertelen.');
+    return res.send(`
+      <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
+        <h2>❌ Fizetés sikertelen!</h2>
+        <p>Kérjük, próbáld meg újra.</p>
+        <a href="/" style="color:#b33;text-decoration:none">Vissza a főoldalra</a>
+      </body></html>
+    `);
+  }
+});
+
 
 /* ================== SUNO HELPERS ========================= */
 async function sunoStartV1(url, headers, body){
