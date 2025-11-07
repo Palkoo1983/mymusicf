@@ -243,17 +243,27 @@ function initBriefHelper() {
     exWrap.style.marginTop = '8px';
 
     const examples = [
-      'Születésnapi dalt szeretnék a nővéremnek, Nórának. Pali vagyok, a legjobb barátja. A minimal techno és a house áll hozzá közel. Jó lenne, ha megjelenne benne a kitartás, a logika, a barátság és az újrakezdés motívuma. Idézzük meg a közös túráinkat, a 2014-es szardíniai utat, Portugáliát és a közös techno bulikat. A munkahelyi százszázalékos tervteljesítések is rólunk szólnak.',
-      'Esküvői dalt kérünk Katának és Máténak, lassú, romantikus pop hangulatban. Szerepeljen benne a hűség, a közös jövő és a naplemente képe. Jó lenne felidézni az első közös balatoni nyaralást, a margitszigeti csókot, és említeni a legjobb barátokat, Nórit és Otit. Az utazásaink közül Dominika is fontos emlék.',
-      'Évfordulóra lepnék meg a párommal egy dallal. Közepes tempójú, pozitív rock-popra gondolok. Legyen benne a humor, a közös főzéseink és a macskánk, Mázli. Jó lenne megemlíteni azt a pillanatot is, amikor megkaptuk az első közös lakásunk kulcsát.',
-      'Búcsúztató dal készül. Szeretném, ha méltóságteljes és nyugodt lenne, visszafogott dobbal. A hála, a fény és az emlékek témája fontos. Gyerekkori közös zongorázásaink a nappaliban különösen kedvesek.',
-      'Céges évzáróra kérek dalt lendületes, modern pop/elektronikus hangzással. Jó lenne, ha a csapatmunka, az innováció, a kétezer-huszonötös célok és egy kis humor is beleférne. A tavaszi hackathon-győzelmünk legyen benne.',
-      'Gyerekdalt szeretnék egy hatéves kislánynak, Lilinek, ma van a születésnapja. Vidám, egyszerű dallamra és könnyen énekelhető refrénre vágyunk. Szerepeljen benne az unikornis, a szivárvány és az ovis barátok. Jó lenne megemlíteni a közös biciklizést a parkban és a legjobb barátját, Sanyikát.',
-      'Nyugdíjba vonuló kollégának kérünk dalt. Legyen nosztalgikus és felemelő, akusztikus gitár és zongora kísérettel. Fontos témák: segítőkészség, humor, huszonöt év közös munka, és a csapat. A legendás hétfő reggeli kávézások mindenképp kerüljenek bele.',
-      'Jobbulást kívánó dalt szeretnénk. Lassan építkező, reményt adó hangulatban gondolkodunk. A kitartás, a gyógyulás és az, hogy mellette állunk, mind jelenjen meg. A nyári tábortűz melletti beszélgetéseink szép emlékek.',
-      'Lánykéréshez kérek dalt romantikus pop ballada hangzásban, meleg tónusokkal. A közös jövő, az „igen” pillanat és az összetartozás legyen benne. Az első csókunk a Margitszigeten különösen fontos és a Budai vár, ahol megkértem Éva kezét.',
-      'Ballagásra/diplomához kérünk dalt a fiamnak, Tamásnak. Közepes tempójú, motiváló darabot szeretnénk. Az álom, a kitartás és az új kezdet témája jelenjen meg. Jó lenne felidézni az éjszakai tanulásokat és a záróvizsga napját.'
-    ];
+  'A nővéremnek, Nórának szeretnék születésnapi dalt. 46 éves, és mindig is imádta a táncolós zenéket. Emlékszem, amikor a nappaliban táncoltunk a kedvenc számaira, és mindenki nevetett. Jó lenne, ha a dalban benne lenne az a nyári este is, amikor együtt túráztunk a Csóványoson, és végignevettük az éjszakát.',
+  
+  'Kata és Máté esküvőjére szeretnék egy romantikus dalt. Az első közös balatoni nyaralásukon ismerkedtek meg igazán, amikor eláztak a viharban, de táncoltak a parton. A lánykérés Toszkánában volt, naplementében, a dombtetőn — ezt az érzést szeretném viszont hallani a dalban.',
+  
+  'A házassági évfordulónkra szeretném meglepni a férjemet, Bencét, egy dallal. Az első randinkon eltévedtünk a Városligetben, és a padon ettük meg a fagyit nevetve. A másik emlék, amikor a lakásfelújítás közben pizzát ettünk a padlón ülve, és sírtunk a nevetéstől.',
+  
+  'Egy búcsúztatóra szeretnék dalt a kollégánknak, Zolinak, aki mindig összetartotta a csapatot. Egyszer, amikor elromlott a nyomtató, ő oldotta meg egy gémkapoccsal és kávéval. A másik pillanat, amikor karácsony előtt mindenkinek sütit hozott, és a legnagyobb nevetése volt az irodában.',
+  
+  'A munkahelyi évzárónkra kérek egy dalt a csapatunknak, amit András vezet. Volt egy közös projektünk, ahol éjszakába nyúlóan dolgoztunk, de közben zenét hallgattunk és táncoltunk. A másik emlék, amikor megnyertük a céges versenyt, és pezsgővel öntöttük le a főnököt – ez a mi kis legendánk.',
+  
+  'A kislányomnak, Lilinek szeretnék születésnapi dalt. Minden reggel a tükör előtt táncol a hajkefével a kezében, és saját dalt énekel. A másik kedvenc történetünk, amikor a parkban elesett a biciklivel, de felállt és azt mondta: „Semmi baj, anya, a hősök nem sírnak!”',
+  
+  'Egy nyugdíjba vonuló kollégának, Ferinek kérek dalt. Ő volt az, aki minden hétfő reggel kávét vitt mindenkinek, és mindig azt mondta: „Ez is csak egy új kezdet.” Egyszer a céges kiránduláson ő szervezte meg a karaoke estét, és senki nem felejti el, ahogy Elvis Presley-t énekelt.',
+  
+  'A barátnőmnek, Eszternek szeretnék jobbulást kívánni egy dallal. Amikor a kórházban volt, nevetve mondta, hogy ha jobban lesz, elmegyünk táncolni, mint régen. A másik emlék, amikor eltévedtünk a Balaton-felvidéken, de az volt az egyik legszebb napunk – szeretném, ha a dal erőt adna neki.',
+  
+  'A lánykérésemhez szeretnék dalt, mert Párizsban fogom megkérni Anna kezét az Eiffel-torony előtt. Az első közös utunk is ide vezetett, akkor még csak barátok voltunk. A másik pillanat, amikor először táncoltunk az esőben a Montmartre lépcsőin – ez biztosan beleillene a dalba.',
+  
+  'A fiamnak, Tamásnak kérek dalt a diplomaosztójára. Emlékszem, ahogy éjszakákon át tanult a konyhaasztalnál, és kávéval próbált ébren maradni. A másik pillanat, amit megőriztem, amikor gyerekként azt mondta: „Anya, egyszer nagy ember leszek” — és most tényleg az lett.'
+];
+
 
     const exTitle = document.createElement('div');
     exTitle.textContent = 'Minta leírások:';
@@ -658,18 +668,28 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 // --- HOWTO példák: töltsük fel a hiányzó data-example-öket ---
 (function seedHowtoExamples(){
-  const map = {
-    "Szülinap": "Születésnapra készül a dal a nővéremnek, Nóra 46 éves. Szereti a minimál techno és house zenét. Kulcsszavak: kitartás, logika, barátság, újrakezdés. Emlék: amikor együtt túráztunk a Csóványosra.",
-    "Esküvő": "Esküvőre készül a dal, Kata és Máté számára. Stílus: romantikus pop, lassú tempó. Kulcsszavak: hűség, közös jövő, naplemente. Emlék: első közös balatoni nyaralás.",
-    "Évforduló": "Évfordulónkra szeretném meglepni a páromat. Közepes tempójú rock-pop, pozitív hangulat. Kulcsszavak: humor, közös főzés, macskánk Mázli. Emlék: amikor megkaptuk az első közös lakás kulcsát.",
-    "Búcsúztató": "Búcsúztatóra készül a dal. Méltóságteljes, nyugodt hangulat, kevés dob. Kulcsszavak: hála, fény, emlékek. Emlék: gyerekkori közös zongorázás a nappaliban.",
-    "Céges rendezvény": "Céges évzáróra kérek dalt. Tempó: lendületes, modern pop/elektronikus. Kulcsszavak: csapatmunka, innováció, 2025 célok, humor. Emlék: a tavaszi hackathon győzelmünk.",
-    "Gyerekdal": "Gyerekdal 6 éves kislánynak, Lilinek. Vidám, egyszerű dallam, könnyen énekelhető refrén. Kulcsszavak: unikornis, szivárvány, ovi-barátok. Emlék: közös biciklizés a parkban.",
-    "Nyugdíj": "Nyugdíjba vonuló kollégának. Hangulat: nosztalgikus, felemelő, akusztikus gitár+zongora. Kulcsszavak: segítőkészség, humor, 25 év, csapat. Emlék: a legendás hétfő reggeli kávék.",
-    "Jobbulást": "Jobbulást kívánó dal. Lassan építkező, reményt adó hangulat. Kulcsszavak: kitartás, gyógyulás, melletted állunk. Emlék: nyári tábortűz melletti beszélgetések.",
-    "Lánykérés": "Lánykéréshez készülő dal. Romantikus pop ballada, meleg hangzás. Kulcsszavak: közös jövő, „igen” pillanat, összetartozás. Emlék: első csók a Margitszigeten.",
-    "Ballagás/Diploma": "Ballagásra/diplomához kérünk dalt. Tempó: közepes, motiváló. Kulcsszavak: álom, kitartás, új kezdet. Emlék: éjszakai tanulások és a záróvizsga napja."
-  };
+const map = {
+  "Szülinap": "A nővéremnek, Nórának szeretnék születésnapi dalt. 46 éves, mindig is imádta a táncolós zenéket. Emlékszem, amikor a nappaliban táncoltunk a régi kedvenc számaira, és mindenki nevetett. Jó lenne, ha a dalban benne lenne az a nyári este is, amikor együtt túráztunk a Csóványoson, és végignevettük az éjszakát.",
+  
+  "Esküvő": "Kata és Máté esküvőjére kérek egy romantikus dalt. Az első közös balatoni nyaralásukon ismerkedtek meg igazán, amikor eláztak egy viharban, de táncoltak a parton. A lánykérés Toszkánában volt, naplementében, a dombtetőn — ezt a pillanatot szeretném viszont hallani a dalban.",
+  
+  "Évforduló": "A házassági évfordulónkra szeretnék dalt a férjemnek, Bencének. Az első randinkon eltévedtünk a Városligetben, és a padon ettük meg a fagyit nevetve. A másik emlék, amikor a lakásfelújítás közben pizzát ettünk a padlón ülve, és sírtunk a nevetéstől.",
+  
+  "Búcsúztató": "Egy búcsúztatóra szeretnék dalt a kollégánknak, Zolinak, aki mindig összetartotta a csapatot. Egyszer, amikor elromlott a nyomtató, ő oldotta meg egy gémkapoccsal és kávéval. A másik pillanat, amikor karácsony előtt mindenkinek sütit hozott, és a legnagyobb nevetése volt az irodában.",
+  
+  "Céges rendezvény": "A munkahelyi évzárónkra kérek dalt a csapatunknak, amit András vezet. Volt egy közös projektünk, ahol éjszakába nyúlóan dolgoztunk, de közben zenét hallgattunk és táncoltunk. A másik emlék, amikor megnyertük a céges versenyt, és pezsgővel öntöttük le a főnököt – ez a mi kis legendánk.",
+  
+  "Gyerekdal": "A kislányomnak, Lilinek szeretnék születésnapi dalt. Minden reggel a tükör előtt táncol a hajkefével a kezében, és saját dalt énekel. A másik kedvenc történetünk, amikor a parkban elesett a biciklivel, de felállt és azt mondta: ‘Semmi baj, anya, a hősök nem sírnak!’",
+  
+  "Nyugdíj": "Egy nyugdíjba vonuló kollégának, Ferinek kérek dalt. Ő volt az, aki minden hétfő reggel kávét vitt mindenkinek, és mindig azt mondta: ‘Ez is csak egy új kezdet.’ Egyszer a céges kiránduláson ő szervezte meg a karaoke estét, és senki nem felejti el, ahogy Elvis Presley-t énekelt.",
+  
+  "Jobbulást": "A barátnőmnek, Eszternek szeretnék jobbulást kívánni egy dallal. Amikor a kórházban volt, nevetve mondta, hogy ha jobban lesz, elmegyünk táncolni, mint régen. A másik emlék, amikor eltévedtünk a Balaton-felvidéken, de az volt az egyik legszebb napunk – szeretném, ha a dal erőt adna neki.",
+  
+  "Lánykérés": "A lánykérésemhez szeretnék dalt, mert Párizsban fogom megkérni Anna kezét az Eiffel-torony előtt. Az első közös utunk is ide vezetett, akkor még csak barátok voltunk. A másik pillanat, amikor először táncoltunk az esőben a Montmartre lépcsőin – ez biztosan beleillene a dalba.",
+  
+  "Ballagás/Diploma": "A fiamnak, Tamásnak kérek dalt a diplomaosztójára. Emlékszem, ahogy éjszakákon át tanult a konyhaasztalnál, és kávéval próbált ébren maradni. A másik pillanat, amit megőriztem, amikor gyerekként azt mondta: ‘Anya, egyszer nagy ember leszek’ — és most tényleg az lett."
+};
+
 
   const chips = document.querySelectorAll('#howto .examples .chip');
   chips.forEach(btn => {
