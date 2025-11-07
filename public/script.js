@@ -324,16 +324,6 @@ function initBriefHelper() {
     }
   });
 }
-
-/* ---------- Order form submit (ALWAYS show license modal) ---------- */
-function initOrderForm() {
-  const orderForm   = qs('#orderForm');
-  const orderStatus = qs('#orderStatus');
-  const modal       = qs('#license-warning');
-  const acceptBtn   = qs('#licenseAccept');
-  const cancelBtn   = qs('#licenseCancel');
-  if (!orderForm) return;
-
   // ne legyen natív navigáció – fetch küldi
   orderForm.setAttribute('action', 'javascript:void(0)');
 
@@ -504,12 +494,6 @@ function initConsent() {
   });
 }
 
-/* ---------- License modal ---------- */
-function initLicenseModal() {
-  const modal  = qs('#license-warning');
-  const ok     = qs('#licenseAccept');
-  const cancel = qs('#licenseCancel');
-  if (!modal || !ok || !cancel) return;
 
   // A tényleges megnyitást az Order submit flow intézi.
   ok.addEventListener('click', () => { /* submit flow kezeli */ });
