@@ -1805,28 +1805,28 @@ html.ua-ioswv .vinyl-tabs .tab {
   100% { box-shadow: 0 0 0 rgba(243,210,122,0); transform: scale(1); }
 }
 
-/* === EnZenem – Nyitási akció szaggatott, körbefutó arany keret (final) === */
+/* === EnZenem – Nyitási akció (lassabb + 3× nagyobb, final) === */
 
 #pricing .promo-banner {
   position: relative;
   display: inline-block;
-  margin: 12px auto 24px;
-  padding: 10px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  color: #fcefa3;
+  margin: 28px auto 36px;
+  padding: 28px 64px; /* 3× nagyobb */
+  border-radius: 18px;
+  font-size: 1.8em; /* nagyobb szöveg */
+  font-weight: 700;
+  color: #fff9c4;
   background: rgba(0, 0, 0, 0.8);
   overflow: hidden;
   border: 2px solid transparent;
-  box-shadow: 0 0 16px rgba(255,215,0,0.3);
+  box-shadow: 0 0 22px rgba(255,215,0,0.35);
 }
 
-/* --- csak a keret animált, belül nem mozog semmi --- */
 #pricing .promo-banner::before {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 12px;
+  border-radius: 18px;
   padding: 2px;
   background: repeating-linear-gradient(
     90deg,
@@ -1834,7 +1834,7 @@ html.ua-ioswv .vinyl-tabs .tab {
     transparent 8px 12px
   );
   background-size: 200% 100%;
-  animation: dashmove 2s linear infinite;
+  animation: dashmove 4s linear infinite; /* lassabb mozgás */
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -1850,7 +1850,7 @@ html.ua-ioswv .vinyl-tabs .tab {
 #pricing .promo-banner span {
   position: relative;
   z-index: 2;
-  text-shadow: 0 0 8px rgba(255,215,0,0.6);
+  text-shadow: 0 0 10px rgba(255,215,0,0.75);
 }
 
 /* === Árak formázás – Áthúzott régi ár (FIXED) === */
