@@ -1929,4 +1929,13 @@ html.ua-ioswv .vinyl-tabs .tab {
     animation: none !important;
   }
 }
+@supports (-webkit-touch-callout: none) {
+  .delivery-btn:active,
+  .video-panel button:active,
+  .gold-button:active {
+    background: rgba(255, 215, 0, 0.12);
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.25) inset;
+    transition: background 0.2s ease-out;
+  }
+}
 
