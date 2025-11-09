@@ -1872,3 +1872,26 @@ html.ua-ioswv .vinyl-tabs .tab {
   color: #ffd700;
   text-shadow: 0 0 6px rgba(255,215,0,0.5);
 }
+/* === [Samsung/WebView Fix] Tap feedback & active state === */
+
+* { -webkit-tap-highlight-color: rgba(255,215,0,0.25); }
+
+button,
+.gold-button,
+.package,
+.option-btn,
+.submit-btn {
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+button:active,
+.gold-button:active,
+.package:active,
+.option-btn:active,
+.submit-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 8px rgba(255,215,0,0.6) inset;
+  opacity: 0.9;
+}
