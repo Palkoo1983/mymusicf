@@ -286,9 +286,10 @@ export async function safeAppendOrderRow(order = {}) {
     // 🎨 Háttérszín a K (Kézbesítés) cellában CSAK a friss sorra
     try {
       const colorReqs = [];
-      const dl = (delivery || "").toLowerCase();
+      const dl = (delivery || "").toLowerCase().trim();
 
-      if (dl.includes("6 óra")) {
+      // pontos illesztés, nem részleges!
+      if (/^6\s*óra/.test(dl)) {
         // 🔴 piros (6 óra)
         colorReqs.push({
           repeatCell: {
@@ -297,23 +298,30 @@ export async function safeAppendOrderRow(order = {}) {
             fields: "userEnteredFormat.backgroundColor"
           }
         });
-      } else if (dl.includes("24 óra")) {
+      } else if (/^24\s*óra/.test(dl)) {
         // 🟠 narancs (24 óra)
         colorReqs.push({
           repeatCell: {
             range: { sheetId, startRowIndex: newRowIndex, endRowIndex: newRowIndex + 1, startColumnIndex: 10, endColumnIndex: 11 },
-            cell: { userEnteredFormat: { backgroundColor: { red: 1, green: 0.65, blue: 0 } } },
+            cell: { userEnteredFormat: { backgroundColor: { red: 1, green: 0.65, blue: 0.3 } } },
+            fields: "userEnteredFormat.backgroundColor"
+          }
+        });
+      } else {
+        // ⚪ alap (48 óra vagy egyéb)
+        colorReqs.push({
+          repeatCell: {
+            range: { sheetId, startRowIndex: newRowIndex, endRowIndex: newRowIndex + 1, startColumnIndex: 10, endColumnIndex: 11 },
+            cell: { userEnteredFormat: { backgroundColor: { red: 1, green: 1, blue: 1 } } },
             fields: "userEnteredFormat.backgroundColor"
           }
         });
       }
 
-      if (colorReqs.length > 0) {
-        await gs.spreadsheets.batchUpdate({
-          spreadsheetId: SHEET_ID,
-          requestBody: { requests: colorReqs }
-        });
-      }
+      await gs.spreadsheets.batchUpdate({
+        spreadsheetId: SHEET_ID,
+        requestBody: { requests: colorReqs }
+      });
     } catch (e) {
       console.warn("[COLOR warn]", e?.message || e);
     }
