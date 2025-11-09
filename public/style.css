@@ -1872,7 +1872,7 @@ html.ua-ioswv .vinyl-tabs .tab {
   color: #ffd700;
   text-shadow: 0 0 6px rgba(255,215,0,0.5);
 }
-/* === [Samsung/WebView Fix] Tap feedback + tartós aktív állapot (Golden Final) === */
+/* === [Samsung/WebView – Golden Hybrid Tap feedback] === */
 @supports (-webkit-touch-callout: none) {
   * { -webkit-tap-highlight-color: rgba(255,215,0,0.25); }
 
@@ -1891,7 +1891,7 @@ html.ua-ioswv .vinyl-tabs .tab {
     outline: none;
   }
 
-  /* 👆 azonnali “tap” fény minden gombon (2 s-ig) */
+  /* rövid, 2 mp-es arany “tap” fény minden gombon */
   button:active,
   .gold-button:active,
   .package:active,
@@ -1900,14 +1900,16 @@ html.ua-ioswv .vinyl-tabs .tab {
   .delivery-btn:active,
   .video-panel button:active {
     animation: holdActive 2s ease-out forwards;
+    transform: scale(0.98);
   }
 
   @keyframes holdActive {
-    0%   { box-shadow: 0 0 10px rgba(255,215,0,0.45) inset; }
+    0%   { box-shadow: 0 0 10px rgba(255,215,0,0.45) inset,
+                     0 0 12px rgba(255,215,0,0.25); }
     100% { box-shadow: 0 0 0 rgba(255,215,0,0); }
   }
 
-  /* 🌟 Tartós aktív állapot (.active class JS-ből) */
+  /* tartós kijelölés, ha JS-ből megkapja az .active osztályt */
   .delivery-btn.active,
   .video-panel button.active,
   button.play.active,
@@ -1922,20 +1924,11 @@ html.ua-ioswv .vinyl-tabs .tab {
     opacity: 1;
   }
 
-  /* ⚡ Ne villogjon, ha már aktív */
-  button.active:active,
-  .delivery-btn.active:active,
-  .video-panel button.active:active {
-    animation: none !important;
-  }
-}
-@supports (-webkit-touch-callout: none) {
+  /* kiegészítő halvány fátyol Samsung-hoz */
   .delivery-btn:active,
   .video-panel button:active,
   .gold-button:active {
-    background: rgba(255, 215, 0, 0.12);
-    box-shadow: 0 0 8px rgba(255, 215, 0, 0.25) inset;
-    transition: background 0.2s ease-out;
+    background: rgba(255,215,0,0.12);
+    box-shadow: 0 0 8px rgba(255,215,0,0.25) inset;
   }
 }
-
