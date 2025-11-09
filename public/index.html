@@ -383,14 +383,48 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 </div>
   </div>
 
- <script>
+<script>
   function playVideo() {
+    const frame = document.getElementById("videoFrame");
     const id = document.getElementById("videoSelect").value;
-    document.getElementById("videoFrame").src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+    const playBtn = document.querySelector('button[onclick="playVideo()"]');
+    const stopBtn = document.querySelector('button[onclick="stopVideo()"]');
+
+    playBtn.classList.add("active");
+    stopBtn.classList.remove("active");
+
+    const ua = navigator.userAgent.toLowerCase();
+    const isSamsungWebView = ua.includes('samsungbrowser') || ua.includes('wv');
+
+    if (isSamsungWebView) {
+      // Samsung / WebView – kis késleltetés a vizuális effekt megjelenéséhez
+      setTimeout(() => {
+        frame.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+      }, 120);
+    } else {
+      // minden más nézet: azonnal töltsön
+      frame.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+    }
   }
 
   function stopVideo() {
-    document.getElementById("videoFrame").src = "";
+    const frame = document.getElementById("videoFrame");
+    const playBtn = document.querySelector('button[onclick="playVideo()"]');
+    const stopBtn = document.querySelector('button[onclick="stopVideo()"]');
+
+    stopBtn.classList.add("active");
+    playBtn.classList.remove("active");
+
+    const ua = navigator.userAgent.toLowerCase();
+    const isSamsungWebView = ua.includes('samsungbrowser') || ua.includes('wv');
+
+    if (isSamsungWebView) {
+      setTimeout(() => {
+        frame.src = "";
+      }, 120);
+    } else {
+      frame.src = "";
+    }
   }
 
   /* Pozicionálás: félúton a lap teteje és a menüsáv alja között */
@@ -407,7 +441,6 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
         (ua.includes('samsungbrowser') || ua.includes('wv')) && !isMessenger
       );
       if (isSamsungWebView) {
-        // Ne számoljuk újra a pozíciót → hagyjuk a CSS alaphelyzetet
         panel.style.position = '';
         panel.style.top = '';
         panel.style.transform = '';
@@ -421,13 +454,11 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
       panel.style.top = desiredTop + 'px';
     }
 
-    // események
     window.addEventListener('load', place);
     window.addEventListener('resize', place);
     document.addEventListener('DOMContentLoaded', place);
   })();
 </script>
-
 
   <div class="bg-vinyl"></div>
 
