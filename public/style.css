@@ -1874,37 +1874,19 @@ html.ua-ioswv .vinyl-tabs .tab {
 }
 /* === [Samsung/WebView Final Visible Tap Feedback] === */
 @supports (-webkit-touch-callout: none) {
-  button,
-  .gold-button,
-  .package,
-  .option-btn,
-  .submit-btn,
-  .delivery-btn,
-  .video-panel button {
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-    touch-action: manipulation;
-    position: relative;
-    overflow: hidden;
+  .play-btn:active,
+  .stop-btn:active {
+    background: rgba(255,215,0,0.15);
+    box-shadow: 0 0 8px rgba(255,215,0,0.4) inset;
+    transition: background 0.15s ease;
   }
 
-  /* ✅ látható 2s tap-fény, még ha a gomb új DOM-ot is indít (pl. iframe) */
-  button:active::after,
-  .delivery-btn:active::after,
-  .video-panel button:active::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: rgba(255, 215, 0, 0.25);
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.6) inset;
-    animation: tapFlash 2s ease-out forwards;
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  @keyframes tapFlash {
-    0%   { opacity: 1; }
-    100% { opacity: 0; }
+  /* 🌟 Tartós fény Samsungon */
+  .play-btn.active,
+  .stop-btn.active {
+    background: rgba(212,175,55,0.3);
+    box-shadow:
+      0 0 12px rgba(255,215,0,0.6) inset,
+      0 0 12px rgba(255,215,0,0.3);
   }
 }
