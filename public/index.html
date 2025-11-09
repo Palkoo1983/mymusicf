@@ -1018,37 +1018,37 @@ if (/wv|samsungbrowser/i.test(navigator.userAgent)) {
 </script>
 
 <script>
-/* === EnZenem – Golden Tap Handler (Samsung/WebView kompatibilis) === */
+<script>
+/* === EnZenem – Golden Hybrid Tap Handler === */
 (function(){
-  // 1️⃣ Kézbesítési opciók: mindig csak egy aktív
-  document.querySelectorAll('.delivery-buttons').forEach(function(group){
-    group.addEventListener('click', function(e){
+  // 1️⃣ Kézbesítési gombok: mindig csak egy aktív
+  document.querySelectorAll('.delivery-buttons').forEach(group=>{
+    group.addEventListener('click', e=>{
       const btn = e.target.closest('.delivery-btn');
       if (!btn) return;
-      group.querySelectorAll('.delivery-btn.active').forEach(b => b.classList.remove('active'));
+      group.querySelectorAll('.delivery-btn.active').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
     });
   });
 
-  // 2️⃣ Lejátszás / Megállít gombok: kizárólagos aktív kijelölés
+  // 2️⃣ Lejátszás / Megállít: kizárólagos aktív kijelölés
   const playBtn = document.querySelector('.video-panel button[onclick*="playVideo"]');
   const stopBtn = document.querySelector('.video-panel button[onclick*="stopVideo"]');
   if (playBtn && stopBtn) {
-    playBtn.addEventListener('click', () => {
+    playBtn.addEventListener('click', ()=>{
       playBtn.classList.add('active');
       stopBtn.classList.remove('active');
     });
-    stopBtn.addEventListener('click', () => {
+    stopBtn.addEventListener('click', ()=>{
       stopBtn.classList.add('active');
       playBtn.classList.remove('active');
     });
   }
 
-  // 3️⃣ Alapértelmezett: a 48 órás kézbesítés legyen aktív betöltéskor
+  // 3️⃣ Alapértelmezett: a 48 órás kézbesítés aktív induláskor
   const def = document.querySelector('.delivery-buttons .delivery-btn[data-extra="0"]');
   if (def && !def.classList.contains('active')) def.classList.add('active');
 })();
 </script>
 </body>
 </html>
-
