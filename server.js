@@ -604,11 +604,11 @@ lyrics = lyrics.replace(/\b([12]?\d{3})([-–]?(?:ban|ben|as|es|os|ös|ik|tól|t
 lyrics = lyrics.replace(/(?<!Verse\s|Chorus\s)\b\d{1,3}\b/g, n => numToHungarian(parseInt(n, 10)));
 
 
-
 // --- UNIVERSAL NORMALIZE GENRES (HU → EN) ---
 function normalizeGenre(g) {
   if (!g) return '';
   return g.toLowerCase()
+    // Alapműfajok
     .replace(/\bmagyar népdal\b/g, 'hungarian folk')
     .replace(/\bnépdal\b/g, 'folk')
     .replace(/\bpop(zene)?\b/g, 'pop')
@@ -618,90 +618,117 @@ function normalizeGenre(g) {
     .replace(/\btechno\b/g, 'techno')
     .replace(/\bhouse\b/g, 'house')
     .replace(/\btrance\b/g, 'trance')
-    .replace(/\bgoa\b/g, 'goa')
-    .replace(/\bdnb\b/g, 'drum and bass')
     .replace(/\bdrum(?!mer)\b/g, 'drum and bass')
     .replace(/\brap(p)?\b/g, 'rap')
-    .replace(/\bhip[\s-]?hop\b/g, 'hip hop')
     .replace(/\br[&\s]?b\b/g, 'r&b')
-    .replace(/\bblues\b/g, 'blues')
-    .replace(/\bjazz\b/g, 'jazz')
-    .replace(/\breggae\b/g, 'reggae')
-    .replace(/\bklasszikus(zene)?\b/g, 'classical')
-    .replace(/\bkomolyzene\b/g, 'classical')
+    .replace(/\belektronikus(zene)?\b/g, 'electronic')
+    // Különleges magyar variációk
+    .replace(/\bminimal techno\b/g, 'minimal techno')
+    .replace(/\bmodern elektronikus\b/g, 'modern electronic')
+    .replace(/\bromantikus pop\b/g, 'romantic pop')
+    .replace(/\blírai ballada\b/g, 'lyrical ballad')
+    .replace(/\blírai\b/g, 'poetic')
+    .replace(/\bgyerekdal\b/g, 'children song')
+    .replace(/\bünnepi akusztikus\b/g, 'holiday acoustic')
+    .replace(/\bkarácsonyi pop\b/g, 'christmas pop')
+    // Hangulatok
+    .replace(/\bmelankolikus\b/g, 'melancholic')
+    .replace(/\bérzelmes\b/g, 'emotional')
+    .replace(/\bromantikus\b/g, 'romantic')
+    .replace(/\bvid[aá]m\b/g, 'happy')
+    .replace(/\bszomor[úu]\b/g, 'sad')
+    .replace(/\blass[uú]\b/g, 'slow')
+    .replace(/\bgyors\b/g, 'fast')
+    // Hangszerek
     .replace(/\bzongora\b/g, 'piano')
     .replace(/\bheged[űu]\b/g, 'violin')
     .replace(/\bgit[aá]r\b/g, 'guitar')
     .replace(/\bdob(ok)?\b/g, 'drum')
     .replace(/\bfuvola\b/g, 'flute')
     .replace(/\bcsell[oó]\b/g, 'cello')
-    .replace(/\bmelankolikus\b/g, 'melancholic')
-    .replace(/\bérzelmes\b/g, 'emotional')
-    .replace(/\bkölt[oő]i\b/g, 'poetic')
-    .replace(/\bromantikus\b/g, 'romantic')
-    .replace(/\bvid[aá]m\b/g, 'happy')
-    .replace(/\bszomor[úu]\b/g, 'sad')
-    .replace(/\blass[uú]\b/g, 'slow')
-    .replace(/\bgyors\b/g, 'fast')
-    .replace(/\bhangszeres\b/g, 'instrumental')
     .replace(/\bvok[aá]l(os)?\b/g, 'vocal')
     .replace(/\bt[áa]nczene\b/g, 'dance')
-    .replace(/\belektronikus(zene)?\b/g, 'electronic')
+    // Egyéb
+    .replace(/\bklasszikus(zene)?\b/g, 'classical')
+    .replace(/\bkomolyzene\b/g, 'classical')
     .replace(/\bambient\b/g, 'ambient')
     .replace(/\bfilmzene\b/g, 'soundtrack')
-    .replace(/\bszintetiz[aá]tor\b/g, 'synth')
     .replace(/\bfolklo[ó]r\b/g, 'folk')
+    .replace(/\bünnepi\b/g, 'holiday')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-    // Végső stílus Suno-hoz: védd a kliens által kért műfajokat + vokál tag
-    function buildStyleEN(client, vocalNorm, styleEN){
-      const protectedGenres = new Set([
-  'rap','hip hop','hip-hop','folk','violin','piano',
-  'minimal techno','pop','rock','house','techno','trance','drum and bass',
-  'r&b','rnb','soul','funk','jazz','blues','edm','electronic','ambient',
-  'lo-fi','lofi','metal','punk','indie','country','reggaeton','reggae',
-  'synthwave','vaporwave','trap','drill','hardstyle','progressive house',
-  'deep house','electro house','future bass','dubstep','garage',
-  'uk garage','breakbeat','phonk','k-pop','kpop','modern pop','emotional',
-  'poetic','drum','cello','flute','hungarian folk','guitar'
-]);
+// --- BUILD STYLE (CLIENT → SUNO, HU → EN) ---
+function buildStyleEN(client, vocalNorm, styleEN) {
+  const protectedGenres = new Set([
+    'rap','hip hop','folk','violin','piano','guitar',
+    'minimal techno','pop','rock','house','techno','trance','drum and bass',
+    'r&b','soul','funk','jazz','blues','edm','electronic','ambient',
+    'metal','punk','indie','country','reggaeton','reggae',
+    'synthwave','trap','progressive house','deep house','electro house',
+    'modern pop','romantic','poetic','lyrical','holiday acoustic','children song'
+  ]);
 
-    const base = (styleEN||'').split(/[,\|\/]+/).map(s => normalizeGenre(s)).filter(Boolean);
-    const cli  = (client||'').split(/[,\|\/]+/).map(s => normalizeGenre(s)).filter(Boolean);
+  // Alap szétbontás
+  const base = (styleEN || '').split(/[,\|\/]+/).map(s => normalizeGenre(s)).filter(Boolean);
+  const cli  = (client || '').split(/[,\|\/]+/).map(s => normalizeGenre(s)).filter(Boolean);
 
-      const out = []; const seen = new Set();
-      for(const g of cli){ if (protectedGenres.has(g) && !seen.has(g)){ out.push(g); seen.add(g); } }
-      let addedMood = 0;
-      for(const tag of base){
-        if (!protectedGenres.has(tag) && !seen.has(tag) && addedMood < 2){ out.push(tag); seen.add(tag); addedMood++; }
-      }
-      let vt = '';
-      switch (String(vocalNorm||'').toLowerCase()){
-        case 'male': vt = 'male vocals'; break;
-        case 'female': vt = 'female vocals'; break;
-        case 'duet': vt = 'male and female vocals'; break;
-        case 'child': vt = 'child vocal'; break;
-        case 'robot': vt = 'synthetic/robotic female vocal (vocoder, AI-like, crystal)'; break;
-        default: vt = '';
-      }
-      if (vt && !seen.has(vt)) out.push(vt);
-      return out.join(', ');
+  // 🧠 Egyesített, ismétlődésmentes lista (ez a korábbi all)
+  const all = [...new Set([...base, ...cli, vocalNorm].filter(Boolean))];
+
+  const out = [];
+  const seen = new Set();
+
+  // 1️⃣ Csak biztos (Suno által ismert) műfajok
+  for (const g of cli) {
+    if (protectedGenres.has(g) && !seen.has(g)) {
+      out.push(g);
+      seen.add(g);
     }
-    const styleFinal = buildStyleEN(styles, vocal, gptStyle);
-    function normalizeSectionHeadingsSafeStrict(text) {
+  }
+
+  // 2️⃣ GPT hangulat / extra tagok (max. 2)
+  let addedMood = 0;
+  for (const tag of base) {
+    if (!protectedGenres.has(tag) && !seen.has(tag) && addedMood < 2) {
+      out.push(tag);
+      seen.add(tag);
+      addedMood++;
+    }
+  }
+
+  // 3️⃣ Ének típusok
+  let vt = '';
+  switch (String(vocalNorm || '').toLowerCase()) {
+    case 'male': vt = 'male vocals'; break;
+    case 'female': vt = 'female vocals'; break;
+    case 'duet': vt = 'male and female vocals'; break;
+    case 'child': vt = 'child vocal'; break;
+    case 'robot': vt = 'synthetic/robotic female vocal (vocoder, AI-like, crystal)'; break;
+    default: vt = '';
+  }
+  if (vt && !seen.has(vt)) out.push(vt);
+
+  // 4️⃣ Fallback – ha semmit sem ismert fel, legalább pop legyen
+  return out.length ? out.join(', ') : 'pop';
+}
+
+// === STYLE FINAL ===
+const styleFinal = buildStyleEN(styles, vocal, gptStyle);
+// 4️⃣ Dalszöveg szakaszcímek normalizálása
+function normalizeSectionHeadingsSafeStrict(text) {
   if (!text) return text;
   let t = String(text);
 
-  // 1) Magyar → angol alapformák (még zárójel nélkül)
+  // Magyar → angol
   t = t.replace(/^\s*\(?\s*(Vers|Verze)\s*0*([1-4])\s*\)?\s*:?\s*$/gmi, (_m, _v, n) => `Verse ${n}`);
   t = t.replace(/^\s*\(?\s*Refr[eé]n\s*\)?\s*:?\s*$/gmi, 'Chorus');
 
-  // 2) MINDEN NEM KELLŐ SZAKASZCÍM (Bridge/Híd/Intro/Outro/Interlude) TÖRLÉSE
+  // Nem kellő címek eltávolítása
   t = t.replace(/^\s*\(?\s*(H[ií]d|Bridge|Intro|Outro|Interlude)\s*\)?\s*:?\s*$/gmi, '');
 
-  // 3) Angol címsorok normalizálása és zárójelezése
+  // Angol címek egységesítése
   t = t.replace(/^\s*(?:\(\s*)?(Verse\s+[1-4]|Chorus)(?:\s*\))?\s*:?\s*$/gmi, (_m, h) => `(${h})`);
 
   return t.trim();
