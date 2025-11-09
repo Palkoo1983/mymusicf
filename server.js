@@ -680,13 +680,13 @@ function buildStyleEN(client, vocalNorm, styleEN) {
   const out = [];
   const seen = new Set();
 
-  // 1️⃣ Csak biztos (Suno által ismert) műfajok
-  for (const g of cli) {
-    if (protectedGenres.has(g) && !seen.has(g)) {
-      out.push(g);
-      seen.add(g);
-    }
+ // 1️⃣ Minden ügyfél által megadott műfajt engedünk (nincs szűrés)
+for (const g of cli) {
+  if (!seen.has(g)) {
+    out.push(g);
+    seen.add(g);
   }
+}
 
   // 2️⃣ GPT hangulat / extra tagok (max. 2)
   let addedMood = 0;
