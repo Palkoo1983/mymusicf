@@ -10,51 +10,25 @@
     position: relative;
     aspect-ratio: 16 / 9;
     overflow: hidden;
-    max-width: 100%;
+    max-width: 560px;
+    margin: 12px auto;
     border-radius: 12px;
     box-shadow: 0 0 12px rgba(0,0,0,0.4);
-    cursor: pointer;
   }
-  .video-wrapper img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-  .play-btn {
+
+  .video-wrapper iframe {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0,0,0,0.6);
-    border-radius: 50%;
-    padding: 16px 20px;
-    font-size: 32px;
-    color: white;
-    transition: background 0.2s;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
   }
-  .play-btn:hover { background: rgba(0,0,0,0.8); }
+
   @media (max-width: 600px) {
     .video-wrapper { max-width: 100%; }
   }
 </style>
-
-<script>
-  document.querySelectorAll('.video-wrapper').forEach(wrapper => {
-    wrapper.addEventListener('click', () => {
-      const id = wrapper.getAttribute('data-video');
-      const iframe = document.createElement('iframe');
-      iframe.src = `https://www.youtube.com/embed/${id}?vq=hd720&autoplay=1`;
-      iframe.title = 'EnZenem video';
-      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-      iframe.allowFullscreen = true;
-      iframe.style.width = '100%';
-      iframe.style.height = '100%';
-      iframe.style.border = '0';
-      wrapper.innerHTML = '';
-      wrapper.appendChild(iframe);
-    });
-  });
-</script>
 
 <style>
   html, body {
@@ -500,11 +474,18 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     Minden dal a te történetedből születik – érzelemmel, pont úgy, ahogy megélted és olyan stílusban, amilyenben csak szeretnéd!
   </p>
 
-  <div class="intro-video">
-  <h3 class="gold-text">Nézd meg, milyen hatást váltott ki egy saját dalom, amit anyukámnak írtam:</h3>
-  <div class="video-wrapper" data-video="is7Ru0dIT6M">
-    <img src="https://img.youtube.com/vi/is7Ru0dIT6M/hqdefault.jpg" alt="EnZenem – ügyfélvideó">
-    <div class="play-btn">▶</div>
+ <div class="intro-video">
+  <h3 class="gold-text">
+    Nézd meg, milyen hatást váltott ki egy saját dalom, amit anyukámnak írtam:
+  </h3>
+  <div class="video-wrapper">
+    <iframe
+      src="https://www.youtube.com/embed/is7Ru0dIT6M?vq=hd720"
+      title="EnZenem – ügyfélvideó"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+      loading="lazy">
+    </iframe>
   </div>
 </div>
 
@@ -578,10 +559,17 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   </div>
   
 <div class="intro-video">
-  <h3 class="gold-text">Nézd meg a robot-narrációs oktatóvideót a stílus és leírás mezők használatáról:</h3>
-  <div class="video-wrapper" data-video="fmuopFfaN1Y">
-    <img src="https://img.youtube.com/vi/fmuopFfaN1Y/hqdefault.jpg" alt="EnZenem – oktatóvideó (robot narráció)">
-    <div class="play-btn">▶</div>
+  <h3 class="gold-text">
+    Nézd meg a robot-narrációs oktatóvideót a stílus és leírás mezők használatáról:
+  </h3>
+  <div class="video-wrapper">
+    <iframe
+      src="https://www.youtube.com/embed/fmuopFfaN1Y?vq=hd720"
+      title="EnZenem – oktatóvideó (robot narráció)"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+      loading="lazy">
+    </iframe>
   </div>
 </div>
 
