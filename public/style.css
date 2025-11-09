@@ -1805,7 +1805,8 @@ html.ua-ioswv .vinyl-tabs .tab {
   100% { box-shadow: 0 0 0 rgba(243,210,122,0); transform: scale(1); }
 }
 
-/* === EnZenem – Nyitási akció fénykeret (Golden Neon – FIXED) === */
+/* === EnZenem – Nyitási akció szaggatott, körbefutó arany keret (final) === */
+
 #pricing .promo-banner {
   position: relative;
   display: inline-block;
@@ -1814,26 +1815,37 @@ html.ua-ioswv .vinyl-tabs .tab {
   border-radius: 12px;
   font-weight: 600;
   color: #fcefa3;
-  background: rgba(0, 0, 0, 0.75);
-  border: 2px solid #ffd700;
-  box-shadow: 0 0 16px rgba(255,215,0,0.3);
+  background: rgba(0, 0, 0, 0.8);
   overflow: hidden;
+  border: 2px solid transparent;
+  box-shadow: 0 0 16px rgba(255,215,0,0.3);
 }
 
+/* --- csak a keret animált, belül nem mozog semmi --- */
 #pricing .promo-banner::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: 12px;
-  border: 2px solid transparent;
-  background: conic-gradient(from 0deg, #ffd700, #fff6bf, #ffd700, #fff6bf);
-  animation: neonloop 8s linear infinite;
-  opacity: 0.9;
+  padding: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    #ffd700 0 8px,
+    transparent 8px 12px
+  );
+  background-size: 200% 100%;
+  animation: dashmove 2s linear infinite;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
   z-index: 0;
-  filter: blur(1px);
 }
 
-@keyframes neonloop { to { transform: rotate(1turn); } }
+@keyframes dashmove {
+  to { background-position: -200% 0; }
+}
 
 #pricing .promo-banner span {
   position: relative;
