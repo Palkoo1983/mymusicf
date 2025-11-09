@@ -240,8 +240,7 @@ async function ensureHeaderFreezeCF(title) {
   }
 }
 
-
-/** Fő: napi fül biztosítása + fejléc + freeze + CF + APPEND A2-től (A–J) */
+/** Fő: napi fül biztosítása + fejléc + freeze + CF + APPEND A2-től (A–K) */
 export async function safeAppendOrderRow(order = {}) {
   try {
     const gs = sheets();
@@ -268,7 +267,7 @@ export async function safeAppendOrderRow(order = {}) {
     ]];
 
     // ⬇️ új sor felvitele a napi lapra
-    await gs.spreadsheets.values.append({
+    const appendRes = await gs.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
       range: `${title}!A2`,
       valueInputOption: "USER_ENTERED",
@@ -276,7 +275,15 @@ export async function safeAppendOrderRow(order = {}) {
       requestBody: { values, majorDimension: "ROWS" }
     });
 
-    // 🎨 Háttérszín a K (Kézbesítés) oszlopban
+    // 📍 új sor indexének meghatározása
+    const updates = appendRes.data.updates;
+    let newRowIndex = 1; // alap: második sor (index 1)
+    if (updates && updates.updatedRange) {
+      const m = updates.updatedRange.match(/![A-Z]+(\d+)/);
+      if (m) newRowIndex = parseInt(m[1], 10) - 1; // Sheets API 0-indexelt
+    }
+
+    // 🎨 Háttérszín a K (Kézbesítés) cellában CSAK a friss sorra
     try {
       const colorReqs = [];
       const dl = (delivery || "").toLowerCase();
@@ -285,7 +292,7 @@ export async function safeAppendOrderRow(order = {}) {
         // 🔴 piros (6 óra)
         colorReqs.push({
           repeatCell: {
-            range: { sheetId, startColumnIndex: 10, endColumnIndex: 11 },
+            range: { sheetId, startRowIndex: newRowIndex, endRowIndex: newRowIndex + 1, startColumnIndex: 10, endColumnIndex: 11 },
             cell: { userEnteredFormat: { backgroundColor: { red: 1, green: 0.4, blue: 0.4 } } },
             fields: "userEnteredFormat.backgroundColor"
           }
@@ -294,7 +301,7 @@ export async function safeAppendOrderRow(order = {}) {
         // 🟠 narancs (24 óra)
         colorReqs.push({
           repeatCell: {
-            range: { sheetId, startColumnIndex: 10, endColumnIndex: 11 },
+            range: { sheetId, startRowIndex: newRowIndex, endRowIndex: newRowIndex + 1, startColumnIndex: 10, endColumnIndex: 11 },
             cell: { userEnteredFormat: { backgroundColor: { red: 1, green: 0.65, blue: 0 } } },
             fields: "userEnteredFormat.backgroundColor"
           }
@@ -321,4 +328,3 @@ export async function safeAppendOrderRow(order = {}) {
 export async function appendOrderRow(o = {}) {
   return safeAppendOrderRow(o);
 }
-
