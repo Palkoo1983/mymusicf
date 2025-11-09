@@ -1794,7 +1794,7 @@ html.ua-ioswv .vinyl-tabs .tab {
      font-size: inherit !important;
      font-weight: 700 !important;
   }
-}
+} 
 /* === Megrendelés-gomb árfrissítés animáció === */
 .primary.price-update {
   animation: glowPrice 0.6s ease-in-out;
@@ -1804,109 +1804,29 @@ html.ua-ioswv .vinyl-tabs .tab {
   40%  { box-shadow: 0 0 12px rgba(243,210,122,.7); transform: scale(1.03); }
   100% { box-shadow: 0 0 0 rgba(243,210,122,0); transform: scale(1); }
 }
-/* === EnZenem – Nyitási Akció design upgrade (Golden Pulse Frame) === */
 
-#pricing .card.package {
+/* === EnZenem – Nyitási akció fénykeret (Golden Neon, v2 – lassított) === */
+
+#pricing .promo-banner {
   position: relative;
-  border: 2px solid #c8a74b; /* alap arany keret */
-  border-radius: 16px;
+  display: inline-block;
+  margin: 12px auto 24px;
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  color: #fcefa3;
+  background: rgba(0, 0, 0, 0.75);
+  border: 2px solid transparent;
+  box-shadow: 0 0 14px rgba(255,215,0,0.25);
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.65);
-  transition: all 0.3s ease;
-  cursor: pointer;
 }
 
-#pricing .card.package:hover {
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
-  transform: translateY(-4px);
-}
-
-/* --- pulzáló fénykeret animáció --- */
-#pricing .card.package::before {
+#pricing .promo-banner::before {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 2px;
-  background: conic-gradient(
-    from 0deg,
-    rgba(255, 215, 0, 0.9),
-    rgba(255, 255, 255, 0.3),
-    rgba(255, 215, 0, 0.9),
-    rgba(255, 255, 255, 0.3)
-  );
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  -webkit-mask-composite: destination-out;
-  animation: spinlight 4s linear infinite;
-  z-index: 0;
-}
-
-@keyframes spinlight {
-  to {
-    transform: rotate(1turn);
-  }
-}
-
-/* --- tartalom felette --- */
-#pricing .card.package > * {
-  position: relative;
-  z-index: 1;
-}
-
-/* --- áthúzott régi ár --- */
-#pricing .old-price {
-  text-decoration: line-through;
-  text-decoration-thickness: 2px;
-  color: #ff8080; /* halvány pirosas árnyalat */
-  opacity: 0.85;
-  margin-right: 6px;
-}
-
-/* --- új ár kiemelve --- */
-#pricing .new-price {
-  font-size: 1.3em;
-  font-weight: bold;
-  color: #ffd700; /* erős arany */
-  text-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
-}
-
-/* --- promó megjegyzés finoman villog --- */
-#pricing .promo-note {
-  display: inline-block;
-  margin-top: 4px;
-  font-size: 0.85em;
-  animation: pulseText 2s ease-in-out infinite;
-}
-
-@keyframes pulseText {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; color: #ffe680; }
-}
-/* === EnZenem.hu – Árak & Csomagok Golden Frame (fix, mobil untouched) === */
-
-#pricing .card.package {
-  position: relative;
-  border: 2px solid #d4af37;
-  border-radius: 18px;
-  background: rgba(0, 0, 0, 0.68);
-  box-shadow: 0 0 8px rgba(212,175,55,0.25);
-  transition: all 0.35s ease;
-  overflow: visible;
-}
-
-#pricing .card.package:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 0 22px rgba(255,215,0,0.45);
-}
-
-/* --- külső fénykeret --- */
-#pricing .card.package::before {
-  content: "";
-  position: absolute;
-  top: -3px; left: -3px; right: -3px; bottom: -3px;
-  border-radius: 20px;
   background: conic-gradient(
     from 0deg,
     #ffd700,
@@ -1915,44 +1835,39 @@ html.ua-ioswv .vinyl-tabs .tab {
     #fff6bf,
     #ffd700
   );
-  animation: spinlight 8s linear infinite;
-  z-index: 0;
-  filter: blur(1px);
-  opacity: 0.6;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: destination-out;
+  animation: neonloop 8s linear infinite;
+  opacity: 0.9;
+  z-index: 1;
 }
-@keyframes spinlight { to { transform: rotate(1turn); } }
 
-#pricing .card.package > * {
+@keyframes neonloop {
+  to { transform: rotate(1turn); }
+}
+
+#pricing .promo-banner span {
   position: relative;
   z-index: 2;
+  text-shadow: 0 0 8px rgba(255,215,0,0.6);
 }
+/* === EnZenem – Árak formázás (áthúzás + kiemelés) === */
 
-/* --- árformázás --- */
 #pricing .old-price {
-  display: inline-block;
   text-decoration: line-through;
   text-decoration-thickness: 2px;
-  color: #ff9e9e;
+  color: #ff6b6b; /* halvány piros árnyalat */
   opacity: 0.85;
-  margin-right: 4px;
+  margin-right: 6px;
 }
 
 #pricing .new-price {
-  display: inline-block;
-  font-size: 1.35em;
+  font-size: 1.3em;
   font-weight: 700;
-  color: #ffd700;
-  text-shadow: 0 0 6px rgba(255,215,0,0.55);
+  color: #ffd700; /* arany */
+  text-shadow: 0 0 6px rgba(255,215,0,0.5);
 }
 
-#pricing .promo-note {
-  display: block;
-  font-size: 0.9em;
-  margin-top: 6px;
-  color: #fcefa3;
-  animation: pulseNote 2s ease-in-out infinite;
-}
-@keyframes pulseNote {
-  0%,100% { opacity: 0.7; }
-  50%     { opacity: 1; color: #fff5bf; }
-}
+
