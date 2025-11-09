@@ -256,19 +256,18 @@ export async function safeAppendOrderRow(order = {}) {
     }
 
     const {
-  email = "", styles = "", vocal = "", language = "hu",
-  brief = "", lyrics = "", link1 = "", link2 = "", format = "",
-  delivery = ""                            // ⬅️ ÚJ
-} = order;
+      email = "", styles = "", vocal = "", language = "hu",
+      brief = "", lyrics = "", link1 = "", link2 = "", format = "",
+      delivery = ""
+    } = order;
 
-const values = [[
-  iso, email, styles, vocal, language, brief, lyrics, link1, link2,
-  (format || "").toLowerCase(),
-  delivery                                  // ⬅️ ÚJ – (K) oszlop
-]];
+    const values = [[
+      iso, email, styles, vocal, language, brief, lyrics, link1, link2,
+      (format || "").toLowerCase(),
+      delivery
+    ]];
 
-
-    // KULCS: mindig A2-től append → fejléc sosem tolódik, sor A–J-be megy
+    // ⬇️ új sor felvitele a napi lapra
     await gs.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
       range: `${title}!A2`,
@@ -277,6 +276,41 @@ const values = [[
       requestBody: { values, majorDimension: "ROWS" }
     });
 
+    // 🎨 Háttérszín a K (Kézbesítés) oszlopban
+    try {
+      const colorReqs = [];
+      const dl = (delivery || "").toLowerCase();
+
+      if (dl.includes("6 óra")) {
+        // 🔴 piros (6 óra)
+        colorReqs.push({
+          repeatCell: {
+            range: { sheetId, startColumnIndex: 10, endColumnIndex: 11 },
+            cell: { userEnteredFormat: { backgroundColor: { red: 1, green: 0.4, blue: 0.4 } } },
+            fields: "userEnteredFormat.backgroundColor"
+          }
+        });
+      } else if (dl.includes("24 óra")) {
+        // 🟠 narancs (24 óra)
+        colorReqs.push({
+          repeatCell: {
+            range: { sheetId, startColumnIndex: 10, endColumnIndex: 11 },
+            cell: { userEnteredFormat: { backgroundColor: { red: 1, green: 0.65, blue: 0 } } },
+            fields: "userEnteredFormat.backgroundColor"
+          }
+        });
+      }
+
+      if (colorReqs.length > 0) {
+        await gs.spreadsheets.batchUpdate({
+          spreadsheetId: SHEET_ID,
+          requestBody: { requests: colorReqs }
+        });
+      }
+    } catch (e) {
+      console.warn("[COLOR warn]", e?.message || e);
+    }
+
     console.log("[SHEET OK]", title, email);
   } catch (e) {
     console.error("[SHEET ERR]", e?.message || e);
@@ -284,4 +318,7 @@ const values = [[
 }
 
 // kompatibilitás
-export async function appendOrderRow(o = {}) { return safeAppendOrderRow(o); }
+export async function appendOrderRow(o = {}) {
+  return safeAppendOrderRow(o);
+}
+
