@@ -378,54 +378,56 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     </select>
     <iframe id="videoFrame" src="https://www.youtube.com/embed/2RY5bwiSR00" allow="autoplay; encrypted-media" allowfullscreen></iframe>
     <div style="display:flex; gap:8px; justify-content:space-between;">
-    <button onclick="playVideo()"><span class="gold-text">Lejátszás</span></button>
-    <button onclick="stopVideo()"><span class="gold-text">Megállít</span></button>
+   <button class="play-btn" onclick="playVideo(this)"><span class="gold-text">Lejátszás</span></button>
+   <button class="stop-btn" onclick="stopVideo(this)"><span class="gold-text">Megállít</span></button>
+
 </div>
   </div>
-
 <script>
-  function playVideo() {
-    const frame = document.getElementById("videoFrame");
-    const id = document.getElementById("videoSelect").value;
-    const playBtn = document.querySelector('button[onclick="playVideo()"]');
-    const stopBtn = document.querySelector('button[onclick="stopVideo()"]');
+function playVideo(btn) {
+  const frame = document.getElementById("videoFrame");
+  const id = document.getElementById("videoSelect").value;
+  const stopBtn = document.querySelector(".stop-btn");
 
-    playBtn.classList.add("active");
-    stopBtn.classList.remove("active");
+  // vizuális visszajelzés
+  btn.classList.add("active");
+  stopBtn.classList.remove("active");
 
-    const ua = navigator.userAgent.toLowerCase();
-    const isSamsungWebView = ua.includes('samsungbrowser') || ua.includes('wv');
+  const ua = navigator.userAgent.toLowerCase();
+  const isSamsungWebView = ua.includes("samsungbrowser") || ua.includes("wv");
 
-    if (isSamsungWebView) {
-      // Samsung / WebView – kis késleltetés a vizuális effekt megjelenéséhez
-      setTimeout(() => {
-        frame.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
-      }, 120);
-    } else {
-      // minden más nézet: azonnal töltsön
+  if (isSamsungWebView) {
+    // rövid villanás után indul
+    btn.classList.add("pressed");
+    setTimeout(() => {
       frame.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
-    }
+      btn.classList.remove("pressed");
+    }, 150);
+  } else {
+    frame.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
   }
+}
 
-  function stopVideo() {
-    const frame = document.getElementById("videoFrame");
-    const playBtn = document.querySelector('button[onclick="playVideo()"]');
-    const stopBtn = document.querySelector('button[onclick="stopVideo()"]');
+function stopVideo(btn) {
+  const frame = document.getElementById("videoFrame");
+  const playBtn = document.querySelector(".play-btn");
 
-    stopBtn.classList.add("active");
-    playBtn.classList.remove("active");
+  btn.classList.add("active");
+  playBtn.classList.remove("active");
 
-    const ua = navigator.userAgent.toLowerCase();
-    const isSamsungWebView = ua.includes('samsungbrowser') || ua.includes('wv');
+  const ua = navigator.userAgent.toLowerCase();
+  const isSamsungWebView = ua.includes("samsungbrowser") || ua.includes("wv");
 
-    if (isSamsungWebView) {
-      setTimeout(() => {
-        frame.src = "";
-      }, 120);
-    } else {
+  if (isSamsungWebView) {
+    btn.classList.add("pressed");
+    setTimeout(() => {
       frame.src = "";
-    }
+      btn.classList.remove("pressed");
+    }, 150);
+  } else {
+    frame.src = "";
   }
+}
 
   /* Pozicionálás: félúton a lap teteje és a menüsáv alja között */
   (function positionVideoPanel() {
