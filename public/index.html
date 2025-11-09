@@ -10,8 +10,7 @@
     position: relative;
     aspect-ratio: 16 / 9;
     overflow: hidden;
-    max-width: 560px;
-    margin: 12px auto;
+    max-width: 100%;
     border-radius: 12px;
     box-shadow: 0 0 12px rgba(0,0,0,0.4);
   }
@@ -22,14 +21,8 @@
     left: 0;
     width: 100%;
     height: 100%;
-    border: 0;
-  }
-
-  @media (max-width: 600px) {
-    .video-wrapper { max-width: 100%; }
   }
 </style>
-
 
 <style>
   html, body {
@@ -476,13 +469,12 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   </p>
 
  <div class="intro-video">
-  <h3 class="gold-text">
-    Nézd meg, milyen hatást váltott ki egy saját dalom, amit anyukámnak írtam:
-  </h3>
-  <div class="video-wrapper">
-    <iframe
+  <h3 class="gold-text">Nézd meg, milyen hatást váltott ki egy saját dalom, amit anyukámnak írtam:</h3>
+  <div class="video-wrapper" style="max-width:560px;margin:12px auto;border-radius:12px;overflow:hidden;box-shadow:0 0 12px rgba(0,0,0,0.4);">
+    <iframe width="560" height="315"
       src="https://www.youtube.com/embed/is7Ru0dIT6M?vq=hd720"
       title="EnZenem – ügyfélvideó"
+      frameborder="0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowfullscreen>
     </iframe>
@@ -559,13 +551,12 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   </div>
   
 <div class="intro-video">
-  <h3 class="gold-text">
-    Nézd meg a robot-narrációs oktatóvideót a stílus és leírás mezők használatáról:
-  </h3>
-  <div class="video-wrapper">
-    <iframe
+  <h3 class="gold-text">Nézd meg a robot-narrációs oktatóvideót a stílus és leírás mezők használatáról:</h3>
+  <div class="video-wrapper" style="max-width:560px;margin:12px auto;border-radius:12px;overflow:hidden;box-shadow:0 0 12px rgba(0,0,0,0.4);">
+    <iframe width="560" height="315"
       src="https://www.youtube.com/embed/fmuopFfaN1Y?vq=hd720"
       title="EnZenem – oktatóvideó (robot narráció)"
+      frameborder="0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowfullscreen>
     </iframe>
