@@ -13,16 +13,48 @@
     max-width: 100%;
     border-radius: 12px;
     box-shadow: 0 0 12px rgba(0,0,0,0.4);
+    cursor: pointer;
   }
-
-  .video-wrapper iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
+  .video-wrapper img {
     width: 100%;
-    height: 100%;
+    height: auto;
+    display: block;
+  }
+  .play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.6);
+    border-radius: 50%;
+    padding: 16px 20px;
+    font-size: 32px;
+    color: white;
+    transition: background 0.2s;
+  }
+  .play-btn:hover { background: rgba(0,0,0,0.8); }
+  @media (max-width: 600px) {
+    .video-wrapper { max-width: 100%; }
   }
 </style>
+
+<script>
+  document.querySelectorAll('.video-wrapper').forEach(wrapper => {
+    wrapper.addEventListener('click', () => {
+      const id = wrapper.getAttribute('data-video');
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://www.youtube.com/embed/${id}?vq=hd720&autoplay=1`;
+      iframe.title = 'EnZenem video';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      iframe.allowFullscreen = true;
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = '0';
+      wrapper.innerHTML = '';
+      wrapper.appendChild(iframe);
+    });
+  });
+</script>
 
 <style>
   html, body {
@@ -469,14 +501,12 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   </p>
 
   <div class="intro-video">
-    <h3 class="gold-text">Nézd meg, milyen hatást váltott ki egy saját dalom, amit anyukámnak írtam:</h3>
-    <div class="video-wrapper" style="max-width:560px;margin:12px auto;border-radius:12px;overflow:hidden;box-shadow:0 0 12px rgba(0,0,0,0.4);">
-  <iframe width="560" height="315"
-    src="https://www.youtube.com/embed/is7Ru0dIT6M?vq=hd720"
-    title="EnZenem – ügyfélvideó"
-    frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-   </div>
+  <h3 class="gold-text">Nézd meg, milyen hatást váltott ki egy saját dalom, amit anyukámnak írtam:</h3>
+  <div class="video-wrapper" data-video="is7Ru0dIT6M">
+    <img src="https://img.youtube.com/vi/is7Ru0dIT6M/hqdefault.jpg" alt="EnZenem – ügyfélvideó">
+    <div class="play-btn">▶</div>
   </div>
+</div>
 
   <ul class="badges">
     <li class="gold-text">Kézbesítés: <strong>48 óra</strong> (alap), akár <strong>24 órán</strong> vagy <strong>6 órán</strong> belül is!</li>
@@ -487,10 +517,10 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   </ul>
 
   <p class="gold-text">
-    Ha az első dal nem tetszik, <strong class="gold-text">3000 Ft</strong> kedvezményes díjért elkészítünk egy
-    második változatot ugyanazzal a szöveggel és stílussal, az adott műfajon belül.
-    Csak írj egy e-mailt arról a címről, amellyel a rendelést leadtad, utald el az összeget a megadott bankszámlaszámra,
-    és <strong class="gold-text">48 órán belül</strong> megkapod a második dalodat.
+    Ha az első dalod mellett szeretnél egy második számot is, akkor csupán <strong class="gold-text">3000 Ft</strong> kedvezményes díjért elkészítjük
+    az egyedi zeneszámod 2. változatát is, ugyanazzal a szöveggel és stílussal, csak stíluson belül más elemekkel, más hangszereléssel!
+    Csak írj egy levelet arról az email címről, amelyről az első dalrendelést is leadtad, utald el az összeget a megadott bankszámlaszámra,
+    és <strong class="gold-text">48 órán belül</strong> megkapod az új hangszerelésű dalodat.
   </p>
 
   <p class="gold-text">
@@ -549,13 +579,9 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   
 <div class="intro-video">
   <h3 class="gold-text">Nézd meg a robot-narrációs oktatóvideót a stílus és leírás mezők használatáról:</h3>
-  <div class="video-wrapper" style="max-width:560px;margin:12px auto;border-radius:12px;overflow:hidden;box-shadow:0 0 12px rgba(0,0,0,0.4);">
-    <iframe width="560" height="315"
-      src="https://www.youtube.com/embed/pAmc0OpIBdI?vq=hd720"
-      title="EnZenem – oktatóvideó (robot narráció)"
-      frameborder="0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen></iframe>
+  <div class="video-wrapper" data-video="fmuopFfaN1Y">
+    <img src="https://img.youtube.com/vi/fmuopFfaN1Y/hqdefault.jpg" alt="EnZenem – oktatóvideó (robot narráció)">
+    <div class="play-btn">▶</div>
   </div>
 </div>
 
