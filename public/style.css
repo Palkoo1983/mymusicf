@@ -1884,83 +1884,75 @@ html.ua-ioswv .vinyl-tabs .tab {
   0%, 100% { opacity: 0.7; }
   50% { opacity: 1; color: #ffe680; }
 }
-/* === EnZenem – Nyitási Akció design upgrade (Golden Pulse Frame) === */
+/* === EnZenem.hu – Árak & Csomagok Golden Frame (fix, mobil untouched) === */
 
 #pricing .card.package {
   position: relative;
-  border: 2px solid #c8a74b; /* alap arany keret */
-  border-radius: 16px;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.65);
-  transition: all 0.3s ease;
-  cursor: pointer;
+  border: 2px solid #d4af37;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.68);
+  box-shadow: 0 0 8px rgba(212,175,55,0.25);
+  transition: all 0.35s ease;
+  overflow: visible;
 }
 
 #pricing .card.package:hover {
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
   transform: translateY(-4px);
+  box-shadow: 0 0 22px rgba(255,215,0,0.45);
 }
 
-/* --- pulzáló fénykeret animáció --- */
+/* --- külső fénykeret --- */
 #pricing .card.package::before {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  padding: 2px;
+  top: -3px; left: -3px; right: -3px; bottom: -3px;
+  border-radius: 20px;
   background: conic-gradient(
     from 0deg,
-    rgba(255, 215, 0, 0.9),
-    rgba(255, 255, 255, 0.3),
-    rgba(255, 215, 0, 0.9),
-    rgba(255, 255, 255, 0.3)
+    #ffd700,
+    #fff6bf,
+    #ffd700,
+    #fff6bf,
+    #ffd700
   );
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  -webkit-mask-composite: destination-out;
-  animation: spinlight 4s linear infinite;
+  animation: spinlight 8s linear infinite;
   z-index: 0;
+  filter: blur(1px);
+  opacity: 0.6;
 }
+@keyframes spinlight { to { transform: rotate(1turn); } }
 
-@keyframes spinlight {
-  to {
-    transform: rotate(1turn);
-  }
-}
-
-/* --- tartalom felette --- */
 #pricing .card.package > * {
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
-/* --- áthúzott régi ár --- */
+/* --- árformázás --- */
 #pricing .old-price {
+  display: inline-block;
   text-decoration: line-through;
   text-decoration-thickness: 2px;
-  color: #ff8080; /* halvány pirosas árnyalat */
+  color: #ff9e9e;
   opacity: 0.85;
-  margin-right: 6px;
+  margin-right: 4px;
 }
 
-/* --- új ár kiemelve --- */
 #pricing .new-price {
-  font-size: 1.3em;
-  font-weight: bold;
-  color: #ffd700; /* erős arany */
-  text-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
-}
-
-/* --- promó megjegyzés finoman villog --- */
-#pricing .promo-note {
   display: inline-block;
-  margin-top: 4px;
-  font-size: 0.85em;
-  animation: pulseText 2s ease-in-out infinite;
+  font-size: 1.35em;
+  font-weight: 700;
+  color: #ffd700;
+  text-shadow: 0 0 6px rgba(255,215,0,0.55);
 }
 
-@keyframes pulseText {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; color: #ffe680; }
+#pricing .promo-note {
+  display: block;
+  font-size: 0.9em;
+  margin-top: 6px;
+  color: #fcefa3;
+  animation: pulseNote 2s ease-in-out infinite;
+}
+@keyframes pulseNote {
+  0%,100% { opacity: 0.7; }
+  50%     { opacity: 1; color: #fff5bf; }
 }
