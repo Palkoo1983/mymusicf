@@ -481,6 +481,8 @@ const sys3 = [
   '- All numeric or temporal expressions (years, ages) must be written in full words and keep Hungarian case endings intact.',
   '- Final chorus must repeat identically at the end.',
   '- The song must feel cohesive, fluent and emotionally expressive — never robotic or literal.'
+  '- Never reinterpret or modify numeric ages or years; only convert digits to words preserving exact numeric meaning.'
+
 ].join('\n');
 
 // Explicit instruction: include all specific years, names, and places mentioned in the brief naturally in the lyrics.
@@ -891,6 +893,11 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
   else if (/(temetés|búcsúztat|gyász|emlék|nyugodj|részvét|jobbulás)/.test(b)) theme = 'funeral';
   else if (/(gyerekdal|ovis|óvoda|mese|gyermeki|kisfiú|kislány)/.test(b)) theme = 'child';
   else if (/(szülinap|születésnap|ünnep|party|ünneplés|boldog szülinap)/.test(b)) theme = 'birthday';
+  // ⚙️ PATCH: Guard v5.1 – prevent "funeral" tone for electronic/minimal styles
+if (/(techno|minimal|house|trance|electronic)/.test(s) && theme === 'funeral') {
+  console.log('[PATCH] Overriding funeral→birthday for electronic styles');
+  theme = 'birthday';
+}
 
   // --- 3️⃣ Vocal finomítás (nem felülíró, csak stílusmódosító) ---
   let vocalMode = 'neutral';
