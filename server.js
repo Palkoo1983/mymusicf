@@ -748,6 +748,48 @@ function normalizeSectionHeadingsSafeStrict(text) {
         console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
       }
       lyrics = normalizeSectionHeadingsSafeStrict(lyrics);
+      // === GUARD v5.2 – RhythmFix (auto-word-count normalization per genre) ===
+try {
+  const norm = (styles || '').toLowerCase();
+
+  // genre minimum word targets
+  const targets = {
+    techno: 6,
+    electronic: 6,
+    house: 6,
+    trance: 6,
+    rap: 10,
+    'drum and bass': 10,
+    child: 5,
+    pop: 8,
+    acoustic: 7,
+    ballad: 7
+  };
+
+  let appliedTarget = 0;
+  for (const key of Object.keys(targets)) {
+    if (norm.includes(key)) { appliedTarget = targets[key]; break; }
+  }
+
+  if (appliedTarget > 0) {
+    const lines = lyrics.split('\n');
+    const fixed = lines.map(line => {
+      const clean = line.trim();
+      if (!clean || /^\(.*\)$/.test(clean)) return clean; // skip section titles
+      const wordCount = clean.split(/\s+/).length;
+      if (wordCount < appliedTarget) {
+        const lastWord = clean.split(/\s+/).pop();
+        // ismétlés ritmikai kitöltésre – nem módosít jelentést
+        return clean + ' ' + lastWord.repeat(Math.max(1, appliedTarget - wordCount));
+      }
+      return clean;
+    });
+    lyrics = fixed.join('\n');
+    console.log(`[RhythmFix] Applied minimal word-count = ${appliedTarget}`);
+  }
+} catch (err) {
+  console.warn('[RhythmFix] skipped due to error:', err.message);
+}
 
       return res.json({ ok: true, lyrics, style: styleFinal, tracks: [], format });
     }
