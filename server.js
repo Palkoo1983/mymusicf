@@ -480,7 +480,7 @@ const sys3 = [
   '- Avoid invented or non-existent Hungarian words.',
   '- All numeric or temporal expressions (years, ages) must be written in full words and keep Hungarian case endings intact.',
   '- Final chorus must repeat identically at the end.',
-  '- The song must feel cohesive, fluent and emotionally expressive — never robotic or literal.'
+  '- The song must feel cohesive, fluent and emotionally expressive — never robotic or literal.',
   '- Never reinterpret or modify numeric ages or years; only convert digits to words preserving exact numeric meaning.'
 
 ].join('\n');
