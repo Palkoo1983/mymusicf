@@ -651,13 +651,18 @@ function stopVideo(btn) {
 <label class="gold-text">
   Zenei stílus (írható is)
 
-  <div class="custom-combobox">
-   <input type="text"
-       id="styleInput"
-       name="styles"
-       placeholder="pl. pop / rock / minimal techno / house / romantikus"
-       required
-       autocomplete="off">
+<div class="custom-combobox">
+  <input type="text"
+      id="styleInput"
+      name="styles"
+      placeholder="pl. pop / rock / minimal techno / house / romantikus"
+      required
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
+      data-lpignore="true"
+      data-form-type="other">
 
     <div class="combo-list" id="styleList">
       <div data-val="Pop">Pop</div>
