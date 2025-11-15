@@ -12,12 +12,17 @@ import PDFDocument from 'pdfkit';
 
 
 function getCounterFile(isTest) {
-  const file = isTest
-    ? '/data/invoice-counter-test.json'
-    : '/data/invoice-counter-live.json';
+  const dir = './data';
 
-  return file;
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  return isTest
+    ? `${dir}/invoice-counter-test.json`
+    : `${dir}/invoice-counter-live.json`;
 }
+
 
 function readCounter(isTest) {
   const file = getCounterFile(isTest);
