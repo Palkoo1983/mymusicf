@@ -9,6 +9,65 @@ import dotenv from 'dotenv';
 import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
 import fs from 'fs';
 import PDFDocument from 'pdfkit';
+import fs from 'fs';
+import path from 'path';
+
+function getCounterFile(isTest) {
+  const file = isTest
+    ? '/data/invoice-counter-test.json'
+    : '/data/invoice-counter-live.json';
+
+  return file;
+}
+
+function readCounter(isTest) {
+  const file = getCounterFile(isTest);
+  try {
+    if (fs.existsSync(file)) {
+      const raw = fs.readFileSync(file, 'utf8');
+      return JSON.parse(raw);
+    }
+  } catch (e) {
+    console.warn('[INVOICE COUNTER READ ERROR]', e.message);
+  }
+  return { year: new Date().getFullYear(), seq: 0 };
+}
+
+function writeCounter(isTest, data) {
+  const file = getCounterFile(isTest);
+  try {
+    fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+  } catch (e) {
+    console.warn('[INVOICE COUNTER WRITE ERROR]', e.message);
+  }
+}
+
+function getNextInvoiceNumber(isTest) {
+  const now = new Date();
+  const year = now.getFullYear();
+
+  let counter = readCounter(isTest);
+
+  // Évváltás esetén sorozat újra indul
+  if (counter.year !== year) {
+    counter = { year, seq: 0 };
+  }
+
+  // Következő sorszám
+  counter.seq += 1;
+
+  writeCounter(isTest, counter);
+
+  const prefix = isTest
+    ? 'TESZT-ENZ'
+    : 'ENZ';
+
+  const seqStr = String(counter.seq).padStart(6, '0'); // 000001 → 000002 → …
+
+  return `${prefix}-${year}-${seqStr}`;
+}
+
+export { getNextInvoiceNumber };
 
 dotenv.config();
 
