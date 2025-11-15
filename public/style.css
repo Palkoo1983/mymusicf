@@ -1906,6 +1906,7 @@ html.ua-ioswv .vinyl-tabs .tab {
   font-size: 15px;
 }
 
+/* Alap lista – minden böngészőre */
 .combo-list {
   display: none;
   position: absolute;
@@ -1940,7 +1941,17 @@ html.ua-ioswv .vinyl-tabs .tab {
   padding: 4px 0;
   pointer-events: none;
 }
+
+/* --- Samsung WebView scroll fix --- */
+html.ua-samsung .custom-combobox {
+  position: relative;
+  overflow: visible !important;
+}
+
 html.ua-samsung .combo-list {
+  max-height: 220px;
+  overflow-y: scroll !important;
+  -webkit-overflow-scrolling: touch !important;
   touch-action: pan-y !important;
-  overscroll-behavior: contain !important;
+  pointer-events: auto !important;
 }
