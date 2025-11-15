@@ -1109,8 +1109,7 @@ if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
 }
 </script>
 <script>
-// Samsung WebView – dropdown pozíció számolás
-document.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('load', () => {
   const ua = navigator.userAgent.toLowerCase();
   const isSamsungWV = ua.includes("samsungbrowser") || ua.includes("wv");
 
@@ -1124,7 +1123,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.documentElement.style.setProperty('--style-input-bottom', rect.bottom + 'px');
 });
 </script>
-
 
 </body>
 </html>
