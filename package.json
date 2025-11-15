@@ -13,7 +13,8 @@
     "express": "^4.19.2",
     "nodemailer": "^6.9.13",
     "stripe": "^16.6.0",
-    "googleapis": "^129.0.0"
+    "googleapis": "^129.0.0",
+    "pdfkit": "^0.15.0"
   },
   "engines": {
     "node": ">=18"
