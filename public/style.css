@@ -1940,30 +1940,3 @@ html.ua-ioswv .vinyl-tabs .tab {
   padding: 4px 0;
   pointer-events: none;
 }
-/* Zenei stílus sor – cím + mező egy sorban desktopon */
-.style-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 14px;
-}
-
-.style-row .gold-text {
-  /* hogy ne húzza szét a sort */
-  margin: 0;
-}
-
-/* Desktop törés – itt tegyük egy sorba */
-@media (min-width: 768px) {
-  .style-row {
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-  }
-  .style-row .gold-text {
-    white-space: nowrap;
-  }
-  .style-row .custom-combobox {
-    flex: 1;
-  }
-}
