@@ -97,25 +97,30 @@ function getNextInvoiceNumber(isTest) {
 async function generateInvoicePDF({ mode, total, order }) {
   const isTest = mode === 'test';
   const invoiceNo = getNextInvoiceNumber(isTest);
+
   const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
+  // 🔥 UTF-8 kompatibilis betűtípus betöltése
+  try {
+    doc.registerFont('dejavu', 'public/fonts/DejaVuSans.ttf');
+    doc.font('dejavu');
+  } catch (e) {
+    console.warn('[INVOICE FONT ERROR] Nem található a DejaVuSans.ttf:', e.message);
+  }
+
   const chunks = [];
-  doc.on('data', (c) => chunks.push(c));
+  doc.on('data', c => chunks.push(c));
 
   return new Promise((resolve, reject) => {
-    doc.on('end', () => {
-      const buffer = Buffer.concat(chunks);
-      resolve({ buffer, invoiceNo });
-    });
-    doc.on('error', (err) => reject(err));
+    doc.on('end', () => resolve({ buffer: Buffer.concat(chunks), invoiceNo }));
+    doc.on('error', err => reject(err));
 
     const today = new Date();
     const dateStr = today.toLocaleDateString('hu-HU');
-    const performanceDate = dateStr;
-    const paymentDate = dateStr;
 
     const o = order || {};
-    const isCompany = !!(o.invoice_company && o.invoice_company !== 'false' && o.invoice_company !== '0');
+    const isCompany =
+      !!(o.invoice_company && o.invoice_company !== 'false' && o.invoice_company !== '0');
 
     const buyerName = isCompany
       ? (o.invoice_company_name || 'Céges vevő')
@@ -127,36 +132,32 @@ async function generateInvoicePDF({ mode, total, order }) {
       : (o.email ? `E-mail: ${o.email}` : '');
 
     const pkg = (o.package || o.format || 'basic').toString().toLowerCase();
-    let itemName = 'Egyedi zeneszám csomag (1 db dal)';
-    if (pkg === 'video') itemName = 'Egyedi zeneszám + videó csomag';
+    let itemName = 'Egyedi zeneszám - MP3 csomag ';
+    if (pkg === 'video') itemName = 'Egyedi zeneszám - Videó csomag';
     else if (pkg === 'premium') itemName = 'Prémium hangcsomag (WAV)';
 
     const qty = 1;
     const gross = total || 0;
     const grossText = `${gross.toLocaleString('hu-HU')} Ft`;
-    let grossWords = '';
-    try {
-      grossWords = numToHungarian(gross);
-    } catch (_) {
-      grossWords = '';
-    }
 
-    // Fejléc
+    // ========= PDF TARTALOM =========
+
     doc.fontSize(16).text(
       isTest ? 'TESZT SZÁMLA – NEM ADÓÜGYI BIZONYLAT' : 'SZÁMLA',
       { align: 'right' }
     );
+
     doc.moveDown(0.5);
     doc.fontSize(10)
       .text(`Számlaszám: ${invoiceNo}`, { align: 'right' })
       .text(`Kelt: ${dateStr}`, { align: 'right' })
-      .text(`Teljesítés dátuma: ${performanceDate}`, { align: 'right' })
-      .text(`Fizetési határidő: ${paymentDate}`, { align: 'right' })
+      .text(`Teljesítés dátuma: ${dateStr}`, { align: 'right' })
+      .text(`Fizetési határidő: ${dateStr}`, { align: 'right' })
       .text('Fizetés módja: Bankkártya (online)', { align: 'right' });
 
-    doc.moveDown(1);
+    doc.moveDown(1.2);
 
-    // Eladó adatai
+    // --- Eladó ---
     doc.fontSize(12).text('Számlakibocsátó:', { underline: true });
     doc.fontSize(10)
       .text(INVOICE_SEED.sellerName)
@@ -168,7 +169,7 @@ async function generateInvoicePDF({ mode, total, order }) {
 
     doc.moveDown(1);
 
-    // Vevő adatai
+    // --- Vevő ---
     doc.fontSize(12).text('Vevő:', { underline: true });
     doc.fontSize(10).text(buyerName);
     if (buyerVat) doc.text(`Adószám: ${buyerVat}`);
@@ -176,7 +177,7 @@ async function generateInvoicePDF({ mode, total, order }) {
 
     doc.moveDown(1);
 
-    // Tételek
+    // --- Tételek táblázat ---
     doc.fontSize(12).text('Tételek:');
     doc.moveDown(0.5);
 
@@ -186,39 +187,36 @@ async function generateInvoicePDF({ mode, total, order }) {
     doc.text('Egységár (bruttó)', 330, doc.y, { continued: true });
     doc.text('Összeg (bruttó)', 450);
     doc.moveDown(0.3);
+
     doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
     doc.moveDown(0.3);
 
-    const unitPrice = gross;
     doc.text(itemName, 50, doc.y, { width: 220, continued: true });
     doc.text(`${qty} db`, 280, doc.y, { continued: true });
-    doc.text(`${unitPrice.toLocaleString('hu-HU')} Ft`, 330, doc.y, { continued: true });
+    doc.text(`${gross.toLocaleString('hu-HU')} Ft`, 330, doc.y, { continued: true });
     doc.text(grossText, 450);
 
     doc.moveDown(0.5);
     doc.moveTo(350, doc.y).lineTo(550, doc.y).stroke();
     doc.moveDown(0.3);
+
     doc.text('Végösszeg (AAM):', 350, doc.y, { continued: true });
     doc.text(grossText, 450);
 
     doc.moveDown(1);
 
-    if (grossWords) {
-      doc.text(`Szóban: ${grossWords} forint`, 50, doc.y);
-      doc.moveDown(0.5);
-    }
-
     doc.fontSize(8).fillColor('gray')
       .text('Megjegyzés: a számla alanyi adómentes, ÁFA tartalma 0%.', 50, doc.y, { width: 500 });
 
     if (isTest) {
-      doc.moveDown(0.3);
+      doc.moveDown(0.5);
       doc.text('TESZT ÜZEMMÓD – kizárólag belső ellenőrzésre.', 50, doc.y, { width: 500 });
     }
 
     doc.end();
   });
 }
+
 
 /* ================== Middleware / static ================= */
 app.use(cors());
