@@ -69,7 +69,12 @@ form.addEventListener('submit', async (e) => {
     consent: !!(form.querySelector('[name=consent]') || {}).checked,
     package: (fd.get('package') || 'basic').toString(),
     delivery_label: (form.querySelector('[name=delivery_label]') || {}).value || '',
-    delivery_extra: (form.querySelector('[name=delivery_extra]') || {}).value || '0'
+    delivery_extra: (form.querySelector('[name=delivery_extra]') || {}).value || '0',
+    // Céges számlázási adatok
+  invoice_company: !!(form.querySelector('[name=invoice_company]') || {}).checked,
+  invoice_company_name: (form.querySelector('[name=invoice_company_name]') || {}).value || '',
+  invoice_vat_number: (form.querySelector('[name=invoice_vat_number]') || {}).value || '',
+  invoice_address: (form.querySelector('[name=invoice_address]') || {}).value || ''
   };
 
   const submitBtn = form.querySelector('button[type=submit], [type=submit]');
