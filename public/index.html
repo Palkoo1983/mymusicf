@@ -1109,16 +1109,22 @@ if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
 }
 </script>
 <script>
-if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
-  const box = document.getElementById("styleList");
-  const input = document.getElementById("styleInput");
+// Samsung WebView – dropdown pozíció számolás
+document.addEventListener('DOMContentLoaded', () => {
+  const ua = navigator.userAgent.toLowerCase();
+  const isSamsungWV = ua.includes("samsungbrowser") || ua.includes("wv");
 
-  input.addEventListener("focus", () => {
-    const rect = input.getBoundingClientRect();
-    box.style.top = (rect.bottom + 4) + "px";
-  });
-}
+  if (!isSamsungWV) return;
+
+  const input = document.getElementById('styleInput');
+  const rect = input.getBoundingClientRect();
+
+  document.documentElement.style.setProperty('--style-input-left', rect.left + 'px');
+  document.documentElement.style.setProperty('--style-input-width', rect.width + 'px');
+  document.documentElement.style.setProperty('--style-input-bottom', rect.bottom + 'px');
+});
 </script>
+
 
 </body>
 </html>
