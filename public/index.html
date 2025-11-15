@@ -1108,6 +1108,17 @@ if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
   }, { passive: true });
 }
 </script>
+<script>
+if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
+  const box = document.getElementById("styleList");
+  const input = document.getElementById("styleInput");
+
+  input.addEventListener("focus", () => {
+    const rect = input.getBoundingClientRect();
+    box.style.top = (rect.bottom + 4) + "px";
+  });
+}
+</script>
 
 </body>
 </html>
