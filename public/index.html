@@ -648,62 +648,63 @@ function stopVideo(btn) {
   <input name="email" placeholder="pelda@domain.hu" required type="email" />
 </label>
 
-<!-- CÍM – maradhat arany, de már csak a címre hat -->
-<label class="gold-text" for="styleInput">
-  Zenei stílus (írható is)
-</label>
+<div class="style-row">
+  <label class="gold-text" for="styleInput">
+    Zenei stílus (írható is)
+  </label>
 
-<!-- A KOMBINÁLT MEZŐ MÁR NINCS BENNE A .gold-text LABELBEN -->
-<div class="custom-combobox">
-  <input type="text"
-         id="styleInput"
-         name="styles"
-         placeholder="pl. pop / rock / minimal techno / house / romantikus"
-         required
-         autocomplete="off"
-         autocorrect="off"
-         autocapitalize="off"
-         spellcheck="false"
-         data-lpignore="true"
-         data-form-type="other">
+  <div class="custom-combobox">
+    <input type="text"
+        id="styleInput"
+        name="styles"
+        placeholder="pl. pop / rock / minimal techno / house / romantikus"
+        required
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        data-lpignore="true"
+        data-form-type="other">
 
-  <div class="combo-list" id="styleList">
-    <div data-val="Pop">Pop</div>
-    <div data-val="Romantikus pop">Romantikus pop</div>
-    <div data-val="Lírai ballada">Lírai ballada</div>
-    <div data-val="R&B">R&B</div>
-    <div data-val="Disco">Disco</div>
+    <div class="combo-list" id="styleList">
+      <div data-val="Pop">Pop</div>
+      <div data-val="Romantikus pop">Romantikus pop</div>
+      <div data-val="Lírai ballada">Lírai ballada</div>
+      <div data-val="R&B">R&B</div>
+      <div data-val="Disco">Disco</div>
 
-    <div class="sep">──────────</div>
+      <div class="sep">──────────</div>
 
-    <div data-val="Minimal techno">Minimal techno</div>
-    <div data-val="House">House</div>
-    <div data-val="Modern elektronikus">Modern elektronikus</div>
-    <div data-val="Drum and bass">Drum and bass</div>
+      <div data-val="Minimal techno">Minimal techno</div>
+      <div data-val="House">House</div>
+      <div data-val="Modern elektronikus">Modern elektronikus</div>
+      <div data-val="Drum and bass">Drum and bass</div>
 
-    <div class="sep">──────────</div>
+      <div class="sep">──────────</div>
 
-    <div data-val="Rock">Rock</div>
-    <div data-val="Metál">Metál</div>
-    <div data-val="Alternatív">Alternatív</div>
+      <div data-val="Rock">Rock</div>
+      <div data-val="Metál">Metál</div>
+      <div data-val="Alternatív">Alternatív</div>
 
-    <div class="sep">──────────</div>
+      <div class="sep">──────────</div>
 
-    <div data-val="Gyerekdal">Gyerekdal</div>
-    <div data-val="Akusztikus">Akusztikus</div>
-    <div data-val="Lírai">Lírai</div>
-    <div data-val="Romantikus">Romantikus</div>
+      <div data-val="Gyerekdal">Gyerekdal</div>
+      <div data-val="Akusztikus">Akusztikus</div>
+      <div data-val="Lírai">Lírai</div>
+      <div data-val="Romantikus">Romantikus</div>
 
-    <div class="sep">──────────</div>
+      <div class="sep">──────────</div>
 
-    <div data-val="Rap">Rap</div>
+      <div data-val="Rap">Rap</div>
 
-    <div class="sep">──────────</div>
+      <div class="sep">──────────</div>
 
-    <div data-val="Karácsonyi pop">Karácsonyi pop</div>
-    <div data-val="Ünnepi akusztikus">Ünnepi akusztikus</div>
+      <div data-val="Karácsonyi pop">Karácsonyi pop</div>
+      <div data-val="Ünnepi akusztikus">Ünnepi akusztikus</div>
+    </div>
   </div>
 </div>
+
 
           <label class="gold-text">Ének
            <select name="vocal" required>
