@@ -1058,17 +1058,25 @@ document.addEventListener("click", (e) => {
   const box = document.getElementById("styleList");
   const input = document.getElementById("styleInput");
 
-  // Ha valamelyik opcióra kattint
-  if (e.target.dataset.val) {
-    input.value = e.target.dataset.val;
-    box.style.display = "none";
+  // Ha listában kattintott, keressük meg a legközelebbi data-val elemet
+  const option = e.target.closest("[data-val]");
+
+  if (option) {
+    input.value = option.dataset.val;
+    box.style.display = "none";       // <<< MOST MINDIG ELTŰNIK
+    return;
+  }
+
+  // Input mezőre kattint → nyitás
+  if (e.target === input) {
+    box.style.display = "block";
   } else {
-    // Input mezőre kattint → nyissa le a listát
-    if (e.target === input) box.style.display = "block";
-    else box.style.display = "none";
+    // Bármilyen más klikk → bezár
+    box.style.display = "none";
   }
 });
 </script>
+
 
 </body>
 </html>
