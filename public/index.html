@@ -1108,21 +1108,6 @@ if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
   }, { passive: true });
 }
 </script>
-<script>
-window.addEventListener('load', () => {
-  const ua = navigator.userAgent.toLowerCase();
-  const isSamsungWV = ua.includes("samsungbrowser") || ua.includes("wv");
-
-  if (!isSamsungWV) return;
-
-  const input = document.getElementById('styleInput');
-  const rect = input.getBoundingClientRect();
-
-  document.documentElement.style.setProperty('--style-input-left', rect.left + 'px');
-  document.documentElement.style.setProperty('--style-input-width', rect.width + 'px');
-  document.documentElement.style.setProperty('--style-input-bottom', rect.bottom + 'px');
-});
-</script>
 
 </body>
 </html>
