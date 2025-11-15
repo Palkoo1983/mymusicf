@@ -1890,46 +1890,31 @@ html.ua-ioswv .vinyl-tabs .tab {
       0 0 12px rgba(255,215,0,0.3);
   }
 }
-.custom-combobox {
-  position: relative;
-  display: block;
-}
-
-.custom-combobox input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 6px;
-  border: 1px solid gold;
-  background: #000;
-  color: gold;
-  font-size: 15px;
-}
-
 .combo-list {
   display: none;
   position: absolute;
   width: 100%;
   max-height: 180px;
   overflow-y: auto;
-  background: #111;
+  background: #000 !important;        /* <<< TÖMÖR FEKETE, NINCS ÁTLÁTSZÓ RÉSZ */
   border: 1px solid gold;
   border-radius: 6px;
-  z-index: 50;
+  z-index: 9999;                      /* <<< FELÉR MINDEN FELETT */
 }
 
 .combo-list div {
   padding: 10px;
   cursor: pointer;
   color: gold;
+  font-size: 15px;
 }
 
 .combo-list div:hover {
-  background: rgba(255, 215, 0, 0.2);
+  background: rgba(255,215,0,0.25);
 }
 
-.sep {
-  text-align: center;
-  color: #555;
-  padding: 4px 0;
-  pointer-events: none;
+/* Scrollbar eltüntetése (nem kell, fölösleges) */
+.combo-list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
