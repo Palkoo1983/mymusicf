@@ -1942,32 +1942,17 @@ html.ua-ioswv .vinyl-tabs .tab {
   pointer-events: none;
 }
 
-/* --- Samsung WebView scroll fix --- */
-html.ua-samsung .custom-combobox {
-  position: relative;
-  overflow: visible !important;
-}
-
+/* === Samsung WebView végleges FIX – dropdown scroll ===== */
 html.ua-samsung .combo-list {
-  max-height: 220px;
-  overflow-y: scroll !important;
-  -webkit-overflow-scrolling: touch !important;
-  touch-action: pan-y !important;
-  pointer-events: auto !important;
-}
-/* Samsung WebView dropdown FIX */
-html.ua-samsung .combo-list {
-  position: fixed !important;
+  position: fixed !important;      /* ABSOLUTE HELYETT FIXED */
   top: auto !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 94% !important;
-  margin: 0 auto !important;
-  max-height: 220px !important;
+  left: 50% !important;
+  transform: translateX(-50%) translateY(10px) !important;
+  width: 90% !important;
+  max-height: 40vh !important;
   overflow-y: scroll !important;
   -webkit-overflow-scrolling: touch !important;
   touch-action: pan-y !important;
   pointer-events: auto !important;
-  transform: translateY(10px) !important;
   z-index: 999999 !important;
 }
