@@ -1942,24 +1942,27 @@ html.ua-ioswv .vinyl-tabs .tab {
   pointer-events: none;
 }
 
-/* === Samsung WebView – végleges, stabil FIX ===== */
+/* ===== Samsung WebView – Tökéletes, stabil ABSOLUTE fix ===== */
+
+/* Jelöld meg, hogy WebView–Samsung eszköz */
+html.ua-samsung .custom-combobox {
+  position: relative !important;
+}
+
 html.ua-samsung .combo-list {
-  position: fixed !important;
-
-  /* A mező alatt jelenjen meg */
-  top: auto !important;
-  margin-top: 8px !important;
-
-  /* Igazodjon a saját konténerhez */
+  position: absolute !important;
+  top: 100% !important;      /* közvetlenül a mező alá kerül */
   left: 0 !important;
-  right: 0 !important;
-  width: auto !important;
-  transform: none !important;
+  width: 100% !important;    /* pontosan olyan széles, mint az input */
 
   max-height: 40vh !important;
   overflow-y: scroll !important;
   -webkit-overflow-scrolling: touch !important;
   touch-action: pan-y !important;
-  pointer-events: auto !important;
-  z-index: 999999 !important;
+
+  background: #000 !important;
+  border: 1px solid gold !important;
+  border-radius: 6px !important;
+  z-index: 99999 !important;
 }
+
