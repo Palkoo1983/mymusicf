@@ -1099,6 +1099,15 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+<script>
+// Samsung WebView scroll-fix
+if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
+  const list = document.getElementById("styleList");
+  list.addEventListener("touchmove", (e) => {
+    e.stopPropagation();
+  }, { passive: true });
+}
+</script>
 
 </body>
 </html>
