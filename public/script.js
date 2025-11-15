@@ -868,3 +868,28 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   if (pkgSelect) pkgSelect.addEventListener('change', scrollToOrderBtn);
 });
+// === Céges számla mezők kezelése ===
+(function(){
+  const form = document.getElementById('orderForm');
+  if (!form) return;
+
+  const chk = form.querySelector('input[name="invoice_company"]');
+  const box = document.getElementById('invoice_company_fields');
+  if (!chk || !box) return;
+
+  function syncInvoiceFields() {
+    const on = !!chk.checked;
+    box.style.display = on ? 'block' : 'none';
+    box.querySelectorAll('input').forEach(inp => {
+      if (on) {
+        inp.removeAttribute('disabled');
+      } else {
+        inp.setAttribute('disabled', 'disabled');
+        inp.value = inp.value; // ne villogjon, csak ne legyen kötelező
+      }
+    });
+  }
+
+  chk.addEventListener('change', syncInvoiceFields);
+  syncInvoiceFields();
+})();
