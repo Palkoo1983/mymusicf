@@ -397,41 +397,17 @@ app.get('/api/test-mail', (req, res) => {
 });
 
 /* =================== Order / Contact ====================== */
-// === ADMIN EMAIL: rendelés után azonnal ===
+// === /api/order – csak mentünk, NEM küldünk e-mailt többé ===
 app.post('/api/order', (req, res) => {
   const o = req.body || {};
-  global.lastOrderData = req.body; // mentjük a VPOS visszahíváshoz
+  global.lastOrderData = o; // mentjük a fizetés callbackhez
 
-  const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
-  const orderHtml = `
-    <h2>Új dal megrendelés</h2>
-    <ul>
-      <li><b>E-mail:</b> ${o.email || ''}</li>
-      <li><b>Csomag/Formátum:</b> ${(o.package || o.format || 'basic').toString().toUpperCase()}</li>
-      <li><b>Stílus(ok):</b> ${o.styles || o.style || ''}</li>
-      <li><b>Ének:</b> ${o.vocal || ''}</li>
-      <li><b>Nyelv:</b> ${o.language || ''}</li>
-      <li><b>Kézbesítés:</b> ${o.delivery_label || o.delivery || '48 óra'}</li>
-    </ul>
-    <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
-  `;
+  // ❗ NINCS több admin email itt!
+  // Megrendeléskor NINCS e-mail küldve.
 
-  // 💌 Admin azonnali értesítése
-  const jobs = [
-    {
-      to: owner,
-      subject: 'EnZenem – Új dal megrendelés',
-      html: orderHtml,
-      replyTo: o.email || undefined
-    }
-  ];
-
-  queueEmails(jobs);
-
-  // Válasz az ügyfélnek a frontendre (nem e-mail!)
   res.json({
     ok: true,
-    message: 'Köszönjük! Megrendelésed beérkezett és feldolgozás alatt van.'
+    message: 'Köszönjük! A megrendelésed rögzítettük, a fizetés után minden automatikusan megtörténik.'
   });
 });
 
@@ -535,67 +511,91 @@ app.get('/api/payment/callback', async (req, res) => {
         console.error('[VPOS CALLBACK] Hiba a dalgenerálás indításakor:', err);
       }
     }
-// === ÜGYFÉL-EMAIL SIKERES FIZETÉS UTÁN (delivery time + PDF számla) ===
+// === ÜGYFÉL + ADMIN EMAIL SIKERES FIZETÉS UTÁN ===
 try {
-  const o = (global.lastOrderData || {});
-  const customer = (o.email || '');
-  if (customer) {
-    const deliveryLabel = (o.delivery_label || o.delivery || '48 óra');
-    const pkg = (o.package || o.format || 'basic').toString().toLowerCase();
-    const format = pkg === 'video' ? 'MP4' : (pkg === 'premium' ? 'WAV' : 'MP3');
+  const o = global.lastOrderData || {};
+  const customer = o.email || '';
+  const adminEmail = ENV.TO_EMAIL || ENV.SMTP_USER;
 
-    const customerHtml = `
-      <p>Kedves Megrendelő!</p>
-      <p>Köszönjük a sikeres fizetést. A megrendelésed rögzítettük.</p>
-      <ul>
-        <li><b>Formátum:</b> ${format}</li>
-        <li><b>Kézbesítési idő:</b> ${deliveryLabel}</li>
-      </ul>
-      <p>A választott kézbesítési időn belül (<b>${deliveryLabel}</b>) megkapod az egyedi zenédet/videódat.</p>
-      <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>
-    `;
+  const deliveryLabel = o.delivery_label || o.delivery || '48 óra';
+  const pkg = (o.package || o.format || 'basic').toString().toLowerCase();
+  const format = pkg === 'video' ? 'MP4' : (pkg === 'premium' ? 'WAV' : 'MP3');
 
-    const jobs = [];
-    let attachments = [];
+  // --- Ügyfél HTML ---
+  const customerHtml = `
+    <p>Kedves Megrendelő!</p>
+    <p>Köszönjük a sikeres fizetést. A megrendelésed rögzítettük.</p>
+    <ul>
+      <li><b>Formátum:</b> ${format}</li>
+      <li><b>Kézbesítési idő:</b> ${deliveryLabel}</li>
+    </ul>
+    <p>A választott kézbesítési időn belül (<b>${deliveryLabel}</b>) megkapod az egyedi zenédet/videódat.</p>
+    <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>
+  `;
 
-    // 🔥 Számla generálás mód szerint
-    if (INVOICE_MODE === 'test' || INVOICE_MODE === 'live') {
-      try {
-        const totalInt = parseInt(amount, 10) || 0;
-        const { buffer, invoiceNo } = await generateInvoicePDF({
-          mode: INVOICE_MODE,
-          total: totalInt,
-          order: o
+  // --- Admin HTML ---
+  const adminHtml = `
+    <h2>Új SIKERES fizetés</h2>
+    <ul>
+      <li><b>E-mail:</b> ${o.email || ''}</li>
+      <li><b>Csomag:</b> ${o.package || o.format}</li>
+      <li><b>Stílus:</b> ${o.styles || o.style}</li>
+      <li><b>Ének:</b> ${o.vocal || ''}</li>
+      <li><b>Nyelv:</b> ${o.language || ''}</li>
+      <li><b>Kézbesítési idő:</b> ${deliveryLabel}</li>
+      <li><b>Összeg:</b> ${amount} Ft</li>
+    </ul>
+    <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
+  `;
+
+  const jobs = [];
+  let attachments = [];
+
+  // --- Számla generálás ---
+  if (INVOICE_MODE === 'test' || INVOICE_MODE === 'live') {
+    try {
+      const totalInt = parseInt(amount, 10) || 0;
+      const { buffer, invoiceNo } = await generateInvoicePDF({
+        mode: INVOICE_MODE,
+        total: totalInt,
+        order: o
+      });
+
+      if (buffer && buffer.length) {
+        attachments.push({
+          filename: `${invoiceNo}.pdf`,
+          content: buffer
         });
-
-        if (buffer && buffer.length) {
-          attachments.push({
-            filename: `${invoiceNo}.pdf`,
-            content: buffer
-          });
-          console.log('[INVOICE] Generated invoice', { invoiceNo, totalInt, mode: INVOICE_MODE });
-        }
-      } catch (err) {
-        console.warn('[INVOICE] Generation failed:', err?.message || err);
+        console.log('[INVOICE] Generated invoice', { invoiceNo, totalInt, mode: INVOICE_MODE });
       }
-    } else {
-      console.log('[INVOICE] INVOICE_MODE=off – nem generálunk számlát.');
+    } catch (err) {
+      console.warn('[INVOICE] Generation failed:', err?.message || err);
     }
+  }
 
+  // --- Ügyfél email ---
+  if (customer) {
     jobs.push({
       to: customer,
       subject: 'EnZenem – Megrendelés visszaigazolás (sikeres fizetés)',
       html: customerHtml,
       attachments: attachments.length ? attachments : undefined
     });
-
-    queueEmails(jobs);
-    console.log('[MAIL:QUEUED customer after VPOS success]', { to: customer, deliveryLabel, format });
-  } else {
-    console.warn('[VPOS CALLBACK] Nincs ügyfél e-mail cím a lastOrderData-ban, nem küldünk ügyféllevelet.');
   }
+
+  // --- ADMIN email (ugyanaz a számla mellékelve) ---
+  jobs.push({
+    to: adminEmail,
+    subject: 'EnZenem – Új SIKERES fizetés + számla',
+    html: adminHtml,
+    attachments: attachments.length ? attachments : undefined,
+  });
+
+  queueEmails(jobs);
+  console.log('[MAIL:QUEUED] Customer + Admin email sent after success');
+
 } catch (e) {
-  console.warn('[VPOS CALLBACK] Ügyfél-email küldési hiba:', e?.message || e);
+  console.warn('[VPOS CALLBACK] Email sending error after success:', e?.message || e);
 }
 
     // 🔸 Visszajelzés a felhasználónak
