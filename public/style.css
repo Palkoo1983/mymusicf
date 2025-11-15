@@ -1945,16 +1945,10 @@ html.ua-ioswv .vinyl-tabs .tab {
 /* === Samsung WebView – végleges pozíció + méret FIX ===== */
 html.ua-samsung .combo-list {
   position: fixed !important;
-
-  /* A styleInput mező alá tesszük pozícióban */
-  top: calc(var(--style-input-bottom) + 6px) !important;
-
-  /* A mező vízszintes pozíciójához igazítjuk */
-  left: var(--style-input-left) !important;
-
-  /* Ugyanolyan széles, mint a mező */
-  width: var(--style-input-width) !important;
-
+  top: auto !important;
+  left: 50% !important;
+  transform: translateX(-50%) translateY(10px) !important;
+  width: 90% !important;
   max-height: 40vh !important;
   overflow-y: scroll !important;
   -webkit-overflow-scrolling: touch !important;
@@ -1962,4 +1956,3 @@ html.ua-samsung .combo-list {
   pointer-events: auto !important;
   z-index: 999999 !important;
 }
-
