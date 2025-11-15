@@ -647,6 +647,22 @@ function stopVideo(btn) {
   <label class="gold-text">E-mail (ahová a zenét küldjük)
   <input name="email" placeholder="pelda@domain.hu" required type="email" />
 </label>
+<label class="check gold-text">
+  <input type="checkbox" name="invoice_company" id="invoice_company">
+  Céges számlát kérek
+</label>
+
+<div id="invoice_company_fields" class="full" style="display:none; margin-top:8px;">
+  <label class="gold-text">Cégnév
+    <input type="text" name="invoice_company_name" placeholder="Cégnév Kft.">
+  </label>
+  <label class="gold-text">Adószám
+    <input type="text" name="invoice_vat_number" placeholder="12345678-1-42">
+  </label>
+  <label class="gold-text">Számlázási cím
+    <input type="text" name="invoice_address" placeholder="Irányítószám, város, utca, házszám">
+  </label>
+</div>
 
 <div class="two-col">
 
@@ -704,8 +720,6 @@ function stopVideo(btn) {
   </div>
 
 </div>
-
-
 
           <label class="gold-text">Ének
            <select name="vocal" required>
