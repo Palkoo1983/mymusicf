@@ -1078,7 +1078,8 @@ try {
   console.warn('[RhythmFix] skipped due to error:', err.message);
 }
 
-      return res.json({ ok: true, lyrics, style: styleFinal, tracks: [], format });
+     return; // háttérfolyamat vége – response már elküldve korábban
+
     }
 
     // === SUNO API CALL (MP3 only) ===
