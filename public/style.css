@@ -1945,10 +1945,18 @@ html.ua-ioswv .vinyl-tabs .tab {
 /* === Samsung WebView – végleges pozíció + méret FIX ===== */
 html.ua-samsung .combo-list {
   position: fixed !important;
+
+  /* A stílus mező alatt jelenjen meg */
   top: auto !important;
-  left: 50% !important;
-  transform: translateX(-50%) translateY(10px) !important;
-  width: 90% !important;
+  margin-top: 8px !important;
+
+  /* NE tegye középre, NE számoljon saját szélességet */
+  left: 0 !important;
+  transform: none !important;
+
+  /* Pontosan a stílusmező szélességét veszi át (a containerét) */
+  width: 100% !important;
+
   max-height: 40vh !important;
   overflow-y: scroll !important;
   -webkit-overflow-scrolling: touch !important;
