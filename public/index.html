@@ -650,49 +650,53 @@ function stopVideo(btn) {
 
 <label class="gold-text">
   Zenei stílus (írható is)
-  <input list="style-list"
-         name="styles"
-         placeholder="pl. pop / rock / minimal techno / house / romantikus"
-         required
-         type="text">
-  <datalist id="style-list">
-    <!-- 🎵 POP / MAINSTREAM -->
-    <option value="Pop">
-    <option value="Romantikus pop">
-    <option value="Lírai ballada">
-    <option value="R&B">
-    <option value="Disco">
 
-    <!-- 🎧 ELEKTRONIKUS / TÁNC -->
-    <option disabled>──────────</option>
-    <option value="Minimal techno">
-    <option value="House">
-    <option value="Modern elektronikus">
-    <option value="Drum and bass">
+  <div class="custom-combobox">
+    <input type="text"
+           id="styleInput"
+           name="styles"
+           placeholder="pl. pop / rock / minimal techno / house / romantikus"
+           required>
 
-    <!-- 🎸 ROCK / ALTERNATÍV -->
-    <option disabled>──────────</option>
-    <option value="Rock">
-    <option value="Metál">
-    <option value="Alternatív">
+    <div class="combo-list" id="styleList">
+      <div data-val="Pop">Pop</div>
+      <div data-val="Romantikus pop">Romantikus pop</div>
+      <div data-val="Lírai ballada">Lírai ballada</div>
+      <div data-val="R&B">R&B</div>
+      <div data-val="Disco">Disco</div>
 
-    <!-- 🧒 GYEREK / ÉRZELMES -->
-    <option disabled>──────────</option>
-    <option value="Gyerekdal">
-    <option value="Akusztikus">
-    <option value="Lírai">
-    <option value="Romantikus">
+      <div class="sep">──────────</div>
 
-    <!-- 🎤 URBAN / SZÖVEGKÖZPONTÚ -->
-    <option disabled>──────────</option>
-    <option value="Rap">
+      <div data-val="Minimal techno">Minimal techno</div>
+      <div data-val="House">House</div>
+      <div data-val="Modern elektronikus">Modern elektronikus</div>
+      <div data-val="Drum and bass">Drum and bass</div>
 
-    <!-- 🎄 ÜNNEPI -->
-    <option disabled>──────────</option>
-    <option value="Karácsonyi pop">
-    <option value="Ünnepi akusztikus">
-  </datalist>
+      <div class="sep">──────────</div>
+
+      <div data-val="Rock">Rock</div>
+      <div data-val="Metál">Metál</div>
+      <div data-val="Alternatív">Alternatív</div>
+
+      <div class="sep">──────────</div>
+
+      <div data-val="Gyerekdal">Gyerekdal</div>
+      <div data-val="Akusztikus">Akusztikus</div>
+      <div data-val="Lírai">Lírai</div>
+      <div data-val="Romantikus">Romantikus</div>
+
+      <div class="sep">──────────</div>
+
+      <div data-val="Rap">Rap</div>
+
+      <div class="sep">──────────</div>
+
+      <div data-val="Karácsonyi pop">Karácsonyi pop</div>
+      <div data-val="Ünnepi akusztikus">Ünnepi akusztikus</div>
+    </div>
+  </div>
 </label>
+
 
           <label class="gold-text">Ének
            <select name="vocal" required>
@@ -1048,6 +1052,22 @@ document.querySelectorAll('.vinyl-tabs .tab').forEach(btn=>{
 if (/wv|samsungbrowser/i.test(navigator.userAgent)) {
   document.documentElement.style.webkitTextSizeAdjust = '100%';
 }
+</script>
+<script>
+document.addEventListener("click", (e) => {
+  const box = document.getElementById("styleList");
+  const input = document.getElementById("styleInput");
+
+  // Ha valamelyik opcióra kattint
+  if (e.target.dataset.val) {
+    input.value = e.target.dataset.val;
+    box.style.display = "none";
+  } else {
+    // Input mezőre kattint → nyissa le a listát
+    if (e.target === input) box.style.display = "block";
+    else box.style.display = "none";
+  }
+});
 </script>
 
 </body>
