@@ -7,6 +7,8 @@ import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
+import fs from 'fs';
+import PDFDocument from 'pdfkit';
 
 dotenv.config();
 
@@ -40,7 +42,183 @@ const ENV = {
   RESEND_API_KEY: process.env.RESEND_API_KEY,
   RESEND_ONLY: (process.env.RESEND_ONLY || '').toString().toLowerCase() === 'true'
 };
+const INVOICE_MODE = (process.env.INVOICE_MODE || 'test').toString().toLowerCase(); 
+// 'off' | 'test' | 'live'
 
+const INVOICE_COUNTER_FILE = './invoice-counter.json';
+
+const INVOICE_SEED = {
+  sellerName: 'Gombkötő Pál egyéni vállalkozó',
+  regNumber: '61398205',
+  taxNumber: '91555179-1-43',
+  statNumber: '91555179-9013-231-01',
+  address: '1097 Budapest, Aszódi utca 8. 123. ajtó',
+  currency: 'HUF'
+};
+
+function loadInvoiceCounter() {
+  try {
+    if (!fs.existsSync(INVOICE_COUNTER_FILE)) return null;
+    const raw = fs.readFileSync(INVOICE_COUNTER_FILE, 'utf8');
+    return JSON.parse(raw);
+  } catch (e) {
+    console.warn('[INVOICE] Nem sikerült beolvasni az invoice-counter fájlt:', e?.message || e);
+    return null;
+  }
+}
+
+function saveInvoiceCounter(data) {
+  try {
+    fs.writeFileSync(INVOICE_COUNTER_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (e) {
+    console.warn('[INVOICE] Nem sikerült menteni az invoice-counter fájlt:', e?.message || e);
+  }
+}
+
+function getNextInvoiceNumber(isTest) {
+  const today = new Date();
+  const year = today.getFullYear();
+  let state = loadInvoiceCounter();
+  if (!state || state.year !== year) {
+    state = { year, last: 0 };
+  }
+  state.last += 1;
+  saveInvoiceCounter(state);
+  const base = `ENZ-${year}-${String(state.last).padStart(6, '0')}`;
+  return isTest ? `TESZT-${base}` : base;
+}
+
+/**
+ * Számla PDF generálása
+ * mode: 'test' | 'live'
+ * total: bruttó összeg (Ft)
+ * order: a global.lastOrderData (megrendelési adatok)
+ */
+async function generateInvoicePDF({ mode, total, order }) {
+  const isTest = mode === 'test';
+  const invoiceNo = getNextInvoiceNumber(isTest);
+  const doc = new PDFDocument({ size: 'A4', margin: 50 });
+
+  const chunks = [];
+  doc.on('data', (c) => chunks.push(c));
+
+  return new Promise((resolve, reject) => {
+    doc.on('end', () => {
+      const buffer = Buffer.concat(chunks);
+      resolve({ buffer, invoiceNo });
+    });
+    doc.on('error', (err) => reject(err));
+
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('hu-HU');
+    const performanceDate = dateStr;
+    const paymentDate = dateStr;
+
+    const o = order || {};
+    const isCompany = !!(o.invoice_company && o.invoice_company !== 'false' && o.invoice_company !== '0');
+
+    const buyerName = isCompany
+      ? (o.invoice_company_name || 'Céges vevő')
+      : (o.email ? `Magánszemély (${o.email})` : 'Magánszemély');
+
+    const buyerVat = isCompany ? (o.invoice_vat_number || '') : '';
+    const buyerAddress = isCompany
+      ? (o.invoice_address || '')
+      : (o.email ? `E-mail: ${o.email}` : '');
+
+    const pkg = (o.package || o.format || 'basic').toString().toLowerCase();
+    let itemName = 'Egyedi zeneszám csomag (1 db dal)';
+    if (pkg === 'video') itemName = 'Egyedi zeneszám + videó csomag';
+    else if (pkg === 'premium') itemName = 'Prémium hangcsomag (WAV)';
+
+    const qty = 1;
+    const gross = total || 0;
+    const grossText = `${gross.toLocaleString('hu-HU')} Ft`;
+    let grossWords = '';
+    try {
+      grossWords = numToHungarian(gross);
+    } catch (_) {
+      grossWords = '';
+    }
+
+    // Fejléc
+    doc.fontSize(16).text(
+      isTest ? 'TESZT SZÁMLA – NEM ADÓÜGYI BIZONYLAT' : 'SZÁMLA',
+      { align: 'right' }
+    );
+    doc.moveDown(0.5);
+    doc.fontSize(10)
+      .text(`Számlaszám: ${invoiceNo}`, { align: 'right' })
+      .text(`Kelt: ${dateStr}`, { align: 'right' })
+      .text(`Teljesítés dátuma: ${performanceDate}`, { align: 'right' })
+      .text(`Fizetési határidő: ${paymentDate}`, { align: 'right' })
+      .text('Fizetés módja: Bankkártya (online)', { align: 'right' });
+
+    doc.moveDown(1);
+
+    // Eladó adatai
+    doc.fontSize(12).text('Számlakibocsátó:', { underline: true });
+    doc.fontSize(10)
+      .text(INVOICE_SEED.sellerName)
+      .text(`Nyilvántartási szám: ${INVOICE_SEED.regNumber}`)
+      .text(`Adószám: ${INVOICE_SEED.taxNumber}`)
+      .text(`Statisztikai számjel: ${INVOICE_SEED.statNumber}`)
+      .text(`Székhely: ${INVOICE_SEED.address}`)
+      .text('Adózás: Alanyi adómentes (AAM – ÁFA tartalma 0%)');
+
+    doc.moveDown(1);
+
+    // Vevő adatai
+    doc.fontSize(12).text('Vevő:', { underline: true });
+    doc.fontSize(10).text(buyerName);
+    if (buyerVat) doc.text(`Adószám: ${buyerVat}`);
+    if (buyerAddress) doc.text(buyerAddress);
+
+    doc.moveDown(1);
+
+    // Tételek
+    doc.fontSize(12).text('Tételek:');
+    doc.moveDown(0.5);
+
+    doc.fontSize(10);
+    doc.text('Megnevezés', 50, doc.y, { continued: true });
+    doc.text('Menny.', 280, doc.y, { continued: true });
+    doc.text('Egységár (bruttó)', 330, doc.y, { continued: true });
+    doc.text('Összeg (bruttó)', 450);
+    doc.moveDown(0.3);
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown(0.3);
+
+    const unitPrice = gross;
+    doc.text(itemName, 50, doc.y, { width: 220, continued: true });
+    doc.text(`${qty} db`, 280, doc.y, { continued: true });
+    doc.text(`${unitPrice.toLocaleString('hu-HU')} Ft`, 330, doc.y, { continued: true });
+    doc.text(grossText, 450);
+
+    doc.moveDown(0.5);
+    doc.moveTo(350, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown(0.3);
+    doc.text('Végösszeg (AAM):', 350, doc.y, { continued: true });
+    doc.text(grossText, 450);
+
+    doc.moveDown(1);
+
+    if (grossWords) {
+      doc.text(`Szóban: ${grossWords} forint`, 50, doc.y);
+      doc.moveDown(0.5);
+    }
+
+    doc.fontSize(8).fillColor('gray')
+      .text('Megjegyzés: a számla alanyi adómentes, ÁFA tartalma 0%.', 50, doc.y, { width: 500 });
+
+    if (isTest) {
+      doc.moveDown(0.3);
+      doc.text('TESZT ÜZEMMÓD – kizárólag belső ellenőrzésre.', 50, doc.y, { width: 500 });
+    }
+
+    doc.end();
+  });
+}
 
 /* ================== Middleware / static ================= */
 app.use(cors());
@@ -80,30 +258,60 @@ function buildTransport() {
   });
 }
 
-async function sendViaSMTP({ to, subject, html, replyTo }) {
+async function sendViaSMTP({ to, subject, html, replyTo, attachments }) {
   const transport = buildTransport();
   if (!transport) return { skipped: true, reason: 'SMTP not configured/disabled' };
   const from = ENV.MAIL_FROM || ENV.SMTP_USER;
-  const info = await transport.sendMail({ from, to, subject, html, replyTo });
+  const info = await transport.sendMail({
+    from,
+    to,
+    subject,
+    html,
+    replyTo,
+    attachments: attachments && attachments.length ? attachments : undefined
+  });
   console.log('[MAIL:SENT:SMTP]', { to, subject, id: info.messageId });
   return { messageId: info.messageId };
 }
 
-async function sendViaResend({ to, subject, html, replyTo }) {
+async function sendViaResend({ to, subject, html, replyTo, attachments }) {
   if (!ENV.RESEND_API_KEY) return { skipped: true, reason: 'RESEND_API_KEY not set' };
+
   const from = ENV.MAIL_FROM || 'onboarding@resend.dev';
+
+  const payload = {
+    from,
+    to,
+    subject,
+    html,
+    reply_to: replyTo || undefined
+  };
+
+  // 🔥 Mellékletek támogatása (PDF számla!)
+  if (attachments && attachments.length) {
+    payload.attachments = attachments.map(a => ({
+      filename: a.filename,
+      // Resend base64-ben várja a PDF tartalmat
+      content: a.content instanceof Buffer
+        ? a.content.toString('base64')
+        : a.content
+    }));
+  }
+
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${ENV.RESEND_API_KEY}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ from, to, subject, html, reply_to: replyTo || undefined })
+    body: JSON.stringify(payload)
   });
+
   if (!res.ok) {
     const text = await res.text();
     throw new Error('Resend error: ' + res.status + ' ' + text);
   }
+
   const json = await res.json();
   console.log('[MAIL:SENT:RESEND]', { to, subject, id: json.id });
   return { id: json.id };
@@ -279,13 +487,12 @@ app.get('/api/payment/callback', async (req, res) => {
         console.error('[VPOS CALLBACK] Hiba a dalgenerálás indításakor:', err);
       }
     }
-// === ÜGYFÉL-EMAIL SIKERES FIZETÉS UTÁN (delivery time-mel) ===
+// === ÜGYFÉL-EMAIL SIKERES FIZETÉS UTÁN (delivery time + PDF számla) ===
 try {
   const o = (global.lastOrderData || {});
   const customer = (o.email || '');
   if (customer) {
     const deliveryLabel = (o.delivery_label || o.delivery || '48 óra');
-    // package/format normalizálás csak a levélhez
     const pkg = (o.package || o.format || 'basic').toString().toLowerCase();
     const format = pkg === 'video' ? 'MP4' : (pkg === 'premium' ? 'WAV' : 'MP3');
 
@@ -300,9 +507,41 @@ try {
       <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>
     `;
 
-    queueEmails([
-      { to: customer, subject: 'EnZenem – Megrendelés visszaigazolás (sikeres fizetés)', html: customerHtml }
-    ]);
+    const jobs = [];
+    let attachments = [];
+
+    // 🔥 Számla generálás mód szerint
+    if (INVOICE_MODE === 'test' || INVOICE_MODE === 'live') {
+      try {
+        const totalInt = parseInt(amount, 10) || 0;
+        const { buffer, invoiceNo } = await generateInvoicePDF({
+          mode: INVOICE_MODE,
+          total: totalInt,
+          order: o
+        });
+
+        if (buffer && buffer.length) {
+          attachments.push({
+            filename: `${invoiceNo}.pdf`,
+            content: buffer
+          });
+          console.log('[INVOICE] Generated invoice', { invoiceNo, totalInt, mode: INVOICE_MODE });
+        }
+      } catch (err) {
+        console.warn('[INVOICE] Generation failed:', err?.message || err);
+      }
+    } else {
+      console.log('[INVOICE] INVOICE_MODE=off – nem generálunk számlát.');
+    }
+
+    jobs.push({
+      to: customer,
+      subject: 'EnZenem – Megrendelés visszaigazolás (sikeres fizetés)',
+      html: customerHtml,
+      attachments: attachments.length ? attachments : undefined
+    });
+
+    queueEmails(jobs);
     console.log('[MAIL:QUEUED customer after VPOS success]', { to: customer, deliveryLabel, format });
   } else {
     console.warn('[VPOS CALLBACK] Nincs ügyfél e-mail cím a lastOrderData-ban, nem küldünk ügyféllevelet.');
