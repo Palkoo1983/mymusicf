@@ -9,8 +9,7 @@ import dotenv from 'dotenv';
 import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
 import fs from 'fs';
 import PDFDocument from 'pdfkit';
-import fs from 'fs';
-import path from 'path';
+
 
 function getCounterFile(isTest) {
   const file = isTest
@@ -67,7 +66,6 @@ function getNextInvoiceNumber(isTest) {
   return `${prefix}-${year}-${seqStr}`;
 }
 
-export { getNextInvoiceNumber };
 
 dotenv.config();
 
