@@ -132,18 +132,6 @@ function saveInvoiceCounter(data) {
   }
 }
 
-function getNextInvoiceNumber(isTest) {
-  const today = new Date();
-  const year = today.getFullYear();
-  let state = loadInvoiceCounter();
-  if (!state || state.year !== year) {
-    state = { year, last: 0 };
-  }
-  state.last += 1;
-  saveInvoiceCounter(state);
-  const base = `ENZ-${year}-${String(state.last).padStart(6, '0')}`;
-  return isTest ? `TESZT-${base}` : base;
-}
 
 /**
  * Számla PDF generálása
