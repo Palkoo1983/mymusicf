@@ -652,11 +652,12 @@ function stopVideo(btn) {
   Zenei stílus (írható is)
 
   <div class="custom-combobox">
-    <input type="text"
-           id="styleInput"
-           name="styles"
-           placeholder="pl. pop / rock / minimal techno / house / romantikus"
-           required>
+   <input type="text"
+       id="styleInput"
+       name="styles"
+       placeholder="pl. pop / rock / minimal techno / house / romantikus"
+       required
+       autocomplete="off">
 
     <div class="combo-list" id="styleList">
       <div data-val="Pop">Pop</div>
@@ -1054,29 +1055,42 @@ if (/wv|samsungbrowser/i.test(navigator.userAgent)) {
 }
 </script>
 <script>
-document.addEventListener("click", (e) => {
-  const box = document.getElementById("styleList");
-  const input = document.getElementById("styleInput");
+document.addEventListener('DOMContentLoaded', () => {
+  const box   = document.getElementById('styleList');
+  const input = document.getElementById('styleInput');
+  if (!box || !input) return;
 
-  // Ha listában kattintott, keressük meg a legközelebbi data-val elemet
-  const option = e.target.closest("[data-val]");
+  // Lista megnyitása: fókusz + kattintáskor
+  input.addEventListener('focus', () => {
+    box.style.display = 'block';
+  });
+  input.addEventListener('click', () => {
+    box.style.display = 'block';
+  });
 
-  if (option) {
+  // Opció kiválasztása – csak a saját listánkon belül figyelünk
+  box.addEventListener('click', (e) => {
+    const option = e.target.closest('[data-val]');
+    if (!option) return;
     input.value = option.dataset.val;
-    box.style.display = "none";       // <<< MOST MINDIG ELTŰNIK
-    return;
-  }
+    box.style.display = 'none';
+    input.focus(); // ha akarsz, maradjon aktív az input
+  });
 
-  // Input mezőre kattint → nyitás
-  if (e.target === input) {
-    box.style.display = "block";
-  } else {
-    // Bármilyen más klikk → bezár
-    box.style.display = "none";
-  }
+  // Ha máshova kattintunk → zárjuk be
+  document.addEventListener('click', (e) => {
+    if (e.target === input || box.contains(e.target)) return;
+    box.style.display = 'none';
+  });
+
+  // Blur eset: biztos, ami biztos, kis késleltetéssel zárjuk
+  input.addEventListener('blur', () => {
+    setTimeout(() => {
+      box.style.display = 'none';
+    }, 120);
+  });
 });
 </script>
-
 
 </body>
 </html>
