@@ -769,13 +769,12 @@ const sys3 = [
   '- Final chorus must repeat identically at the end.',
   '- The song must feel cohesive, fluent and emotionally expressive — never robotic or literal.',
   '- Never reinterpret or modify numeric ages or years; only convert digits to words preserving exact numeric meaning.',
-  '- TIME & AGE COHERENCE GUARD: Do NOT invent or calculate time spans (e.g., "x years ago", "for x years") if the brief does not explicitly provide time or age information.',
+  '- TIME & AGE COHERENCE GUARD: Do NOT invent or calculate time spans if the brief does not explicitly provide time or age information.',
   '- If no time information is provided in the brief, use general past expressions only (e.g., "long ago", "back then", "on a summer night", "in childhood") instead of numeric durations.',
   '- Never reinterpret, modify, expand, or reverse-calculate any age or time data given in the brief.',
-  '- If the brief includes a specific age or time reference, include it exactly as stated, without adding derived durations.',
+  '- If the brief provides a specific age, the lyrics MUST explicitly include that age in a natural, coherent way, without transforming it into a past duration or calculated time span.',
   '- METAPHOR COHERENCE GUARD: Metaphors are allowed only if emotionally meaningful and logically interpretable; avoid absurd or comedic personification of objects.',
-  '- Do NOT assign human actions or intentions to objects (e.g., photos dancing, houses singing, cakes hugging the room).',
-  '- Metaphors must remain consistent with the emotional core of the song and should not conflict with each other.'
+  '- Do NOT assign human actions or intentions to objects.'
 
 ].join('\n');
 
