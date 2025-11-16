@@ -816,7 +816,10 @@ const sys3 = [
   '- Never reinterpret, modify, expand, or reverse-calculate any age or time data given in the brief.',
   '- If the brief provides a specific age, the lyrics MUST explicitly include that age in a natural, coherent way, without transforming it into a past duration or calculated time span.',
   '- METAPHOR COHERENCE GUARD: Metaphors are allowed only if emotionally meaningful and logically interpretable; avoid absurd or comedic personification of objects.',
-  '- Do NOT assign human actions or intentions to objects.'
+  '- Do NOT assign human actions or intentions to objects.',
+  '- Never invent or calculate time differences (e.g., "x éve") unless explicitly stated in the brief.',
+  '- Use clear rhythmic phrasing and internal rhyme patterns when style = rap/trap/hip-hop.',
+  '- Do NOT use funeral, memorial, or farewell tone unless the brief explicitly indicates a loss, funeral, or memorial context.'
 
 ].join('\n');
 
