@@ -733,7 +733,7 @@ const sys2 = [
   'RAP / HIP-HOP / TRAP: min. 10 words/line – logical, rhythmic, no meaningless filler',
   'CHILD: min. 6 words/line – simple playful language, optional la-la / taps-taps / bumm-bumm in Chorus only',
   '',
-  'BIRTHDAY: celebrated person\\'s NAME must appear in EVERY Chorus',
+  'BIRTHDAY: az ünnepelt NEVE szerepeljen minden Chorus részben',
   'WEDDING / ROMANTIC: warm, unified tone + 1 natural love metaphor (csillag, fény, tenger, szellő, naplemente)',
   'FUNERAL: calm, grateful, peaceful tone (ONLY if brief clearly indicates loss)',
   'GRADUATION: pride, future, growth, achievement',
@@ -743,6 +743,7 @@ const sys2 = [
   'Use the FIRST matching genre from the user styles.',
   'Never mix multiple style rule-sets at once.'
 ].join('\\n');
+
 const sys3 = [
   '=== LANGUAGE & COHERENCE RULES ===',
   '- Natural Hungarian grammar only',
