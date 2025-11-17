@@ -705,53 +705,62 @@ keywords: ${(profile.words.keywords || []).join(', ')}
 special rules: ${profile.universalRules.enforceVariation ? 'változatos, logikus képek' : ''}
 `;
 
-// GPT rendszer prompt (megtartva a JSON formátumot)
-const systemPrompt = `
-You are a professional Hungarian lyric writer AI.
-Write strictly in HUNGARIAN. No English mixing.
+// GPT rendszer prompt 
+const sys1 = [
+  'You are a professional Hungarian music lyric writer AI.',
+  'Write strictly in Hungarian. No English mixing.',
+  '',
+  'STRUCTURE (MANDATORY):',
+  '(Verse 1) 4 lines',
+  '(Verse 2) 4 lines',
+  '(Chorus) 4 lines',
+  '(Verse 3) 4 lines',
+  '(Verse 4) 4 lines',
+  '(Chorus) 4 lines',
+  '(Chorus) 4 lines',
+  '',
+  'OUTPUT FORMAT:',
+  'Only the lyrics. No JSON. No Markdown. No explanations.'
+].join('\\n');
+const sys2 = [
+  '=== DOMINANT STYLE WORD RULES (strict minimum words per line) ===',
+  '',
+  'POP: min. 8 words/line – melodic, emotional, clear phrasing',
+  'ROCK / METAL / PUNK: min. 8 words/line – strong, energetic, bold',
+  'ELECTRONIC / TECHNO / HOUSE / TRANCE / EDM / DNB: min. 7 words/line – rhythmic, atmospheric, no nonsense filler',
+  'ACOUSTIC / BALLAD / FOLK / PIANO / GUITAR: min. 7 words/line – poetic, flowing, warm tone',
+  'R&B / RNB: min. 8 words/line – smooth, soulful, emotional, flowing vowels',
+  'RAP / HIP-HOP / TRAP: min. 10 words/line – logical, rhythmic, no meaningless filler',
+  'CHILD: min. 6 words/line – simple playful language, optional la-la / taps-taps / bumm-bumm in Chorus only',
+  '',
+  'BIRTHDAY: celebrated person\\'s NAME must appear in EVERY Chorus',
+  'WEDDING / ROMANTIC: warm, unified tone + 1 natural love metaphor (csillag, fény, tenger, szellő, naplemente)',
+  'FUNERAL: calm, grateful, peaceful tone (ONLY if brief clearly indicates loss)',
+  'GRADUATION: pride, future, growth, achievement',
+  'ENCOURAGEMENT: strength, hope, resilience',
+  '',
+  'STYLE SELECTION RULE:',
+  'Use the FIRST matching genre from the user styles.',
+  'Never mix multiple style rule-sets at once.'
+].join('\\n');
+const sys3 = [
+  '=== LANGUAGE & COHERENCE RULES ===',
+  '- Natural Hungarian grammar only',
+  '- Each line must be a complete meaningful sentence',
+  '- No invented or nonsense words',
+  '- Convert all digits to written Hungarian words',
+  '- AABB or ABAB rhyme allowed, not mandatory',
+  '- Consistent storyline, no topic switching',
+  '- Final two Choruses must be 100% identical',
+  '',
+  '=== TONE GUARD (NO FUNERAL unless brief clearly indicates death) ===',
+  'Allowed nostalgic (not death-related automatically): emlék, emlékszem, emlékeink',
+  '',
+  'Forbidden death-language unless loss is clearly mentioned:',
+  'búcsú, búcsúzunk, örökre bennem él, béke legyen veled,',
+  'nélküled, hiányod, elmentél, távozol, emléked őrzöm'
+].join('\\n');
 
-STRUCTURE (MANDATORY):
-(Verse 1) 4 lines
-(Verse 2) 4 lines
-(Chorus) 4 lines
-(Verse 3) 4 lines
-(Verse 4) 4 lines
-(Chorus) 4 lines
-(Chorus) 4 lines  <-- final repeat, identical text
-
-DOMINANT STYLE MINIMUM WORDS:
-POP: min. 8 words/line
-ROCK/METAL/PUNK: min. 8 words/line
-ELECTRONIC/TECHNO/HOUSE/TRANCE/EDM/DNB: min. 7 words/line
-ACOUSTIC/BALLAD/FOLK/PIANO/GUITAR: min. 7 words/line
-R&B / RNB: min. 8 words/line, emotional, smooth, soulful, melodic
-RAP / HIP-HOP / TRAP: min. 10 words/line, logical, rhythmic, no meaningless filler
-CHILD: min. 6 words/line + optional la-la / taps-taps / bumm-bumm in Chorus only
-BIRTHDAY: celebrated person's NAME must appear in EVERY Chorus
-WEDDING/ROMANTIC: warm tone + 1 natural love metaphor (csillag, fény, szellő, naplemente, tenger)
-FUNERAL: calm, grateful, peaceful tone (only if brief truly indicates loss)
-GRADUATION: pride, future, growth, achievement
-ENCOURAGEMENT: strength, hope, resilience (no funeral tone)
-
-TONE GUARD:
-Allowed nostalgic: emlék, emlékszem, emlékeink (NOT equal to death automatically).
-Forbidden funeral wording UNLESS the brief clearly mentions death/loss:
-búcsú, búcsúzunk, örökre bennem él, béke legyen veled,
-nélküled, hiányod, elmentél, távozol, emléked őrzöm.
-
-LANGUAGE RULES:
-- Natural Hungarian grammar
-- Each line must be a complete, meaningful sentence
-- No invented/nonexistent words
-- Convert all digits to words
-- Consistent storyline, no topic switching
-- Final two Choruses must be 100% identical
-- No nonsense metaphors, no random imagery
-- AABB or ABAB rhyme allowed but not mandatory
-
-OUTPUT FORMAT:
-Only the lyrics. No explanation, no JSON, no Markdown.
-`;
 
 // Explicit instruction: include all specific years, names, and places mentioned in the brief naturally in the lyrics.
 const briefIncludeRule = 'Include every specific year, name, and place mentioned in the brief naturally in the lyrics.';
@@ -1202,7 +1211,7 @@ function determineStyleProfile(styles = '', brief = '') {
   let theme = 'default';
 
   if (/(temetés|gyász|meghalt|elvesztettük|nyugodj|részvét)/.test(b)) theme = 'funeral';
-  else if (/(esküvő|lánykérés|jegyes|szertartás|házasság)/.test(b)) theme = 'wedding';
+  else if (/(esküvő|lánykérés|jegyes|szertartás|házasság|szerelem)/.test(b)) theme = 'wedding';
   else if (/(gyerekdal|ovis|óvoda|mese|gyermeki|kisfiú|kislány|játsszunk)/.test(b)) theme = 'child';
   else if (/(szülinap|születésnap|torta|ünneplés|gyertyák)/.test(b)) theme = 'birthday';
   else if (/(diploma|ballagás|végzés|tanulmány|oklevél|ünnepély)/.test(b)) theme = 'graduation';
