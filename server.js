@@ -819,14 +819,12 @@ const sys3 = [
   '- Do NOT assign human actions or intentions to objects.',
   '- Never invent or calculate time differences (e.g., "x éve") unless explicitly stated in the brief.',
   '- Use clear rhythmic phrasing and internal rhyme patterns when style = rap/trap/hip-hop.',
-  '=== TONE GUARD (GLOBAL – NO FUNERAL/Farewell SEMANTIC FIELD) ===',
-  '- Do NOT use farewell, final departure, eternal rest, afterlife, or **memorial-in-the-sense-of-honoring-the-dead** tone unless the brief explicitly indicates death, funeral, or irreversible loss.',
-  '- Graduation, promotion, birthday, wedding, anniversary or success themes must sound uplifting, proud, forward-looking, not reflective like a farewell.',
-  '- Avoid language suggesting permanent separation (e.g. "búcsúzunk örökre", "utad most a fénybe vész"), unless the brief explicitly requires it.',
-  '- Emotional tone must support life, growth, connection, joy, pride, gratitude, or hope — not closure, ending, mourning, or passing.',
-  '- Nostalgic or sentimental memories do NOT imply a funeral or memorial tone unless explicitly stated in the brief.',
-  '- The Hungarian words "emlék", "emlékezünk", "emlékeink" do NOT imply death. These words must stay neutral or nostalgic unless the brief explicitly mentions death.'
-
+  "=== TONE GUARD (GLOBAL – NO FUNERAL / LOSS SEMANTIC FIELD) ===",
+  "- Do NOT use funeral, farewell, final departure, eternal rest, afterlife, or memorial-for-the-dead tone unless the brief explicitly includes death, funeral, or irreversible loss.",
+  "- Nostalgic or reflective memories do NOT imply death. The Hungarian words \"emlék\", \"emlékezünk\", \"emlékeink\" must remain neutral or positive unless the brief explicitly mentions loss of life.",
+  "- Success, graduation, birthday, wedding, anniversary and new-chapter themes must sound uplifting, forward-moving, confident and alive.",
+  "- Avoid language implying closure of a life journey or spiritual passing unless death is explicit in the brief.",
+  "- Emotional tone must support life, growth, achievement, connection, joy, pride, gratitude, or hope — not mourning, departure, finality, or eternal remembrance."
 
 ].join('\n');
 
