@@ -819,13 +819,13 @@ const sys3 = [
   '- Do NOT assign human actions or intentions to objects.',
   '- Never invent or calculate time differences (e.g., "x éve") unless explicitly stated in the brief.',
   '- Use clear rhythmic phrasing and internal rhyme patterns when style = rap/trap/hip-hop.',
-  '- Do NOT use funeral, memorial, or farewell tone unless the brief explicitly indicates a loss, funeral, or memorial context.',
   '=== TONE GUARD (GLOBAL – NO FUNERAL/Farewell SEMANTIC FIELD) ===',
-  '- Do NOT use farewell, final departure, eternal rest, memorial, or afterlife tone unless the brief explicitly indicates death, funeral, or irreversible loss.',
+  '- Do NOT use farewell, final departure, eternal rest, afterlife, or **memorial-in-the-sense-of-honoring-the-dead** tone unless the brief explicitly indicates death, funeral, or irreversible loss.',
   '- Graduation, promotion, birthday, wedding, anniversary or success themes must sound uplifting, proud, forward-looking, not reflective like a farewell.',
   '- Avoid language suggesting permanent separation (e.g. "búcsúzunk örökre", "utad most a fénybe vész"), unless the brief explicitly requires it.',
   '- Emotional tone must support life, growth, connection, joy, pride, gratitude, or hope — not closure, ending, mourning, or passing.',
-  '- Nostalgic or sentimental memories do NOT imply a funeral or memorial tone unless explicitly stated in the brief.'
+  '- Nostalgic or sentimental memories do NOT imply a funeral or memorial tone unless explicitly stated in the brief.',
+  '- The Hungarian words "emlék", "emlékezünk", "emlékeink" do NOT imply death. These words must stay neutral or nostalgic unless the brief explicitly mentions death.'
 
 
 ].join('\n');
