@@ -1223,8 +1223,6 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
   else if (/child/.test(v)) vocalMode = 'child';
   else if (/robot|synthetic/.test(v)) vocalMode = 'robot';
 
-  return { baseStyle, theme, vocalMode };
-}
 
   // --- 4️⃣ Alap stílusprofilok ---
   const baseProfiles = {
