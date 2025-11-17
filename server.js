@@ -706,129 +706,52 @@ special rules: ${profile.universalRules.enforceVariation ? 'változatos, logikus
 `;
 
 // GPT rendszer prompt (megtartva a JSON formátumot)
-const sys1 = [
-  'You are a professional lyric writer AI. You generate complete, structured Hungarian song lyrics strictly following the requested style and theme.',
-  'Follow the given style profile below when creating rhythm, emotion, tone, and vocabulary.',
-  'LANGUAGE LOCK: write the lyrics STRICTLY in ' + language + ' (no mixing).',
-  'STRUCTURE IS MANDATORY: the song must include these section titles exactly as shown:',
-  '(Verse 1)',
-  '(Verse 2)',
-  '(Chorus)',
-  '(Verse 3)',
-  '(Verse 4)',
-  '(Chorus)',
-  'Each verse and chorus must have exactly 4 lines.',
-  'OUTPUT: Return only the clean lyrics text with proper section titles and line breaks (no JSON, no markdown, no explanations).',
-  'Include and respect all style hints: ' + styles + '.'
-].join('\n');
+const systemPrompt = `
+You are a professional Hungarian lyric writer AI.
+Write strictly in HUNGARIAN. No English mixing.
 
-const sys2 = [
-  '=== UNIVERSAL STYLE ENFORCEMENT RULES (STRICT MINIMUM WORDS PER LINE) ===',
-  'All lines MUST contain at least the minimum number of words required by the dominant style. This rule is STRICT and may NOT be ignored, reduced, or overridden by any other instruction.',
-  '',
-  '🎵 POP songs:',
-  '- Minimum 8 words per line.',
-  '- Focus on melody, emotional clarity, natural phrasing.',
-  '',
-  '🎸 ROCK / METAL / PUNK songs:',
-  '- Minimum 8 words per line.',
-  '- Energetic, expressive rhythm, strong delivery.',
-  '',
-  '🎧 ELECTRONIC / TECHNO / HOUSE / TRANCE / EDM songs:',
-  '- Minimum 7 words per line.',
-  '- Rhythmic, atmospheric, imagery-driven phrasing.',
-  '- No nonsense filler words; still meaningful.',
-  '',
-  '🎹 ACOUSTIC / BALLAD / FOLK / PIANO / GUITAR songs:',
-  '- Minimum 7 words per line.',
-  '- Gentle, poetic, flowing musicality.',
-  '',
-  '🎤 RAP / TRAP / HIP-HOP songs:',
-  '- Minimum 10 words per line.',
-  '- Maintain natural flow, coherent meaning, avoid filler syllables.',
-  '- Wordplay allowed, but must remain logical and meaningful.',
-  '',
-  '🧁 BIRTHDAY songs:',
-  '- Minimum 7 words per line.',
-  '- The celebrated person’s NAME MUST appear in EVERY Chorus.',
-  '- Rhythm positive, joyful, celebratory.',
-  '',
-  '💍 WEDDING / ROMANTIC songs:',
-  '- Minimum 8 words per line.',
-  '- Use at least one natural metaphor related to love (e.g., sun, sunset, sea, stars, light, breeze).',
-  '- Tone must be warm, emotional, unified.',
-  '',
-  '🕊 FUNERAL / MEMORIAL songs:',
-  '- Minimum 7 words per line.',
-  '- Calm, serene, grateful tone. No harsh, comical, or absurd imagery.',
-  '- Avoid slang. No bright party or celebration tone.',
-  '',
-  '🧒 CHILD songs (gyerekdal):',
-  '- Minimum 6 words per line.',
-  '- CHORUS may contain 1–2 playful onomatopoeias (e.g., "la-la", "taps-taps", "bumm-bumm") used rhythmically and meaningfully.',
-  '- Only use child-vocabulary if the theme AND vocal mode justify a child song.',
-  '',
-  '⚠ STYLE SELECTION RULE:',
-  '- If multiple genres were provided, apply the MINIMUM WORD limit of the FIRST (dominant) style.',
-  '',
-  '🚫 PROHIBITED:',
-  '- Do NOT drop below min. word counts.',
-  '- Do NOT use invented/non-existent Hungarian words.',
-  '- Do NOT rely on empty fillers (e.g., na-na-na, yeah-yeah) unless RAP and still meaningful.',
-  '- UNIVERSAL RULES: vary sentence beginnings, ensure meaningful continuity, avoid nonsense or mixed metaphors, preserve natural Hungarian rhythm and vowel harmony, and ensure the final Chorus repeats identically at the end.',
-  '- APPLY ONLY ONE STYLE RULESET matching the most dominant genre from the client styles.',
-  '- If multiple genres are listed (e.g. "minimal techno, house, trance"), choose the one that best fits the rhythm and tone, and apply its minimum word rule consistently to all verses and choruses.',
-  '- IMPORTANT: child-song specific words (napocska, dalocska, ovis, kacagás, la-la, taps-taps, bumm-bumm) are allowed ONLY when style = child; never use them in any other genre or theme.'
-].join('\n');
+STRUCTURE (MANDATORY):
+(Verse 1) 4 lines
+(Verse 2) 4 lines
+(Chorus) 4 lines
+(Verse 3) 4 lines
+(Verse 4) 4 lines
+(Chorus) 4 lines
+(Chorus) 4 lines  <-- final repeat, identical text
 
-const sys3 = [
-  '=== HUNGARIAN LANGUAGE POLISH & COHERENCE RULES ===',
-  '- Write the entire song in natural, grammatically correct Hungarian.',
-  '- Every line must form a full, meaningful sentence — always include both subject and predicate.',
-  '- Ensure logical flow between lines; verses and choruses must connect coherently to the same theme.',
-  '- Maintain natural Hungarian word order (subject–predicate–object), avoid inverted or awkward structures.',
-  '- Use proper Hungarian suffixes and vowel harmony (no "-ban/-ben" mismatches).',
-  '- Remove unnecessary spaces or blank lines.',
-  '- Avoid double punctuation or repeated words (e.g., "fény fény" → "fény").',
-  '- Capitalize the first letter of each line.',
-  '- Use correct and natural conjugations (e.g., "szeretet érzem" → "szeretetet érzek", "vágy érzem" → "vágyat érzek").',
-  '- Replace incorrect or awkward expressions with fluent, native Hungarian equivalents.',
-  '- Convert any numeric digits to written Hungarian words (e.g., 10 → tíz, 2024 → kétezer-huszonnégy).',
-  '- Exclude numbers from section headings (Verse, Chorus).',
-  '- Keep poetic rhythm consistent with the style, but always semantically correct.',
-  '- If multiple styles are given, determine rhythm and phrasing from the first (dominant) style only.',
-  '- Do not force rhymes at the expense of meaning. Rhyme is optional, sense and fluency are mandatory.',
-  '- Maintain smooth rhyme and rhythm (AABB or ABAB patterns when natural).',
-  '- If a rhyme would create an illogical or unnatural phrase, remove or rephrase it naturally.',
-  '- If style = wedding/romantic, include logical, coherent metaphors (e.g., naplemente, tenger, csillag, fény, szellő). Avoid random or nonsense imagery.',
-  '- If style = funeral, use gentle and calm tone, gratitude and peace — no harsh or absurd images.',
-  '- Avoid meaningless repetition or filler words.',
-  '- Ensure tense consistency (past/present forms should not randomly change).',
-  '- Use rich, expressive but realistic imagery; avoid mixed or unrelated metaphors (e.g., "tenger" + "sivatag" in the same image).',
-  '- Ensure that all metaphors support the song’s emotional core and do not contradict each other.',
-  '- Avoid invented or non-existent Hungarian words.',
-  '- All numeric or temporal expressions (years, ages) must be written in full words and keep Hungarian case endings intact.',
-  '- Final chorus must repeat identically at the end.',
-  '- The song must feel cohesive, fluent and emotionally expressive — never robotic or literal.',
-  '- Never reinterpret or modify numeric ages or years; only convert digits to words preserving exact numeric meaning.',
-  '- TIME & AGE COHERENCE GUARD: Do NOT invent or calculate time spans if the brief does not explicitly provide time or age information.',
-  '- If no time information is provided in the brief, use general past expressions only (e.g., "long ago", "back then", "on a summer night", "in childhood") instead of numeric durations.',
-  '- Never reinterpret, modify, expand, or reverse-calculate any age or time data given in the brief.',
-  '- If the brief provides a specific age, the lyrics MUST explicitly include that age in a natural, coherent way, without transforming it into a past duration or calculated time span.',
-  '- METAPHOR COHERENCE GUARD: Metaphors are allowed only if emotionally meaningful and logically interpretable; avoid absurd or comedic personification of objects.',
-  '- Do NOT assign human actions or intentions to objects.',
-  '- Never invent or calculate time differences (e.g., "x éve") unless explicitly stated in the brief.',
-  '- Use clear rhythmic phrasing and internal rhyme patterns when style = rap/trap/hip-hop.',
-  "=== TONE GUARD (NO FUNERAL / NO FAREWELL LANGUAGE) ===",
-  "- The song must NOT use funeral, memorial, farewell, parting, afterlife or eternal-rest tone unless the brief explicitly mentions death or funeral.",
-  "- The Hungarian words emlék / emlékszem / emlékeink are allowed and must be interpreted as positive or nostalgic, NOT related to death.",
-  "- STRICTLY FORBIDDEN EXPRESSIONS (when no death is mentioned):",
-  "  búcsú, búcsúzom, búcsúzunk, örökre bennem él, örökre él, örök fény, béke szálljon, béke legyen veled, emléked őrzöm, nélküled, hiányod, távozol, elmentél.",
-  "- Graduation, birthday, wedding, anniversary and success themes must sound uplifting, forward-moving, confident, proud and alive.",
-  "- Emotional tone must support life, growth, connection, joy, pride, gratitude or hope — not closure, passing, mourning or final departure."
+DOMINANT STYLE MINIMUM WORDS:
+POP: min. 8 words/line
+ROCK/METAL/PUNK: min. 8 words/line
+ELECTRONIC/TECHNO/HOUSE/TRANCE/EDM/DNB: min. 7 words/line
+ACOUSTIC/BALLAD/FOLK/PIANO/GUITAR: min. 7 words/line
+R&B / RNB: min. 8 words/line, emotional, smooth, soulful, melodic
+RAP / HIP-HOP / TRAP: min. 10 words/line, logical, rhythmic, no meaningless filler
+CHILD: min. 6 words/line + optional la-la / taps-taps / bumm-bumm in Chorus only
+BIRTHDAY: celebrated person's NAME must appear in EVERY Chorus
+WEDDING/ROMANTIC: warm tone + 1 natural love metaphor (csillag, fény, szellő, naplemente, tenger)
+FUNERAL: calm, grateful, peaceful tone (only if brief truly indicates loss)
+GRADUATION: pride, future, growth, achievement
+ENCOURAGEMENT: strength, hope, resilience (no funeral tone)
 
+TONE GUARD:
+Allowed nostalgic: emlék, emlékszem, emlékeink (NOT equal to death automatically).
+Forbidden funeral wording UNLESS the brief clearly mentions death/loss:
+búcsú, búcsúzunk, örökre bennem él, béke legyen veled,
+nélküled, hiányod, elmentél, távozol, emléked őrzöm.
 
-].join('\n');
+LANGUAGE RULES:
+- Natural Hungarian grammar
+- Each line must be a complete, meaningful sentence
+- No invented/nonexistent words
+- Convert all digits to words
+- Consistent storyline, no topic switching
+- Final two Choruses must be 100% identical
+- No nonsense metaphors, no random imagery
+- AABB or ABAB rhyme allowed but not mandatory
+
+OUTPUT FORMAT:
+Only the lyrics. No explanation, no JSON, no Markdown.
+`;
 
 // Explicit instruction: include all specific years, names, and places mentioned in the brief naturally in the lyrics.
 const briefIncludeRule = 'Include every specific year, name, and place mentioned in the brief naturally in the lyrics.';
@@ -1262,184 +1185,30 @@ app.post('/api/suno/callback', async (req, res) => {
   }
 });
 // === STYLE PROFILE DECISION ENGINE (6 fő zenei stílus + 4 tematikus blokk) ===
-function determineStyleProfile(styles = '', brief = '', vocal = '') {
+function determineStyleProfile(styles = '', brief = '') {
   const s = (styles || '').toLowerCase();
   const b = (brief || '').toLowerCase();
-  const v = (vocal || '').toLowerCase();
 
-  // --- 1️⃣ Alap zenei stílus detektálása ---
+  // 1️⃣ Domináns zenei stílus (prior: r&b > rap/hiphop/trap > rock > electronic > acoustic > pop)
   let baseStyle = 'pop';
-  if (/(rock|punk|metal)/.test(s)) baseStyle = 'rock';
-  else if (/(techno|trance|electro|house|edm|electronic|dnb|drum)/.test(s)) baseStyle = 'electronic';
+  if (/r&b|rnb|r and b/.test(s)) baseStyle = 'rnb';
+  else if (/(rap|hip.?hop|trap)/.test(s)) baseStyle = 'rap';
+  else if (/(rock|punk|metal)/.test(s)) baseStyle = 'rock';
+  else if (/(techno|minimal|trance|electro|house|edm|electronic|dnb|drum)/.test(s)) baseStyle = 'electronic';
   else if (/(acoustic|ballad|folk|guitar|piano|lírai|lassú)/.test(s)) baseStyle = 'acoustic';
-  else if (/(rap|trap|hip.?hop)/.test(s)) baseStyle = 'rap';
   else if (/(none|null|unknown)/.test(s)) baseStyle = 'none';
 
-  // --- 2️⃣ Tematikus blokk felismerése ---
-  let theme = null;
-  if (/(esküvő|lánykérés|valentin|jegyes|házasság)/.test(b)) theme = 'wedding';
-  else if (/(temetés|búcsúztat|gyász|emlék|nyugodj|részvét|jobbulás)/.test(b)) theme = 'funeral';
-  else if (/(gyerekdal|ovis|óvoda|mese|gyermeki|kisfiú|kislány)/.test(b)) theme = 'child';
-  else if (/(szülinap|születésnap|ünnep|party|ünneplés|boldog szülinap)/.test(b)) theme = 'birthday';
-  // ⚙️ PATCH: Guard v5.1 – prevent "funeral" tone for electronic/minimal styles
-if (/(techno|minimal|house|trance|electronic)/.test(s) && theme === 'funeral') {
-  console.log('[PATCH] Overriding funeral→birthday for electronic styles');
-  theme = 'birthday';
-}
+  // 2️⃣ Téma felismerése (prioritási sorrend)
+  let theme = 'default';
 
-  // --- 3️⃣ Vocal finomítás (nem felülíró, csak stílusmódosító) ---
-  let vocalMode = 'neutral';
-  if (/male/.test(v)) vocalMode = 'male';
-  else if (/female/.test(v)) vocalMode = 'female';
-  else if (/duet/.test(v)) vocalMode = 'duet';
-  else if (/child/.test(v)) vocalMode = 'child';
-  else if (/robot|synthetic/.test(v)) vocalMode = 'robot';
+  if (/(temetés|gyász|meghalt|elvesztettük|nyugodj|részvét)/.test(b)) theme = 'funeral';
+  else if (/(esküvő|lánykérés|jegyes|szertartás|házasság)/.test(b)) theme = 'wedding';
+  else if (/(gyerekdal|ovis|óvoda|mese|gyermeki|kisfiú|kislány|játsszunk)/.test(b)) theme = 'child';
+  else if (/(szülinap|születésnap|torta|ünneplés|gyertyák)/.test(b)) theme = 'birthday';
+  else if (/(diploma|ballagás|végzés|tanulmány|oklevél|ünnepély)/.test(b)) theme = 'graduation';
+  else if (/(küzdelem|nem adom fel|büszke vagyok|erőt ad|tovább lépek|sosem állok meg)/.test(b)) theme = 'encouragement';
 
-  // --- 4️⃣ Alap stílusprofilok ---
-  const baseProfiles = {
-    pop: {
-      rhythm: { wordsPerLine: [8, 10], tempo: 'medium' },
-      tone: { emotion: 'high', brightness: 'warm', density: 'balanced' },
-      words: { allowSlang: false, repetition: 'low', variation: 'high', poeticImages: 'moderate' }
-    },
-    rock: {
-      rhythm: { wordsPerLine: [8, 12], tempo: 'medium-fast' },
-      tone: { emotion: 'strong', brightness: 'bright', density: 'dense' },
-      words: { allowSlang: true, repetition: 'low', variation: 'high', poeticImages: 'few' }
-    },
-    electronic: {
-      rhythm: { wordsPerLine: [6, 8], tempo: 'fast' },
-      tone: { emotion: 'neutral', brightness: 'cool', density: 'minimal' },
-      words: { allowSlang: false, repetition: 'medium', variation: 'medium', poeticImages: 'minimal' }
-    },
-    acoustic: {
-      rhythm: { wordsPerLine: [7, 11], tempo: 'slow' },
-      tone: { emotion: 'soft', brightness: 'warm', density: 'airy' },
-      words: { allowSlang: false, repetition: 'low', variation: 'high', poeticImages: 'rich' }
-    },
-    rap: {
-      rhythm: { wordsPerLine: [10, 16], tempo: 'variable' },
-      tone: { emotion: 'assertive', brightness: 'neutral', density: 'dense' },
-      words: { allowSlang: true, repetition: 'rhythmic', variation: 'high', poeticImages: 'few' }
-    },
-    none: {
-      rhythm: { wordsPerLine: [6, 10], tempo: 'medium' },
-      tone: { emotion: 'neutral', brightness: 'balanced', density: 'medium' },
-      words: { allowSlang: false, repetition: 'moderate', variation: 'medium', poeticImages: 'balanced' }
-    }
-  };
-
-  // --- 5️⃣ Tematikus módosítók (felülírás a zenei profilon) ---
-  const themeMods = {
-    wedding: {
-      tone: { emotion: 'romantic', brightness: 'warm', density: 'full' },
-      words: {
-        keywords: ['ígéret', 'hűség', 'örök', 'fény', 'igen'],
-        allowSlang: false,
-        variation: 'very-high',
-        poeticImages: 'rich'
-      },
-      overrides: {
-        positivity: 'high',
-        structure: 'balanced',
-        metaphorRule: 'logical-only',
-        repetition: 'minimal'
-      }
-    },
-    funeral: {
-      tone: { emotion: 'serene', brightness: 'dim', density: 'soft' },
-      words: {
-        keywords: ['emlék', 'fény', 'hála', 'búcsú', 'béke'],
-        allowSlang: false,
-        variation: 'medium',
-        poeticImages: 'gentle'
-      },
-      overrides: {
-        positivity: 'low',
-        structure: 'slow',
-        metaphorRule: 'realistic',
-        repetition: 'minimal'
-      }
-    },
-    child: {
-      tone: { emotion: 'joyful', brightness: 'bright', density: 'light' },
-      words: {
-        keywords: ['játszunk', 'játsszunk', 'napocska', 'dalocska','ovis', 'kacagás', 'bumm-bumm', 'la-la', 'taps-taps'],
-        allowSlang: false,
-        variation: 'medium',
-        poeticImages: 'simple'
-      },
-      overrides: {
-        simplicity: 'high',
-        repetition: 'moderate',
-        onomatopoeia: ['taps-taps', 'la-la', 'bumm-bumm'],
-        onomatopoeiaPlacement: 'chorus-only'
-      }
-    },
-    birthday: {
-      tone: { emotion: 'cheerful', brightness: 'bright', density: 'full' },
-      words: {
-        keywords: ['élet', 'barátok', 'nevetés', 'torta', 'fény', 'emlék', 'boldog születésnap'],
-        allowSlang: false,
-        variation: 'high',
-        poeticImages: 'vivid'
-      },
-      overrides: {
-        positivity: 'very-high',
-        structure: 'upbeat',
-        refrainNameMention: true,
-        repetition: 'moderate'
-      }
-    }
-  };
-
-  // --- 6️⃣ Összevonás és prioritáskezelés ---
-  let profile = JSON.parse(JSON.stringify(baseProfiles[baseStyle] || baseProfiles.pop));
-  profile.baseStyle = baseStyle;
-  profile.theme = theme;
-  profile.vocal = vocalMode;
-  profile.priority = ['theme', 'style', 'vocal'];
-
-  // Tematikus felülírás
-  if (theme && themeMods[theme]) {
-    const t = themeMods[theme];
-    profile.tone = { ...profile.tone, ...t.tone };
-    profile.words = { ...profile.words, ...t.words };
-    profile.overrides = { ...t.overrides };
-  }
-
-  // Vocal finomhangolás – csak akkor vált child témára, ha mind a vokál, mind a brief gyerekes jellegű
-if (vocalMode === 'child' && theme !== 'child' && /(gyerek|ovis|mese|ját|iskolás|szülinap|vidám)/.test(b)) {
-  profile.theme = 'child';
-  const t = themeMods.child;
-  profile.tone = { ...profile.tone, ...t.tone };
-  profile.words = { ...profile.words, ...t.words };
-  profile.overrides = { ...t.overrides };
-}
-
-
-  // Globális szabály: minden stílusban törekvés a változatosságra
-  profile.universalRules = {
-    enforceVariation: true,
-    forbidIdenticalSentenceStart: true,
-    forbidNonsensicalMetaphor: true,
-    requirePositiveClosure: true
-  };
-  // --- 7️⃣ Gyerekdal-szókészlet izolálása ---
-  // Ha a stílus vagy téma NEM gyerekdal, akkor a gyerekdalos kulcsszavakat töröljük a keywords-ból
-  if (profile.theme !== 'child' && profile.baseStyle !== 'child') {
-    const childWords = [
-      'játszunk', 'játsszunk', 'napocska', 'dalocska',
-      'ovis', 'kacagás', 'bumm-bumm', 'la-la', 'taps-taps'
-    ];
-    if (Array.isArray(profile.words.keywords)) {
-      profile.words.keywords = profile.words.keywords.filter(
-        w => !childWords.includes(w)
-      );
-    }
-  }
-
-  return profile;
+  return { baseStyle, theme };
 }
 
 
