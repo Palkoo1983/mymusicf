@@ -819,12 +819,14 @@ const sys3 = [
   '- Do NOT assign human actions or intentions to objects.',
   '- Never invent or calculate time differences (e.g., "x éve") unless explicitly stated in the brief.',
   '- Use clear rhythmic phrasing and internal rhyme patterns when style = rap/trap/hip-hop.',
-  "=== TONE GUARD (GLOBAL – NO FUNERAL / LOSS SEMANTIC FIELD) ===",
-  "- Do NOT use funeral, farewell, final departure, eternal rest, afterlife, or memorial-for-the-dead tone unless the brief explicitly includes death, funeral, or irreversible loss.",
-  "- Nostalgic or reflective memories do NOT imply death. The Hungarian words \"emlék\", \"emlékezünk\", \"emlékeink\" must remain neutral or positive unless the brief explicitly mentions loss of life.",
-  "- Success, graduation, birthday, wedding, anniversary and new-chapter themes must sound uplifting, forward-moving, confident and alive.",
-  "- Avoid language implying closure of a life journey or spiritual passing unless death is explicit in the brief.",
-  "- Emotional tone must support life, growth, achievement, connection, joy, pride, gratitude, or hope — not mourning, departure, finality, or eternal remembrance."
+  "=== TONE GUARD (NO FUNERAL / NO FAREWELL LANGUAGE) ===",
+  "- The song must NOT use funeral, memorial, farewell, parting, afterlife or eternal-rest tone unless the brief explicitly mentions death or funeral.",
+  "- The Hungarian words emlék / emlékszem / emlékeink are allowed and must be interpreted as positive or nostalgic, NOT related to death.",
+  "- STRICTLY FORBIDDEN EXPRESSIONS (when no death is mentioned):",
+  "  búcsú, búcsúzom, búcsúzunk, örökre bennem él, örökre él, örök fény, béke szálljon, béke legyen veled, emléked őrzöm, nélküled, hiányod, távozol, elmentél.",
+  "- Graduation, birthday, wedding, anniversary and success themes must sound uplifting, forward-moving, confident, proud and alive.",
+  "- Emotional tone must support life, growth, connection, joy, pride, gratitude or hope — not closure, passing, mourning or final departure."
+
 
 ].join('\n');
 
