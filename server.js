@@ -551,7 +551,7 @@ try {
   const jobs = [];
   let attachments = [];
 
-  // --- Számla generálás ---
+// --- Számla generálás ---
   if (INVOICE_MODE === 'test' || INVOICE_MODE === 'live') {
     try {
       const totalInt = parseInt(amount, 10) || 0;
@@ -637,14 +637,13 @@ async function sunoStartV1(url, headers, body){
   return { ok:false, status:503, text:'start_unavailable_after_retries' };
 }
 
-/* ============ GPT → Suno generate (NO POLISH) ============ */
+/* ============ GPT → Suno generate (NEW BRIEF-FIRST ENGINE) ============ */
 app.post('/api/generate_song', async (req, res) => {
   try {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
     if (!rateLimit('gen:' + ip, 45000, 5)) {
       return res.status(429).json({ ok:false, message:'Túl sok kérés. Próbáld később.' });
     }
-
 
     // 🔹 1️⃣ Ügyfél azonnali válasz – ne várja meg a hosszú folyamatot
     res.json({ ok:true, message:"Köszönjük! Megrendelésed feldolgozás alatt." });
@@ -653,502 +652,527 @@ app.post('/api/generate_song', async (req, res) => {
     setImmediate(async () => {
       try {
 
-    let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
+        let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
 
-    // Map package/format
-    const pkg = (req.body && (req.body.package||req.body.format)) ? String((req.body.package||req.body.format)).toLowerCase() : 'basic';
-    const format = pkg==='basic' ? 'mp3' : (pkg==='video' ? 'mp4' : pkg==='premium' ? 'wav' : pkg);
-    const isMP3 = (format === 'mp3');
+        // Map package/format
+        const pkg = (req.body && (req.body.package||req.body.format)) ? String((req.body.package||req.body.format)).toLowerCase() : 'basic';
+        const format = pkg==='basic' ? 'mp3' : (pkg==='video' ? 'mp4' : pkg==='premium' ? 'wav' : pkg);
+        const isMP3 = (format === 'mp3');
 
-    // Vocal normalizálás (csak Suno style taghez)
-    const v = (vocal || '').toString().trim().toLowerCase();
-    if (/^női|female/.test(v)) vocal = 'female';
-    else if (/^férfi|male/.test(v)) vocal = 'male';
-    else if (/instrument/.test(v)) vocal = 'instrumental';
-    else vocal = (v || 'instrumental');
+        // Vocal normalizálás (csak Suno style taghez)
+        const v0 = (vocal || '').toString().trim().toLowerCase();
+        if (/^női|female/.test(v0)) vocal = 'female';
+        else if (/^férfi|male/.test(v0)) vocal = 'male';
+        else if (/instrument/.test(v0)) vocal = 'instrumental';
+        else vocal = (v0 || 'instrumental');
 
-    // ENV
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
-    const SUNO_API_KEY   = process.env.SUNO_API_KEY;
-    const SUNO_BASE_URL  = (process.env.SUNO_BASE_URL || '').replace(/\/+$/,'');
-    const PUBLIC_URL     = (process.env.PUBLIC_URL || '').replace(/\/+$/,'');
+        // ENV
+        const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+        const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
+        const SUNO_API_KEY   = process.env.SUNO_API_KEY;
+        const SUNO_BASE_URL  = (process.env.SUNO_BASE_URL || '').replace(/\/+$/,'');
+        const PUBLIC_URL     = (process.env.PUBLIC_URL || '').replace(/\/+$/,'');
 
-    if (!OPENAI_API_KEY || !SUNO_API_KEY || !SUNO_BASE_URL) {
-  console.warn('[generate_song] Missing API keys or base URL.');
-  return;
-}
+        if (!OPENAI_API_KEY || !SUNO_API_KEY || !SUNO_BASE_URL) {
+          console.warn('[generate_song] Missing API keys or base URL.');
+          return;
+        }
 
-    // Idempotencia
-    const key = makeKey({ title, styles, vocal, language, brief });
-    const now = Date.now();
-    const last = activeStarts.get(key) || 0;
-    if (now - last < 20000) {
-  console.warn('[generate_song] Duplicate request ignored.');
-  return;
-}
+        // Idempotencia
+        const key = makeKey({ title, styles, vocal, language, brief });
+        const now = Date.now();
+        const last = activeStarts.get(key) || 0;
+        if (now - last < 20000) {
+          console.warn('[generate_song] Duplicate request ignored.');
+          return;
+        }
 
-    activeStarts.set(key, now);
-    setTimeout(() => activeStarts.delete(key), 60000);
+        activeStarts.set(key, now);
+        setTimeout(() => activeStarts.delete(key), 60000);
 
-   // --- GPT System Prompt ---
-const profile = determineStyleProfile(styles, brief, vocal);
+        // ========================= BEGIN NEW LYRIC ENGINE ========================= //
 
-// Magyar nyelvű, de kulcsosított leírás a GPT-nek
-const styleProfileText = `
-Zenei stílus: ${profile.baseStyle}
-Téma: ${profile.theme || 'általános'}
-Vokál: ${profile.vocalMode || 'neutral'}
-Használd a SYS szabályokat a stílushoz és a témához.
-`;
+        /*  BRIEF-FIRST DALGENERÁLÓ RENDSZER
+            Nyelvkezelés:
+              language = 'hu' vagy 'hungarian' → magyar dalszöveg
+              language = 'en' vagy 'english'   → angol dalszöveg
+            Kötelező szerkezet:
+              Verse 1 (4 sor)
+              Verse 2 (4 sor)
+              Chorus  (4 sor)
+              Verse 3 (4 sor)
+              Verse 4 (4 sor)
+              Chorus  (4 sor)
+              Chorus  (4 sor) – 100% azonos az előző Chorus-szal
+            Név szabály:
+              Ha a brief tartalmaz személynevet, annak legalább 1 versszakban ÉS minden chorusban szerepelnie kell.
+        */
 
-// GPT rendszer prompt 
-const sys1 = [
-  'You are a professional Hungarian music lyric writer AI.',
-  'Write strictly in Hungarian. No English mixing.',
-  '',
-  'STRUCTURE (MANDATORY):',
-  '(Verse 1) 4 lines',
-  '(Verse 2) 4 lines',
-  '(Chorus) 4 lines',
-  '(Verse 3) 4 lines',
-  '(Verse 4) 4 lines',
-  '(Chorus) 4 lines',
-  '(Chorus) 4 lines',
-  '',
-  'OUTPUT FORMAT:',
-  'Only the lyrics. No JSON. No Markdown. No explanations.'
-].join('\\n');
-const sys2 = [
-  '=== DOMINANT STYLE WORD RULES (strict minimum words per line) ===',
-  '',
-  'POP: min. 8 words/line – melodic, emotional, clear phrasing',
-  'ROCK / METAL / PUNK: min. 8 words/line – strong, energetic, bold',
-  'ELECTRONIC / TECHNO / HOUSE / TRANCE / EDM / DNB: min. 7 words/line – rhythmic, atmospheric, no nonsense filler',
-  'ACOUSTIC / BALLAD / FOLK / PIANO / GUITAR: min. 7 words/line – poetic, flowing, warm tone',
-  'R&B / RNB: min. 8 words/line – smooth, soulful, emotional, flowing vowels',
-  'RAP / HIP-HOP / TRAP: min. 10 words/line – logical, rhythmic, no meaningless filler',
-  'CHILD: min. 6 words/line – simple playful language, optional la-la / taps-taps / bumm-bumm in Chorus only',
-  '',
-  'BIRTHDAY: az ünnepelt NEVE szerepeljen minden Chorus részben',
-  'WEDDING / ROMANTIC: warm, unified tone + 1 natural love metaphor (csillag, fény, tenger, szellő, naplemente)',
-  'FUNERAL: calm, grateful, peaceful tone (ONLY if brief clearly indicates loss)',
-  'GRADUATION: pride, future, growth, achievement',
-  'ENCOURAGEMENT: strength, hope, resilience',
-  '',
-  'STYLE SELECTION RULE:',
-  'Use the FIRST matching genre from the user styles.',
-  'Never mix multiple style rule-sets at once.'
-].join('\\n');
+        function buildLyricSystemPrompt(language) {
+          const lang = (language || '').toString().toLowerCase();
+          const isHU = !lang || lang === 'hu' || lang === 'hungarian' || lang === 'magyar';
 
-const sys3 = [
-  '=== LANGUAGE & COHERENCE RULES ===',
-  '- Natural Hungarian grammar only',
-  '- Each line must be a complete meaningful sentence',
-  '- No invented or nonsense words',
-  '- Convert all digits to written Hungarian words',
-  '- AABB or ABAB rhyme allowed, not mandatory',
-  '- Consistent storyline, no topic switching',
-  '- Final two Choruses must be 100% identical',
-  '',
-  '=== TONE GUARD (NO FUNERAL unless brief clearly indicates death) ===',
-  'Allowed nostalgic (not death-related automatically): emlék, emlékszem, emlékeink',
-  '',
-  'Forbidden death-language unless loss is clearly mentioned:',
-  'búcsú, búcsúzunk, örökre bennem él, béke legyen veled,',
-  'nélküled, hiányod, elmentél, távozol, emléked őrzöm'
-].join('\\n');
+          return `
+You are a professional song lyric writer AI.
+PRIMARY CREATIVE SOURCE = USER BRIEF (story, emotion, places, names).
+SECONDARY STYLE SHAPING = USER STYLES (rhythm, tone, min words/line).
+Never override or contradict the brief.
 
+Write the song in ${isHU ? 'HUNGARIAN' : 'ENGLISH'}.
+No language mixing. No invented words. No filler nonsense.
 
-// Explicit instruction: include all specific years, names, and places mentioned in the brief naturally in the lyrics.
-const briefIncludeRule = 'Include every specific year, name, and place mentioned in the brief naturally in the lyrics.';
+MANDATORY STRUCTURE:
+(Verse 1)
+4 lines
 
-// User prompt = input + stílusprofil
-const usr1 = [
-  'Title: ' + title,
-  'Client styles: ' + styles,
-  'Vocal: ' + vocal,
-  'Language: ' + language,
-  'Brief: ' + brief,
-   briefIncludeRule,
-  '',
-  '=== STYLE PROFILE ===',
-  styleProfileText.trim()
-].join('\n');
+(Verse 2)
+4 lines
 
-    // --- Kombinált rendszerprompt: struktúra + stílus + magyar nyelvi polish ---
-const sysPrompt = [sys1, sys2, sys3].join('\n\n');
+(Chorus)
+4 lines
 
-const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${OPENAI_API_KEY}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    model: OPENAI_MODEL,
-    messages: [
-      { role: 'system', content: sysPrompt },
-      { role: 'user', content: usr1 }
-    ],
-    temperature: 0.7,
-    max_tokens: 800
-  })
-});
+(Verse 3)
+4 lines
 
-   if(!oi1.ok){
-  const t = await oi1.text();
-  console.warn('[generate_song] OpenAI error', t.slice(0,200));
-  return;
-}
-    const j1 = await oi1.json();
+(Verse 4)
+4 lines
 
-// --- ROBUSZTUS JSON + FALLBACK + POLISH ---
-const raw = j1?.choices?.[0]?.message?.content || '';
+(Chorus)
+4 lines
 
-let payload;
-try {
-  payload = JSON.parse(raw);
-} catch {
-  payload = {};
-}
+(Chorus)
+4 lines (MUST be 100% identical to the previous Chorus)
 
-// több kulcsot is próbálunk, hogy tuti legyen szöveg:
-let lyrics = (
-  payload.lyrics_draft ||
-  payload.lyrics ||
-  payload.text ||
-  payload.song ||
-  ''
-).trim();
+NAME RULE:
+If the brief contains a personal name, it must appear:
+- in at least one Verse
+- in ALL Chorus sections
 
-let gptStyle = (
-  payload.style_en ||
-  payload.style ||
-  ''
-).trim();
+NUMBERS:
+Convert all digits to written ${isHU ? 'Hungarian' : 'English'} words.
 
-// ha a JSON üres, essünk vissza a nyers contentre
-if (!lyrics && raw) {
-  lyrics = String(raw).trim();
-}
- // --- convert numeric numbers to written Hungarian words (universal) ---
-function numToHungarian(n) {
-  const ones = ['nulla','egy','kettő','három','négy','öt','hat','hét','nyolc','kilenc'];
-  const tens = ['','tíz','húsz','harminc','negyven','ötven','hatvan','hetven','nyolcvan','kilencven'];
+STYLE → MINIMUM WORDS PER LINE:
+For electronic / techno / house / trance / edm / dnb: 6+
+For pop / r&b / romantic / wedding: 8+
+For rap / hip-hop / trap: 10+
+For acoustic / ballad / folk / piano / guitar: 7+
+For children songs: 5+ and allowed playful onomatopoeia in Chorus only.
 
-  if (n < 10) return ones[n];
-  if (n < 20) {
-    if (n === 10) return 'tíz';
-    return 'tizen' + ones[n - 10];
-  }
-  if (n < 100) {
-    const t = Math.floor(n / 10);
-    const o = n % 10;
-    return tens[t] + (o ? ones[o] : '');
-  }
-  if (n < 1000) {
-    const h = Math.floor(n / 100);
-    const r = n % 100;
-    return (h > 1 ? ones[h] + 'száz' : 'száz') + (r ? numToHungarian(r) : '');
-  }
-  if (n < 2000) return 'ezer-' + numToHungarian(n - 1000);
-  if (n < 2100) return 'kétezer-' + numToHungarian(n - 2000);
-  if (n < 10000) {
-    const t = Math.floor(n / 1000);
-    const r = n % 1000;
-    return ones[t] + 'ezer' + (r ? '-' + numToHungarian(r) : '');
-  }
-  return String(n); // fallback for very large numbers
-}
-// --- smarter numeric replacement with suffix support ---
-// Évszámok (0–2999) + ragozás (pl. 2014-ben → kétezer-tizennégyben)
-lyrics = lyrics.replace(/\b([12]?\d{3})([-–]?(?:ban|ben|as|es|os|ös|ik|tól|től|hoz|hez|höz|nak|nek|ra|re|ról|ről|ba|be))?\b/g, (match, num, suffix='') => {
-  const year = parseInt(num, 10);
-  if (isNaN(year) || year > 2999) return match; // biztonsági korlát
-  let text = '';
-  if (year < 1000) text = numToHungarian(year);
-  else {
-    const thousand = Math.floor(year / 1000);
-    const rest = year % 1000;
-    const base = thousand === 1 ? 'ezer' : 'kétezer';
-    text = base + (rest ? '-' + numToHungarian(rest) : '');
-  }
-  return text + (suffix || '');
-});
+CONTENT RULES:
+- Keep storyline coherent and connected to the brief.
+- NO switching topics.
+- Allow metaphors only if meaningful.
+- Chorus must be catchy, emotional, repeating key message.
 
-// Kis számok (1–999), de NE Verse/Chorus után
-lyrics = lyrics.replace(/(?<!Verse\s|Chorus\s)\b\d{1,3}\b/g, n => numToHungarian(parseInt(n, 10)));
+HOLIDAY MODE (if detected in brief: karácsony / valentin / húsvét):
+Enable gentle festive imagery (lights, warmth, celebration).
+`.trim();
+        }
 
+        // ========== USER PROMPT BUILDER ========== //
+        function buildLyricUserPrompt({ title, styles, vocal, language, brief }) {
+          return `
+TITLE: ${title}
+LANGUAGE: ${language}
+CLIENT STYLES: ${styles}
+VOCAL: ${vocal}
 
-// --- UNIVERSAL NORMALIZE GENRES (HU → EN) ---
-function normalizeGenre(g) {
-  if (!g) return '';
-  return g.toLowerCase()
-    // Alapműfajok
-    .replace(/\bmagyar népdal\b/g, 'hungarian folk')
-    .replace(/\bnépdal\b/g, 'folk')
-    .replace(/\bpop(zene)?\b/g, 'pop')
-    .replace(/\brock(zene)?\b/g, 'rock')
-    .replace(/\bmet[aá]l\b/g, 'metal')
-    .replace(/\bdiszk[oó]\b/g, 'disco')
-    .replace(/\btechno\b/g, 'techno')
-    .replace(/\bhouse\b/g, 'house')
-    .replace(/\btrance\b/g, 'trance')
-    .replace(/\bdrum(?!mer)\b/g, 'drum and bass')
-    .replace(/\brap(p)?\b/g, 'rap')
-    .replace(/\br[&\s]?b\b/g, 'r&b')
-    .replace(/\belektronikus(zene)?\b/g, 'electronic')
-    // Különleges magyar variációk
-    .replace(/\bminimal techno\b/g, 'minimal techno')
-    .replace(/\bmodern elektronikus\b/g, 'modern electronic')
-    .replace(/\bromantikus pop\b/g, 'romantic pop')
-    .replace(/\blírai ballada\b/g, 'lyrical ballad')
-    .replace(/\blírai\b/g, 'poetic')
-    .replace(/\bgyerekdal\b/g, 'children song')
-    .replace(/\bünnepi akusztikus\b/g, 'holiday acoustic')
-    .replace(/\bkarácsonyi pop\b/g, 'christmas pop')
-    // Hangulatok
-    .replace(/\bmelankolikus\b/g, 'melancholic')
-    .replace(/\bérzelmes\b/g, 'emotional')
-    .replace(/\bromantikus\b/g, 'romantic')
-    .replace(/\bvid[aá]m\b/g, 'happy')
-    .replace(/\bszomor[úu]\b/g, 'sad')
-    .replace(/\blass[uú]\b/g, 'slow')
-    .replace(/\bgyors\b/g, 'fast')
-    // Hangszerek
-    .replace(/\bzongora\b/g, 'piano')
-    .replace(/\bheged[űu]\b/g, 'violin')
-    .replace(/\bgit[aá]r\b/g, 'guitar')
-    .replace(/\bdob(ok)?\b/g, 'drum')
-    .replace(/\bfuvola\b/g, 'flute')
-    .replace(/\bcsell[oó]\b/g, 'cello')
-    .replace(/\bvok[aá]l(os)?\b/g, 'vocal')
-    .replace(/\bt[áa]nczene\b/g, 'dance')
-    // Egyéb
-    .replace(/\bklasszikus(zene)?\b/g, 'classical')
-    .replace(/\bkomolyzene\b/g, 'classical')
-    .replace(/\bambient\b/g, 'ambient')
-    .replace(/\bfilmzene\b/g, 'soundtrack')
-    .replace(/\bfolklo[ó]r\b/g, 'folk')
-    .replace(/\bünnepi\b/g, 'holiday')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+BRIEF TO FOLLOW STRICTLY:
+${brief}
+`.trim();
+        }
 
-// --- BUILD STYLE (CLIENT → SUNO, HU → EN) ---
-function buildStyleEN(client, vocalNorm, styleEN) {
-  const protectedGenres = new Set([
-    'rap','hip hop','folk','violin','piano','guitar',
-    'minimal techno','pop','rock','house','techno','trance','drum and bass',
-    'r&b','soul','funk','jazz','blues','edm','electronic','ambient',
-    'metal','punk','indie','country','reggaeton','reggae',
-    'synthwave','trap','progressive house','deep house','electro house',
-    'modern pop','romantic','poetic','lyrical','holiday acoustic','children song'
-  ]);
+        // ========== OPENAI GENERATION (BRIEF-FIRST) ========== //
+        async function generateLyricsForOrder({ title, styles, vocal, language, brief }) {
+          const sysPrompt = buildLyricSystemPrompt(language);
+          const usrPrompt = buildLyricUserPrompt({ title, styles, vocal, language, brief });
 
-  // Alap szétbontás
-  const base = (styleEN || '').split(/[,\|\/]+/).map(s => normalizeGenre(s)).filter(Boolean);
-  const cli  = (client || '').split(/[,\|\/]+/).map(s => normalizeGenre(s)).filter(Boolean);
+          const oi1 = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${OPENAI_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: OPENAI_MODEL,
+              temperature: 0.7,
+              max_tokens: 900,
+              messages: [
+                { role: "system", content: sysPrompt },
+                { role: "user", content: usrPrompt },
+              ],
+            }),
+          });
 
-  // 🧠 Egyesített, ismétlődésmentes lista (ez a korábbi all)
-  const all = [...new Set([...base, ...cli, vocalNorm].filter(Boolean))];
+          const raw = await oi1.json();
+          let lyrics = raw?.choices?.[0]?.message?.content?.trim() || "";
 
-  const out = [];
-  const seen = new Set();
+          // ===== NUMBER → WORD CONVERSION (Hungarian only, safety) ===== //
+          if ((language || '').toString().toLowerCase().startsWith('hu')) {
+            lyrics = lyrics.replace(/\b\d+\b/g, n => numToHun(n));
+          }
 
- // 1️⃣ Minden ügyfél által megadott műfajt engedünk (nincs szűrés)
-for (const g of cli) {
-  if (!seen.has(g)) {
-    out.push(g);
-    seen.add(g);
-  }
-}
+          // ===== ENFORCE DOUBLE IDENTICAL CHORUS ===== //
+          lyrics = enforceDoubleChorus(lyrics);
 
-  // 2️⃣ GPT hangulat / extra tagok (max. 2)
-  let addedMood = 0;
-  for (const tag of base) {
-    if (!protectedGenres.has(tag) && !seen.has(tag) && addedMood < 2) {
-      out.push(tag);
-      seen.add(tag);
-      addedMood++;
-    }
-  }
+          return lyrics;
+        }
 
-  // 3️⃣ Ének típusok
-  let vt = '';
-  switch (String(vocalNorm || '').toLowerCase()) {
-    case 'male': vt = 'male vocals'; break;
-    case 'female': vt = 'female vocals'; break;
-    case 'duet': vt = 'male and female vocals'; break;
-    case 'child': vt = 'child vocal'; break;
-    case 'robot': vt = 'synthetic/robotic female vocal (vocoder, AI-like, crystal)'; break;
-    default: vt = '';
-  }
-  if (vt && !seen.has(vt)) out.push(vt);
+        // ========== SIMPLE HUNGARIAN NUMBER CONVERSION (0–9) ========== //
+        function numToHun(num) {
+          const n = parseInt(num, 10);
+          if (isNaN(n)) return num;
+          const ones = ['nulla','egy','kettő','három','négy','öt','hat','hét','nyolc','kilenc'];
+          if (n < 10) return ones[n] || num;
+          return String(num);
+        }
 
-  // 4️⃣ Fallback – ha semmit sem ismert fel, legalább pop legyen
-  return out.length ? out.join(', ') : 'pop';
-}
+        // ========== CHORUS DUPLICATION CHECK ========== //
+        function enforceDoubleChorus(text) {
+          if (!text) return text;
+          // próbáljuk megkeresni az első Chorus blokkot
+          const chorusMatch = text.match(/\(Chorus\)[\s\S]*?(?=\n\(|$)/i);
+          if (!chorusMatch) return text;
 
-// === STYLE FINAL ===
-const styleFinal = buildStyleEN(styles, vocal, gptStyle);
-// 4️⃣ Dalszöveg szakaszcímek normalizálása
-function normalizeSectionHeadingsSafeStrict(text) {
-  if (!text) return text;
-  let t = String(text);
+          const firstChorus = chorusMatch[0].trim();
 
-  // Magyar → angol
-  t = t.replace(/^\s*\(?\s*(Vers|Verze)\s*0*([1-4])\s*\)?\s*:?\s*$/gmi, (_m, _v, n) => `Verse ${n}`);
-  t = t.replace(/^\s*\(?\s*Refr[eé]n\s*\)?\s*:?\s*$/gmi, 'Chorus');
+          // ha már kétszer szerepel egymás után, nem kell semmit tenni
+          const doubleChorusPattern = new RegExp(
+            `${firstChorus.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\s*\n+${firstChorus.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
+            'i'
+          );
+          if (doubleChorusPattern.test(text)) return text;
 
-  // Nem kellő címek eltávolítása
-  t = t.replace(/^\s*\(?\s*(H[ií]d|Bridge|Intro|Outro|Interlude)\s*\)?\s*:?\s*$/gmi, '');
+          return `${text.trim()}\n\n${firstChorus}\n${firstChorus}`.trim();
+        }
 
-  // Angol címek egységesítése
-  t = t.replace(/^\s*(?:\(\s*)?(Verse\s+[1-4]|Chorus)(?:\s*\))?\s*:?\s*$/gmi, (_m, h) => `(${h})`);
+        // === LYRICS GENERATION CALL (BRIEF-FIRST) === //
+        const lyricsRaw = await generateLyricsForOrder({ title, styles, vocal, language, brief });
+        let lyrics = String(lyricsRaw || '').trim();
 
-  return t.trim();
-}
+        // --- convert numeric numbers to written Hungarian words (universal) ---
+        function numToHungarian(n) {
+          const ones = ['nulla','egy','kettő','három','négy','öt','hat','hét','nyolc','kilenc'];
+          const tens = ['','tíz','húsz','harminc','negyven','ötven','hatvan','hetven','nyolcvan','kilencven'];
 
-    // Ha nem MP3: nincs Suno, csak Sheets + visszaadás
-    if (!isMP3) {
-      try {
-        await safeAppendOrderRow({
-          email: req.body.email || '',
-          styles, vocal, language, brief, lyrics,
-          link1: '', link2: '', format, delivery: req.body.delivery_label || req.body.delivery || ''
+          if (n < 10) return ones[n];
+          if (n < 20) {
+            if (n === 10) return 'tíz';
+            return 'tizen' + ones[n - 10];
+          }
+          if (n < 100) {
+            const t = Math.floor(n / 10);
+            const o = n % 10;
+            return tens[t] + (o ? ones[o] : '');
+          }
+          if (n < 1000) {
+            const h = Math.floor(n / 100);
+            const r = n % 100;
+            return (h > 1 ? ones[h] + 'száz' : 'száz') + (r ? numToHungarian(r) : '');
+          }
+          if (n < 2000) return 'ezer-' + numToHungarian(n - 1000);
+          if (n < 2100) return 'kétezer-' + numToHungarian(n - 2000);
+          if (n < 10000) {
+            const t = Math.floor(n / 1000);
+            const r = n % 1000;
+            return ones[t] + 'ezer' + (r ? '-' + numToHungarian(r) : '');
+          }
+          return String(n); // fallback for very large numbers
+        }
+        // --- smarter numeric replacement with suffix support ---
+        // Évszámok (0–2999) + ragozás (pl. 2014-ben → kétezer-tizennégyben)
+        lyrics = lyrics.replace(/\b([12]?\d{3})([-–]?(?:ban|ben|as|es|os|ös|ik|tól|től|hoz|hez|höz|nak|nek|ra|re|ról|ről|ba|be))?\b/g, (match, num, suffix='') => {
+          const year = parseInt(num, 10);
+          if (isNaN(year) || year > 2999) return match; // biztonsági korlát
+          let text = '';
+          if (year < 1000) text = numToHungarian(year);
+          else {
+            const thousand = Math.floor(year / 1000);
+            const rest = year % 1000;
+            const base = thousand === 1 ? 'ezer' : 'kétezer';
+            text = base + (rest ? '-' + numToHungarian(rest) : '');
+          }
+          return text + (suffix || '');
         });
-      } catch (_e) {
-        console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
-      }
-      lyrics = normalizeSectionHeadingsSafeStrict(lyrics);
-      // === GUARD v5.2 – RhythmFix (auto-word-count normalization per genre) ===
-try {
-  const norm = (styles || '').toLowerCase();
 
-  // genre minimum word targets
-  const targets = {
-    techno: 6,
-    electronic: 6,
-    house: 6,
-    trance: 6,
-    rap: 10,
-    'drum and bass': 10,
-    child: 5,
-    pop: 8,
-    acoustic: 7,
-    ballad: 7
-  };
+        // Kis számok (1–999), de NE Verse/Chorus után
+        lyrics = lyrics.replace(/(?<!Verse\s|Chorus\s)\b\d{1,3}\b/g, n => numToHungarian(parseInt(n, 10)));
 
-  let appliedTarget = 0;
-  for (const key of Object.keys(targets)) {
-    if (norm.includes(key)) { appliedTarget = targets[key]; break; }
-  }
+        // --- UNIVERSAL NORMALIZE GENRES (HU → EN) ---
+        function normalizeGenre(g) {
+          if (!g) return '';
+          return g.toLowerCase()
+            // Alapműfajok
+            .replace(/\bmagyar népdal\b/g, 'hungarian folk')
+            .replace(/\bnépdal\b/g, 'folk')
+            .replace(/\bpop(zene)?\b/g, 'pop')
+            .replace(/\brock(zene)?\b/g, 'rock')
+            .replace(/\bmet[aá]l\b/g, 'metal')
+            .replace(/\bdiszk[oó]\b/g, 'disco')
+            .replace(/\btechno\b/g, 'techno')
+            .replace(/\bhouse\b/g, 'house')
+            .replace(/\btrance\b/g, 'trance')
+            .replace(/\bdrum(?!mer)\b/g, 'drum and bass')
+            .replace(/\brap(p)?\b/g, 'rap')
+            .replace(/\br[&\s]?b\b/g, 'r&b')
+            .replace(/\belektronikus(zene)?\b/g, 'electronic')
+            // Különleges magyar variációk
+            .replace(/\bminimal techno\b/g, 'minimal techno')
+            .replace(/\bmodern elektronikus\b/g, 'modern electronic')
+            .replace(/\bromantikus pop\b/g, 'romantic pop')
+            .replace(/\blírai ballada\b/g, 'lyrical ballad')
+            .replace(/\blírai\b/g, 'poetic')
+            .replace(/\bgyerekdal\b/g, 'children song')
+            .replace(/\bünnepi akusztikus\b/g, 'holiday acoustic')
+            .replace(/\bkarácsonyi pop\b/g, 'christmas pop')
+            // Hangulatok
+            .replace(/\bmelankolikus\b/g, 'melancholic')
+            .replace(/\bérzelmes\b/g, 'emotional')
+            .replace(/\bromantikus\b/g, 'romantic')
+            .replace(/\bvid[aá]m\b/g, 'happy')
+            .replace(/\bszomor[úu]\b/g, 'sad')
+            .replace(/\blass[uú]\b/g, 'slow')
+            .replace(/\bgyors\b/g, 'fast')
+            // Hangszerek
+            .replace(/\bzongora\b/g, 'piano')
+            .replace(/\bheged[űu]\b/g, 'violin')
+            .replace(/\bgit[aá]r\b/g, 'guitar')
+            .replace(/\bdob(ok)?\b/g, 'drum')
+            .replace(/\bfuvola\b/g, 'flute')
+            .replace(/\bcsell[oó]\b/g, 'cello')
+            .replace(/\bvok[aá]l(os)?\b/g, 'vocal')
+            .replace(/\bt[áa]nczene\b/g, 'dance')
+            // Egyéb
+            .replace(/\bklasszikus(zene)?\b/g, 'classical')
+            .replace(/\bkomolyzene\b/g, 'classical')
+            .replace(/\bambient\b/g, 'ambient')
+            .replace(/\bfilmzene\b/g, 'soundtrack')
+            .replace(/\bfolklo[ó]r\b/g, 'folk')
+            .replace(/\bünnepi\b/g, 'holiday')
+            .replace(/\s+/g, ' ')
+            .trim();
+        }
 
-  if (appliedTarget > 0) {
-    const lines = lyrics.split('\n');
-    const fixed = lines.map(line => {
-      const clean = line.trim();
-      if (!clean || /^\(.*\)$/.test(clean)) return clean; // skip section titles
-      const wordCount = clean.split(/\s+/).length;
-      if (wordCount < appliedTarget) {
-        const lastWord = clean.split(/\s+/).pop();
-        // ismétlés ritmikai kitöltésre – nem módosít jelentést
-        return clean + ' ' + lastWord.repeat(Math.max(1, appliedTarget - wordCount));
-      }
-      return clean;
-    });
-    lyrics = fixed.join('\n');
-    console.log(`[RhythmFix] Applied minimal word-count = ${appliedTarget}`);
-  }
-} catch (err) {
-  console.warn('[RhythmFix] skipped due to error:', err.message);
-}
+        // --- BUILD STYLE (CLIENT → SUNO, HU → EN) ---
+        function buildStyleEN(client, vocalNorm, styleEN) {
+          const protectedGenres = new Set([
+            'rap','hip hop','folk','violin','piano','guitar',
+            'minimal techno','pop','rock','house','techno','trance','drum and bass',
+            'r&b','soul','funk','jazz','blues','edm','electronic','ambient',
+            'metal','punk','indie','country','reggaeton','reggae',
+            'synthwave','trap','progressive house','deep house','electro house',
+            'modern pop','romantic','poetic','lyrical','holiday acoustic','children song'
+          ]);
 
-     return; // háttérfolyamat vége – response már elküldve korábban
+          // Alap szétbontás
+          const base = (styleEN || '').split(/[,\|\/]+/).map(s => normalizeGenre(s)).filter(Boolean);
+          const cli  = (client || '').split(/[,\|\/]+/).map(s => normalizeGenre(s)).filter(Boolean);
 
-    }
+          // 🧠 Egyesített, ismétlődésmentes lista (ez a korábbi all)
+          const all = [...new Set([...base, ...cli, vocalNorm].filter(Boolean))];
 
-    // === SUNO API CALL (MP3 only) ===
-    const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
-      'Authorization': 'Bearer ' + SUNO_API_KEY,
-      'Content-Type': 'application/json'
-    }, {
-      customMode: true,
-      model: 'V5',
-      instrumental: (vocal === 'instrumental'),
-      title: title,
-      style: styleFinal,
-      prompt: lyrics,
-      callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
-    });
+          const out = [];
+          const seen = new Set();
 
-   if (!startRes.ok) {
-  console.warn('[generate_song] Suno start error', startRes.status);
-  return;
-}
-
-    const sj = startRes.json;
-  if (!sj || sj.code !== 200 || !sj.data || !sj.data.taskId) {
-  console.warn('[generate_song] Suno bad response', sj);
-  return;
-}
-
-    const taskId = sj.data.taskId;
-
-    // Poll up to 2 tracks
-    const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 160);
-    const intervalMs  = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 2000));
-    let attempts = 0, tracks = [];
-    while (tracks.length < 2 && attempts < maxAttempts) {
-      attempts++;
-      await new Promise(r => setTimeout(r, intervalMs));
-      const pr = await fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
-        method:'GET',
-        headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY }
-      });
-      if (!pr.ok) continue;
-      const st = await pr.json();
-      if (!st || st.code !== 200) continue;
-      const items = (st.data && st.data.response && st.data.response.sunoData) || [];
-      tracks = items.flatMap(d => {
-          const urls = [];
-          const a1 = d.audioUrl || d.url || d.audio_url;
-          const a2 = d.audioUrl2 || d.url2 || d.audio_url_2;
-          if (a1) urls.push(a1);
-          if (a2) urls.push(a2);
-          if (Array.isArray(d.clips)) {
-            for (const c of d.clips) {
-              if (c?.audioUrl || c?.audio_url) urls.push(c.audioUrl || c.audio_url);
-              if (c?.audioUrlAlt || c?.audio_url_alt) urls.push(c.audioUrlAlt || c.audio_url_alt);
+          // 1️⃣ Minden ügyfél által megadott műfajt engedünk (nincs szűrés)
+          for (const g of cli) {
+            if (!seen.has(g)) {
+              out.push(g);
+              seen.add(g);
             }
           }
-          return urls.map(u => ({ title: d.title || title, audio_url: u, image_url: d.imageUrl || d.coverUrl }));
-        })
-        .map(x => ({ ...x, audio_url: String(x.audio_url||'').trim() }))
-        .filter(x => !!x.audio_url && /^https?:\/\//i.test(x.audio_url))
-        .reduce((acc, cur) => {
-          if (!acc.find(t => t.audio_url === cur.audio_url)) acc.push(cur);
-          return acc;
-        }, [])
-        .slice(0, 2);
-    }
 
-    if (!tracks.length) {
-  console.warn('[generate_song] No tracks returned in time.');
-  return;
-}
+          // 2️⃣ GPT hangulat / extra tagok (max. 2)
+          let addedMood = 0;
+          for (const tag of base) {
+            if (!protectedGenres.has(tag) && !seen.has(tag) && addedMood < 2) {
+              out.push(tag);
+              seen.add(tag);
+              addedMood++;
+            }
+          }
 
-    try {
-      const link1 = tracks[0]?.audio_url || '';
-      const link2 = tracks[1]?.audio_url || '';
-      await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2, format,
-      delivery: req.body.delivery_label || req.body.delivery || '' 
-    });
-    } catch (_e) { /* log only */ }
+          // 3️⃣ Ének típusok
+          let vt = '';
+          switch (String(vocalNorm || '').toLowerCase()) {
+            case 'male': vt = 'male vocals'; break;
+            case 'female': vt = 'female vocals'; break;
+            case 'duet': vt = 'male and female vocals'; break;
+            case 'child': vt = 'child vocal'; break;
+            case 'robot': vt = 'synthetic/robotic female vocal (vocoder, AI-like, crystal)'; break;
+            default: vt = '';
+          }
+          if (vt && !seen.has(vt)) out.push(vt);
 
-    } catch (err) {
+          // 4️⃣ Fallback – ha semmit sem ismert fel, legalább pop legyen
+          return out.length ? out.join(', ') : 'pop';
+        }
+
+        // === STYLE FINAL ===
+        const styleFinal = buildStyleEN(styles, vocal, ''); // gptStyle most nem jön JSON-ből
+
+        // 4️⃣ Dalszöveg szakaszcímek normalizálása
+        function normalizeSectionHeadingsSafeStrict(text) {
+          if (!text) return text;
+          let t = String(text);
+
+          // Magyar → angol
+          t = t.replace(/^\s*\(?\s*(Vers|Verze)\s*0*([1-4])\s*\)?\s*:?\s*$/gmi, (_m, _v, n) => `Verse ${n}`);
+          t = t.replace(/^\s*\(?\s*Refr[eé]n\s*\)?\s*:?\s*$/gmi, 'Chorus');
+
+          // Nem kellő címek eltávolítása
+          t = t.replace(/^\s*\(?\s*(H[ií]d|Bridge|Intro|Outro|Interlude)\s*\)?\s*:?\s*$/gmi, '');
+
+          // Angol címek egységesítése
+          t = t.replace(/^\s*(?:\(\s*)?(Verse\s+[1-4]|Chorus)(?:\s*\))?\s*:?\s*$/gmi, (_m, h) => `(${h})`);
+
+          return t.trim();
+        }
+
+        // Ha nem MP3: nincs Suno, csak Sheets + visszaadás
+        if (!isMP3) {
+          try {
+            await safeAppendOrderRow({
+              email: req.body.email || '',
+              styles, vocal, language, brief, lyrics,
+              link1: '', link2: '', format, delivery: req.body.delivery_label || req.body.delivery || ''
+            });
+          } catch (_e) {
+            console.warn('[SHEETS_WRITE_ONLY_MODE_FAIL]', _e?.message || _e);
+          }
+
+          lyrics = normalizeSectionHeadingsSafeStrict(lyrics);
+
+          // === GUARD v5.2 – RhythmFix (auto-word-count normalization per genre) ===
+          try {
+            const norm = (styles || '').toLowerCase();
+
+            // genre minimum word targets
+            const targets = {
+              techno: 6,
+              electronic: 6,
+              house: 6,
+              trance: 6,
+              rap: 10,
+              'drum and bass': 10,
+              child: 5,
+              pop: 8,
+              acoustic: 7,
+              ballad: 7
+            };
+
+            let appliedTarget = 0;
+            for (const key of Object.keys(targets)) {
+              if (norm.includes(key)) { appliedTarget = targets[key]; break; }
+            }
+
+            if (appliedTarget > 0) {
+              const lines = lyrics.split('\n');
+              const fixed = lines.map(line => {
+                const clean = line.trim();
+                if (!clean || /^\(.*\)$/.test(clean)) return clean; // skip section titles
+                const wordCount = clean.split(/\s+/).length;
+                if (wordCount < appliedTarget) {
+                  const lastWord = clean.split(/\s+/).pop();
+                  // ismétlés ritmikai kitöltésre – nem módosít jelentést
+                  return clean + ' ' + lastWord.repeat(Math.max(1, appliedTarget - wordCount));
+                }
+                return clean;
+              });
+              lyrics = fixed.join('\n');
+              console.log(`[RhythmFix] Applied minimal word-count = ${appliedTarget}`);
+            }
+          } catch (err) {
+            console.warn('[RhythmFix] skipped due to error:', err.message);
+          }
+
+          return; // háttérfolyamat vége – response már elküldve korábban
+        }
+
+        // === SUNO API CALL (MP3 only) ===
+        const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
+          'Authorization': 'Bearer ' + SUNO_API_KEY,
+          'Content-Type': 'application/json'
+        }, {
+          customMode: true,
+          model: 'V5',
+          instrumental: (vocal === 'instrumental'),
+          title: title,
+          style: styleFinal,
+          prompt: lyrics,
+          callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
+        });
+
+        if (!startRes.ok) {
+          console.warn('[generate_song] Suno start error', startRes.status);
+          return;
+        }
+
+        const sj = startRes.json;
+        if (!sj || sj.code !== 200 || !sj.data || !sj.data.taskId) {
+          console.warn('[generate_song] Suno bad response', sj);
+          return;
+        }
+
+        const taskId = sj.data.taskId;
+
+        // Poll up to 2 tracks
+        const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 160);
+        const intervalMs  = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 2000));
+        let attempts = 0, tracks = [];
+        while (tracks.length < 2 && attempts < maxAttempts) {
+          attempts++;
+          await new Promise(r => setTimeout(r, intervalMs));
+          const pr = await fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
+            method:'GET',
+            headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY }
+          });
+          if (!pr.ok) continue;
+          const st = await pr.json();
+          if (!st || st.code !== 200) continue;
+          const items = (st.data && st.data.response && st.data.response.sunoData) || [];
+          tracks = items.flatMap(d => {
+              const urls = [];
+              const a1 = d.audioUrl || d.url || d.audio_url;
+              const a2 = d.audioUrl2 || d.url2 || d.audio_url_2;
+              if (a1) urls.push(a1);
+              if (a2) urls.push(a2);
+              if (Array.isArray(d.clips)) {
+                for (const c of d.clips) {
+                  if (c?.audioUrl || c?.audio_url) urls.push(c.audioUrl || c.audio_url);
+                  if (c?.audioUrlAlt || c?.audio_url_alt) urls.push(c.audioUrlAlt || c.audio_url_alt);
+                }
+              }
+              return urls.map(u => ({ title: d.title || title, audio_url: u, image_url: d.imageUrl || d.coverUrl }));
+            })
+            .map(x => ({ ...x, audio_url: String(x.audio_url||'').trim() }))
+            .filter(x => !!x.audio_url && /^https?:\/\//i.test(x.audio_url))
+            .reduce((acc, cur) => {
+              if (!acc.find(t => t.audio_url === cur.audio_url)) acc.push(cur);
+              return acc;
+            }, [])
+            .slice(0, 2);
+        }
+
+        if (!tracks.length) {
+          console.warn('[generate_song] No tracks returned in time.');
+          return;
+        }
+
+        try {
+          const link1 = tracks[0]?.audio_url || '';
+          const link2 = tracks[1]?.audio_url || '';
+          await safeAppendOrderRow({
+            email: req.body.email || '',
+            styles, vocal, language, brief, lyrics,
+            link1, link2, format,
+            delivery: req.body.delivery_label || req.body.delivery || '' 
+          });
+        } catch (_e) {
+          console.warn('[SHEETS_APPEND_FAIL]', _e?.message || _e);
+        }
+
+      } catch (err) {
         console.error('[BG generate_song error]', err);
       }
     });
@@ -1191,6 +1215,7 @@ app.post('/api/suno/callback', async (req, res) => {
     res.status(500).json({ ok:false });
   }
 });
+
 // === STYLE PROFILE DECISION ENGINE (6 fő zenei stílus + 4 tematikus blokk) ===
 function determineStyleProfile(styles = '', brief = '', vocal = '') {
   const s = (styles || '').toLowerCase();
@@ -1359,13 +1384,14 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
       'játszunk','játsszunk','napocska','dalocska','ovis','kacagás','bumm-bumm','la-la','taps-taps'
     ];
     if (Array.isArray(profile.words.keywords)) {
-      profile.words.keywords = profile.words.keywords.filter(w => !childWords.includes(w));
+      profile.words.keywords = profile.words.keywords.filter(
+        w => !childWords.includes(w)
+      );
     }
   }
 
   return profile;
 }
-
 
 
 /* ================== Start server ========================== */
