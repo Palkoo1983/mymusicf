@@ -1330,8 +1330,7 @@ if (/(techno|minimal|house|trance|electronic)/.test(s) && theme === 'funeral') {
   let profile = JSON.parse(JSON.stringify(baseProfiles[baseStyle] || baseProfiles.pop));
   profile.baseStyle = baseStyle;
   profile.theme = theme;
-  profile.vocal = vocalMode;
-  profile.priority = ['theme', 'style', 'vocal'];
+  profile.priority = ['theme', 'style'];
 
   // Tematikus felülírás
   if (theme && themeMods[theme]) {
