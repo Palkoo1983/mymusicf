@@ -707,7 +707,7 @@ special rules: ${profile.universalRules.enforceVariation ? 'változatos, logikus
 
 // GPT rendszer prompt (megtartva a JSON formátumot)
 const sys1 = [
-  'You are a professional lyric writer AI. You generate complete, structured Hungarian song lyrics strictly following the requested style and theme.',
+  'You are a professional music lyric writer AI. You generate complete, structured Hungarian song lyrics strictly following the requested style and theme.',
   'Follow the given style profile below when creating rhythm, emotion, tone, and vocabulary.',
   'LANGUAGE LOCK: write the lyrics STRICTLY in ' + language + ' (no mixing).',
   'STRUCTURE IS MANDATORY: the song must include these section titles exactly as shown:',
@@ -716,6 +716,7 @@ const sys1 = [
   '(Chorus)',
   '(Verse 3)',
   '(Verse 4)',
+  '(Chorus)',
   '(Chorus)',
   'Each verse and chorus must have exactly 4 lines.',
   'OUTPUT: Return only the clean lyrics text with proper section titles and line breaks (no JSON, no markdown, no explanations).',
@@ -726,10 +727,10 @@ const sys2 = [
   '=== UNIVERSAL STYLE ENFORCEMENT RULES (Natural flow + min word limit) ===',
   '- For POP songs: each line should contain at least 8 words, focusing on emotion, melody, and natural phrasing.',
   '- For ROCK songs: each line should contain at least 8 words, with energetic and expressive rhythm.',
-  '- For ELECTRONIC / TECHNO songs: each line should contain at least 6 words, rhythmic and atmospheric, prioritizing imagery over story.',
+  '- For ELECTRONIC / TECHNO songs: each line should contain at least 7 words, rhythmic and atmospheric, prioritizing imagery over story.',
   '- For ACOUSTIC / BALLAD songs: each line should contain at least 7 words, gentle and poetic, with flowing phrasing.',
   '- For RAP songs: each line should contain at least 10 words, maintaining natural flow, rhyme, and coherent meaning (no fillers).',
-  '- For CHILD songs: each line should contain at least 5 words; in the Chorus include 1–2 playful onomatopoeias (e.g., "la-la", "taps-taps", "bumm-bumm"), used rhythmically.',
+  '- For CHILD songs: each line should contain at least 6 words; in the Chorus include 1–2 playful onomatopoeias (e.g., "la-la", "taps-taps", "bumm-bumm"), used rhythmically.',
   '- For WEDDING or ROMANTIC songs: each line should contain at least 8 words; include at least one natural metaphor (sunset, sea, stars, light, breeze) connecting to love or unity.',
   '- For FUNERAL songs: each line should contain at least 7 words; tone must remain calm, serene, full of gratitude and light. Avoid slang and harsh rhythms.',
   '- For BIRTHDAY songs: each line should contain at least 7 words; the person’s name must appear naturally in every Chorus; keep rhythm joyful and positive.',
@@ -754,15 +755,14 @@ const sys3 = [
   '- Convert any numeric digits to written Hungarian words (e.g., 10 → tíz, 2024 → kétezer-huszonnégy).',
   '- Exclude numbers from section headings (Verse, Chorus).',
   '- Keep poetic rhythm consistent with the style, but always semantically correct.',
-  '- If multiple styles are given, determine rhythm and phrasing from the first (dominant) style only.',
-  '- Do not force rhymes at the expense of meaning. Rhyme is optional, sense and fluency are mandatory.',
+  '- Prioritize meaningful rhymes: aim for natural, fluent rhyming lines whenever possible, but never sacrifice clarity, storyline, or emotional logic just to force a rhyme.',
   '- Maintain smooth rhyme and rhythm (AABB or ABAB patterns when natural).',
   '- If a rhyme would create an illogical or unnatural phrase, remove or rephrase it naturally.',
   '- If style = wedding/romantic, include logical, coherent metaphors (e.g., naplemente, tenger, csillag, fény, szellő). Avoid random or nonsense imagery.',
   '- If style = funeral, use gentle and calm tone, gratitude and peace — no harsh or absurd images.',
   '- Avoid meaningless repetition or filler words.',
   '- Ensure tense consistency (past/present forms should not randomly change).',
-  '- Use rich, expressive but realistic imagery; avoid mixed or unrelated metaphors (e.g., "tenger" + "sivatag" in the same image).',
+  '- Use rich, expressive but realistic imagery.',
   '- Ensure that all metaphors support the song’s emotional core and do not contradict each other.',
   '- Avoid invented or non-existent Hungarian words.',
   '- All numeric or temporal expressions (years, ages) must be written in full words and keep Hungarian case endings intact.',
@@ -1041,13 +1041,13 @@ try {
 
   // genre minimum word targets
   const targets = {
-    techno: 6,
-    electronic: 6,
-    house: 6,
-    trance: 6,
+    techno: 7,
+    electronic: 7,
+    house: 7,
+    trance: 7,
     rap: 10,
     'drum and bass': 10,
-    child: 5,
+    child: 6,
     pop: 8,
     acoustic: 7,
     ballad: 7
@@ -1207,7 +1207,6 @@ app.post('/api/suno/callback', async (req, res) => {
 function determineStyleProfile(styles = '', brief = '', vocal = '') {
   const s = (styles || '').toLowerCase();
   const b = (brief || '').toLowerCase();
-  const v = (vocal || '').toLowerCase();
 
   // --- 1️⃣ Alap zenei stílus detektálása ---
   let baseStyle = 'pop';
@@ -1229,14 +1228,6 @@ if (/(techno|minimal|house|trance|electronic)/.test(s) && theme === 'funeral') {
   theme = 'birthday';
 }
 
-  // --- 3️⃣ Vocal finomítás (nem felülíró, csak stílusmódosító) ---
-  let vocalMode = 'neutral';
-  if (/male/.test(v)) vocalMode = 'male';
-  else if (/female/.test(v)) vocalMode = 'female';
-  else if (/duet/.test(v)) vocalMode = 'duet';
-  else if (/child/.test(v)) vocalMode = 'child';
-  else if (/robot|synthetic/.test(v)) vocalMode = 'robot';
-
   // --- 4️⃣ Alap stílusprofilok ---
   const baseProfiles = {
     pop: {
@@ -1250,7 +1241,7 @@ if (/(techno|minimal|house|trance|electronic)/.test(s) && theme === 'funeral') {
       words: { allowSlang: true, repetition: 'low', variation: 'high', poeticImages: 'few' }
     },
     electronic: {
-      rhythm: { wordsPerLine: [6, 8], tempo: 'fast' },
+      rhythm: { wordsPerLine: [7, 8], tempo: 'fast' },
       tone: { emotion: 'neutral', brightness: 'cool', density: 'minimal' },
       words: { allowSlang: false, repetition: 'medium', variation: 'medium', poeticImages: 'minimal' }
     },
@@ -1265,7 +1256,7 @@ if (/(techno|minimal|house|trance|electronic)/.test(s) && theme === 'funeral') {
       words: { allowSlang: true, repetition: 'rhythmic', variation: 'high', poeticImages: 'few' }
     },
     none: {
-      rhythm: { wordsPerLine: [6, 10], tempo: 'medium' },
+      rhythm: { wordsPerLine: [7, 10], tempo: 'medium' },
       tone: { emotion: 'neutral', brightness: 'balanced', density: 'medium' },
       words: { allowSlang: false, repetition: 'moderate', variation: 'medium', poeticImages: 'balanced' }
     }
@@ -1349,16 +1340,6 @@ if (/(techno|minimal|house|trance|electronic)/.test(s) && theme === 'funeral') {
     profile.words = { ...profile.words, ...t.words };
     profile.overrides = { ...t.overrides };
   }
-
-  // Vocal finomhangolás – csak akkor vált child témára, ha mind a vokál, mind a brief gyerekes jellegű
-if (vocalMode === 'child' && theme !== 'child' && /(gyerek|ovis|mese|ját|iskolás|szülinap|vidám)/.test(b)) {
-  profile.theme = 'child';
-  const t = themeMods.child;
-  profile.tone = { ...profile.tone, ...t.tone };
-  profile.words = { ...profile.words, ...t.words };
-  profile.overrides = { ...t.overrides };
-}
-
 
   // Globális szabály: minden stílusban törekvés a változatosságra
   profile.universalRules = {
