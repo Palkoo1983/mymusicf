@@ -720,24 +720,47 @@ const sys1 = [
   '(Chorus)',
   'Each verse and chorus must have exactly 4 lines.',
   'OUTPUT: Return only the clean lyrics text with proper section titles and line breaks (no JSON, no markdown, no explanations).',
-  'Include and respect all style hints: ' + styles + '.'
+  'Include and respect all style hints: ' + styles + '.',
+
+  // HARD funeral rules:
+  '- Only use funeral/mourning tone if the brief EXPLICITLY mentions: death, passing away, funeral, burial, losing someone, condolences, memorial service.',
+  '- Do NOT trigger funeral tone based on generic words such as: “emlék”, “hiányzik”, “csend”, “fény”, “régen”, “messze”, “búcsú” (when used metaphorically).',
+  '- If the brief describes a positive event (birthday, diploma, wedding, childhood moment, achievement), the tone MUST remain positive, warm, uplifting or emotional — but NEVER funeral-like.',
+  '- RAP MUST remain confident and rhythmic; TECHNO must remain atmospheric and cool.',
+  '- WEDDING must remain warm and romantic.'
 ].join('\n');
 
+
 const sys2 = [
-  '=== UNIVERSAL STYLE ENFORCEMENT RULES (Natural flow + min word limit) ===',
-  '- For POP songs: each line should contain at least 8 words, focusing on emotion, melody, and natural phrasing.',
-  '- For ROCK songs: each line should contain at least 8 words, with energetic and expressive rhythm.',
-  '- For ELECTRONIC / TECHNO songs: each line should contain at least 7 words, rhythmic and atmospheric, prioritizing imagery over story.',
-  '- For ACOUSTIC / BALLAD songs: each line should contain at least 7 words, gentle and poetic, with flowing phrasing.',
-  '- For RAP songs: each line should contain at least 10 words, maintaining natural flow, rhyme, and coherent meaning (no fillers).',
-  '- For CHILD songs: each line should contain at least 6 words; in the Chorus include 1–2 playful onomatopoeias (e.g., "la-la", "taps-taps", "bumm-bumm"), used rhythmically.',
-  '- For WEDDING or ROMANTIC songs: each line should contain at least 8 words; include at least one natural metaphor (sunset, sea, stars, light, breeze) connecting to love or unity.',
-  '- For FUNERAL songs: each line should contain at least 7 words; tone must remain calm, serene, full of gratitude and light. Avoid slang and harsh rhythms.',
-  '- For BIRTHDAY songs: each line should contain at least 7 words; the person’s name must appear naturally in every Chorus; keep rhythm joyful and positive.',
-  '- UNIVERSAL RULES: vary sentence beginnings, ensure meaningful continuity, avoid nonsense or mixed metaphors, preserve natural Hungarian rhythm and vowel harmony, and ensure the final Chorus repeats identically at the end.',
-  '- APPLY ONLY ONE STYLE RULESET matching the most dominant genre from the client styles.',
-  '- If multiple genres are listed (e.g. "minimal techno, house, trance"), choose the one that best fits the rhythm and tone, and apply its minimum word rule consistently to all verses and choruses.',
-  '- IMPORTANT: child-song specific words (napocska, dalocska, ovis, kacagás, la-la, taps-taps, bumm-bumm) are allowed ONLY when style = child; never use them in any other genre or theme.'
+  '=== UNIVERSAL STYLE ENFORCEMENT RULES (Natural flow + minimum word count) ===',
+
+'- POP: each line must contain at least 8 words; focus on melody, emotional tone, and natural phrasing.',
+
+'- ROCK: each line must contain at least 8 words; maintain energetic rhythm and expressive imagery.',
+
+'- ELECTRONIC / TECHNO / HOUSE / TRANCE: each line must contain at least 7 words; rhythm should be atmospheric, repetitive, cool, and imagery-driven rather than story-driven.',
+
+'- ACOUSTIC / BALLAD: each line must contain at least 7 words; phrasing should be gentle, flowing, poetic, emotionally clear.',
+
+'- RAP: each line must contain at least 10 words; flow must be confident, rhythmic, coherent, and free of filler or meaningless syllables.',
+
+'- CHILD: each line must contain at least 6 words; the Chorus must include 1–2 playful onomatopoeias (e.g., “la-la”, “taps-taps”, “bumm-bumm”) used rhythmically.',
+
+'- WEDDING / ROMANTIC: each line must contain at least 8 words; include at least one natural metaphor (sunset, sea, stars, light, breeze) organically expressing unity or love.',
+
+'- FUNERAL: each line must contain at least 7 words; tone must remain calm, serene, grateful, and warm. Do not use slang or aggressive rhythms.',
+
+'- BIRTHDAY: each line must contain at least 7 words; the celebrated person’s name must appear naturally in every Chorus, with a warm, joyful mood.',
+
+'=== UNIVERSAL RULES (must be applied across ALL genres) ===',
+'- Vary sentence beginnings to avoid repetition.',
+'- Maintain meaningful continuity; avoid nonsense phrases or mixed metaphors.',
+'- Preserve natural Hungarian rhythm, vowel harmony, and smooth phrasing.',
+'- The final two Choruses must repeat identically.',
+'- Only ONE genre’s rule set may be applied — choose the most dominant style.',
+'- If multiple genres are listed (e.g. “minimal techno, house, trance”), pick the best-fitting primary genre and apply its rules consistently.',
+'- Child-song specific vocabulary (napocska, dalocska, ovis, kacagás, la-la, taps-taps, bumm-bumm) is ONLY allowed when the selected style = child.'
+
 ].join('\n');
 
 const sys3 = [
@@ -1219,7 +1242,7 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
   // --- 2️⃣ Tematikus blokk felismerése ---
   let theme = null;
   if (/(esküvő|lánykérés|valentin|jegyes|házasság)/.test(b)) theme = 'wedding';
-  else if (/(temetés|búcsúztat|gyász|emlék|nyugodj|részvét|jobbulás)/.test(b)) theme = 'funeral';
+  else if (/(temetés|halál|gyász|nyugodj|részvét|elmúlás)/.test(b)) theme = 'funeral';
   else if (/(gyerekdal|ovis|óvoda|mese|gyermeki|kisfiú|kislány)/.test(b)) theme = 'child';
   else if (/(szülinap|születésnap|ünnep|party|ünneplés|boldog szülinap)/.test(b)) theme = 'birthday';
   // ⚙️ PATCH: Guard v5.1 – prevent "funeral" tone for electronic/minimal styles
