@@ -724,6 +724,10 @@ const sys1 = [
   'Never write an entire verse as one long line or paragraph; always split the text into 4 balanced lines.',
   'Do NOT merge multiple sentences into a single line if this would break the 4-line structure.',
   'OUTPUT: Return only the clean lyrics text with proper section titles and line breaks (no JSON, no markdown, no explanations).',
+  'HARD LINE BREAK RULE: Every Verse and every Chorus MUST contain exactly 4 lines, each as a separate sentence. Never generate one ultra-long sentence; divide thoughts naturally into 4 meaningful, rhythmic lines.',
+  'STRICT REPETITION RULE: Within the same verse, do NOT repeat the same word, verb, or phrase at the start or end of lines, unless it is intentional rhyme or refrain.',
+  'Each line must be a single clear sentence. Avoid chaining multiple comma-separated clauses.',
+  'Each verse must describe one continuous emotional moment or scene.',
   'Include and respect all style hints: ' + styles + '.'
 ].join('\n');
 
@@ -762,8 +766,7 @@ const sys2 = [
   '- For RAP: never output an entire verse as one long line or paragraph; ALWAYS split it into 4 separate lines, exactly as required by the structure.',
   '- TECHNO must remain atmospheric and cool.',
   '- Romantic / wedding songs must use only coherent, emotionally connected metaphors (e.g., sea, light, breeze, stars, sunset). Random or forced imagery is forbidden.',
-  '- Do NOT mix metaphors that do not belong together (e.g., “fény száll a vízen, tenger hulláma ég”).',
-  '- Each verse must describe one continuous emotional moment or scene.'
+  '- Do NOT mix metaphors that do not belong together (e.g., “fény száll a vízen, tenger hulláma ég”).'
 ].join('\n');
 
 const sys3 = [
@@ -798,7 +801,6 @@ const sys3 = [
   '- ABSOLUTE RULE: No illogical or contradictory statements are allowed. Every line must express a clear, meaningful idea that a native Hungarian speaker would naturally say.',
   '- Do NOT create sentences that contradict themselves (e.g., “nem hagytuk, hogy a szerelem lángoljon”).',
   '- Avoid semantic nonsense or unclear relationships between actions (“nevettek táncot már”, “nem hagytuk, hogy… nem hagytuk”).',
-  '- STRICT REPETITION RULE: Within the same verse, do NOT repeat the same word, verb, or phrase at the start or end of lines, unless it is intentional rhyme or refrain.',
   '- Do NOT repeat entire phrases in consecutive lines (e.g., “nem hagytuk… nem hagytuk”).',
   '- HUNGARIAN CASE ACCURACY: Always use the grammatically correct Hungarian noun cases (e.g., “minden sarkot”, not “minden sarok”).',
   '- Ensure that verbs and nouns agree in number, case, and suffix harmony.',
@@ -806,7 +808,11 @@ const sys3 = [
   '- METAPHOR RULE FOR ROMANTIC SONGS: metaphors must be beautiful, coherent, and logically connected. Do NOT mix unrelated images in the same verse.',
   '- Each metaphor must make sense within real emotional logic and must not contradict previous lines.',
   '- If a line sounds awkward, rigid, or unnatural in Hungarian, rewrite it into smooth, native phrasing.',
-  '- Keep the emotional logic consistent — no sudden breaks, no random shifts, no phrases that sound “machine-made”.'
+  '- Keep the emotional logic consistent — no sudden breaks, no random shifts, no phrases that sound “machine-made”.',
+  '- Avoid mirrored or duplicated adjective-noun constructions (e.g., "érő vágyat érző").',
+  '- Every descriptive phrase must be a meaningful, natural Hungarian expression.',
+  '- Romantic/wedding style: avoid repeating the same metaphor root (e.g., "fény", "láng", "örök") more than once per verse.'
+
 ].join('\n');
 
 // Explicit instruction: include all specific years, names, and places mentioned in the brief naturally in the lyrics.
