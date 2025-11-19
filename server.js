@@ -726,41 +726,39 @@ const sys1 = [
   '- Only use funeral/mourning tone if the brief EXPLICITLY mentions: death, passing away, funeral, burial, losing someone, condolences, memorial service.',
   '- Do NOT trigger funeral tone based on generic words such as: “emlék”, “hiányzik”, “csend”, “fény”, “régen”, “messze”, “búcsú” (when used metaphorically).',
   '- If the brief describes a positive event (birthday, diploma, wedding, childhood moment, achievement), the tone MUST remain positive, warm, uplifting or emotional — but NEVER funeral-like.',
-  '- RAP MUST remain confident and rhythmic; TECHNO must remain atmospheric and cool.',
-  '- WEDDING must remain warm and romantic.'
+  '- WEDDING must remain warm and romantic.',
+  // RAP SPECIAL RULES (only when genre contains "rap")
+'- If the selected style or client styles include "rap", apply all of the following:',
+'- Write in confident, energetic, rhythmic Hungarian rap style.',
+'- Use 10–16 words per line in EVERY verse and chorus line.',
+'- Maintain strong internal rhythm and natural Hungarian flow.',
+'- Avoid overly poetic metaphors; keep imagery concrete and relatable.',
+'- Use dynamic phrasing, assertive voice, and momentum-building structure.',
+'- Never shift into funeral, ballad, or soft tone unless explicitly required in the brief.',
+'- RAP MUST remain confident and rhythmic',
+'- TECHNO must remain atmospheric and cool.'
+
 ].join('\n');
 
 
 const sys2 = [
-  '=== UNIVERSAL STYLE ENFORCEMENT RULES (Natural flow + minimum word count) ===',
+  '=== MINIMUM WORD COUNT RULES (dominant genre only) ===',
 
-'- POP: each line must contain at least 8 words; focus on melody, emotional tone, and natural phrasing.',
+  '- POP: at least 8 words per line.',
+  '- ROCK: at least 8 words per line.',
+  '- ELECTRONIC / TECHNO / HOUSE / TRANCE: at least 7 words per line.',
+  '- ACOUSTIC / BALLAD: at least 7 words per line.',
+  '- RAP: at least 10 words per line.',
+  '- CHILD: at least 6 words per line.',
+  '- WEDDING / ROMANTIC: at least 8 words per line.',
+  '- FUNERAL: at least 7 words per line.',
+  '- BIRTHDAY: at least 7 words per line.',
 
-'- ROCK: each line must contain at least 8 words; maintain energetic rhythm and expressive imagery.',
-
-'- ELECTRONIC / TECHNO / HOUSE / TRANCE: each line must contain at least 7 words; rhythm should be atmospheric, repetitive, cool, and imagery-driven rather than story-driven.',
-
-'- ACOUSTIC / BALLAD: each line must contain at least 7 words; phrasing should be gentle, flowing, poetic, emotionally clear.',
-
-'- RAP: each line must contain at least 10 words; flow must be confident, rhythmic, coherent, and free of filler or meaningless syllables.',
-
-'- CHILD: each line must contain at least 6 words; the Chorus must include 1–2 playful onomatopoeias (e.g., “la-la”, “taps-taps”, “bumm-bumm”) used rhythmically.',
-
-'- WEDDING / ROMANTIC: each line must contain at least 8 words; include at least one natural metaphor (sunset, sea, stars, light, breeze) organically expressing unity or love.',
-
-'- FUNERAL: each line must contain at least 7 words; tone must remain calm, serene, grateful, and warm. Do not use slang or aggressive rhythms.',
-
-'- BIRTHDAY: each line must contain at least 7 words; the celebrated person’s name must appear naturally in every Chorus, with a warm, joyful mood.',
-
-'=== UNIVERSAL RULES (must be applied across ALL genres) ===',
-'- Vary sentence beginnings to avoid repetition.',
-'- Maintain meaningful continuity; avoid nonsense phrases or mixed metaphors.',
-'- Preserve natural Hungarian rhythm, vowel harmony, and smooth phrasing.',
-'- The final two Choruses must repeat identically.',
-'- Only ONE genre’s rule set may be applied — choose the most dominant style.',
-'- If multiple genres are listed (e.g. “minimal techno, house, trance”), pick the best-fitting primary genre and apply its rules consistently.',
-'- Child-song specific vocabulary (napocska, dalocska, ovis, kacagás, la-la, taps-taps, bumm-bumm) is ONLY allowed when the selected style = child.'
-
+  '=== UNIVERSAL RULES ===',
+  '- Apply ONLY ONE genre’s rule set — the most dominant.',
+  '- Avoid nonsense, maintain logical continuity.',
+  '- The final two Choruses must repeat IDENTICALLY.',
+  '- Child-song vocabulary is ONLY allowed if genre = child.'
 ].join('\n');
 
 const sys3 = [
@@ -1085,7 +1083,10 @@ try {
     const lines = lyrics.split('\n');
     const fixed = lines.map(line => {
       const clean = line.trim();
-      if (!clean || /^\(.*\)$/.test(clean)) return clean; // skip section titles
+     if (!clean) return clean;
+    // csak akkor skip, ha TÉNYLEG Verse/Chorus
+    if (/^\(\s*(Verse\s*[1-4]|Chorus)\s*\)$/.test(clean)) return clean;
+
       const wordCount = clean.split(/\s+/).length;
       if (wordCount < appliedTarget) {
         const lastWord = clean.split(/\s+/).pop();
