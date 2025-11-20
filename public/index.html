@@ -518,6 +518,7 @@ function stopVideo(btn) {
     <li class="gold-text">Kézbesítés: <strong>48 óra</strong> (alap), akár <strong>24 órán</strong> vagy <strong>6 órán</strong> belül is!</li>
     <li class="gold-text">Biztonságos fizetés: Visa / MasterCard – hivatalos banki <strong class="gold-text">VPOS</strong> terminál</li>
     <li class="gold-text">Garantált, PROFI zeneszám és kézbesítési idő vagy <strong class="gold-text">100% pénzvisszatérítés</strong></li>
+    <li class="gold-text">Az elkészült dalodat <strong class="gold-text">email-ben</strong> kapod meg, amit a megrendelés fülön megadott email címre küldünk el!</li>
     <li class="gold-text">Bejegyzett magyar vállalkozás • <strong class="gold-text">SSL tanúsítványos weboldal</strong></li>
     <li class="gold-text">🎵 A dalok hossza általában <strong>2–4 perc</strong>, a választott stílustól és a megadott <em>Leírás</em> részletességétől függően.</li>
   </ul>
@@ -540,25 +541,25 @@ function stopVideo(btn) {
 </section>
     <section class="panel" id="pricing">
       <h2 class="gold-text">Árak &amp; Csomagok</h2>
-      <div class="promo-banner"><span class="gold-text">Nyitási akció — 30 napig — 30% kedvezmény</span></div>
+      <div class="promo-banner"><span class="gold-text">Akció — 30 napig — 30% kedvezmény</span></div>
       <div class="cards">
         <div class="card package" data-package="mp3">
           <h3 class="gold-text">MP3</h3>
           <p class="gold-text">Magas minőségű, univerzális zenei formátum. Minden eszközön lejátszható.</p>
           <p class="price gold-text">Alap csomag</p>
-          <p class="gold-text"><span class="old-price gold-text">15 000 Ft</span> → <span class="new-price gold-text">10 500 Ft</span><br/><span class="promo-note gold-text">Nyitási akció — 30 napig — 30%</span></p>
+          <p class="gold-text"><span class="old-price gold-text">15 000 Ft</span> → <span class="new-price gold-text">10 500 Ft</span><br/><span class="promo-note gold-text">Akció — 30 napig — 30%</span></p>
         </div>
         <div class="card package" data-package="mp4">
           <h3 class="gold-text">MP4</h3>
           <p class="gold-text">Egyszerű, ízléses, statikus <em class="gold-text">videóklip</em> a zenéhez, felirattal.</p>
           <p class="price gold-text">Videó csomag</p>
-          <p class="gold-text"><span class="old-price gold-text">30 000 Ft</span> → <span class="new-price gold-text">21 000 Ft</span><br/><span class="promo-note gold-text">Nyitási akció — 30 napig — 30%</span></p>
+          <p class="gold-text"><span class="old-price gold-text">30 000 Ft</span> → <span class="new-price gold-text">21 000 Ft</span><br/><span class="promo-note gold-text">Akció — 30 napig — 30%</span></p>
         </div>
         <div class="card package" data-package="wav">
           <h3 class="gold-text">WAV</h3>
           <p class="gold-text">Stúdióminőség, veszteségmentes hang. Ajánlott hangtechnikához.</p>
           <p class="price gold-text">Prémium csomag</p>
-          <p class="gold-text"><span class="old-price gold-text">50 000 Ft</span> → <span class="new-price gold-text">35 000 Ft</span><br/><span class="promo-note gold-text">Nyitási akció — 30 napig — 30%</span></p>
+          <p class="gold-text"><span class="old-price gold-text">50 000 Ft</span> → <span class="new-price gold-text">35 000 Ft</span><br/><span class="promo-note gold-text">Akció — 30 napig — 30%</span></p>
         </div>
       </div>
     </section>
@@ -578,7 +579,7 @@ function stopVideo(btn) {
     💡 <strong>Fontos tudnivalók:</strong><br><br>
     • <strong>Stílus:</strong> bármilyen műfaj választható – akár 2–3 stílus is keverhető (pl. pop + rap + akusztikus).<br>
     • <strong>Ének:</strong> férfi, női, gyermek, duett, instrumentális vagy akár robot hang is elérhető.<br>
-    • <strong>Nyelv:</strong> bármilyen nyelven kérheted, de a <em>Leírás</em> mezőt mindig az adott nyelven töltsd ki.<br>
+    • <strong>Nyelv:</strong> bármilyen nyelven kérheted, de a <em>Leírás</em> mezőt mindig az adott nyelven töltsd ki!<br>
     • <strong>Leírás mező:</strong> írd le saját szavaiddal, milyen dalt szeretnél, kinek készül, milyen alkalomra,
       és minél több személyes emléket, részletet adj meg – így lesz igazán egyedi a dalod.
   </div>
@@ -644,7 +645,7 @@ function stopVideo(btn) {
   <input name="title" type="text" placeholder="pl. Budai csillag">
 </label>
 
-  <label class="gold-text">E-mail (ahová a zenét küldjük)
+  <label class="gold-text">E-mail (ahová a számlát és zenét küldjük)
   <input name="email" placeholder="pelda@domain.hu" required type="email" />
 </label>
 <label class="check gold-text">
@@ -734,7 +735,7 @@ function stopVideo(btn) {
           <label class="gold-text">Nyelv (pl. magyar, angol, német, holland, stb..)
             <input name="language" placeholder="pl. magyar / angol / német / holland / stb.." type="text"/>
           </label>
-          <label class="full gold-text">Leírás / miről szóljon a dal?
+          <label class="full gold-text">Leírás / miről szóljon a dal, milyen érzést adjon át? (min.:120, max.:4000 karakter)
           <textarea id="brief" name="brief" placeholder="Milyen történetet, érzést, üzenetet közvetítsen a dal? Írd le az emlékeiteket, milyen az a személy(ek) akinek a dal íródik. Esküvőre a kettőtök történetét, születésnapra a személy tulajdonságait, életkorát, stb.." rows="5" maxlength="4000" required></textarea>
           </label>
           <label class="check full gold-text">
