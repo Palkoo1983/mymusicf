@@ -829,9 +829,19 @@ const sys3 = [
 
   '- Make the final Chorus repeat IDENTICALLY.',
   '- Keep the entire song cohesive, expressive and human.',
-  '- Avoid confusing or contradictory statements.'
-].join('\\n');
+  '- Avoid confusing or contradictory statements.',
+  '- Use ONLY valid, existing Hungarian words (no invented or distorted forms).',
+  '- Each line must be a complete, meaningful Hungarian sentence (subject + predicate).',
+  '- Maintain consistent verb tense throughout the entire song (no random past/present/future switching).',
+  '- Apply correct Hungarian conjugation: verbs and nouns must agree in number and case.',
+  '- Do not mix singular/plural inconsistently.',
+  '- Keep sentence logic clear: no contradictory or unclear actions.',
+  '- Avoid filler words, meaningless expressions, or machine-like phrasing.',
+  '- Do not start or end multiple consecutive lines with the same word, unless intentionally for rhyme.',
+  '- Keep metaphors simple, coherent and style-appropriate; do NOT combine unrelated images.',
+  '- All imagery must support the emotional meaning of the brief.'
 
+].join('\\n');
 
 
 // Explicit instruction: include all specific years, names, and places mentioned in the brief naturally in the lyrics.
