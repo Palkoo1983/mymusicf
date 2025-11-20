@@ -184,7 +184,7 @@ if (false && NB_IS_SAMSUNG) {
       bemutatkozas: 'Ez a rész bemutatja, mivel foglalkozik a weboldalunk.',
       arak: 'Ebben a részben találhatóak választható zenei csomagjaink és ezek árai, díjai.',
       referenciak: 'Itt találhatóak a weboldal tulajdonosának eredeti videói, példaként – hogy megtudd, milyen minőségre számíthatsz.',
-      megrendeles: 'Itt adhatod le a megrendelést. A mintaleírások segítenek a Leírás megfogalmazásában, görgess le és próbáld ki.',
+      megrendeles: 'Itt adhatod le a megrendelést. A minta leírások segítenek a Leírás megfogalmazásában, görgess le és próbáld ki.',
       hogyan: 'Itt röviden elmagyarázzuk, hogyan zajlik a folyamat, a tényleges vásárlást a Megrendelés fülön tudod megtenni.',
       kapcsolat: 'Itt tudsz üzenni és kérdezni tőlünk.'
     };
