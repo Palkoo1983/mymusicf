@@ -719,20 +719,32 @@ const sys1 = [
   '(Chorus)',
   '(Chorus)',
   'Each verse and chorus must have exactly 4 lines.',
-  // 🔥 ÚJ: nagyon explicit sor-törés szabály
-  'Inside every Verse/Chorus you MUST write exactly 4 separate lines, each on its own line with a line break.',
-  'Never write an entire verse as one long line or paragraph; always split the text into 4 balanced lines.',
-  'Do NOT merge multiple sentences into a single line if this would break the 4-line structure.',
-  'OUTPUT: Return only the clean lyrics text with proper section titles and line breaks (no JSON, no markdown, no explanations).',
-  'HARD LINE BREAK RULE: Every Verse and every Chorus MUST contain exactly 4 lines, each as a separate sentence. Never generate one ultra-long sentence; divide thoughts naturally into 4 meaningful, rhythmic lines.',
-  'STRICT REPETITION RULE: Within the same verse, do NOT repeat the same word, verb, or phrase at the start or end of lines, unless it is intentional rhyme or refrain.',
-  'Each line must be a single clear sentence. Avoid chaining multiple comma-separated clauses.',
-  'Each verse must describe one continuous emotional moment or scene.',
-  'Include and respect all style hints: ' + styles + '.'
+
+  // HARD LINE-BREAK RULES
+  'Inside every Verse/Chorus you MUST write exactly 4 separate lines, each on its own line.',
+  'Never write an entire verse as one long paragraph; always split the text into 4 balanced lines.',
+  'Do NOT merge multiple sentences into a single line.',
+  'OUTPUT: Return only the clean lyrics text with proper section titles and line breaks (no JSON, no markdown).',
+  'Each line must be a single clear sentence. Avoid chaining comma-heavy structures.',
+
+  // SCENE + EMOTION RULE (összevont, erős, nem duplikált)
+  'Each verse must describe ONE clear emotional moment or scene with consistent atmosphere and imagery.',
+
+  'STRICT REPETITION RULE: Within the same verse, do NOT repeat the same word, verb, or phrase at the start or end of lines unless it is intentional rhyme or refrain.',
+  'Include and respect all style hints: ' + styles + '.',
+
+  // UNIVERSAL BRIEF RULES
+  'BRIEF RULE: EVERY emotional detail from the brief MUST appear explicitly in the lyrics.',
+  'BRIEF LOCATION RULE: If a location appears in the brief, ALWAYS use the full name (never shorten).',
+  'BRIEF MULTI-LAYER RULE: If the brief contains multiple memories, integrate ALL of them consistently.',
+  'SENTENCE RULE: Avoid ultra-long sentences; keep lines crisp, rhythmic, easy to sing.',
+
+  // UNIVERSAL RHYME RULE – tisztított, nem duplikált
+  'RHYME RULE (UNIVERSAL): Prefer natural Hungarian rhyme pairs when appropriate (e.g., fény–remény, szél–él), but NEVER force a rhyme at the expense of meaning.'
 ].join('\n');
 
 
-const sys2 = [
+cconst sys2 = [
   '=== MINIMUM WORD COUNT RULES (dominant genre only) ===',
   '- POP: at least 8 words per line.',
   '- ROCK: at least 8 words per line.',
@@ -743,77 +755,95 @@ const sys2 = [
   '- WEDDING / ROMANTIC: at least 8 words per line.',
   '- FUNERAL: at least 7 words per line.',
   '- BIRTHDAY: at least 7 words per line.',
-  '=== UNIVERSAL RULES ===',
+
+  '=== UNIVERSAL GENRE LOGIC ===',
   '- Apply ONLY ONE genre’s rule set — the most dominant.',
-  '- Avoid nonsense, maintain logical continuity.',
+  '- Avoid nonsense; maintain strong logical continuity.',
   '- The final two Choruses must repeat IDENTICALLY.',
-  '- Child-song vocabulary is ONLY allowed if genre = child.',
-  // HARD funeral rules:
-  '- Only use funeral/mourning tone if the brief EXPLICITLY mentions: death, passing away, funeral, burial, losing someone, condolences, memorial service.',
-  '- Do NOT trigger funeral tone based on generic words such as: “emlék”, “hiányzik”, “csend”, “fény”, “régen”, “messze”, “búcsú” (when used metaphorically).',
-  '- If the brief describes a positive event (birthday, diploma, wedding, childhood moment, achievement), the tone MUST remain positive, warm, uplifting or emotional — but NEVER funeral-like.',
-  '- WEDDING must remain warm and romantic.',
-  // RAP SPECIAL RULES (only when genre contains "rap")
-  '- If the selected style or client styles include "rap", apply all of the following:',
-  '- Write in confident, energetic, rhythmic Hungarian rap style.',
-  '- Use 10–16 words per line in EVERY verse and chorus line.',
-  '- Maintain strong internal rhythm and natural Hungarian flow.',
-  '- Avoid overly poetic metaphors; keep imagery concrete and relatable.',
-  '- Use dynamic phrasing, assertive voice, and momentum-building structure.',
-  '- Never shift into funeral, ballad, or soft tone unless explicitly required in the brief.',
-  '- RAP MUST remain confident and rhythmic.',
-  // 🔥 ÚJ: kifejezetten tiltjuk az egybekezdéses verseket rapnél is
-  '- For RAP: never output an entire verse as one long line or paragraph; ALWAYS split it into 4 separate lines, exactly as required by the structure.',
+  '- Child-song vocabulary ONLY if genre = child.',
+
+  // FUNERAL FILTER
+  '- Use funeral/mourning tone ONLY if the brief explicitly mentions: death, passing away, funeral, burial, loss, condolences, memorial.',
+  '- NEVER trigger funeral tone from generic words ("emlék", "hiányzik", "csend", "fény", "régen", etc.) when used metaphorically.',
+  '- If the event is positive (birthday, diploma, wedding, childhood, achievement), tone MUST remain warm, positive, uplifting.',
+  '- Wedding songs must remain warm, romantic and coherent.',
+
+  // RAP RULES (tisztított + összevont)
+  '- If the selected style or styles include "rap", apply these:',
+  '- Confident, energetic, rhythmic Hungarian rap style.',
+  '- 10–16 words per line in EVERY verse and chorus.',
+  '- Maintain strong internal rhythm and Hungarian flow.',
+  '- Prefer concrete, real-life imagery over soft poetic metaphors.',
+  '- Dynamic phrasing; assertive voice; forward momentum.',
+  '- NEVER shift into ballad, funeral or soft tone unless brief requires.',
+  '- ALWAYS use 4 separate lines per verse (no paragraph-style verse).',
+
+  // ADVANCED RAP FLOW PATCH
+  '- RAP INTERNAL RHYME: Include internal rhymes in 2+ lines per verse.',
+  '- RAP ALLITERATION: Use light Hungarian alliteration (e.g., fáradtan figyeltél).',
+  '- RAP RHYTHM PATTERN: Use short→long→short→long phrasing.',
+  '- RAP VOCAB: natural rap phrasing (küzdöttél, haladtál, felálltál).',
+
+  // ELECTRONIC / TECHNO / MINIMAL
   '- TECHNO must remain atmospheric and cool.',
-  '- Romantic / wedding songs must use only coherent, emotionally connected metaphors (e.g., sea, light, breeze, stars, sunset). Random or forced imagery is forbidden.',
-  '- Do NOT mix metaphors that do not belong together (e.g., “fény száll a vízen, tenger hulláma ég”).'
+  '- ELECTRONIC SNAPSHOT RULE: each line must be one sensory snapshot (light, shadow, motion).',
+  '- ELECTRONIC NO-STORY: Avoid narrative; use movement and vibe.',
+  '- ELECTRONIC RHYTHM: Prefer short, percussive, image-based lines.',
+  '- ELECTRONIC METAPHOR LIMIT: Max one metaphor per verse.',
+  '- ELECTRONIC REPETITION: small motif repetition allowed, but keep 4-line rule intact.',
+
+  // ROMANTIC/WEDDING – a metafora-tiltás összevonva 1 profi blokkba
+  '- Romantic / wedding songs must use coherent, emotionally connected metaphors only (sea, light, breeze, stars, sunset).',
+  '- NEVER mix unrelated images (e.g., “fény száll a vízen, tenger hulláma ég”).'
 ].join('\n');
+
 
 const sys3 = [
   '=== HUNGARIAN LANGUAGE POLISH & COHERENCE RULES ===',
-  '- Write the entire song in natural, grammatically correct Hungarian.',
-  '- Every line must form a full, meaningful sentence — always include both subject and predicate.',
-  '- Ensure logical flow between lines; verses and choruses must connect coherently to the same theme.',
-  '- Maintain natural Hungarian word order (subject–predicate–object), avoid inverted or awkward structures.',
-  '- Use proper Hungarian suffixes and vowel harmony (no "-ban/-ben" mismatches).',
+  '- Write in natural, grammatically correct Hungarian.',
+  '- Every line must be a full, meaningful sentence with subject and predicate.',
+  '- Maintain logical flow; verses and choruses must connect to the theme.',
+  '- Natural Hungarian word order; avoid awkward inversions.',
+  '- Vowel harmony and correct case endings are mandatory.',
   '- Remove unnecessary spaces or blank lines.',
-  '- Avoid double punctuation or repeated words (e.g., "fény fény" → "fény").',
+  '- Avoid double punctuation or repeated words.',
   '- Capitalize the first letter of each line.',
-  '- Use correct and natural conjugations (e.g., "szeretet érzem" → "szeretetet érzek", "vágy érzem" → "vágyat érzek").',
-  '- Replace incorrect or awkward expressions with fluent, native Hungarian equivalents.',
-  '- Convert any numeric digits to written Hungarian words (e.g., 10 → tíz, 2024 → kétezer-huszonnégy).',
-  '- Exclude numbers from section headings (Verse, Chorus).',
-  '- Keep poetic rhythm consistent with the style, but always semantically correct.',
-  '- Prioritize meaningful rhymes: aim for natural, fluent rhyming lines whenever possible, but never sacrifice clarity, storyline, or emotional logic just to force a rhyme.',
-  '- Maintain smooth rhyme and rhythm (AABB or ABAB patterns when natural).',
-  '- If a rhyme would create an illogical or unnatural phrase, remove or rephrase it naturally.',
-  '- If style = wedding/romantic, include logical, coherent metaphors (e.g., naplemente, tenger, csillag, fény, szellő). Avoid random or nonsense imagery.',
-  '- If style = funeral, use gentle and calm tone, gratitude and peace — no harsh or absurd images.',
-  '- Avoid meaningless repetition or filler words.',
-  '- Ensure tense consistency (past/present forms should not randomly change).',
-  '- Use rich, expressive but realistic imagery.',
-  '- Ensure that all metaphors support the song’s emotional core and do not contradict each other.',
-  '- Avoid invented or non-existent Hungarian words.',
-  '- All numeric or temporal expressions (years, ages) must be written in full words and keep Hungarian case endings intact.',
-  '- Final chorus must repeat identically at the end.',
-  '- The song must feel cohesive, fluent and emotionally expressive — never robotic or literal.',
-  '- Never reinterpret or modify numeric ages or years; only convert digits to words preserving exact numeric meaning.',
-  '- ABSOLUTE RULE: No illogical or contradictory statements are allowed. Every line must express a clear, meaningful idea that a native Hungarian speaker would naturally say.',
-  '- Do NOT create sentences that contradict themselves (e.g., “nem hagytuk, hogy a szerelem lángoljon”).',
-  '- Avoid semantic nonsense or unclear relationships between actions (“nevettek táncot már”, “nem hagytuk, hogy… nem hagytuk”).',
-  '- Do NOT repeat entire phrases in consecutive lines (e.g., “nem hagytuk… nem hagytuk”).',
-  '- HUNGARIAN CASE ACCURACY: Always use the grammatically correct Hungarian noun cases (e.g., “minden sarkot”, not “minden sarok”).',
-  '- Ensure that verbs and nouns agree in number, case, and suffix harmony.',
-  '- Pay attention to exact Hungarian conjugation and suffixes — incorrect case endings are forbidden.',
-  '- METAPHOR RULE FOR ROMANTIC SONGS: metaphors must be beautiful, coherent, and logically connected. Do NOT mix unrelated images in the same verse.',
-  '- Each metaphor must make sense within real emotional logic and must not contradict previous lines.',
-  '- If a line sounds awkward, rigid, or unnatural in Hungarian, rewrite it into smooth, native phrasing.',
-  '- Keep the emotional logic consistent — no sudden breaks, no random shifts, no phrases that sound “machine-made”.',
-  '- Avoid mirrored or duplicated adjective-noun constructions (e.g., "érő vágyat érző").',
-  '- Every descriptive phrase must be a meaningful, natural Hungarian expression.',
-  '- Romantic/wedding style: avoid repeating the same metaphor root (e.g., "fény", "láng", "örök") more than once per verse.'
-
+  '- Use correct conjugation (e.g., szeretetet érzek; vágyat érzek).',
+  '- Replace awkward expressions with fluent, native phrasing.',
+  '- Convert numeric digits to written-out Hungarian words.',
+  '- Do not place numbers in section headings.',
+  '- Keep poetic rhythm consistent with the style.',
+  '- Prefer natural rhymes; never force rhyme over meaning.',
+  '- If rhyme causes unnatural phrasing, rewrite it.',
+  '- For wedding/romantic: use soft, coherent metaphors (naplemente, tenger, csillag, fény, szellő).',
+  '- Funeral: gentle, peaceful tone; no harsh images.',
+  '- Avoid meaningless repetition or filler.',
+  '- Keep tense consistent; no random shifts.',
+  '- Use rich but realistic imagery.',
+  '- Metaphors must support emotional logic and not contradict.',
+  '- Avoid invented/non-existent words.',
+  '- Write all years and ages in full words with correct endings.',
+  '- Final chorus MUST repeat exactly.',
+  '- The whole song must feel cohesive, expressive and human.',
+  '- Never reinterpret numeric ages or years.',
+  '- ABSOLUTE: No illogical or contradictory statements.',
+  '- Avoid unclear or semantically confused structures.',
+  '- Do NOT repeat entire phrases in consecutive lines.',
+  '- CASE ACCURACY: Hungarian noun cases must always be correct.',
+  '- Ensure verbs/nouns agree in number, case, suffix harmony.',
+  '- Fix unnatural constructions; keep phrasing smooth.',
+  '- Avoid mirrored adjective-noun patterns.',
+  '- Each descriptive phrase must be meaningful and Hungarian.',
+  
+  // ROMANTIC / POP enhancement – duplikációk összevonva
+  '- ROMANTIC METAPHOR RULE: Each verse must include one soft sensory metaphor (breeze, sunset, stars, sea, warm light).',
+  '- ROMANTIC NO-DIARY RULE: Avoid diary-style narrative; paint cinematic scenes.',
+  '- ROMANTIC MEMORY INTEGRATION: Blend all major memories naturally.',
+  '- POP/ROMANTIC RHYTHM: Maintain melodic, flowing lyricism.',
+  '- POP/ROMANTIC Rhyme: Prefer AABB or ABAB when natural.',
+  '- POP/ROMANTIC Tone: Warm, emotional, clear — never rigid.'
 ].join('\n');
+
 
 // Explicit instruction: include all specific years, names, and places mentioned in the brief naturally in the lyrics.
 const briefIncludeRule = 'Include every specific year, name, and place mentioned in the brief naturally in the lyrics.';
