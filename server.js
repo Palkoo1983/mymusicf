@@ -744,7 +744,7 @@ const sys1 = [
 ].join('\n');
 
 
-cconst sys2 = [
+const sys2 = [
   '=== MINIMUM WORD COUNT RULES (dominant genre only) ===',
   '- POP: at least 8 words per line.',
   '- ROCK: at least 8 words per line.',
@@ -796,7 +796,6 @@ cconst sys2 = [
   '- Romantic / wedding songs must use coherent, emotionally connected metaphors only (sea, light, breeze, stars, sunset).',
   '- NEVER mix unrelated images (e.g., “fény száll a vízen, tenger hulláma ég”).'
 ].join('\n');
-
 
 const sys3 = [
   '=== HUNGARIAN LANGUAGE POLISH & COHERENCE RULES ===',
