@@ -250,7 +250,7 @@ const examples = [
 
   'A házassági évfordulónkra szeretném meglepni a férjemet, Bencét, egy dallal. Az első randinkon eltévedtünk a Városligetben, és végül a padon ettük meg a fagyit nevetve. A másik emlék, amikor a lakásfelújítás közben pizzát ettünk a padlón ülve, és sírtunk a nevetéstől.',
 
-  'Egy kedves kollégánknak, Zolinak szeretnék dalt a csapat nevében. Ő volt az, aki mindig jókedvet hozott az irodába. Egyszer, amikor elromlott a nyomtató, egy gémkapoccsal és kávéval oldotta meg. A másik pillanat, amikor karácsony előtt mindenkinek sütit hozott, és mindenki nevetett.',
+  'Egy kedves kollégánknak, Zolinak szeretnék dalt a csapat nevében, a temetésére. Ő volt az, aki mindig jókedvet hozott az irodába. Egyszer, amikor elromlott a nyomtató, egy gémkapoccsal és kávéval oldotta meg. A másik pillanat, amikor karácsony előtt mindenkinek sütit hozott, és mindenki nevetett.',
 
   'A munkahelyi évzárónkra kérek egy dalt. Volt egy közös projektünk Andrással, ahol éjszakába nyúlóan dolgoztunk, de közben zenét hallgattunk és táncoltunk. A másik emlék, amikor megnyertük a céges versenyt, és pezsgővel öntöttük le a főnököt – ezt a hangulatot szeretném viszont hallani.',
 
