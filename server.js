@@ -669,7 +669,7 @@ app.post('/api/generate_song', async (req, res) => {
 
     // ENV
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
+    const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'GPT-5 mini';
     const SUNO_API_KEY   = process.env.SUNO_API_KEY;
     const SUNO_BASE_URL  = (process.env.SUNO_BASE_URL || '').replace(/\/+$/,'');
     const PUBLIC_URL     = (process.env.PUBLIC_URL || '').replace(/\/+$/,'');
@@ -869,16 +869,17 @@ const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
     'Authorization': `Bearer ${OPENAI_API_KEY}`,
     'Content-Type': 'application/json'
   },
-  body: JSON.stringify({
-    model: OPENAI_MODEL,
-    messages: [
-      { role: 'system', content: sysPrompt },
-      { role: 'user', content: usr1 }
-    ],
-    temperature: 0.7,
-    max_tokens: 800
-  })
+ body: JSON.stringify({
+  model: OPENAI_MODEL,
+  messages: [
+    { role: 'system', content: sysPrompt },
+    { role: 'user', content: usr1 }
+  ],
+  temperature: 0.7,
+  max_completion_tokens: 800   // ✅ GPT-5 mini ezt KELL használni
+})
 });
+
 
    if(!oi1.ok){
   const t = await oi1.text();
