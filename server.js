@@ -875,7 +875,6 @@ const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
     { role: 'system', content: sysPrompt },
     { role: 'user', content: usr1 }
   ],
-  temperature: 0.7,
   max_completion_tokens: 800   // ✅ GPT-5 mini ezt KELL használni
 })
 });
