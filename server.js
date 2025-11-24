@@ -720,6 +720,10 @@ const sys1 = [
   '(Chorus)',
 
   'Each Verse and each Chorus must contain EXACTLY 4 lines.',
+  // LINE LENGTH RULE – mandatory
+  'Each line in every Verse and Chorus MUST contain between 10 and 14 words.',
+  'If any line is shorter than 10 words, you MUST rewrite it so it becomes 10–14 words naturally without breaking the rhythm, meaning, or emotional tone.',
+
   'Never use more or less than 4 lines in any section.',
   'Each line must be ONE clear, grammatically correct sentence.',
   'Never write paragraph-style verses.',
