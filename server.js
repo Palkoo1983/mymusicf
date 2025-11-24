@@ -669,7 +669,7 @@ app.post('/api/generate_song', async (req, res) => {
 
     // ENV
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'GPT-5 mini';
+    const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
     const SUNO_API_KEY   = process.env.SUNO_API_KEY;
     const SUNO_BASE_URL  = (process.env.SUNO_BASE_URL || '').replace(/\/+$/,'');
     const PUBLIC_URL     = (process.env.PUBLIC_URL || '').replace(/\/+$/,'');
@@ -869,16 +869,16 @@ const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
     'Authorization': `Bearer ${OPENAI_API_KEY}`,
     'Content-Type': 'application/json'
   },
- body: JSON.stringify({
-  model: OPENAI_MODEL,
-  messages: [
-    { role: 'system', content: sysPrompt },
-    { role: 'user', content: usr1 }
-  ],
-  max_completion_tokens: 800   // ✅ GPT-5 mini ezt KELL használni
-})
+  body: JSON.stringify({
+    model: OPENAI_MODEL,
+    messages: [
+      { role: 'system', content: sysPrompt },
+      { role: 'user', content: usr1 }
+    ],
+    temperature: 0.7,
+    max_tokens: 800
+  })
 });
-
 
    if(!oi1.ok){
   const t = await oi1.text();
@@ -887,24 +887,18 @@ const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
 }
     const j1 = await oi1.json();
 
-// --- GPT-5 MINI SAFE PARSE + FALLBACK + CLEAN SONG EXTRACTION ---
-let rawContent = j1?.choices?.[0]?.message?.content || '';
-rawContent = String(rawContent || '').trim();
+// --- ROBUSZTUS JSON + FALLBACK + POLISH ---
+const raw = j1?.choices?.[0]?.message?.content || '';
 
-let lyrics = '';
-let payload = {};
-
-// 1) JSON only if the model actually returned JSON (rare)
-if (rawContent.startsWith('{') && rawContent.endsWith('}')) {
-  try {
-    payload = JSON.parse(rawContent);
-  } catch {
-    payload = {};
-  }
+let payload;
+try {
+  payload = JSON.parse(raw);
+} catch {
+  payload = {};
 }
 
-// 2) JSON-based lyrics first (if any)
-lyrics = (
+// több kulcsot is próbálunk, hogy tuti legyen szöveg:
+let lyrics = (
   payload.lyrics_draft ||
   payload.lyrics ||
   payload.text ||
@@ -912,24 +906,16 @@ lyrics = (
   ''
 ).trim();
 
-// 3) If JSON was empty → fallback to pure text
-if (!lyrics) {
-  // Remove GPT-5 MINI introductory chatter (“Here is…”, “Sure…”, etc.)
-  lyrics = rawContent
-    .replace(/^Sure.*?\n+/i, '')
-    .replace(/^Here.*?\n+/i, '')
-    .replace(/^Okay.*?\n+/i, '')
-    .replace(/^I will.*?\n+/i, '')
-    .replace(/^Following.*?\n+/i, '')
-    .trim();
+let gptStyle = (
+  payload.style_en ||
+  payload.style ||
+  ''
+).trim();
+
+// ha a JSON üres, essünk vissza a nyers contentre
+if (!lyrics && raw) {
+  lyrics = String(raw).trim();
 }
-
-// 4) If still empty for some reason → final fallback
-if (!lyrics) lyrics = rawContent;
-// restore gptStyle extraction for Suno style builder
-let gptStyle = payload.style_en || payload.style || '';
-gptStyle = String(gptStyle || '').trim();
-
  // --- convert numeric numbers to written Hungarian words (universal) ---
 function numToHungarian(n) {
   const ones = ['nulla','egy','kettő','három','négy','öt','hat','hét','nyolc','kilenc'];
