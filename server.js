@@ -887,18 +887,24 @@ const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
 }
     const j1 = await oi1.json();
 
-// --- ROBUSZTUS JSON + FALLBACK + POLISH ---
-const raw = j1?.choices?.[0]?.message?.content || '';
+// --- GPT-5 MINI SAFE PARSE + FALLBACK + CLEAN SONG EXTRACTION ---
+let rawContent = j1?.choices?.[0]?.message?.content || '';
+rawContent = String(rawContent || '').trim();
 
-let payload;
-try {
-  payload = JSON.parse(raw);
-} catch {
-  payload = {};
+let lyrics = '';
+let payload = {};
+
+// 1) JSON only if the model actually returned JSON (rare)
+if (rawContent.startsWith('{') && rawContent.endsWith('}')) {
+  try {
+    payload = JSON.parse(rawContent);
+  } catch {
+    payload = {};
+  }
 }
 
-// több kulcsot is próbálunk, hogy tuti legyen szöveg:
-let lyrics = (
+// 2) JSON-based lyrics first (if any)
+lyrics = (
   payload.lyrics_draft ||
   payload.lyrics ||
   payload.text ||
@@ -906,16 +912,21 @@ let lyrics = (
   ''
 ).trim();
 
-let gptStyle = (
-  payload.style_en ||
-  payload.style ||
-  ''
-).trim();
-
-// ha a JSON üres, essünk vissza a nyers contentre
-if (!lyrics && raw) {
-  lyrics = String(raw).trim();
+// 3) If JSON was empty → fallback to pure text
+if (!lyrics) {
+  // Remove GPT-5 MINI introductory chatter (“Here is…”, “Sure…”, etc.)
+  lyrics = rawContent
+    .replace(/^Sure.*?\n+/i, '')
+    .replace(/^Here.*?\n+/i, '')
+    .replace(/^Okay.*?\n+/i, '')
+    .replace(/^I will.*?\n+/i, '')
+    .replace(/^Following.*?\n+/i, '')
+    .trim();
 }
+
+// 4) If still empty for some reason → final fallback
+if (!lyrics) lyrics = rawContent;
+
  // --- convert numeric numbers to written Hungarian words (universal) ---
 function numToHungarian(n) {
   const ones = ['nulla','egy','kettő','három','négy','öt','hat','hét','nyolc','kilenc'];
