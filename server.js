@@ -926,6 +926,9 @@ if (!lyrics) {
 
 // 4) If still empty for some reason → final fallback
 if (!lyrics) lyrics = rawContent;
+// restore gptStyle extraction for Suno style builder
+let gptStyle = payload.style_en || payload.style || '';
+gptStyle = String(gptStyle || '').trim();
 
  // --- convert numeric numbers to written Hungarian words (universal) ---
 function numToHungarian(n) {
