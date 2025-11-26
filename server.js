@@ -414,16 +414,56 @@ app.post('/api/order', (req, res) => {
 app.post('/api/contact', (req, res) => {
   const c = req.body || {};
   const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
+
+  // Email, amit TE kapsz (belső)
   const html = `
-    <h2>Új üzenet</h2>
+    <h2>Új üzenet érkezett az EnZenem.hu oldalról</h2>
     <ul>
-      <li><b>Név:</b> ${c.name || ''}</li>
-      <li><b>E-mail:</b> ${c.email || ''}</li>
+      <li><b>Név:</b> ${c.name || '-'}</li>
+      <li><b>E-mail:</b> ${c.email || '-'}</li>
     </ul>
     <p>${(c.message || '').replace(/\n/g, '<br/>')}</p>
+
+    <hr style="margin-top:32px;">
+    <p style="font-size:12px; color:#777;">
+      Ez az üzenet automatikusan generált értesítés az EnZenem.hu rendszeréből.
+    </p>
   `;
-  const jobs = [{ to: owner, subject: 'EnZenem – Üzenet', html, replyTo: c.email || undefined }];
-  if (c.email) jobs.push({ to: c.email, subject: 'EnZenem – Üzenet fogadva', html: '<p>Köszönjük az üzenetet, hamarosan válaszolunk.</p>' });
+
+  // Email, amit az ÜGYFÉL kap (külső)
+  const customerHtml = `
+    <p>Kedves ${c.name || 'Érdeklődő'}!</p>
+
+    <p>Köszönjük, hogy üzenetet küldtél az EnZenem.hu oldalán keresztül.  
+    A megkeresésed beérkezett hozzánk, és 24 órán belül válaszolunk rá.</p>
+
+    <p><b>Az üzenet tartalma:</b></p>
+    <p>${(c.message || '').replace(/\n/g, '<br/>')}</p>
+
+    <p>Üdvözlettel,<br>
+    <b>EnZenem.hu ügyfélszolgálat</b></p>
+
+    <hr style="margin-top:32px;">
+    <p style="font-size:12px; color:#777;">
+      Ez egy automatikusan generált e-mail. Kérjük, erre az üzenetre ne válaszolj!<br>
+      Ha szeretnél kapcsolatba lépni velünk, írj az <b>info@enzenem.hu</b> címre.
+      <br><br>
+      <b>Környezetvédelmi figyelmeztetés:</b> kérjük, csak akkor nyomtasd ki ezt az e-mailt, ha feltétlenül szükséges.
+    </p>
+  `;
+
+  const jobs = [
+    { to: owner, subject: 'EnZenem – Új üzenet érkezett', html, replyTo: c.email || undefined }
+  ];
+
+  if (c.email) {
+    jobs.push({
+      to: c.email,
+      subject: 'EnZenem – Üzenetedet fogadtuk',
+      html: customerHtml
+    });
+  }
+
   queueEmails(jobs);
   res.json({ ok: true, message: 'Üzeneted elküldve. Köszönjük a megkeresést!' });
 });
@@ -522,16 +562,34 @@ try {
   const format = pkg === 'video' ? 'MP4' : (pkg === 'premium' ? 'WAV' : 'MP3');
 
   // --- Ügyfél HTML ---
-  const customerHtml = `
-    <p>Kedves Megrendelő!</p>
-    <p>Köszönjük a sikeres fizetést. A megrendelésed rögzítettük.</p>
-    <ul>
-      <li><b>Formátum:</b> ${format}</li>
-      <li><b>Kézbesítési idő:</b> ${deliveryLabel}</li>
-    </ul>
-    <p>A választott kézbesítési időn belül (<b>${deliveryLabel}</b>) megkapod az egyedi zenédet/videódat.</p>
-    <p>Üdvözlettel,<br/>EnZenem.hu csapat</p>
-  `;
+ const customerHtml = `
+  <p>Kedves Megrendelő!</p>
+
+  <p>Köszönjük a sikeres fizetést és a bizalmat! A megrendelésedet a rendszer sikeresen rögzítette.</p>
+
+  <p><b>A megrendelés adatai:</b></p>
+  <ul>
+    <li><b>Formátum:</b> ${format}</li>
+    <li><b>Kézbesítési idő:</b> ${deliveryLabel}</li>
+  </ul>
+
+  <p>
+    A választott kézbesítési időn belül (<b>${deliveryLabel}</b>) elkészítjük és elküldjük az egyedi zenédet / videódat.
+    A kész anyagot az általad megadott e-mail címre fogod megkapni vagy a választott formátumban vagy letöltési link formájában.
+  </p>
+
+  <p>Üdvözlettel,<br>
+  <b>EnZenem.hu csapat</b></p>
+
+  <hr style="margin-top:32px;">
+  <p style="font-size:12px; color:#777;">
+    Ez egy automatikusan küldött rendszerüzenet, kérjük, erre az e-mailre ne válaszolj.<br>
+    Ha kérdésed van, keress minket bizalommal az <b>info@enzenem.hu</b> címen.
+    <br><br>
+    <b>Környezetvédelmi figyelmeztetés:</b>
+    kérjük, ne nyomtasd ki ezt az e-mailt, hacsak nem feltétlenül szükséges.
+  </p>
+`;
 
   // --- Admin HTML ---
   const adminHtml = `
