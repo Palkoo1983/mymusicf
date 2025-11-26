@@ -1969,4 +1969,56 @@ html.ua-samsung .combo-list {
   border-radius: 6px !important;
   z-index: 99999 !important;
 }
+/* ==== Kártyalogók – EnZenem VPOS blokk ==== */
+
+footer {
+  padding: 24px 16px 32px;
+  text-align: center;
+}
+
+.footer-cards {
+  margin-top: 10px;
+}
+
+.footer-cards-label {
+  font-size: 12px;
+  opacity: 0.85;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.card-logos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.card-logo {
+  min-width: 60px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 6px;
+  background: #111;
+  border: 1px solid rgba(245, 207, 96, 0.5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: 0 0 8px rgba(0,0,0,0.6);
+  color: #f5f0d8;
+}
+
+.card-visa        { border-color: #1a4fa3; }
+.card-mastercard  { border-color: #ff5b2e; }
+.card-maestro     { border-color: #2f9bd8; }
+.card-visa-electron { border-color: #1a4fa3; }
+.card-vpay        { border-color: #1a4fa3; }
+
+@media (max-width: 768px) {
+  .card-logo { min-width: 72px; }
+}
 
