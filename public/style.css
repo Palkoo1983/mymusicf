@@ -2012,13 +2012,16 @@ footer {
   color: #f5f0d8;
 }
 
-.card-visa        { border-color: #1a4fa3; }
-.card-mastercard  { border-color: #ff5b2e; }
-.card-maestro     { border-color: #2f9bd8; }
-.card-visa-electron { border-color: #1a4fa3; }
-.card-vpay        { border-color: #1a4fa3; }
+.card-visa,
+.card-mastercard,
+.card-maestro,
+.card-visa-electron,
+.card-vpay {
+  border-color: rgba(245, 207, 96, 0.6) !important;
+  color: #f5cf60 !important;
+}
+
 
 @media (max-width: 768px) {
   .card-logo { min-width: 72px; }
 }
-
