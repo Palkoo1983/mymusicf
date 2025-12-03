@@ -439,6 +439,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitBtn   = document.querySelector('#orderForm button[type="submit"], #orderForm .primary');
 
   if (!container || !pkgSel || !submitBtn || !hiddenExtra) return;
+  // 6 órás expressz gomb engedélyezése csak 08:00–20:00 között
+  const now = new Date();
+  const hour = now.getHours();
+  const expressBtn = container.querySelector('.delivery-btn[data-extra="6500"]');
+  const expressAllowed = hour >= 8 && hour < 20;
+
+  if (expressBtn && !expressAllowed) {
+    expressBtn.disabled = true;
+    expressBtn.classList.add('disabled');
+    expressBtn.textContent = '6 óra (+6 500 Ft) – csak 08:00–20:00 között';
+  }
 
   // Alapárak (Ft)
   const basePrices = {
@@ -479,13 +490,21 @@ document.addEventListener('DOMContentLoaded', () => {
   if (defaultBtn) setActive(defaultBtn);
   else updatePriceLabel();
 
-  // Delegált eseménykezelő – garantáltan csak egy gomb aktív marad
-  container.addEventListener('click', (e) => {
-    const btn = e.target.closest('.delivery-btn');
-    if (!btn || !container.contains(btn)) return;
+ // Delegált eseménykezelő – garantáltan csak egy gomb aktív marad
+container.addEventListener('click', (e) => {
+  const btn = e.target.closest('.delivery-btn');
+  if (!btn || !container.contains(btn)) return;
+
+  // ❗ Tiltott (disabled) gomb ne működjön
+  if (btn.disabled || btn.classList.contains('disabled')) {
     e.preventDefault();
-    setActive(btn);
-  });
+    return;
+  }
+
+  e.preventDefault();
+  setActive(btn);
+});
+
 
   // Csomagváltáskor újraszámolás
   pkgSel.addEventListener('change', updatePriceLabel);
