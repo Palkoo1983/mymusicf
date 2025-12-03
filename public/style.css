@@ -2025,3 +2025,22 @@ footer {
 @media (max-width: 768px) {
   .card-logo { min-width: 72px; }
 }
+/* === NovaBot ne takarja a footer linkeket (ÁSZF, Adatkezelés) === */
+footer, .footer-links, a[href*="aszf"], a[href*="adatkezeles"] {
+  position: relative !important;
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+}
+
+/* Minden NovaBot overlay, ami nem látszik → ne kapjon pointert */
+#novabot::before,
+#novabot::after {
+  pointer-events: none !important;
+}
+
+/* Mobilon NovaBot ne üljön rá a footerre */
+@media(max-width: 768px){
+  #novabot.nb-docked {
+    bottom: 40px !important;
+  }
+}
