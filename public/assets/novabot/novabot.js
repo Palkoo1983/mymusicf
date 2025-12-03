@@ -362,5 +362,11 @@ window.novaOrderSuccess = function(){
 window.novaOrderFail = function(){
   window.novaBotSay('Oh :(, megrendelésed nem sikerült, kérlek próbáld újra');
 };
+// ==== Jogi linkek védelme – NovaBot ne kapja el ezeket a kattintásokat ====
+document.querySelectorAll('a[href*="aszf"], a[href*="adatkezeles"]').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.stopPropagation();   // fontos: NovaBot click-capture ne fogja el
+  }, true);                // capture mód: így biztos működik
+});
 
 })();
