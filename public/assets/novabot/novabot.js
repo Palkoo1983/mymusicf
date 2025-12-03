@@ -368,42 +368,5 @@ document.querySelectorAll('a[href*="aszf"], a[href*="adatkezeles"]').forEach(lin
     e.stopPropagation();   // fontos: NovaBot click-capture ne fogja el
   }, true);                // capture mód: így biztos működik
 });
-// === SAFE BROWSER-OPEN FIX (NovaBot fallback) ===
-window.novaBotOpenBrowser = function() {
-  try {
-    window.location.assign('https://www.enzenem.hu');
-  } catch(e) {
-    window.open('https://www.enzenem.hu','_blank');
-  }
-};
-
-// Ha nincs hang → kínáljunk fel direkt normál böngésző megnyitást
-(function(){
-  try {
-    const noAudio = (!('speechSynthesis' in window)) || !NB_AUDIO_ENABLED;
-    if (!noAudio) return;
-
-    setTimeout(() => {
-      const btn = document.createElement('button');
-      btn.textContent = 'Megnyitás normál böngészőben';
-      btn.style.cssText = `
-        position:fixed;
-        bottom:110px;
-        right:16px;
-        z-index:999999;
-        padding:8px 14px;
-        background:#ffd700;
-        color:#000;
-        border-radius:8px;
-        font-size:14px;
-      `;
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        window.novaBotOpenBrowser();
-      };
-      document.body.appendChild(btn);
-    }, 1300);
-  } catch(err){}
-})();
 
 })();
