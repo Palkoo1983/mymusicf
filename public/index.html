@@ -1138,6 +1138,21 @@ if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
   }, { passive: true });
 }
 </script>
+<script>
+(function() {
+  const now = new Date();
+  const hour = now.getHours();
 
+  if (hour < 8 || hour >= 20) {
+    const select = document.getElementById('delivery');
+    const express6h = select?.querySelector('option[value="6500"]');
+
+    if (express6h) {
+      express6h.disabled = true;
+      express6h.textContent = '6 órás (08:00–20:00 között elérhető)';
+    }
+  }
+})();
+</script>
 </body>
 </html>
