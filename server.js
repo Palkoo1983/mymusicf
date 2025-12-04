@@ -273,6 +273,20 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
+/* ==========================================================
+   🔥 VIVA WALLET – TESZT / VALIDÁCIÓ WEBHOOK
+   A Viva GET + POST ellenőrzést is átengedi gond nélkül
+=========================================================== */
+
+app.get('/api/payment/viva-test', (req, res) => {
+  console.log("[VIVA TEST GET] Validation ping");
+  return res.status(200).json({ status: "ok", method: "GET" });
+});
+
+app.post('/api/payment/viva-test', (req, res) => {
+  console.log("[VIVA TEST POST] Validation ping body:", req.body);
+  return res.status(200).json({ status: "ok", method: "POST" });
+});
 
 /* ----------------- Simple rate-limit -------------------- */
 const hitMap = new Map();
