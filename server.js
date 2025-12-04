@@ -469,100 +469,150 @@ app.post('/api/contact', (req, res) => {
 });
 
 
-// =================== TEST VPOS FLOW (with visible amount log) ===================
+/* ========== VIVA WALLET AUTH TOKEN ========== */
+async function vivaGetToken() {
+  const id = process.env.VIVA_CLIENT_ID;
+  const secret = process.env.VIVA_CLIENT_SECRET;
+
+  const res = await fetch(process.env.VIVA_BASE_URL + '/connect/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: id,
+      client_secret: secret
+    })
+  });
+
+  if (!res.ok) throw new Error('Viva token hiba');
+  return res.json();
+}
+
+/* ==========================================================
+   VIVA SMART CHECKOUT – FIZETÉS INDÍTÁSA (CREATE)
+   Ez váltja ki a teljes TEST VPOS create blokkot
+========================================================== */
 app.post('/api/payment/create', async (req, res) => {
   try {
     global.lastOrderData = req.body;
     const data = req.body || {};
+
+    // ------ ÖSSZEG KISZÁMÍTÁSA (VÁLTOZATLANUL A TE SZABÁLYOD) ------
     const total =
       (data.package === 'video' ? 21000 :
       data.package === 'premium' ? 35000 :
       10500) + parseInt(data.delivery_extra || '0', 10);
 
-    // Logoljunk a konzolba is, hogy lássuk mi ment a VPOS-nak
-    console.log(`[VPOS CREATE] Fizetés indítva: ${total} Ft | Csomag: ${data.package}, Kézbesítés: ${data.delivery_label}`);
+    console.log(`[VIVA CREATE] Fizetés indítva: ${total} Ft | Csomag: ${data.package}`);
 
-    // Tesztfizetési oldalak (lehet saját domainen is)
-    const successUrl = `${process.env.PUBLIC_URL || ''}/testpay.html?result=success&amount=${total}`;
-    const failUrl = `${process.env.PUBLIC_URL || ''}/testpay.html?result=fail&amount=${total}`;
+    // ------ 1) Viva access token ------
+    const tokenData = await vivaGetToken();
+    const accessToken = tokenData.access_token;
 
-    // Az ügyfél ezt kapja vissza – benne az összeg is látható
-    res.json({ ok: true, successUrl, failUrl, total });
-  } catch (e) {
-    console.error('[VPOS CREATE ERROR]', e);
-    res.status(500).json({ ok: false, message: 'Nem sikerült a fizetési folyamat indítása.' });
+    // ------ 2) PAYMENT ORDER LETREHOZÁSA ------
+    const orderRes = await fetch(process.env.VIVA_BASE_URL + '/checkout/v2/orders', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        amount: total * 100, // Viva centet vár
+        customerTrns: "EnZenem.hu rendelés",
+        customer: {
+          email: data.email
+        },
+        sourceCode: process.env.VIVA_SOURCE_CODE || "Default",
+        tags: ["enzenem"]
+      })
+    });
+
+    const orderJson = await orderRes.json();
+    console.log("[VIVA ORDER RESPONSE]", orderJson);
+
+    if (!orderJson?.orderCode) {
+      console.error("VIVA ORDER ERROR:", orderJson);
+      return res.json({ ok: false, message: "Nem jött létre a Viva rendelés." });
+    }
+
+    // ------ 3) Smart Checkout fizetési link ------
+    const payUrl = `https://www.vivapayments.com/web2/checkout?ref=${orderJson.orderCode}`;
+
+    console.log("[VIVA PAY URL]", payUrl);
+
+    // ------ FRONTENDNEK VISSZAADJUK ------
+    res.json({
+      ok: true,
+      payUrl,
+      total
+    });
+
+  } catch (err) {
+    console.error("[VIVA CREATE ERROR]", err);
+    res.status(500).json({ ok: false, message: "Nem sikerült a fizetés indítása." });
   }
 });
+/* ============================================
+   VIVA WALLET – SMART CHECKOUT CALLBACK
+   (A TE teljes sikeres fizetési logikáddal beépítve)
+=============================================== */
+app.post('/api/payment/callback', async (req, res) => {
+  try {
+    const body = req.body || {};
+    console.log("[VIVA CALLBACK RAW]", body);
 
-// A „fizetési oldalt” is mi szimuláljuk (frontend is itt tudja megnyitni)
-app.get('/testpay.html', (req, res) => {
-  const amount = req.query.amount || '0';
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="hu">
-    <head>
-      <meta charset="UTF-8">
-      <title>VPOS Tesztfizetés</title>
-      <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background:#0d1b2a; color:#fff; }
-        .btn { display:inline-block; padding:15px 25px; margin:10px; font-size:18px; border-radius:8px; cursor:pointer; text-decoration:none; }
-        .ok { background:#21a353; color:#fff; }
-        .fail { background:#b33; color:#fff; }
-      </style>
-    </head>
-    <body>
-      <h1>VPOS Tesztfizetés</h1>
-      <p>Összeg: <b>${amount} Ft</b></p>
-      <p>Válassz eredményt:</p>
-      <a class="btn ok" href="/api/payment/callback?status=success&amount=${amount}">✅ Sikeres fizetés</a>
-      <a class="btn fail" href="/api/payment/callback?status=fail&amount=${amount}">❌ Sikertelen fizetés</a>
-    </body>
-    </html>
-  `);
-});
+    const event = body?.EventData;
 
-// Callback – a tesztfizetés befejezése után
-app.get('/api/payment/callback', async (req, res) => {
-  const status = req.query.status || 'fail';
-  const amount = req.query.amount || '0';
-
-  if (status === 'success') {
-    console.log('[VPOS CALLBACK] Fizetés sikeres, indítjuk a dal generálást...');
-
-    // 🔸 Automatikus dalgenerálás, ha van mentett megrendelés
-    if (!global.lastOrderData) {
-      console.warn('[VPOS CALLBACK] Nincs mentett lastOrderData – nem indítjuk a generálást.');
-    } else {
-      try {
-        // Biztosítsuk, hogy mindig a fő domainre küldje
-      const base = process.env.PUBLIC_URL || 'https://www.enzenem.hu';
-      const apiUrl = `${base}/api/generate_song`;
-
-        console.log('[VPOS CALLBACK] Generálás indítása:', apiUrl);
-
-        await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(global.lastOrderData),
-        });
-
-        console.log('[VPOS CALLBACK] Dal generálás elindítva (POST /api/generate_song).');
-      } catch (err) {
-        console.error('[VPOS CALLBACK] Hiba a dalgenerálás indításakor:', err);
-      }
+    if (!event) {
+      console.warn("[VIVA CALLBACK] Nincs EventData");
+      return res.json({ ok: true });
     }
-// === ÜGYFÉL + ADMIN EMAIL SIKERES FIZETÉS UTÁN ===
-try {
-  const o = global.lastOrderData || {};
-  const customer = o.email || '';
-  const adminEmail = ENV.TO_EMAIL || ENV.SMTP_USER;
 
-  const deliveryLabel = o.delivery_label || o.delivery || '48 óra';
-  const pkg = (o.package || o.format || 'basic').toString().toLowerCase();
-  const format = pkg === 'video' ? 'MP4' : (pkg === 'premium' ? 'WAV' : 'MP3');
+    const statusId = event.StatusId;    // "F" = sikeres fizetés
+    const amount = (event.Amount || 0) / 100;  // cent → Ft
 
-  // --- Ügyfél HTML ---
- const customerHtml = `
+    // ======================================================
+    // 1) SIKERES FIZETÉS – A TELJES EREDETI LOGIKÁD 1:1-BEN
+    // ======================================================
+    if (statusId === "F") {
+      const status = 'success'; // hogy a te logikád változatlanul fusson
+
+      console.log('[VPOS CALLBACK] Fizetés sikeres, indítjuk a dal generálást...');
+
+      // 🔸 Automatikus dalgenerálás, ha van mentett megrendelés
+      if (!global.lastOrderData) {
+        console.warn('[VPOS CALLBACK] Nincs mentett lastOrderData – nem indítjuk a generálást.');
+      } else {
+        try {
+          const base = process.env.PUBLIC_URL || 'https://www.enzenem.hu';
+          const apiUrl = `${base}/api/generate_song`;
+
+          console.log('[VPOS CALLBACK] Generálás indítása:', apiUrl);
+
+          await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(global.lastOrderData),
+          });
+
+          console.log('[VPOS CALLBACK] Dal generálás elindítva (POST /api/generate_song).');
+        } catch (err) {
+          console.error('[VPOS CALLBACK] Hiba a dalgenerálás indításakor:', err);
+        }
+      }
+
+      // === ÜGYFÉL + ADMIN EMAIL SIKERES FIZETÉS UTÁN ===
+      try {
+        const o = global.lastOrderData || {};
+        const customer = o.email || '';
+        const adminEmail = ENV.TO_EMAIL || ENV.SMTP_USER;
+
+        const deliveryLabel = o.delivery_label || o.delivery || '48 óra';
+        const pkg = (o.package || o.format || 'basic').toString().toLowerCase();
+        const format = pkg === 'video' ? 'MP4' : (pkg === 'premium' ? 'WAV' : 'MP3');
+
+        // --- Ügyfél HTML (NEM MÓDOSÍTOTTAM SEMMIT) ---
+        const customerHtml = `
   <p>Kedves Megrendelő!</p>
 
   <p>Köszönjük a sikeres fizetést és a bizalmat! A megrendelésedet a rendszer sikeresen rögzítette.</p>
@@ -591,8 +641,8 @@ try {
   </p>
 `;
 
-  // --- Admin HTML ---
-  const adminHtml = `
+        // --- Admin HTML (NEM MÓDOSÍTOTTAM SEMMIT) ---
+        const adminHtml = `
     <h2>Új SIKERES fizetés</h2>
     <ul>
       <li><b>E-mail:</b> ${o.email || ''}</li>
@@ -606,66 +656,67 @@ try {
     <p><b>Brief:</b><br/>${(o.brief || '').replace(/\n/g, '<br/>')}</p>
   `;
 
-  const jobs = [];
-  let attachments = [];
+        const jobs = [];
+        let attachments = [];
 
-  // --- Számla generálás ---
-  if (INVOICE_MODE === 'test' || INVOICE_MODE === 'live') {
-    try {
-      const totalInt = parseInt(amount, 10) || 0;
-      const { buffer, invoiceNo } = await generateInvoicePDF({
-        mode: INVOICE_MODE,
-        total: totalInt,
-        order: o
-      });
+        // --- Számla generálás (VÁLTOZATLAN) ---
+        if (INVOICE_MODE === 'test' || INVOICE_MODE === 'live') {
+          try {
+            const totalInt = parseInt(amount, 10) || 0;
+            const { buffer, invoiceNo } = await generateInvoicePDF({
+              mode: INVOICE_MODE,
+              total: totalInt,
+              order: o
+            });
 
-      if (buffer && buffer.length) {
-        attachments.push({
-          filename: `${invoiceNo}.pdf`,
-          content: buffer
+            if (buffer && buffer.length) {
+              attachments.push({
+                filename: `${invoiceNo}.pdf`,
+                content: buffer
+              });
+              console.log('[INVOICE] Generated invoice', { invoiceNo, totalInt, mode: INVOICE_MODE });
+            }
+          } catch (err) {
+            console.warn('[INVOICE] Generation failed:', err?.message || err);
+          }
+        }
+
+        // --- Ügyfél email ---
+        if (customer) {
+          jobs.push({
+            to: customer,
+            subject: 'EnZenem – Megrendelés visszaigazolás (sikeres fizetés)',
+            html: customerHtml,
+            attachments: attachments.length ? attachments : undefined
+          });
+        }
+
+        // --- Admin email ---
+        jobs.push({
+          to: adminEmail,
+          subject: 'EnZenem – Új SIKERES fizetés + számla',
+          html: adminHtml,
+          attachments: attachments.length ? attachments : undefined,
         });
-        console.log('[INVOICE] Generated invoice', { invoiceNo, totalInt, mode: INVOICE_MODE });
+
+        queueEmails(jobs);
+        console.log('[MAIL:QUEUED] Customer + Admin email sent after success');
+
+      } catch (e) {
+        console.warn('[VPOS CALLBACK] Email sending error after success:', e?.message || e);
       }
-    } catch (err) {
-      console.warn('[INVOICE] Generation failed:', err?.message || err);
-    }
-  }
 
-  // --- Ügyfél email ---
-  if (customer) {
-    jobs.push({
-      to: customer,
-      subject: 'EnZenem – Megrendelés visszaigazolás (sikeres fizetés)',
-      html: customerHtml,
-      attachments: attachments.length ? attachments : undefined
-    });
-  }
-
-  // --- ADMIN email (ugyanaz a számla mellékelve) ---
-  jobs.push({
-    to: adminEmail,
-    subject: 'EnZenem – Új SIKERES fizetés + számla',
-    html: adminHtml,
-    attachments: attachments.length ? attachments : undefined,
-  });
-
-  queueEmails(jobs);
-  console.log('[MAIL:QUEUED] Customer + Admin email sent after success');
-
-} catch (e) {
-  console.warn('[VPOS CALLBACK] Email sending error after success:', e?.message || e);
-}
-
-    // 🔸 Visszajelzés a felhasználónak
-    return res.send(`
+      // ====== VISSZAJELZŐ HTML (VÁLTOZATLAN) ======
+      return res.send(`
       <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
         <h2>✅ Fizetés sikeres!</h2>
         <p>A választott kézbesítési időn belül megkapod a dalodat.</p>
         <a href="/" style="color:#21a353;text-decoration:none">Vissza a főoldalra</a>
       </body></html>
     `);
-  } else {
-    console.log('[VPOS CALLBACK] Fizetés sikertelen.');
+    }
+
+    // ========== SIKERTELEN FIZETÉS ==========
     return res.send(`
       <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
         <h2>❌ Fizetés sikertelen!</h2>
@@ -673,6 +724,10 @@ try {
         <a href="/" style="color:#b33;text-decoration:none">Vissza a főoldalra</a>
       </body></html>
     `);
+
+  } catch (err) {
+    console.error("[VIVA CALLBACK ERROR]", err);
+    return res.status(500).json({ ok: false });
   }
 });
 
