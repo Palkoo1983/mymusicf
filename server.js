@@ -272,6 +272,7 @@ async function generateInvoicePDF({ mode, total, order }) {
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true }));
 
 /* ----------------- Simple rate-limit -------------------- */
 const hitMap = new Map();
