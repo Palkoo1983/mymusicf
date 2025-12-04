@@ -557,10 +557,7 @@ app.post('/api/payment/create', async (req, res) => {
 //  (A Viva GET kéréssel ellenőrzi az URL-t, ezért szükséges)
 // ===========================================================
 app.get('/api/payment/callback', (req, res) => {
-  return res.status(200).json({
-    ok: true,
-    message: "Viva webhook endpoint ready (GET validation passed)"
-  });
+  res.status(200).send("OK");
 });
 
 /* ============================================
