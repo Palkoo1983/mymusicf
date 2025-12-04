@@ -474,15 +474,15 @@ async function vivaGetToken() {
   const id = process.env.VIVA_CLIENT_ID;
   const secret = process.env.VIVA_CLIENT_SECRET;
 
-  const res = await fetch(process.env.VIVA_BASE_URL + '/connect/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'client_credentials',
-      client_id: id,
-      client_secret: secret
-    })
-  });
+ const res = await fetch(process.env.VIVA_TOKEN_URL, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: id,
+    client_secret: secret
+  })
+});
 
   if (!res.ok) throw new Error('Viva token hiba');
   return res.json();
@@ -510,22 +510,20 @@ app.post('/api/payment/create', async (req, res) => {
     const accessToken = tokenData.access_token;
 
     // ------ 2) PAYMENT ORDER LETREHOZÁSA ------
-    const orderRes = await fetch(process.env.VIVA_BASE_URL + '/checkout/v2/orders', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        amount: total * 100, // Viva centet vár
-        customerTrns: "EnZenem.hu rendelés",
-        customer: {
-          email: data.email
-        },
-        sourceCode: process.env.VIVA_SOURCE_CODE || "Default",
-        tags: ["enzenem"]
-      })
-    });
+    const orderRes = await fetch(process.env.VIVA_API_URL + '/checkout/v2/orders', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    amount: total * 100,
+    customerTrns: "EnZenem.hu rendelés",
+    customer: { email: data.email },
+    sourceCode: process.env.VIVA_SOURCE_CODE,
+    tags: ["enzenem"]
+  })
+});
 
     const orderJson = await orderRes.json();
     console.log("[VIVA ORDER RESPONSE]", orderJson);
