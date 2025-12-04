@@ -552,6 +552,17 @@ app.post('/api/payment/create', async (req, res) => {
     res.status(500).json({ ok: false, message: "Nem sikerült a fizetés indítása." });
   }
 });
+// ===========================================================
+//  VIVA WEBHOOK VALIDATION – GET támogatás a Viva számára
+//  (A Viva GET kéréssel ellenőrzi az URL-t, ezért szükséges)
+// ===========================================================
+app.get('/api/payment/callback', (req, res) => {
+  return res.status(200).json({
+    ok: true,
+    message: "Viva webhook endpoint ready (GET validation passed)"
+  });
+});
+
 /* ============================================
    VIVA WALLET – SMART CHECKOUT CALLBACK
    (A TE teljes sikeres fizetési logikáddal beépítve)
