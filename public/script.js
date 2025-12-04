@@ -364,72 +364,90 @@ examples.forEach((t, i) => {
   });
 }
 
-/* ---------- Order form submit (ALWAYS show license modal) ---------- */
 function initOrderForm() {
   const orderForm   = qs('#orderForm');
   const orderStatus = qs('#orderStatus');
   if (!orderForm) return;
 
-  // ne legyen natív navigáció – fetch küldi
   orderForm.setAttribute('action', 'javascript:void(0)');
 
-  async function actuallySend(data) {
-    if (orderStatus) orderStatus.textContent = 'Küldés...';
+  // === 1) VIVA SMART CHECKOUT – fizetés indítása ===
+  async function startPayment(orderData) {
     try {
-      const json = await postJSON('/api/order', data);
-      if (orderStatus) { orderStatus.textContent = ''; orderStatus.style.display = 'none'; }
-      orderForm.reset();
-      // ✅ NOVABOT: SIKER
-      try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderSuccess && window.novaOrderSuccess(); } } catch(_){}
-      setTimeout(() => {
-        const desc = qs('#order textarea[name="brief"]');
-        if (desc) desc.dispatchEvent(new Event('input', { bubbles: true }));
-      }, 10);
+      if (orderStatus) orderStatus.textContent = 'Fizetés indítása...';
+
+      const res = await fetch('/api/payment/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
+
+      const json = await res.json();
+      console.log("PAYMENT RESPONSE:", json);
+
+      if (!json.ok || !json.payUrl) {
+        if (orderStatus) orderStatus.textContent = 'Hiba: nem sikerült elindítani a fizetést.';
+        window.novaOrderFail && window.novaOrderFail();
+        alert("Nem sikerült elindítani a fizetést.");
+        return;
+      }
+
+      // 🚀 Átirányítás a Viva fizetési oldalra
+      window.location.href = json.payUrl;
+
     } catch (err) {
-      if (orderStatus) orderStatus.textContent = 'Nem sikerült elküldeni. Próbáld újra később.';
-      console.error(err);
-      // ✅ NOVABOT: HIBA
-      try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderFail && window.novaOrderFail(); } } catch(_){}
+      console.error("PAYMENT ERROR:", err);
+      if (orderStatus) orderStatus.textContent = 'Hiba történt a fizetés indításakor.';
+      window.novaOrderFail && window.novaOrderFail();
+      alert("Hiba történt a fizetés indításakor.");
     }
   }
 
+  // === 2) MODAL kezelése ===
   function showModal(){ if (modal){ modal.style.display='block'; modal.setAttribute('aria-hidden','false'); } }
   function hideModal(){ if (modal){ modal.style.display='none';  modal.setAttribute('aria-hidden','true'); } }
 
+  // === 3) Form submit ===
   orderForm.addEventListener('submit', (e) => {
-    e.preventDefault(); e.stopPropagation();
-    const data = Object.fromEntries(new FormData(orderForm).entries());
-const delivLabel = document.querySelector('input[name="delivery_label"]');
-if (delivLabel) data.delivery_label = delivLabel.value;
+    e.preventDefault(); 
+    e.stopPropagation();
 
-    // MINDIG kérdezzünk rá (nincs cookie / localStorage)
+    const data = Object.fromEntries(new FormData(orderForm).entries());
+
+    // Kézbesítési címke belerakása
+    const delivLabel = document.querySelector('input[name="delivery_label"]');
+    if (delivLabel) data.delivery_label = delivLabel.value || '';
+
+    // Mindig modal
     showModal();
 
     const onAccept = () => {
-  hideModal();
+      hideModal();
 
-  // 🟡 Frissítsük a kézbesítési címkét a legutóbbi gombnyomás után
-  const delivLabel = document.querySelector('input[name="delivery_label"]');
-  if (delivLabel) data.delivery_label = delivLabel.value || '';
+      // Friss címke még egyszer
+      const dl = document.querySelector('input[name="delivery_label"]');
+      if (dl) data.delivery_label = dl.value || '';
 
-  acceptBtn?.removeEventListener('click', onAccept);
-  cancelBtn?.removeEventListener('click', onCancel);
-  actuallySend(data);
-};
+      acceptBtn?.removeEventListener('click', onAccept);
+      cancelBtn?.removeEventListener('click', onCancel);
+
+      // 🔥 Itt indul a fizetés!
+      startPayment(data);
+    };
 
     const onCancel = () => {
       hideModal();
       if (orderStatus) orderStatus.textContent = 'A megrendelést megszakítottad.';
       acceptBtn?.removeEventListener('click', onAccept);
       cancelBtn?.removeEventListener('click', onCancel);
-      // ✅ NOVABOT: FELTÉTEL ELUTASÍTVA → HIBA üzenet
-      try { if (!(window.NB_NOTIFY_SOURCE === 'generate')) { window.novaOrderFail && window.novaOrderFail(); } } catch(_){}
+      window.novaOrderFail && window.novaOrderFail();
     };
 
-    acceptBtn?.addEventListener('click', onAccept, { once:true });
-    cancelBtn?.addEventListener('click', onCancel, { once:true });
+    acceptBtn?.addEventListener('click', onAccept, { once: true });
+    cancelBtn?.addEventListener('click', onCancel, { once: true });
   });
 }
+
 // === Kézbesítési opciók kiválasztása + árfrissítés a Megrendelés gombon (javított delegált verzió) ===
 document.addEventListener('DOMContentLoaded', () => {
   const container   = document.querySelector('.delivery-buttons');
