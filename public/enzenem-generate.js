@@ -90,18 +90,17 @@ form.addEventListener('submit', async (e) => {
   showFeedback('Kapcsolódás a fizetési rendszerhez...', true);
 
   try {
-    // 🟡 1️⃣ Admin e-mail azonnal (megrendelés leadásakor)
-    await postJSON('/api/order', data);
-    console.log('[ORDER] Admin értesítés elküldve');
-
+    
     // 🟢 2️⃣ Fizetési folyamat indítása
-    const res = await postJSON('/api/payment/create', data);
-    if (res.ok && res.successUrl) {
-      showFeedback('Átirányítás a fizetési oldalra...', true);
-      window.location.href = res.successUrl;
-    } else {
-      showFeedback('Nem sikerült elindítani a fizetést.', false);
-    }
+  const res = await postJSON('/api/payment/create', data);
+
+if (res.payUrl) {
+  showFeedback('Átirányítás a fizetési oldalra...', true);
+  window.location.href = res.payUrl;
+} else {
+  showFeedback('Nem sikerült elindítani a fizetést.', false);
+}
+
 
   } catch (err) {
     console.error('VPOS create failed:', err);
