@@ -908,14 +908,6 @@ const sys2 = [
   '- 8–14 words per line.',
   '- Clear, concrete images.',
 
-  'RAP:',
-  '- Confident, rhythmic Hungarian rap tone.',
-  '- 10–16 words per line.',
-  '- Concrete imagery (konyhaasztal, jegyzetek, kávé, város este).',
-  '- Light internal rhymes and clean rhythm.',
-  '- NEVER switch into ballad or funeral tone.',
-  '- Always keep 4 separate lines per section.',
-
   'ELECTRONIC / TECHNO / MINIMAL:',
   '- Focus on atmosphere and movement, not long storytelling.',
   '- Each line = 1 sensory snapshot (light, motion, night air).',
@@ -947,7 +939,21 @@ const sys2 = [
 
   'POSITIVE EVENTS (birthday, diploma, wedding, achievement):',
   '- Tone must stay positive, warm and uplifting.',
-  '- NEVER use funeral tone for positive events.'
+  '- NEVER use funeral tone for positive events.',
+  
+  'RAP:',
+  '- Confident, rhythmic Hungarian rap tone.',
+  '- 10–16 words per line, always maintaining a clear 4/4 flow.',
+  '- Use concrete, everyday imagery (streets, notes, nights, routine, ambition).',
+  '- Use light internal rhymes without sacrificing clarity.',
+  '- Each line must be one full, grammatically correct Hungarian sentence.',
+  '- Avoid lyrical-ballad tone completely; keep the voice direct and grounded.',
+  '- Do not use soft romantic metaphors or cinematic descriptions.',
+  '- Keep metaphors minimal, simple, and concrete only.',
+  '- Maintain a steady rhythmic structure in all four lines of each section.',
+  '- Never split one sentence across multiple lines, and never join multiple sentences.',
+  '- Do not drift into pop, wedding, ballad, or funeral tone.',
+  '- Always keep 4 separate lines per section.'
 ].join('\\n');
 
 const sys3 = [
