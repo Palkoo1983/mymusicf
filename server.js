@@ -739,12 +739,11 @@ res.send(`
   <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
     <h2>✅ Fizetés sikeres!</h2>
     <p>A dal generálása elindult, hamarosan érkezik az email.</p>
-    <a href="/megrendeles.html?paid=success" style="color:#21a353;text-decoration:none">
+    <a href="/" style="color:#21a353;text-decoration:none">
       Vissza a főoldalra
     </a>
   </body></html>
 `);
-
 });
 
 /* ==========================================================
@@ -753,16 +752,15 @@ res.send(`
 app.get("/api/payment/fail", (req, res) => {
   console.log("[VIVA FAIL REDIRECT]", req.query);
 
- res.send(`
+res.send(`
   <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
     <h2>❌ A fizetés sikertelen!</h2>
     <p>Kérjük, próbáld meg újra.</p>
-    <a href="/megrendeles.html?paid=fail" style="color:#b33;text-decoration:none">
+    <a href="/" style="color:#b33;text-decoration:none">
       Vissza a főoldalra
     </a>
   </body></html>
 `);
-
 });
 
 /* ================== SUNO HELPERS ========================= */
