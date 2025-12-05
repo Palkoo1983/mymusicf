@@ -475,63 +475,91 @@ async function vivaGetToken() {
   const secret = process.env.VIVA_CLIENT_SECRET;
 
   const res = await fetch(process.env.VIVA_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      grant_type: 'client_credentials',
+      grant_type: "client_credentials",
       client_id: id,
-      client_secret: secret
-    })
+      client_secret: secret,
+    }),
   });
 
-  if (!res.ok) throw new Error('Viva token hiba');
+  if (!res.ok) throw new Error("Viva token hiba");
   return res.json();
 }
+
+/** A rendelés összegének kiszámítása a lastOrderData alapján */
+function computeOrderTotal(order = {}) {
+  const pkg = (order.package || order.format || "basic").toString().toLowerCase();
+
+  const base =
+    pkg === "video"
+      ? 21000
+      : pkg === "premium"
+      ? 35000
+      : 10500;
+
+  const extraRaw = parseInt(order.delivery_extra || "0", 10);
+  const extra = Number.isNaN(extraRaw) ? 0 : extraRaw;
+
+  return base + extra; // Ft-ban
+}
+
 /* ==========================================================
    VIVA SMART CHECKOUT – FIZETÉS INDÍTÁSA (CREATE)
 ========================================================== */
-app.post('/api/payment/create', async (req, res) => {
+app.post("/api/payment/create", async (req, res) => {
   try {
     global.lastOrderData = req.body;
     const data = req.body || {};
 
-    // ------ Ár kiszámítása (változatlanul a te szabályod) ------
-    const total =
-      (data.package === 'video' ? 21000 :
-      data.package === 'premium' ? 35000 :
-      10500) + parseInt(data.delivery_extra || '0', 10);
+    // ------ Ár kiszámítása (a saját szabályod szerint) ------
+    const total = computeOrderTotal(data);
 
-    console.log(`[VIVA CREATE] Fizetés indítva: ${total} Ft | Csomag: ${data.package}`);
+    console.log(
+      `[VIVA CREATE] Fizetés indítva: ${total} Ft | Csomag: ${data.package}`
+    );
 
     // ------ 1) Viva access token ------
     const tokenData = await vivaGetToken();
     const accessToken = tokenData.access_token;
 
     // ------ 2) Fizetési order létrehozása ------
-    const orderRes = await fetch(process.env.VIVA_API_URL + '/checkout/v2/orders', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        amount: total * 100,
-        customerTrns: "EnZenem.hu rendelés",
-        customer: { email: data.email },
-        sourceCode: process.env.VIVA_SOURCE_CODE,
-        tags: ["enzenem"],
-        // 🔵 Redirect URL-ek (ahová a Viva visszaküldi a felhasználót)
-        successUrl: (process.env.PUBLIC_URL || "https://www.enzenem.hu") + "/api/payment/success",
-        failureUrl: (process.env.PUBLIC_URL || "https://www.enzenem.hu") + "/api/payment/fail"
-      })
-    });
+    const orderRes = await fetch(
+      process.env.VIVA_API_URL + "/checkout/v2/orders",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: total * 100, // fillérben
+          customerTrns: "EnZenem.hu rendelés",
+          customer: { email: data.email },
+          sourceCode: process.env.VIVA_SOURCE_CODE,
+          tags: ["enzenem"],
+          // A redirect URL-eket a payment source-ban is beállítottad,
+          // itt opcionálisak – de ugyanazokra mutatnak:
+          successUrl:
+            (process.env.PUBLIC_URL || "https://www.enzenem.hu") +
+            "/api/payment/success",
+          failureUrl:
+            (process.env.PUBLIC_URL || "https://www.enzenem.hu") +
+            "/api/payment/fail",
+        }),
+      }
+    );
 
     const orderJson = await orderRes.json();
     console.log("[VIVA ORDER RESPONSE]", orderJson);
 
     if (!orderJson?.orderCode) {
       console.error("VIVA ORDER ERROR:", orderJson);
-      return res.json({ ok: false, message: "Nem jött létre a Viva rendelés." });
+      return res.json({
+        ok: false,
+        message: "Nem jött létre a Viva rendelés.",
+      });
     }
 
     const payUrl = `https://www.vivapayments.com/web/checkout?ref=${orderJson.orderCode}`;
@@ -541,19 +569,20 @@ app.post('/api/payment/create', async (req, res) => {
     res.json({
       ok: true,
       payUrl,
-      total
+      total,
     });
-
   } catch (err) {
     console.error("[VIVA CREATE ERROR]", err);
-    res.status(500).json({ ok: false, message: "Nem sikerült a fizetés indítása." });
+    res
+      .status(500)
+      .json({ ok: false, message: "Nem sikerült a fizetés indítása." });
   }
 });
 
 /* ==========================================================
    SIKERES FIZETÉS – REDIRECT HANDLER (NEM WEBHOOK!)
 ========================================================== */
-app.get('/api/payment/success', async (req, res) => {
+app.get("/api/payment/success", async (req, res) => {
   const orderCode = req.query.orderCode;
   const transactionId = req.query.transactionId;
 
@@ -564,77 +593,136 @@ app.get('/api/payment/success', async (req, res) => {
   // ====== DAL GENERÁLÁS ======
   try {
     if (global.lastOrderData) {
-      const apiUrl = (process.env.PUBLIC_URL || "https://www.enzenem.hu") + "/api/generate_song";
+      const apiUrl =
+        (process.env.PUBLIC_URL || "https://www.enzenem.hu") +
+        "/api/generate_song";
 
       await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(global.lastOrderData)
+        body: JSON.stringify(global.lastOrderData),
       });
 
       console.log("[SUCCESS] Dal generálás elindult.");
     } else {
-      console.warn("[SUCCESS] Nincs lastOrderData → nem indítom a generálást.");
+      console.warn(
+        "[SUCCESS] Nincs lastOrderData → nem indítom a generálást."
+      );
     }
   } catch (err) {
     console.error("[SUCCESS] Generálási hiba:", err);
   }
 
-  // ====== EMAIL + SZÁMLA KIKÜLDÉSE (A TE EREDETI LOGIKÁDDAL!) ======
+  // ====== EMAIL + SZÁMLA (AZ EREDETI LOGIKÁDDAL) ======
   try {
     const customer = o.email || "";
     const adminEmail = ENV.TO_EMAIL || ENV.SMTP_USER;
     const deliveryLabel = o.delivery_label || o.delivery || "48 óra";
-    const pkg = (o.package || o.format || "basic").toLowerCase();
-    const format = pkg === "video" ? "MP4" : (pkg === "premium" ? "WAV" : "MP3");
+    const pkg = (o.package || o.format || "basic").toString().toLowerCase();
+    const format =
+      pkg === "video" ? "MP4" : pkg === "premium" ? "WAV" : "MP3";
 
-    const amount = o.delivery_extra ? 
-      (parseInt(o.delivery_extra)+10500) : 10500;
+    const amount = computeOrderTotal(o); // Ft-ban, ezt adjuk a számlához
 
-    // ------ ügyfél email ------
+    // --- Ügyfél HTML (változatlan szöveg) ---
     const customerHtml = `
-      <p>Kedves Megrendelő!</p>
-      <p>Köszönjük a sikeres fizetést és a bizalmat! A megrendelésedet sikeresen rögzítettük.</p>
-      <p><b>Formátum:</b> ${format}<br/>
-      <b>Kézbesítési idő:</b> ${deliveryLabel}</p>
-      <p>A dal / videó elkészítése elindult.</p>
-      <p>Üdv,<br/>EnZenem.hu</p>
-    `;
+  <p>Kedves Megrendelő!</p>
 
+  <p>Köszönjük a sikeres fizetést és a bizalmat! A megrendelésedet a rendszer sikeresen rögzítette.</p>
+
+  <p><b>A megrendelés adatai:</b></p>
+  <ul>
+    <li><b>Formátum:</b> ${format}</li>
+    <li><b>Kézbesítési idő:</b> ${deliveryLabel}</li>
+  </ul>
+
+  <p>
+    A választott kézbesítési időn belül (<b>${deliveryLabel}</b>) elkészítjük és elküldjük az egyedi zenédet / videódat.
+    A kész anyagot az általad megadott e-mail címre fogod megkapni vagy a választott formátumban vagy letöltési link formájában.
+  </p>
+
+  <p>Üdvözlettel,<br>
+  <b>EnZenem.hu csapat</b></p>
+
+  <hr style="margin-top:32px;">
+  <p style="font-size:12px; color:#777;">
+    Ez egy automatikusan küldött rendszerüzenet, kérjük, erre az e-mailre ne válaszolj.<br>
+    Ha kérdésed van, keress minket bizalommal az <b>info@enzenem.hu</b> címen.
+    <br><br>
+    <b>Környezetvédelmi figyelmeztetés:</b>
+    kérjük, ne nyomtasd ki ezt az e-mailt, hacsak nem feltétlenül szükséges.
+  </p>
+`;
+
+    // --- Admin HTML (változatlan szöveg + most már jó összeg) ---
     const adminHtml = `
-      <h2>Új SIKERES fizetés</h2>
-      <ul>
-        <li><b>Email:</b> ${customer}</li>
-        <li><b>Csomag:</b> ${pkg}</li>
-        <li><b>Stílus:</b> ${o.styles}</li>
-        <li><b>Ének:</b> ${o.vocal}</li>
-        <li><b>Nyelv:</b> ${o.language}</li>
-        <li><b>Kézbesítés:</b> ${deliveryLabel}</li>
-      </ul>
-      <p><b>Brief:</b><br/>${(o.brief || "").replace(/\n/g, "<br/>")}</p>
-    `;
+    <h2>Új SIKERES fizetés</h2>
+    <ul>
+      <li><b>E-mail:</b> ${o.email || ""}</li>
+      <li><b>Csomag:</b> ${o.package || o.format}</li>
+      <li><b>Stílus:</b> ${o.styles || o.style}</li>
+      <li><b>Ének:</b> ${o.vocal || ""}</li>
+      <li><b>Nyelv:</b> ${o.language || ""}</li>
+      <li><b>Kézbesítési idő:</b> ${deliveryLabel}</li>
+      <li><b>Összeg:</b> ${amount} Ft</li>
+    </ul>
+    <p><b>Brief:</b><br/>${(o.brief || "").replace(/\n/g, "<br/>")}</p>
+  `;
 
     const jobs = [];
+    let attachments = [];
 
+    // --- Számla generálás (változatlan logikával) ---
+    if (INVOICE_MODE === "test" || INVOICE_MODE === "live") {
+      try {
+        const totalInt = parseInt(amount, 10) || 0;
+        const { buffer, invoiceNo } = await generateInvoicePDF({
+          mode: INVOICE_MODE,
+          total: totalInt,
+          order: o,
+        });
+
+        if (buffer && buffer.length) {
+          attachments.push({
+            filename: `${invoiceNo}.pdf`,
+            content: buffer,
+          });
+          console.log("[INVOICE] Generated invoice", {
+            invoiceNo,
+            totalInt,
+            mode: INVOICE_MODE,
+          });
+        }
+      } catch (err) {
+        console.warn("[INVOICE] Generation failed:", err?.message || err);
+      }
+    }
+
+    // --- Ügyfél email ---
     if (customer) {
       jobs.push({
         to: customer,
-        subject: "EnZenem – Sikeres fizetés visszaigazolása",
-        html: customerHtml
+        subject: "EnZenem – Megrendelés visszaigazolás (sikeres fizetés)",
+        html: customerHtml,
+        attachments: attachments.length ? attachments : undefined,
       });
     }
 
+    // --- Admin email ---
     jobs.push({
       to: adminEmail,
-      subject: "EnZenem – Új SIKERES fizetés",
-      html: adminHtml
+      subject: "EnZenem – Új SIKERES fizetés + számla",
+      html: adminHtml,
+      attachments: attachments.length ? attachments : undefined,
     });
 
     queueEmails(jobs);
-    console.log("[MAIL SENT] Success emails queued.");
-
-  } catch (err) {
-    console.warn("[SUCCESS EMAIL] Error:", err);
+    console.log("[MAIL:QUEUED] Customer + Admin email sent after success");
+  } catch (e) {
+    console.warn(
+      "[SUCCESS EMAIL] Email sending error after success:",
+      e?.message || e
+    );
   }
 
   // ====== HTML VISSZAJELZÉS ======
@@ -650,17 +738,18 @@ app.get('/api/payment/success', async (req, res) => {
 /* ==========================================================
    SIKERTELEN FIZETÉS – REDIRECT HANDLER
 ========================================================== */
-app.get('/api/payment/fail', (req, res) => {
+app.get("/api/payment/fail", (req, res) => {
   console.log("[VIVA FAIL REDIRECT]", req.query);
 
   res.send(`
     <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
       <h2>❌ A fizetés sikertelen!</h2>
       <p>Kérjük, próbáld meg újra.</p>
-      <a href="/" style="color:#b33">Vissza a főoldalra</a>
+      <a href="/" style="color:#b33;text-decoration:none">Vissza a főoldalra</a>
     </body></html>
   `);
 });
+
 
 
 /* ================== SUNO HELPERS ========================= */
