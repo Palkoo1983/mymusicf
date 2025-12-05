@@ -10,6 +10,8 @@ import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
 import fs from 'fs';
 import PDFDocument from 'pdfkit';
 
+// === DUPLA DALGENERÁLÁS ELLENI VÉDELEM ===
+global.paymentAlreadyProcessed = false;
 
 function getCounterFile(isTest) {
   const dir = './data';
@@ -519,6 +521,7 @@ app.post("/api/payment/create", async (req, res) => {
     console.log(
       `[VIVA CREATE] Fizetés indítva: ${total} Ft | Csomag: ${data.package}`
     );
+    global.paymentAlreadyProcessed = false;
 
     // ------ 1) Viva access token ------
     const tokenData = await vivaGetToken();
@@ -587,6 +590,12 @@ app.get("/api/payment/success", async (req, res) => {
   const transactionId = req.query.transactionId;
 
   console.log("[VIVA SUCCESS REDIRECT]", { orderCode, transactionId });
+// === DUPLA FUTÁS ELLENI VÉDELEM ===
+if (global.paymentAlreadyProcessed) {
+  console.log("[SUCCESS] Már feldolgozott fizetés → redirect NovaBot siker oldalra");
+  return res.redirect("/megrendeles.html?paid=success");
+}
+global.paymentAlreadyProcessed = true;
 
   const o = global.lastOrderData || {};
 
@@ -726,13 +735,16 @@ app.get("/api/payment/success", async (req, res) => {
   }
 
   // ====== HTML VISSZAJELZÉS ======
-  res.send(`
-    <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
-      <h2>✅ Fizetés sikeres!</h2>
-      <p>A dal generálása elindult, hamarosan érkezik az email.</p>
-      <a href="/" style="color:#21a353;text-decoration:none">Vissza a főoldalra</a>
-    </body></html>
-  `);
+res.send(`
+  <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
+    <h2>✅ Fizetés sikeres!</h2>
+    <p>A dal generálása elindult, hamarosan érkezik az email.</p>
+    <a href="/megrendeles.html?paid=success" style="color:#21a353;text-decoration:none">
+      Vissza a főoldalra
+    </a>
+  </body></html>
+`);
+
 });
 
 /* ==========================================================
@@ -741,16 +753,17 @@ app.get("/api/payment/success", async (req, res) => {
 app.get("/api/payment/fail", (req, res) => {
   console.log("[VIVA FAIL REDIRECT]", req.query);
 
-  res.send(`
-    <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
-      <h2>❌ A fizetés sikertelen!</h2>
-      <p>Kérjük, próbáld meg újra.</p>
-      <a href="/" style="color:#b33;text-decoration:none">Vissza a főoldalra</a>
-    </body></html>
-  `);
+ res.send(`
+  <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
+    <h2>❌ A fizetés sikertelen!</h2>
+    <p>Kérjük, próbáld meg újra.</p>
+    <a href="/megrendeles.html?paid=fail" style="color:#b33;text-decoration:none">
+      Vissza a főoldalra
+    </a>
+  </body></html>
+`);
+
 });
-
-
 
 /* ================== SUNO HELPERS ========================= */
 async function sunoStartV1(url, headers, body){
