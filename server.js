@@ -534,7 +534,7 @@ app.post('/api/payment/create', async (req, res) => {
     }
 
     // ------ 3) Smart Checkout fizetési link ------
-    const payUrl = `https://www.vivapayments.com/web2/checkout?ref=${orderJson.orderCode}`;
+    const payUrl = `https://www.vivapayments.com/web/checkout?ref=${orderJson.orderCode}`;
 
     console.log("[VIVA PAY URL]", payUrl);
 
