@@ -806,11 +806,18 @@ app.post('/api/generate_song', async (req, res) => {
     const isMP3 = (format === 'mp3');
 
     // Vocal normalizálás (csak Suno style taghez)
-    const v = (vocal || '').toString().trim().toLowerCase();
-    if (/^női|female/.test(v)) vocal = 'female';
-    else if (/^férfi|male/.test(v)) vocal = 'male';
-    else if (/instrument/.test(v)) vocal = 'instrumental';
-    else vocal = (v || 'instrumental');
+    // Vocal normalizálás (Suno számára)
+const v = (vocal || '').toString().trim().toLowerCase();
+
+if (/^női|female/.test(v)) vocal = 'female';
+else if (/^férfi|male/.test(v)) vocal = 'male';
+else if (/duet|duett/.test(v)) vocal = 'duet';
+else if (/child|gyerek|gyermek/.test(v)) vocal = 'child';
+else if (/robot|synthetic|gépi/.test(v)) vocal = 'robot';
+else if (/instrument/.test(v)) vocal = 'instrumental';
+else if (/choir|kórus/.test(v)) vocal = 'choir';
+else if (/gospel/.test(v)) vocal = 'gospel choir';
+else vocal = (v || 'instrumental');
 
     // ENV
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -1217,13 +1224,16 @@ for (const g of cli) {
   // 3️⃣ Ének típusok
   let vt = '';
   switch (String(vocalNorm || '').toLowerCase()) {
-    case 'male': vt = 'male vocals'; break;
-    case 'female': vt = 'female vocals'; break;
-    case 'duet': vt = 'male and female vocals'; break;
-    case 'child': vt = 'child vocal'; break;
-    case 'robot': vt = 'synthetic/robotic female vocal (vocoder, AI-like, crystal)'; break;
-    default: vt = '';
-  }
+  case 'male': vt = 'male vocals'; break;
+  case 'female': vt = 'female vocals'; break;
+  case 'duet': vt = 'male and female vocals'; break;
+  case 'child': vt = 'child vocal'; break;
+  case 'robot': vt = 'synthetic/robotic female vocal (vocoder, AI-like, crystal)'; break;
+  case 'choir': vt = 'choir vocals (multiple voices, layered harmonies)'; break;
+  case 'gospel choir': vt = 'gospel choir vocals (soulful, uplifting, rich harmonies)'; break;
+  default: vt = '';
+}
+
   if (vt && !seen.has(vt)) out.push(vt);
 
   // 4️⃣ Fallback – ha semmit sem ismert fel, legalább pop legyen
