@@ -943,6 +943,10 @@ const sys2 = [
   '- 6–10 words per line.',
   '- No dark or complex metaphors.',
   '- Use happy, safe, child-friendly images.',
+  '- Onomatopoetic words (taps-taps, la-la, bumm-bumm) ONLY in the Chorus.',
+  '- NEVER invent or distort Hungarian words (pl. ragadogat, csillogogat).',
+  '- If many children are listed, distribute them across the verses naturally; never list all in one verse.',
+
 
   'FUNERAL / LÍRAI:',
   '- ONLY use if brief clearly mentions death or funeral.',
