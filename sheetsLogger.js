@@ -239,6 +239,123 @@ async function ensureHeaderFreezeCF(title) {
     }
   }
 }
+// ========== Invoice counter (persistent, Google Sheets-based) ==========
+
+const INVOICE_META_SHEET = "InvoiceMeta";
+
+/**
+ * Gondoskodik róla, hogy legyen egy InvoiceMeta lap:
+ * A1: mode | B1: year | C1: seq
+ * A2: live | B2: <aktuális év> | C2: 0
+ * A3: test | B3: <aktuális év> | C3: 0
+ */
+async function ensureInvoiceMetaSheet() {
+  const gs = sheets();
+
+  // Teljes dokumentum meta lekérése
+  const meta = await gs.spreadsheets.get({ spreadsheetId: SHEET_ID });
+  const hasSheet = (meta.data.sheets || []).some(
+    (s) => s.properties && s.properties.title === INVOICE_META_SHEET
+  );
+
+  if (!hasSheet) {
+    // Új lap létrehozása
+    await gs.spreadsheets.batchUpdate({
+      spreadsheetId: SHEET_ID,
+      requestBody: {
+        requests: [
+          {
+            addSheet: {
+              properties: {
+                title: INVOICE_META_SHEET,
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    const year = new Date().getFullYear();
+    const values = [
+      ["mode", "year", "seq"],
+      ["live", year, 0],
+      ["test", year, 0],
+    ];
+
+    await gs.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: `${INVOICE_META_SHEET}!A1:C3`,
+      valueInputOption: "RAW",
+      requestBody: { values },
+    });
+  }
+}
+
+/**
+ * Számlaszámláló Sheets-ben:
+ * - külön sor live / test módra
+ * - évváltáskor sorozat újraindul
+ * Visszatérés: { year, seq } – ahol seq már az új (növelt) érték.
+ */
+export async function getAndIncrementInvoiceSeq(isTest = false) {
+  const gs = sheets();
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const mode = isTest ? "test" : "live";
+
+  await ensureInvoiceMetaSheet();
+
+  // Létező sorok beolvasása (A2:C3)
+  const read = await gs.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: `${INVOICE_META_SHEET}!A2:C3`,
+  });
+
+  let rows = read.data.values || [];
+  let rowIndex = -1;
+  let storedYear = currentYear;
+  let storedSeq = 0;
+
+  for (let i = 0; i < rows.length; i++) {
+    const rowMode = (rows[i][0] || "").toString().toLowerCase();
+    if (rowMode === mode) {
+      rowIndex = i;
+      const y = parseInt(rows[i][1] ?? `${currentYear}`, 10);
+      const s = parseInt(rows[i][2] ?? "0", 10);
+      storedYear = Number.isFinite(y) ? y : currentYear;
+      storedSeq = Number.isFinite(s) ? s : 0;
+      break;
+    }
+  }
+
+  if (rowIndex === -1) {
+    // Ha hiányzik a mód sora, hozzuk létre
+    rowIndex = rows.length;
+    storedYear = currentYear;
+    storedSeq = 0;
+    rows.push([mode, currentYear, 0]);
+  }
+
+  // Évváltás esetén reset
+  if (storedYear !== currentYear) {
+    storedYear = currentYear;
+    storedSeq = 0;
+  }
+
+  const nextSeq = storedSeq + 1;
+  const updateRange = `${INVOICE_META_SHEET}!A${rowIndex + 2}:C${rowIndex + 2}`;
+
+  await gs.spreadsheets.values.update({
+    spreadsheetId: SHEET_ID,
+    range: updateRange,
+    valueInputOption: "RAW",
+    requestBody: {
+      values: [[mode, currentYear, nextSeq]],
+    },
+  });
+
+  return { year: currentYear, seq: nextSeq };
+}
 
 /** Fő: napi fül biztosítása + fejléc + freeze + CF + APPEND A2-től (A–K) */
 export async function safeAppendOrderRow(order = {}) {
