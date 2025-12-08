@@ -6,9 +6,10 @@ import express from 'express';
 import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-import { appendOrderRow, safeAppendOrderRow } from './sheetsLogger.js';
+import { appendOrderRow, safeAppendOrderRow, getAndIncrementInvoiceSeq } from './sheetsLogger.js';
 import fs from 'fs';
 import PDFDocument from 'pdfkit';
+
 
 // === DUPLA DALGENERÁLÁS ELLENI VÉDELEM ===
 global.paymentAlreadyProcessed = false;
@@ -48,29 +49,33 @@ function writeCounter(isTest, data) {
   }
 }
 
-function getNextInvoiceNumber(isTest) {
-  const now = new Date();
-  const year = now.getFullYear();
+async function getNextInvoiceNumber(isTest) {
+  const prefix = isTest ? 'TESZT-ENZ' : 'ENZ';
 
-  let counter = readCounter(isTest);
+  try {
+    // Elsődleges: Google Sheets-alapú perzisztens számlaszámláló
+    const { year, seq } = await getAndIncrementInvoiceSeq(isTest);
+    const seqStr = String(seq).padStart(6, '0');
+    return `${prefix}-${year}-${seqStr}`;
+  } catch (e) {
+    console.warn('[INVOICE COUNTER SHEETS ERROR]', e?.message || e);
 
-  // Évváltás esetén sorozat újra indul
-  if (counter.year !== year) {
-    counter = { year, seq: 0 };
+    // Fallback: régi JSON-alapú logika, hogy a számlázás ne álljon le
+    const now = new Date();
+    const year = now.getFullYear();
+
+    let counter = readCounter(isTest);
+
+    if (counter.year !== year) {
+      counter = { year, seq: 0 };
+    }
+
+    counter.seq += 1;
+    writeCounter(isTest, counter);
+
+    const seqStr = String(counter.seq).padStart(6, '0');
+    return `${prefix}-${year}-${seqStr}`;
   }
-
-  // Következő sorszám
-  counter.seq += 1;
-
-  writeCounter(isTest, counter);
-
-  const prefix = isTest
-    ? 'TESZT-ENZ'
-    : 'ENZ';
-
-  const seqStr = String(counter.seq).padStart(6, '0'); // 000001 → 000002 → …
-
-  return `${prefix}-${year}-${seqStr}`;
 }
 
 
@@ -148,7 +153,7 @@ function saveInvoiceCounter(data) {
  */
 async function generateInvoicePDF({ mode, total, order }) {
   const isTest = mode === 'test';
-  const invoiceNo = getNextInvoiceNumber(isTest);
+  const invoiceNo = await getNextInvoiceNumber(isTest);
 
   const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
