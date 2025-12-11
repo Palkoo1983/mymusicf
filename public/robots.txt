@@ -1,3 +1,16 @@
 User-agent: *
 Allow: /
+
+# Ne indexelje a technikai fájlokat
+Disallow: /assets/
+Disallow: /scripts/
+Disallow: /style/
+Disallow: /server.js
+Disallow: /package.json
+Disallow: /node_modules/
+
+# Engedélyezett HTML oldalak (nem kötelező, de tiszta)
+Allow: /*.html$
+
+# Sitemap helye
 Sitemap: https://www.enzenem.hu/sitemap.xml
