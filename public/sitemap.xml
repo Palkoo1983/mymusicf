@@ -1,11 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://www.enzenem.hu/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://www.enzenem.hu/#order</loc></url>
-  <url><loc>https://www.enzenem.hu/#pricing</loc></url>
-  <url><loc>https://www.enzenem.hu/#refs</loc></url>
-  <url><loc>https://www.enzenem.hu/aszf.html</loc></url>
-  <url><loc>https://www.enzenem.hu/adatkezeles.html</loc></url>
-  <url><loc>https://www.enzenem.hu/success.html</loc></url>
-  <url><loc>https://www.enzenem.hu/cancel.html</loc></url>
+
+  <!-- FŐOLDAL -->
+  <url>
+    <loc>https://www.enzenem.hu/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- ALOLDALAK -->
+  <url>
+    <loc>https://www.enzenem.hu/aszf.html</loc>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://www.enzenem.hu/adatkezeles.html</loc>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- FIZETÉSI OLDALAK (nem szükséges, de nem baj ha benne vannak) -->
+  <url>
+    <loc>https://www.enzenem.hu/success.html</loc>
+    <priority>0.3</priority>
+  </url>
+
+  <url>
+    <loc>https://www.enzenem.hu/cancel.html</loc>
+    <priority>0.3</priority>
+  </url>
+
 </urlset>
