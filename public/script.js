@@ -928,5 +928,53 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   chk.addEventListener('change', syncInvoiceFields);
+   // ================== Reviews carousel + FAQ accordion (Intro) ==================
+  function initReviewsCarousel(){
+    const wraps = document.querySelectorAll('[data-reviews]');
+    wraps.forEach(wrap => {
+      const track = wrap.querySelector('.reviews-track');
+      const btnL = wrap.querySelector('.reviews-nav.left');
+      const btnR = wrap.querySelector('.reviews-nav.right');
+      if(!track || !btnL || !btnR) return;
+
+      const scrollByOne = (dir) => {
+        const first = track.querySelector('.review-card');
+        const cardW = first ? first.getBoundingClientRect().width : 420;
+        const gap = 14;
+        track.scrollBy({ left: dir * (cardW + gap), behavior: 'smooth' });
+      };
+
+      btnL.addEventListener('click', () => scrollByOne(-1));
+      btnR.addEventListener('click', () => scrollByOne(1));
+
+      // keyboard support when focused inside track
+      track.addEventListener('keydown', (e) => {
+        if(e.key === 'ArrowLeft'){ e.preventDefault(); scrollByOne(-1); }
+        if(e.key === 'ArrowRight'){ e.preventDefault(); scrollByOne(1); }
+      }, { passive: false });
+    });
+  }
+
+  function initFaq(){
+    const faq = document.querySelector('[data-faq]');
+    if(!faq) return;
+
+    faq.querySelectorAll('.faq-item').forEach(item => {
+      const btn = item.querySelector('.faq-q');
+      const ans = item.querySelector('.faq-a');
+      const icon = item.querySelector('.faq-icon');
+      if(!btn || !ans) return;
+
+      btn.addEventListener('click', () => {
+        const isOpen = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!isOpen));
+        ans.hidden = isOpen;
+        if(icon) icon.textContent = isOpen ? '+' : '–';
+      });
+    });
+  }
+
+  initReviewsCarousel();
+  initFaq();
   syncInvoiceFields();
 })();
