@@ -859,6 +859,7 @@ rhythm: ${profile.rhythm.wordsPerLine[0]}–${profile.rhythm.wordsPerLine[1]} sz
 theme: ${profile.theme || 'általános'}
 poetic images: ${profile.words.poeticImages || 'balanced'}
 keywords: ${(profile.words.keywords || []).join(', ')}
+adultLock: ${profile.adultLock ? 'TRUE – TILOS gyerekdalos szóhasználat és onomatopoézia (napocska, dalocska, taps-taps, la-la, bumm-bumm, játsszunk, ovis). Felnőtt, büszke, megható hangon írj.' : 'FALSE'}
 special rules: ${profile.universalRules.enforceVariation ? 'változatos, logikus képek' : ''}
 `;
 
@@ -1452,6 +1453,22 @@ app.post('/api/suno/callback', async (req, res) => {
     res.status(500).json({ ok:false });
   }
 });
+// === ADULT LOCK HELPERS ===
+// Ha a brief felnőtt élethelyzetet jelez (házasság/unoka/40 év stb.), akkor tiltjuk a child témát
+function isAdultContext(brief = '') {
+  const b = (brief || '').toLowerCase();
+
+  // Direkt felnőtt jelek
+  if (/(megn[őo]s[üu]lt|feles[ée]g|f[ée]rj|h[áa]zass[áa]g|unoka|kisut[óo]d|kisunok[áa]m|apuka|anyuka)/.test(b)) return true;
+
+  // Életkor minták: "10 éves" felett (10–99) → adultLock
+if (/\b([1-9]\d)\s*éves\b/.test(b)) return true;
+// Évforduló minták: "40 éve" (10–99) → adultLock
+if (/\b([1-9]\d)\s*éve\b/.test(b)) return true;
+
+  return false;
+}
+
 // === STYLE PROFILE DECISION ENGINE (6 fő zenei stílus + 4 tematikus blokk) ===
 function determineStyleProfile(styles = '', brief = '', vocal = '') {
   const s = (styles || '').toLowerCase();
@@ -1465,17 +1482,25 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
   else if (/(rap|trap|hip.?hop)/.test(s)) baseStyle = 'rap';
   else if (/(none|null|unknown)/.test(s)) baseStyle = 'none';
 
-  // --- 2️⃣ Tematikus blokk felismerése ---
+   // --- 2️⃣ Tematikus blokk felismerése ---
   let theme = null;
+
+  const adultLock = isAdultContext(brief);
+
   if (/(esküvő|lánykérés|valentin|jegyes|házasság)/.test(b)) theme = 'wedding';
   else if (/(temetés|halál|gyász|nyugodj|részvét|elmúlás)/.test(b)) theme = 'funeral';
-  else if (/(gyerekdal|ovis|óvoda|mese|gyermeki|kisfiú|kislány)/.test(b)) theme = 'child';
+
+  // ⚠️ CHILD: csak akkor engedjük, ha nincs adultLock
+  else if (!adultLock && /(gyerekdal|ovis|óvoda|mese|gyermeki|kisfiú|kislány)/.test(b)) theme = 'child';
+
   else if (/(szülinap|születésnap|ünnep|party|ünneplés|boldog szülinap)/.test(b)) theme = 'birthday';
-  // ⚙️ PATCH: Guard v5.1 – prevent "funeral" tone for electronic/minimal styles
-if (/(techno|minimal|house|trance|electronic)/.test(s) && theme === 'funeral') {
-  console.log('[PATCH] Overriding funeral→birthday for electronic styles');
-  theme = 'birthday';
-}
+
+  // ✅ Ha adultLock mégis child-ba vinné a logika/brief, akkor tiltsuk
+  if (adultLock && theme === 'child') {
+    console.log('[ADULT_LOCK] child theme blocked → birthday');
+    theme = 'birthday';
+  }
+
 
   // --- 4️⃣ Alap stílusprofilok ---
   const baseProfiles = {
@@ -1609,6 +1634,8 @@ if (/(techno|minimal|house|trance|electronic)/.test(s) && theme === 'funeral') {
       );
     }
   }
+  // --- 8️⃣ AdultLock flag (GPT-nek tiltás-jelzés) ---
+  profile.adultLock = !!adultLock;
 
   return profile;
 }
