@@ -1134,7 +1134,13 @@ lyrics = lyrics.replace(/\b([12]?\d{3})([-–]?(?:ban|ben|as|es|os|ös|ik|tól|t
 });
 
 // Kis számok (1–999), de NE Verse/Chorus után
-lyrics = lyrics.replace(/(?<!Verse\s|Chorus\s)\b\d{1,3}\b/g, n => numToHungarian(parseInt(n, 10)));
+lyrics = lyrics.replace(/\b\d{1,3}\b/g, (m, _off, str) => {
+  const i = _off ?? 0;
+  const prev = str.slice(Math.max(0, i - 7), i); // elég hossz, hogy "Chorus " is beleférjen
+  if (/Verse\s$/i.test(prev) || /Chorus\s$/i.test(prev)) return m;
+  return numToHungarian(parseInt(m, 10));
+});
+
 
 
 // --- UNIVERSAL NORMALIZE GENRES (HU → EN) ---
@@ -1317,7 +1323,7 @@ try {
       if (wordCount < appliedTarget) {
         const lastWord = clean.split(/\s+/).pop();
         // ismétlés ritmikai kitöltésre – nem módosít jelentést
-        return clean + ' ' + lastWord.repeat(Math.max(1, appliedTarget - wordCount));
+        return clean + ' ' + Array(Math.max(1, appliedTarget - wordCount)).fill(lastWord).join(' ');
       }
       return clean;
     });
