@@ -879,8 +879,8 @@ const sys1 = [
 
   'Each Verse and each Chorus must contain EXACTLY 4 lines.',
   // LINE LENGTH RULE – mandatory
-  'Each line in every Verse and Chorus MUST contain between 10 and 14 words.',
-  'If any line is shorter than 10 words, you MUST rewrite it so it becomes 10–14 words naturally without breaking the rhythm, meaning, or emotional tone.',
+  'Each line in every Verse and Chorus MUST contain between 7 and 16 words.',
+  'If any line is shorter than 7 words, you MUST rewrite it so it becomes 7–16 words naturally without breaking the rhythm, meaning, or emotional tone.',
 
   'Never use more or less than 4 lines in any section.',
   'Each line must be ONE clear, grammatically correct sentence.',
@@ -913,12 +913,12 @@ const sys2 = [
 
   'POP:',
   '- Simple, catchy emotional lines.',
-  '- Aim for 8–12 words per line.',
+  '- Aim for 7–10 words per line.',
   '- Use light, natural rhymes.',
 
   'ROCK:',
   '- Energetic, strong tone.',
-  '- 8–14 words per line.',
+  '- 7–12 words per line.',
   '- Clear, concrete images.',
 
   'ELECTRONIC / TECHNO / MINIMAL:',
@@ -948,6 +948,12 @@ const sys2 = [
   '- NEVER invent or distort Hungarian words (pl. ragadogat, csillogogat).',
   '- If many children are listed, distribute them across the verses naturally; never list all in one verse.',
 
+  'REGGAE:',
+'- Laid-back, warm, positive tone.',
+'- Natural, flowing rhythm.',
+'- Simple, uplifting imagery.',
+'- Focus on unity, love, life, freedom.',
+'- Avoid aggressive or dark metaphors.',
 
   'FUNERAL / LÍRAI:',
   '- ONLY use if brief clearly mentions death or funeral.',
@@ -1194,6 +1200,9 @@ function normalizeGenre(g) {
     .replace(/\bfilmzene\b/g, 'soundtrack')
     .replace(/\bfolklo[ó]r\b/g, 'folk')
     .replace(/\bünnepi\b/g, 'holiday')
+    .replace(/\breggae\b/g, 'reggae')
+    .replace(/\breggie\b/g, 'reggae')
+    .replace(/\bregg[eé]i\b/g, 'reggae')
     .replace(/\s+/g, ' ')
     .trim();
 }
