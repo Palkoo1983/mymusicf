@@ -81,10 +81,6 @@ async function getNextInvoiceNumber(isTest) {
 
 dotenv.config();
 
-const BUILD_TAG = 'CHILDLOCK_V3_FINAL_2026-03-03';
-console.log('[BUILD]', BUILD_TAG);
-
-
 const app = express();
 const PORT = process.env.PORT || 8000;
 
@@ -807,9 +803,6 @@ app.post('/api/generate_song', async (req, res) => {
     setImmediate(async () => {
       try {
 
-    console.warn('[BUILD_ACTIVE]', BUILD_TAG);
-
-
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
 
     // Map package/format
@@ -1072,7 +1065,7 @@ const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
       { role: 'system', content: sysPrompt },
       { role: 'user', content: usr1 }
     ],
-    temperature: 0.35,
+    temperature: 0.7,
     max_tokens: 800
   })
 });
@@ -1576,12 +1569,11 @@ app.post('/api/suno/callback', async (req, res) => {
 function detectUnder10Age(text = '') {
   const t = (text || '').toString().toLowerCase();
 
-  // ⚠️ Fontos: az "egy/három/... éves" kifejezés sokszor NEM életkort jelent,
-  // hanem évfordulót / kapcsolatot / időtartamot (pl. "egy éves évforduló", "három éves kapcsolat").
-  // Ezeket nem tekintjük gyerek-életkornak.
+  // ⚠️ Csak VALÓDI életkort akarunk felismerni (1–9 éves).
+  // Az "egy éves évforduló / kapcsolat / munkaviszony / program / projekt" NEM gyerek-életkor.
   const isNonAgeContextAfter = (endIdx) => {
-    const after = t.slice(endIdx, endIdx + 50);
-    return /(évfordul|kapcsolat|együtt|házass|ismerets|munkaviszony|betegs|küzdel|időtartam|program|projekt)/.test(after);
+    const after = t.slice(endIdx, endIdx + 60);
+    return /(évfordul|kapcsolat|együtt|házass|ismerets|munkaviszony|időtartam|projekt|program|betegs|küzdel)/.test(after);
   };
 
   let m;
