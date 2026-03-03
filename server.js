@@ -81,6 +81,10 @@ async function getNextInvoiceNumber(isTest) {
 
 dotenv.config();
 
+const BUILD_TAG = 'CHILDLOCK_V3_FINAL_2026-03-03';
+console.log('[BUILD]', BUILD_TAG);
+
+
 const app = express();
 const PORT = process.env.PORT || 8000;
 
@@ -803,6 +807,9 @@ app.post('/api/generate_song', async (req, res) => {
     setImmediate(async () => {
       try {
 
+    console.warn('[BUILD_ACTIVE]', BUILD_TAG);
+
+
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
 
     // Map package/format
@@ -1065,7 +1072,7 @@ const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
       { role: 'system', content: sysPrompt },
       { role: 'user', content: usr1 }
     ],
-    temperature: 0.7,
+    temperature: 0.35,
     max_tokens: 800
   })
 });
@@ -1569,14 +1576,36 @@ app.post('/api/suno/callback', async (req, res) => {
 function detectUnder10Age(text = '') {
   const t = (text || '').toString().toLowerCase();
 
-  // 1–9 éves (számjeggyel, kötőjellel is)
-  if (/\b([1-9])\s*[-–]?\s*éves\b/.test(t)) return true;
+  // ⚠️ Fontos: az "egy/három/... éves" kifejezés sokszor NEM életkort jelent,
+  // hanem évfordulót / kapcsolatot / időtartamot (pl. "egy éves évforduló", "három éves kapcsolat").
+  // Ezeket nem tekintjük gyerek-életkornak.
+  const isNonAgeContextAfter = (endIdx) => {
+    const after = t.slice(endIdx, endIdx + 50);
+    return /(évfordul|kapcsolat|együtt|házass|ismerets|munkaviszony|betegs|küzdel|időtartam|program|projekt)/.test(after);
+  };
 
-  // egy–kilenc éves (szóval)
-  if (/\b(egy|kettő|két|három|négy|öt|hat|hét|nyolc|kilenc)\s*éves\b/.test(t)) return true;
+  let m;
+
+  // 1–9 éves (számjeggyel, kötőjellel is) — pl. "8 éves"
+  const reDigit = /\b([1-9])\s*[-–]?\s*éves\b/g;
+  while ((m = reDigit.exec(t)) !== null) {
+    const endIdx = m.index + m[0].length;
+    if (!isNonAgeContextAfter(endIdx)) return true;
+  }
+
+  // egy–kilenc éves (szóval) — pl. "három éves"
+  const reWord = /\b(egy|kettő|két|három|négy|öt|hat|hét|nyolc|kilenc)\s*éves\b/g;
+  while ((m = reWord.exec(t)) !== null) {
+    const endIdx = m.index + m[0].length;
+    if (!isNonAgeContextAfter(endIdx)) return true;
+  }
 
   // egybeírt formák (pl. "kilencéves")
-  if (/\b(egy|kettő|két|három|négy|öt|hat|hét|nyolc|kilenc)éves\b/.test(t)) return true;
+  const reWordJoined = /\b(egy|kettő|két|három|négy|öt|hat|hét|nyolc|kilenc)éves\b/g;
+  while ((m = reWordJoined.exec(t)) !== null) {
+    const endIdx = m.index + m[0].length;
+    if (!isNonAgeContextAfter(endIdx)) return true;
+  }
 
   return false;
 }
