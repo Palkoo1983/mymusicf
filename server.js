@@ -817,7 +817,7 @@ const v = (vocal || '').toString().trim().toLowerCase();
 if (/^női|female/.test(v)) vocal = 'female';
 else if (/^férfi|male/.test(v)) vocal = 'male';
 else if (/duet|duett/.test(v)) vocal = 'duet';
-else if (/child|gyerek|gyermek/.test(v)) vocal = 'child';
+else if (/^(child|gyerek|gyermek)\b/.test(v)) vocal = 'child';
 else if (/robot|synthetic|gépi/.test(v)) vocal = 'robot';
 else if (/instrument/.test(v)) vocal = 'instrumental';
 else if (/choir|kórus/.test(v)) vocal = 'choir';
@@ -868,6 +868,11 @@ const sys1 = [
   'You are a professional music lyric writer AI. You generate complete, structured Hungarian song lyrics strictly following the requested style and theme.',
   'Write STRICTLY in Hungarian. No language mixing.',
 
+  'MODE GATING:',
+  (profile && profile.adultLock)
+    ? 'ADULT MODE: NEVER write a children song or nursery rhyme. NEVER use childlike/onomatopoeia words (napocska, dalocska, taps-taps, la-la, bumm-bumm, játsszunk, játszunk, ovis, óvoda/ovoda, mesehős). If any appear, rewrite the line into mature adult wording.'
+    : 'CHILD MODE: You may use child-friendly vocabulary ONLY because the request is explicitly for a child (<10) or a children song.',
+
   'STRUCTURE RULES:',
   '(Verse 1)',
   '(Verse 2)',
@@ -908,7 +913,7 @@ const sys1 = [
 ].join('\\n');
 
 
-const sys2 = [
+const sys2Adult = [
   '=== GENRE AND TONE RULES (apply ONLY the dominant one) ===',
 
   'POP:',
@@ -939,21 +944,12 @@ const sys2 = [
   '- No mixed or contradictory images.',
   '- Keep the feeling uplifting and loving.',
 
-  'CHILD:',
-  '- Simple vocabulary, playful rhythm.',
-  '- 6–10 words per line.',
-  '- No dark or complex metaphors.',
-  '- Use happy, safe, child-friendly images.',
-  '- Onomatopoetic words (taps-taps, la-la, bumm-bumm) ONLY in the Chorus.',
-  '- NEVER invent or distort Hungarian words (pl. ragadogat, csillogogat).',
-  '- If many children are listed, distribute them across the verses naturally; never list all in one verse.',
-
   'REGGAE:',
-'- Laid-back, warm, positive tone.',
-'- Natural, flowing rhythm.',
-'- Simple, uplifting imagery.',
-'- Focus on unity, love, life, freedom.',
-'- Avoid aggressive or dark metaphors.',
+  '- Laid-back, warm, positive tone.',
+  '- Natural, flowing rhythm.',
+  '- Simple, uplifting imagery.',
+  '- Focus on unity, love, life, freedom.',
+  '- Avoid aggressive or dark metaphors.',
 
   'FUNERAL / LÍRAI:',
   '- ONLY use if brief clearly mentions death or funeral.',
@@ -963,7 +959,7 @@ const sys2 = [
   'POSITIVE EVENTS (birthday, diploma, wedding, achievement):',
   '- Tone must stay positive, warm and uplifting.',
   '- NEVER use funeral tone for positive events.',
-  
+
   'RAP:',
   '- Confident, rhythmic Hungarian rap tone.',
   '- 10–16 words per line, always maintaining a clear 4/4 flow.',
@@ -978,6 +974,22 @@ const sys2 = [
   '- Do not drift into pop, wedding, ballad, or funeral tone.',
   '- Always keep 4 separate lines per section.'
 ].join('\\n');
+
+const sys2Child = [
+  'CHILD (ONLY IF explicitly requested OR age <10):',
+  '- Simple vocabulary, playful rhythm.',
+  '- 6–10 words per line.',
+  '- No dark or complex metaphors.',
+  '- Use happy, safe, child-friendly images.',
+  '- Onomatopoetic words (taps-taps, la-la, bumm-bumm) ONLY in the Chorus.',
+  '- NEVER invent or distort Hungarian words (pl. ragadogat, csillogogat).',
+  '- If many children are listed, distribute them across the verses naturally; never list all in one verse.'
+].join('\\n');
+
+const sys2Final = ((profile && profile.theme) === 'child' || String(vocal || '').toLowerCase() === 'child')
+  ? [sys2Adult, sys2Child].join('\\n')
+  : sys2Adult;
+
 
 const sys3 = [
   '=== HUNGARIAN LANGUAGE POLISH & COHERENCE RULES ===',
@@ -1039,7 +1051,7 @@ const usr1 = [
 ].join('\n');
 
     // --- Kombinált rendszerprompt: struktúra + stílus + magyar nyelvi polish ---
-const sysPrompt = [sys1, sys2, sys3].join('\n\n');
+const sysPrompt = [sys1, sys2Final, sys3].join('\n\n');
 
 const oi1 = await fetch('https://api.openai.com/v1/chat/completions', {
   method: 'POST',
@@ -1094,7 +1106,62 @@ let gptStyle = (
 if (!lyrics && raw) {
   lyrics = String(raw).trim();
 }
- // --- convert numeric numbers to written Hungarian words (universal) ---
+ // --- ADULT_LOCK post-check (prevent accidental children-song output) ---
+if ((profile && profile.adultLock) && containsChildlikeTokens(lyrics)) {
+  console.warn('[ADULT_LOCK] Childlike vocabulary detected in lyrics → rewrite once before Suno.');
+  try {
+    const rewriteSys = [
+      'You are a professional Hungarian lyric editor.',
+      'Rewrite the draft into a mature, adult POP love song in Hungarian.',
+      'Write STRICTLY in Hungarian. No language mixing.',
+      'Keep the SAME required structure and constraints:',
+      '(Verse 1) (Verse 2) (Chorus) (Verse 3) (Verse 4) (Chorus) (Chorus), each exactly 4 lines.',
+      'Each line must have 7–16 words, and be one clear grammatical sentence.',
+      'ABSOLUTELY FORBIDDEN: any children-song vocabulary or onomatopoeia such as napocska, dalocska, taps-taps, la-la, bumm-bumm, ovis, óvoda/ovoda, mondóka, altató.',
+      'Keep all names, places and key memories from the brief.',
+      'Output ONLY the rewritten lyrics with section titles and line breaks.'
+    ].join('\\n');
+
+    const rewriteUsr = [
+      usr1,
+      '',
+      '=== DRAFT TO REWRITE (remove any childlike tone) ===',
+      lyrics
+    ].join('\\n');
+
+    const oi2 = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        messages: [
+          { role: 'system', content: rewriteSys },
+          { role: 'user', content: rewriteUsr }
+        ],
+        temperature: 0.4,
+        max_tokens: 900
+      })
+    });
+
+    if (oi2.ok) {
+      const j2 = await oi2.json();
+      const rewritten = (j2?.choices?.[0]?.message?.content || '').trim();
+      if (rewritten) {
+        lyrics = rewritten;
+      }
+    } else {
+      const t2 = await oi2.text();
+      console.warn('[ADULT_LOCK] Rewrite OpenAI error', t2.slice(0, 200));
+    }
+  } catch (e) {
+    console.warn('[ADULT_LOCK] Rewrite failed:', e?.message || e);
+  }
+}
+
+// --- convert numeric numbers to written Hungarian words (universal) ---
 function numToHungarian(n) {
   const ones = ['nulla','egy','kettő','három','négy','öt','hat','hét','nyolc','kilenc'];
   const tens = ['','tíz','húsz','harminc','negyven','ötven','hatvan','hetven','nyolcvan','kilencven'];
@@ -1470,18 +1537,59 @@ app.post('/api/suno/callback', async (req, res) => {
 });
 // === ADULT LOCK HELPERS ===
 // Ha a brief felnőtt élethelyzetet jelez (házasság/unoka/40 év stb.), akkor tiltjuk a child témát
-function isAdultContext(brief = '') {
-  const b = (brief || '').toLowerCase();
+// === CHILD/ADULT INTENT HELPERS ===
+// Gyerekdal CSAK akkor engedett, ha:
+// 1) a stílus/brief KIFEJEZETTEN gyerekdalt kér (pl. "gyerekdal", "altató", "mondóka", "ovis/óvoda"), VAGY
+// 2) szerepel konkrét életkor, ami 10 év alatti (1–9 éves / egy–kilenc éves).
+// Minden más esetben default: FELNŐTT (adultLock = TRUE).
 
-  // Direkt felnőtt jelek
-  if (/(megn[őo]s[üu]lt|feles[ée]g|f[ée]rj|h[áa]zass[áa]g|unoka|kisut[óo]d|kisunok[áa]m|apuka|anyuka)/.test(b)) return true;
+function detectUnder10Age(text = '') {
+  const t = (text || '').toString().toLowerCase();
 
-  // Életkor minták: "10 éves" felett (10–99) → adultLock
-if (/\b([1-9]\d)\s*éves\b/.test(b)) return true;
-// Évforduló minták: "40 éve" (10–99) → adultLock
-if (/\b([1-9]\d)\s*éve\b/.test(b)) return true;
+  // 1–9 éves (számjeggyel, kötőjellel is)
+  if (/\b([1-9])\s*[-–]?\s*éves\b/.test(t)) return true;
+
+  // egy–kilenc éves (szóval)
+  if (/\b(egy|kettő|két|három|négy|öt|hat|hét|nyolc|kilenc)\s*éves\b/.test(t)) return true;
+
+  // egybeírt formák (pl. "kilencéves")
+  if (/\b(egy|kettő|két|három|négy|öt|hat|hét|nyolc|kilenc)éves\b/.test(t)) return true;
 
   return false;
+}
+
+function hasExplicitChildRequest(text = '') {
+  const t = (text || '').toString().toLowerCase();
+
+  // Szándékosan NEM triggerelünk pusztán a "gyerek/gyermek" szavakra,
+  // mert az felnőtt szerelmes dalokban is előfordulhat ("mint két gyermek").
+  return /(\bgyerekdal\b|\bgyermekdal\b|\bmondóka\b|\baltató\b|\baltatódal\b|\bovis\b|\bóvoda\b|\bovoda\b|\bóvodás\b|\bovodas\b|\bbölcsőde\b|\bbolcsode\b|\bkicsiknek\b|\bgyerekeknek\b|\bgyermekeknek\b|\bkids\s*song\b|\bchildren\s*song\b|\bnursery\s*rhyme\b)/.test(t);
+}
+
+function isChildIntent(styles = '', brief = '', vocal = '') {
+  const s = (styles || '').toString().toLowerCase();
+  const b = (brief  || '').toString().toLowerCase();
+  const v = (vocal  || '').toString().toLowerCase();
+
+  const vocalChild = /^child\b/.test(v) || /^gyerek\b/.test(v) || /^gyermek\b/.test(v);
+  const styleOrBriefExplicit = hasExplicitChildRequest(s + ' ' + b);
+  const ageUnder10 = detectUnder10Age(b);
+
+  return !!(vocalChild || styleOrBriefExplicit || ageUnder10);
+}
+
+
+const ADULT_BANNED_CHILD_TOKENS = [
+  'napocska','dalocska','taps-taps','la-la','bumm-bumm',
+  'ovis','óvoda','ovoda','óvodás','ovodas',
+  'mondóka','mondoka','altató','altato',
+  'mesehős','mesehos',
+  'játsszunk','játszunk'
+];
+
+function containsChildlikeTokens(text = '') {
+  const t = (text || '').toString().toLowerCase();
+  return ADULT_BANNED_CHILD_TOKENS.some(w => t.includes(w));
 }
 
 // === STYLE PROFILE DECISION ENGINE (6 fő zenei stílus + 4 tematikus blokk) ===
@@ -1500,22 +1608,13 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
    // --- 2️⃣ Tematikus blokk felismerése ---
   let theme = null;
 
-  const adultLock = isAdultContext(brief);
+  const childIntent = isChildIntent(styles, brief, vocal);
+  const adultLock = !childIntent;
 
   if (/(esküvő|lánykérés|valentin|jegyes|házasság)/.test(b)) theme = 'wedding';
   else if (/(temetés|halál|gyász|nyugodj|részvét|elmúlás)/.test(b)) theme = 'funeral';
-
-  // ⚠️ CHILD: csak akkor engedjük, ha nincs adultLock
-  else if (!adultLock && /(gyerekdal|ovis|óvoda|mese|gyermeki|kisfiú|kislány)/.test(b)) theme = 'child';
-
+  else if (childIntent) theme = 'child';
   else if (/(szülinap|születésnap|ünnep|party|ünneplés|boldog szülinap)/.test(b)) theme = 'birthday';
-
-  // ✅ Ha adultLock mégis child-ba vinné a logika/brief, akkor tiltsuk
-  if (adultLock && theme === 'child') {
-    console.log('[ADULT_LOCK] child theme blocked → birthday');
-    theme = 'birthday';
-  }
-
 
   // --- 4️⃣ Alap stílusprofilok ---
   const baseProfiles = {
