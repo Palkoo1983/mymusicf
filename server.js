@@ -817,7 +817,7 @@ const v = (vocal || '').toString().trim().toLowerCase();
 if (/^női|female/.test(v)) vocal = 'female';
 else if (/^férfi|male/.test(v)) vocal = 'male';
 else if (/duet|duett/.test(v)) vocal = 'duet';
-else if (/^(child|gyerek|gyermek)\b/.test(v)) vocal = 'child';
+else if (/^child\b/.test(v)) vocal = 'child';
 else if (/robot|synthetic|gépi/.test(v)) vocal = 'robot';
 else if (/instrument/.test(v)) vocal = 'instrumental';
 else if (/choir|kórus/.test(v)) vocal = 'choir';
@@ -986,7 +986,7 @@ const sys2Child = [
   '- If many children are listed, distribute them across the verses naturally; never list all in one verse.'
 ].join('\\n');
 
-const sys2Final = ((profile && profile.theme) === 'child' || String(vocal || '').toLowerCase() === 'child')
+const sys2Final = ((profile && profile.theme) === 'child')
   ? [sys2Adult, sys2Child].join('\\n')
   : sys2Adult;
 
@@ -1106,58 +1106,81 @@ let gptStyle = (
 if (!lyrics && raw) {
   lyrics = String(raw).trim();
 }
- // --- ADULT_LOCK post-check (prevent accidental children-song output) ---
-if ((profile && profile.adultLock) && containsChildlikeTokens(lyrics)) {
-  console.warn('[ADULT_LOCK] Childlike vocabulary detected in lyrics → rewrite once before Suno.');
-  try {
-    const rewriteSys = [
-      'You are a professional Hungarian lyric editor.',
-      'Rewrite the draft into a mature, adult POP love song in Hungarian.',
-      'Write STRICTLY in Hungarian. No language mixing.',
-      'Keep the SAME required structure and constraints:',
-      '(Verse 1) (Verse 2) (Chorus) (Verse 3) (Verse 4) (Chorus) (Chorus), each exactly 4 lines.',
-      'Each line must have 7–16 words, and be one clear grammatical sentence.',
-      'ABSOLUTELY FORBIDDEN: any children-song vocabulary or onomatopoeia such as napocska, dalocska, taps-taps, la-la, bumm-bumm, ovis, óvoda/ovoda, mondóka, altató.',
-      'Keep all names, places and key memories from the brief.',
-      'Output ONLY the rewritten lyrics with section titles and line breaks.'
-    ].join('\\n');
+ // --- ADULT_LOCK post-check (hard stop: prevent accidental children-song output) ---
+if (profile && profile.adultLock) {
+  let rewritePass = 0;
 
-    const rewriteUsr = [
-      usr1,
-      '',
-      '=== DRAFT TO REWRITE (remove any childlike tone) ===',
-      lyrics
-    ].join('\\n');
+  while (containsChildlikeTokens(lyrics) && rewritePass < 2) {
+    rewritePass += 1;
+    console.warn(`[ADULT_LOCK] Childlike vocabulary detected (pass ${rewritePass}) → rewrite before Suno.`);
 
-    const oi2 = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: OPENAI_MODEL,
-        messages: [
-          { role: 'system', content: rewriteSys },
-          { role: 'user', content: rewriteUsr }
-        ],
-        temperature: 0.4,
-        max_tokens: 900
-      })
-    });
+    try {
+      const rewriteSys = [
+        'You are a professional Hungarian lyric editor.',
+        'Rewrite the draft into a mature, adult POP love song in Hungarian.',
+        'Write STRICTLY in Hungarian. No language mixing.',
+        'Keep the SAME required structure and constraints:',
+        '(Verse 1) (Verse 2) (Chorus) (Verse 3) (Verse 4) (Chorus) (Chorus), each exactly 4 lines.',
+        'Each line must have 7–16 words, and be one clear grammatical sentence.',
+        'ABSOLUTELY FORBIDDEN: any children-song vocabulary or onomatopoeia such as napocska, dalocska, taps-taps, la-la, bumm-bumm, ovis, óvoda/ovoda, mondóka, altató, játsszunk/játszunk.',
+        'Keep all names, places and key memories from the brief.',
+        'Output ONLY the rewritten lyrics with section titles and line breaks.'
+      ].join('\\n');
 
-    if (oi2.ok) {
-      const j2 = await oi2.json();
-      const rewritten = (j2?.choices?.[0]?.message?.content || '').trim();
-      if (rewritten) {
-        lyrics = rewritten;
+      const rewriteUsr = [
+        usr1,
+        '',
+        '=== DRAFT TO REWRITE (remove any childlike tone) ===',
+        lyrics
+      ].join('\\n');
+
+      const oi2 = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          messages: [
+            { role: 'system', content: rewriteSys },
+            { role: 'user', content: rewriteUsr }
+          ],
+          temperature: 0.25,
+          max_tokens: 950
+        })
+      });
+
+      if (oi2.ok) {
+        const j2 = await oi2.json();
+        const rewritten = (j2?.choices?.[0]?.message?.content || '').trim();
+        if (rewritten) lyrics = rewritten;
+      } else {
+        const t2 = await oi2.text();
+        console.warn('[ADULT_LOCK] Rewrite OpenAI error', t2.slice(0, 200));
+        break;
       }
-    } else {
-      const t2 = await oi2.text();
-      console.warn('[ADULT_LOCK] Rewrite OpenAI error', t2.slice(0, 200));
+    } catch (e) {
+      console.warn('[ADULT_LOCK] Rewrite failed:', e?.message || e);
+      break;
     }
-  } catch (e) {
-    console.warn('[ADULT_LOCK] Rewrite failed:', e?.message || e);
+  }
+
+  // Hard stop: if still childlike, DO NOT burn Suno credits
+  if (containsChildlikeTokens(lyrics)) {
+    console.warn('[ADULT_LOCK] Still childlike after rewrites → abort Suno to avoid credit burn; write row with empty links.');
+    try {
+      await safeAppendOrderRow({
+        email: req.body.email || '',
+        styles, vocal, language, brief, lyrics,
+        link1: '', link2: '',
+        format,
+        delivery: req.body.delivery_label || req.body.delivery || ''
+      });
+    } catch (e) {
+      console.warn('[ADULT_LOCK] Sheet write failed in abort path:', e?.message || e);
+    }
+    return;
   }
 }
 
@@ -1561,21 +1584,23 @@ function detectUnder10Age(text = '') {
 function hasExplicitChildRequest(text = '') {
   const t = (text || '').toString().toLowerCase();
 
-  // Szándékosan NEM triggerelünk pusztán a "gyerek/gyermek" szavakra,
-  // mert az felnőtt szerelmes dalokban is előfordulhat ("mint két gyermek").
-  return /(\bgyerekdal\b|\bgyermekdal\b|\bmondóka\b|\baltató\b|\baltatódal\b|\bovis\b|\bóvoda\b|\bovoda\b|\bóvodás\b|\bovodas\b|\bbölcsőde\b|\bbolcsode\b|\bkicsiknek\b|\bgyerekeknek\b|\bgyermekeknek\b|\bkids\s*song\b|\bchildren\s*song\b|\bnursery\s*rhyme\b)/.test(t);
+  // ✅ CSAK explicit "gyerekdal" jelzés számít (nem következtetünk semmire a történet szavaiból).
+  // Ha valaki gyerekdalt akar, ezt kimondja: gyerekdal / children song / kids song / nursery rhyme.
+  return /(\bgyerekdal\b|\bgyermekdal\b|\bkids\s*song\b|\bchildren\s*song\b|\bnursery\s*rhyme\b)/.test(t);
 }
 
 function isChildIntent(styles = '', brief = '', vocal = '') {
   const s = (styles || '').toString().toLowerCase();
   const b = (brief  || '').toString().toLowerCase();
-  const v = (vocal  || '').toString().toLowerCase();
 
-  const vocalChild = /^child\b/.test(v) || /^gyerek\b/.test(v) || /^gyermek\b/.test(v);
+  // ✅ Gyerekdal CSAK akkor engedett, ha:
+  // 1) a stílus/brief KIFEJEZETTEN gyerekdalt kér (gyerekdal/altató/mondóka/kids song stb.), VAGY
+  // 2) a briefben konkrétan szerepel 10 év alatti életkor (1–9 éves / egy–kilenc éves).
+  // ❌ NEM következtetünk semmire a "gyerek/gyermek" szavak puszta előfordulásából (pl. "mint két gyermek").
   const styleOrBriefExplicit = hasExplicitChildRequest(s + ' ' + b);
   const ageUnder10 = detectUnder10Age(b);
 
-  return !!(vocalChild || styleOrBriefExplicit || ageUnder10);
+  return !!(styleOrBriefExplicit || ageUnder10);
 }
 
 
