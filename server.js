@@ -768,26 +768,7 @@ res.send(`
 `);
 });
 
-/* ================== SUNO HELPERS ========================= */
-async function sunoStartV1(url, headers, body){
-  for (let i=0; i<6; i++){
-    const r = await fetch(url, { method:'POST', headers, body: JSON.stringify(body) });
-    const txt = await r.text();
-    if (r.ok){
-      try { return { ok:true, json: JSON.parse(txt) }; }
-      catch { return { ok:true, json:{} }; }
-    }
-    console.warn('[SUNO:START_FAIL]', r.status, txt.slice(0,200));
-    if (r.status === 503 || r.status === 502 || r.status === 429){
-      await new Promise(res => setTimeout(res, 2000 * (i+1)));
-      continue;
-    }
-    return { ok:false, status:r.status, text:txt };
-  }
-  return { ok:false, status:503, text:'start_unavailable_after_retries' };
-}
-
-/* ============ GPT → Suno generate (NO POLISH) ============ */
+/* ============ GPT → Sheets (NO POLISH) ============ */
 app.post('/api/generate_song', async (req, res) => {
   try {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
@@ -799,7 +780,7 @@ app.post('/api/generate_song', async (req, res) => {
     // 🔹 1️⃣ Ügyfél azonnali válasz – ne várja meg a hosszú folyamatot
     res.json({ ok:true, message:"Köszönjük! Megrendelésed feldolgozás alatt." });
 
-    // 🔹 2️⃣ Háttérben elindítjuk ugyanazt a folyamatot (GPT → Suno → Sheet)
+    // 🔹 2️⃣ Háttérben elindítjuk ugyanazt a folyamatot (GPT → Sheet)
     setImmediate(async () => {
       try {
 
@@ -810,8 +791,8 @@ app.post('/api/generate_song', async (req, res) => {
     const format = pkg==='basic' ? 'mp3' : (pkg==='video' ? 'mp4' : pkg==='premium' ? 'wav' : pkg);
     const isMP3 = (format === 'mp3');
 
-    // Vocal normalizálás (csak Suno style taghez)
-    // Vocal normalizálás (Suno számára)
+    // Vocal normalizálás
+    // Vocal normalizálás (belső)
 const v = (vocal || '').toString().trim().toLowerCase();
 
 if (/^női|female/.test(v)) vocal = 'female';
@@ -827,14 +808,12 @@ else vocal = (v || 'instrumental');
     // ENV
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     const OPENAI_MODEL   = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
-    const SUNO_API_KEY   = process.env.SUNO_API_KEY;
-    const SUNO_BASE_URL  = (process.env.SUNO_BASE_URL || '').replace(/\/+$/,'');
-    const PUBLIC_URL     = (process.env.PUBLIC_URL || '').replace(/\/+$/,'');
 
-    if (!OPENAI_API_KEY || !SUNO_API_KEY || !SUNO_BASE_URL) {
-  console.warn('[generate_song] Missing API keys or base URL.');
-  return;
-}
+    // Csak dalszöveg-generálás + Google Sheets mentés (audio generálás nincs)
+    if (!OPENAI_API_KEY) {
+      console.warn('[generate_song] Missing OPENAI_API_KEY.');
+      return;
+    }
 
     // Idempotencia
     const key = makeKey({ title, styles, vocal, language, brief });
@@ -1112,7 +1091,7 @@ if (profile && profile.adultLock) {
 
   while (containsChildlikeTokens(lyrics) && rewritePass < 2) {
     rewritePass += 1;
-    console.warn(`[ADULT_LOCK] Childlike vocabulary detected (pass ${rewritePass}) → rewrite before Suno.`);
+    console.warn(`[ADULT_LOCK] Childlike vocabulary detected (pass ${rewritePass}) → rewrite before saving.`);
 
     try {
       const rewriteSys = [
@@ -1166,9 +1145,9 @@ if (profile && profile.adultLock) {
     }
   }
 
-  // Hard stop: if still childlike, DO NOT burn Suno credits
+  // Hard stop: if still childlike, DO NOT run any extra generation
   if (containsChildlikeTokens(lyrics)) {
-    console.warn('[ADULT_LOCK] Still childlike after rewrites → abort Suno to avoid credit burn; write row with empty links.');
+    console.warn('[ADULT_LOCK] Still childlike after rewrites → abort any extra generation; write row with empty links.');
     try {
       await safeAppendOrderRow({
         email: req.body.email || '',
@@ -1297,7 +1276,7 @@ function normalizeGenre(g) {
     .trim();
 }
 
-// --- BUILD STYLE (CLIENT → SUNO, HU → EN) ---
+// --- BUILD STYLE (HU → EN) ---
 function buildStyleEN(client, vocalNorm, styleEN) {
   const protectedGenres = new Set([
     'rap','hip hop','folk','violin','piano','guitar',
@@ -1375,8 +1354,8 @@ function normalizeSectionHeadingsSafeStrict(text) {
   return t.trim();
 }
 
-    // Ha nem MP3: nincs Suno, csak Sheets + visszaadás
-    if (!isMP3) {
+    // AUDIO GENERÁLÁS KI VAN KÖTVE: minden formátum csak Sheets + visszaadás
+    {
       try {
         await safeAppendOrderRow({
           email: req.body.email || '',
@@ -1436,85 +1415,6 @@ try {
      return; // háttérfolyamat vége – response már elküldve korábban
 
     }
-
-    // === SUNO API CALL (MP3 only) ===
-    const startRes = await sunoStartV1(SUNO_BASE_URL + '/api/v1/generate', {
-      'Authorization': 'Bearer ' + SUNO_API_KEY,
-      'Content-Type': 'application/json'
-    }, {
-      customMode: true,
-      model: 'V5',
-      instrumental: (vocal === 'instrumental'),
-      title: title,
-      style: styleFinal,
-      prompt: lyrics,
-      callBackUrl: PUBLIC_URL ? (PUBLIC_URL + '/api/suno/callback') : undefined
-    });
-
-   if (!startRes.ok) {
-  console.warn('[generate_song] Suno start error', startRes.status);
-  return;
-}
-
-    const sj = startRes.json;
-  if (!sj || sj.code !== 200 || !sj.data || !sj.data.taskId) {
-  console.warn('[generate_song] Suno bad response', sj);
-  return;
-}
-
-    const taskId = sj.data.taskId;
-
-    // Poll up to 2 tracks
-    const maxAttempts = Number(process.env.SUNO_MAX_ATTEMPTS || 160);
-    const intervalMs  = Math.floor(Number(process.env.SUNO_POLL_INTERVAL || 2000));
-    let attempts = 0, tracks = [];
-    while (tracks.length < 2 && attempts < maxAttempts) {
-      attempts++;
-      await new Promise(r => setTimeout(r, intervalMs));
-      const pr = await fetch(SUNO_BASE_URL + '/api/v1/generate/record-info?taskId=' + encodeURIComponent(taskId), {
-        method:'GET',
-        headers:{ 'Authorization': 'Bearer ' + SUNO_API_KEY }
-      });
-      if (!pr.ok) continue;
-      const st = await pr.json();
-      if (!st || st.code !== 200) continue;
-      const items = (st.data && st.data.response && st.data.response.sunoData) || [];
-      tracks = items.flatMap(d => {
-          const urls = [];
-          const a1 = d.audioUrl || d.url || d.audio_url;
-          const a2 = d.audioUrl2 || d.url2 || d.audio_url_2;
-          if (a1) urls.push(a1);
-          if (a2) urls.push(a2);
-          if (Array.isArray(d.clips)) {
-            for (const c of d.clips) {
-              if (c?.audioUrl || c?.audio_url) urls.push(c.audioUrl || c.audio_url);
-              if (c?.audioUrlAlt || c?.audio_url_alt) urls.push(c.audioUrlAlt || c.audio_url_alt);
-            }
-          }
-          return urls.map(u => ({ title: d.title || title, audio_url: u, image_url: d.imageUrl || d.coverUrl }));
-        })
-        .map(x => ({ ...x, audio_url: String(x.audio_url||'').trim() }))
-        .filter(x => !!x.audio_url && /^https?:\/\//i.test(x.audio_url))
-        .reduce((acc, cur) => {
-          if (!acc.find(t => t.audio_url === cur.audio_url)) acc.push(cur);
-          return acc;
-        }, [])
-        .slice(0, 2);
-    }
-
-    if (!tracks.length) {
-  console.warn('[generate_song] No tracks returned in time.');
-  return;
-}
-
-    try {
-      const link1 = tracks[0]?.audio_url || '';
-      const link2 = tracks[1]?.audio_url || '';
-      await safeAppendOrderRow({ email: req.body.email || '', styles, vocal, language, brief, lyrics, link1, link2, format,
-      delivery: req.body.delivery_label || req.body.delivery || '' 
-    });
-    } catch (_e) { /* log only */ }
-
     } catch (err) {
         console.error('[BG generate_song error]', err);
       }
@@ -1530,34 +1430,11 @@ app.get('/api/generate_song/ping', (req, res) => {
   res.json({ ok:true, diag:{
     node: process.version, fetch_defined: typeof fetch!=='undefined',
     has_OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
-    has_SUNO_API_KEY: !!process.env.SUNO_API_KEY,
-    SUNO_BASE_URL: process.env.SUNO_BASE_URL||null,
     public_url: process.env.PUBLIC_URL || null
   }});
 });
 
-app.get('/api/suno/ping', async (req, res) => {
-  try{
-    const BASE = (process.env.SUNO_BASE_URL || 'https://sunoapi.org').replace(/\/+$/,'');
-    const H = { 'Authorization': `Bearer ${process.env.SUNO_API_KEY||''}`, 'Content-Type':'application/json' };
-    const r1 = await fetch(`${BASE}/api/v1/generate`, { method:'POST', headers:H, body: JSON.stringify({ invalid:true }) });
-    const t1 = await r1.text();
-    return res.json({ ok:true, base: BASE, post_generate: { status:r1.status, len:t1.length, head:t1.slice(0,160) } });
-  }catch(e){
-    return res.status(500).json({ ok:false, error: (e && e.message) || e });
-  }
-});
 
-/* ================== SUNO CALLBACK (no-op) ================= */
-app.post('/api/suno/callback', async (req, res) => {
-  try {
-    console.log('[SUNO CALLBACK] body:', req.body);
-    res.json({ ok:true });
-  } catch (e) {
-    console.error('[SUNO CALLBACK ERROR]', e);
-    res.status(500).json({ ok:false });
-  }
-});
 // === ADULT LOCK HELPERS ===
 // Ha a brief felnőtt élethelyzetet jelez (házasság/unoka/40 év stb.), akkor tiltjuk a child témát
 // === CHILD/ADULT INTENT HELPERS ===
