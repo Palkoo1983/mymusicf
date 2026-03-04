@@ -11,8 +11,119 @@ import fs from 'fs';
 import PDFDocument from 'pdfkit';
 
 
-// === DUPLA DALGENERÁLÁS ELLENI VÉDELEM ===
-global.paymentAlreadyProcessed = false;
+// === DUPLA DALGENERÁLÁS / DUPLA FIZETÉS ELLENI VÉDELEM ===
+// (Nem globál bool: orderCode/transactionId alapján deduplikálunk rövid TTL-lel.)
+const processedPayments = new Map(); // key -> ts
+const PAYMENT_TTL_MS = 6 * 60 * 60 * 1000; // 6 óra
+
+// === RENDELÉS ADATOK BIZTONSÁGOS TÁROLÁSA (global.lastOrderData kiváltása) ===
+// Viva orderCode alapján tároljuk a rendelés payloadot rövid TTL-lel,
+// hogy párhuzamos fizetéseknél se csússzanak össze az adatok.
+const pendingOrders = new Map(); // orderCode -> { ts, order }
+const ORDER_TTL_MS = 6 * 60 * 60 * 1000; // 6 óra
+const PENDING_ORDERS_FILE = './data/pending-orders.json';
+
+function ensureDataDir() {
+  const dir = './data';
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+function persistPendingOrders() {
+  try {
+    ensureDataDir();
+    // csak a szükséges minimális adatot mentjük
+    const out = {};
+    for (const [oc, rec] of pendingOrders) {
+      if (oc && rec && rec.ts && rec.order) out[oc] = rec;
+    }
+    fs.writeFileSync(PENDING_ORDERS_FILE, JSON.stringify(out, null, 2), 'utf8');
+  } catch (e) {
+    console.warn('[PENDING_ORDERS] persist failed:', e?.message || e);
+  }
+}
+
+function restorePendingOrders() {
+  try {
+    ensureDataDir();
+    if (!fs.existsSync(PENDING_ORDERS_FILE)) return;
+    const raw = fs.readFileSync(PENDING_ORDERS_FILE, 'utf8');
+    const json = JSON.parse(raw || '{}');
+    if (!json || typeof json !== 'object') return;
+    const now = Date.now();
+    for (const [oc, rec] of Object.entries(json)) {
+      if (!oc || !rec || !rec.ts || !rec.order) continue;
+      if ((now - rec.ts) > ORDER_TTL_MS) continue;
+      pendingOrders.set(String(oc), rec);
+    }
+  } catch (e) {
+    console.warn('[PENDING_ORDERS] restore failed:', e?.message || e);
+  }
+}
+
+// Induláskor visszatöltjük a még élő (TTL-en belüli) pending order rekordokat.
+restorePendingOrders();
+
+function cleanupPendingOrders(now) {
+  for (const [oc, rec] of pendingOrders) {
+    if (!rec || !rec.ts || (now - rec.ts) > ORDER_TTL_MS) pendingOrders.delete(oc);
+  }
+}
+
+function storePendingOrder(orderCode, order) {
+  const oc = (orderCode || '').toString().trim();
+  if (!oc) return;
+  cleanupPendingOrders(Date.now());
+  pendingOrders.set(oc, { ts: Date.now(), order: order || {} });
+  persistPendingOrders();
+}
+
+function loadPendingOrder(orderCode) {
+  const oc = (orderCode || '').toString().trim();
+  if (!oc) return null;
+  cleanupPendingOrders(Date.now());
+  const rec = pendingOrders.get(oc);
+  return rec && rec.order ? rec.order : null;
+}
+
+function deletePendingOrder(orderCode) {
+  const oc = (orderCode || '').toString().trim();
+  if (!oc) return;
+  pendingOrders.delete(oc);
+  persistPendingOrders();
+}
+
+function paymentKey(orderCode, transactionId) {
+  const oc = (orderCode || '').toString().trim();
+  const tx = (transactionId || '').toString().trim();
+
+  // Preferáld a transactionId-t, mert az a legstabilabb egyedi azonosító.
+  // Így ha egyszer tx-vel jött, később tx nélkül is (orderCode-dal) ugyanarra kulcsot kap.
+  if (tx) return `tx:${tx}`;
+  if (oc) return `oc:${oc}`;
+  return '';
+}
+
+function cleanupProcessedPayments(now) {
+  // ritka, olcsó takarítás
+  for (const [k, ts] of processedPayments) {
+    if (now - ts > PAYMENT_TTL_MS) processedPayments.delete(k);
+  }
+}
+
+function isPaymentProcessed(key) {
+  if (!key) return false;
+  const now = Date.now();
+  cleanupProcessedPayments(now);
+  const ts = processedPayments.get(key);
+  return !!ts && (now - ts) <= PAYMENT_TTL_MS;
+}
+
+function markPaymentProcessed(key) {
+  if (!key) return;
+  processedPayments.set(key, Date.now());
+}
 
 function getCounterFile(isTest) {
   const dir = './data';
@@ -512,6 +623,28 @@ function computeOrderTotal(order = {}) {
   return base + extra; // Ft-ban
 }
 
+// --- Safe internal POST with timeout (prevents /api/payment/success hanging forever) ---
+async function postJsonWithTimeout(url, body, timeoutMs = 8000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {}),
+      signal: ctrl.signal
+    });
+    return { ok: r.ok, status: r.status };
+  } catch (e) {
+    const msg = (e && (e.name === 'AbortError' ? 'timeout' : e.message)) || String(e);
+    return { ok: false, error: msg };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+
 /* ==========================================================
    VIVA SMART CHECKOUT – FIZETÉS INDÍTÁSA (CREATE)
 ========================================================== */
@@ -526,8 +659,6 @@ app.post("/api/payment/create", async (req, res) => {
     console.log(
       `[VIVA CREATE] Fizetés indítva: ${total} Ft | Csomag: ${data.package}`
     );
-    global.paymentAlreadyProcessed = false;
-
     // ------ 1) Viva access token ------
     const tokenData = await vivaGetToken();
     const accessToken = tokenData.access_token;
@@ -570,6 +701,9 @@ app.post("/api/payment/create", async (req, res) => {
       });
     }
 
+    // Rendelés adat elmentése orderCode-hoz (a success redirect ezt fogja használni)
+    storePendingOrder(orderJson.orderCode, data);
+
     const payUrl = `https://www.vivapayments.com/web/checkout?ref=${orderJson.orderCode}`;
 
     console.log("[VIVA PAY URL]", payUrl);
@@ -595,37 +729,46 @@ app.get("/api/payment/success", async (req, res) => {
   const transactionId = req.query.transactionId;
 
   console.log("[VIVA SUCCESS REDIRECT]", { orderCode, transactionId });
-// === DUPLA FUTÁS ELLENI VÉDELEM ===
-if (global.paymentAlreadyProcessed) {
-  console.log("[SUCCESS] Már feldolgozott fizetés → redirect NovaBot siker oldalra");
-  return res.redirect("/megrendeles.html?paid=success");
-}
-global.paymentAlreadyProcessed = true;
+// === DUPLA FUTÁS ELLENI VÉDELEM (orderCode/transactionId alapján) ===
+  const pkey = paymentKey(orderCode, transactionId);
+  if (pkey && isPaymentProcessed(pkey)) {
+    console.log('[SUCCESS] Már feldolgozott fizetés (dedupe) → redirect NovaBot siker oldalra', pkey);
+    return res.redirect('/megrendeles.html?paid=success');
+  }
+  if (pkey) {
+    markPaymentProcessed(pkey);
+  } else {
+    console.warn('[SUCCESS] Hiányzik orderCode/transactionId → dedupe nem alkalmazható.');
+  }
 
-  const o = global.lastOrderData || {};
+  // Rendelés payload betöltése orderCode alapján (biztonságos párhuzamos fizetésekhez)
+  const o = loadPendingOrder(orderCode) || global.lastOrderData || {};
 
   // ====== DAL GENERÁLÁS ======
   try {
-    if (global.lastOrderData) {
+    // Ha nincs rendelés adat (pl. szerver restart / hiányzó orderCode), ne akasszuk meg a flow-t
+    if (o && Object.keys(o).length) {
       const apiUrl =
         (process.env.PUBLIC_URL || "https://www.enzenem.hu") +
         "/api/generate_song";
 
-      await fetch(apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(global.lastOrderData),
-      });
-
-      console.log("[SUCCESS] Dal generálás elindult.");
+      const trig = await postJsonWithTimeout(apiUrl, o, 8000);
+      if (trig.ok) {
+        console.log("[SUCCESS] Dal generálás elindult.");
+      } else {
+        console.warn("[SUCCESS] Dal generálás indítás sikertelen:", trig.error || trig.status);
+      }
     } else {
       console.warn(
-        "[SUCCESS] Nincs lastOrderData → nem indítom a generálást."
+        "[SUCCESS] Nincs elérhető rendelés adat (order payload) → nem indítom a generálást."
       );
     }
   } catch (err) {
     console.error("[SUCCESS] Generálási hiba:", err);
   }
+
+  // Sikeres flow után töröljük a pending order-t (a dedupe már védi az ismétlődést)
+  if (orderCode) deletePendingOrder(orderCode);
 
   // ====== EMAIL + SZÁMLA (AZ EREDETI LOGIKÁDDAL) ======
   try {
