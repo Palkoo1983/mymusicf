@@ -94,14 +94,65 @@ function deletePendingOrder(orderCode) {
   persistPendingOrders();
 }
 
+// === INTERNAL CLIENT REF (enz_ref) ===
+// We add our own reference to success/fail URLs so the redirect ALWAYS contains a key,
+// even if Viva does not append orderCode/transactionId.
+function makeEnzRef() {
+  return 'enz_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+}
+
+function extractEnzRef(req) {
+  const q = (req && req.query) ? req.query : {};
+  const v = q.enz_ref || q.enzRef || q.enzref || q.enzenem_ref || q.enzenemRef || q.ref || q.reference;
+  return (v !== undefined && v !== null) ? String(v).trim() : '';
+}
+
 function paymentKey(orderCode, transactionId) {
   const oc = (orderCode || '').toString().trim();
   const tx = (transactionId || '').toString().trim();
-
-  // Preferáld a transactionId-t, mert az a legstabilabb egyedi azonosító.
-  // Így ha egyszer tx-vel jött, később tx nélkül is (orderCode-dal) ugyanarra kulcsot kap.
+  if (oc && tx) return `oc:${oc}|tx:${tx}`;
   if (tx) return `tx:${tx}`;
   if (oc) return `oc:${oc}`;
+  return '';
+}
+
+
+// --- Extract Viva redirect params robustly ---
+// Viva Smart Checkout redirect may not use 'orderCode'/'transactionId' keys consistently.
+// We try common keys + any 16-digit token in query values / URL.
+function extractOrderCode(req) {
+  const q = (req && req.query) ? req.query : {};
+  const candidates = [
+    q.orderCode, q.ordercode, q.OrderCode, q.order_code,
+    q.ref, q.reference, q.s, q.oc, q.order
+  ].filter(v => v !== undefined && v !== null && String(v).trim() !== '');
+  if (candidates.length) return String(candidates[0]).trim();
+
+  // Any 16-digit value in query?
+  for (const v of Object.values(q)) {
+    const sv = (v !== undefined && v !== null) ? String(v).trim() : '';
+    if (/^\d{16}$/.test(sv)) return sv;
+  }
+
+  // Fallback: search 16-digit token in URL
+  const url = (req && (req.originalUrl || req.url)) ? String(req.originalUrl || req.url) : '';
+  const m = url.match(/\b\d{16}\b/);
+  return m ? m[0] : '';
+}
+
+function extractTransactionId(req) {
+  const q = (req && req.query) ? req.query : {};
+  const candidates = [
+    q.transactionId, q.transactionid, q.transaction_id,
+    q.t, q.tx, q.trx, q.trxId, q.transaction
+  ].filter(v => v !== undefined && v !== null && String(v).trim() !== '');
+  if (candidates.length) return String(candidates[0]).trim();
+
+  // If any value looks like a UUID, take it
+  for (const v of Object.values(q)) {
+    const sv = (v !== undefined && v !== null) ? String(v).trim() : '';
+    if (/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(sv)) return sv;
+  }
   return '';
 }
 
@@ -260,7 +311,7 @@ function saveInvoiceCounter(data) {
  * Számla PDF generálása
  * mode: 'test' | 'live'
  * total: bruttó összeg (Ft)
- * order: a global.lastOrderData (megrendelési adatok)
+ * order: a rendelés payload (megrendelési adatok)
  */
 async function generateInvoicePDF({ mode, total, order }) {
   const isTest = mode === 'test';
@@ -518,7 +569,6 @@ app.get('/api/test-mail', (req, res) => {
 // === /api/order – csak mentünk, NEM küldünk e-mailt többé ===
 app.post('/api/order', (req, res) => {
   const o = req.body || {};
-  global.lastOrderData = o; // mentjük a fizetés callbackhez
 
   // ❗ NINCS több admin email itt!
   // Megrendeléskor NINCS e-mail küldve.
@@ -650,8 +700,10 @@ async function postJsonWithTimeout(url, body, timeoutMs = 8000) {
 ========================================================== */
 app.post("/api/payment/create", async (req, res) => {
   try {
-    global.lastOrderData = req.body;
     const data = req.body || {};
+
+
+    const enzRef = makeEnzRef();
 
     // ------ Ár kiszámítása (a saját szabályod szerint) ------
     const total = computeOrderTotal(data);
@@ -682,10 +734,10 @@ app.post("/api/payment/create", async (req, res) => {
           // itt opcionálisak – de ugyanazokra mutatnak:
           successUrl:
             (process.env.PUBLIC_URL || "https://www.enzenem.hu") +
-            "/api/payment/success",
+            `/api/payment/success?enz_ref=${encodeURIComponent(enzRef)}`,
           failureUrl:
             (process.env.PUBLIC_URL || "https://www.enzenem.hu") +
-            "/api/payment/fail",
+            `/api/payment/fail?enz_ref=${encodeURIComponent(enzRef)}`,
         }),
       }
     );
@@ -701,7 +753,8 @@ app.post("/api/payment/create", async (req, res) => {
       });
     }
 
-    // Rendelés adat elmentése orderCode-hoz (a success redirect ezt fogja használni)
+    // Rendelés adat elmentése (enz_ref + orderCode)
+    storePendingOrder(enzRef, data);
     storePendingOrder(orderJson.orderCode, data);
 
     const payUrl = `https://www.vivapayments.com/web/checkout?ref=${orderJson.orderCode}`;
@@ -725,12 +778,13 @@ app.post("/api/payment/create", async (req, res) => {
    SIKERES FIZETÉS – REDIRECT HANDLER (NEM WEBHOOK!)
 ========================================================== */
 app.get("/api/payment/success", async (req, res) => {
-  const orderCode = req.query.orderCode;
-  const transactionId = req.query.transactionId;
+  const orderCode = extractOrderCode(req);
+  const transactionId = extractTransactionId(req);
+  const enzRef = extractEnzRef(req);
 
-  console.log("[VIVA SUCCESS REDIRECT]", { orderCode, transactionId });
+  console.log("[VIVA SUCCESS REDIRECT]", { orderCode, transactionId, enzRef, queryKeys: Object.keys(req.query || {}) });
 // === DUPLA FUTÁS ELLENI VÉDELEM (orderCode/transactionId alapján) ===
-  const pkey = paymentKey(orderCode, transactionId);
+  const pkey = paymentKey(orderCode || enzRef, transactionId);
   if (pkey && isPaymentProcessed(pkey)) {
     console.log('[SUCCESS] Már feldolgozott fizetés (dedupe) → redirect NovaBot siker oldalra', pkey);
     return res.redirect('/megrendeles.html?paid=success');
@@ -742,7 +796,22 @@ app.get("/api/payment/success", async (req, res) => {
   }
 
   // Rendelés payload betöltése orderCode alapján (biztonságos párhuzamos fizetésekhez)
-  const o = loadPendingOrder(orderCode) || global.lastOrderData || {};
+  const o = (enzRef ? loadPendingOrder(enzRef) : null) || (orderCode ? loadPendingOrder(orderCode) : null) || {};
+
+  // Ha semmilyen rendelés payload nem elérhető, FAIL-SAFE: ne generáljunk dalt / számlát / e-mailt,
+  // mert így lehet félre-számlázás vagy téves e-mail küldés. Ilyenkor csak a siker oldalt adjuk vissza.
+  if (!o || !Object.keys(o).length) {
+    console.warn('[SUCCESS] Missing order payload (no pending order found) → skipping generation/invoice/email.');
+    return res.send(`
+      <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
+        <h2>✅ Fizetés sikeres!</h2>
+        <p>A fizetés sikeres volt, de a rendelés adatai nem találhatók a szerveren.</p>
+        <p>Kérjük, írj az <b>info@enzenem.hu</b> címre a tranzakció adataival, és azonnal intézzük.</p>
+        <a href="/" style="color:#21a353;text-decoration:none">Vissza a főoldalra</a>
+      </body></html>
+    `);
+  }
+
 
   // ====== DAL GENERÁLÁS ======
   try {
@@ -768,6 +837,7 @@ app.get("/api/payment/success", async (req, res) => {
   }
 
   // Sikeres flow után töröljük a pending order-t (a dedupe már védi az ismétlődést)
+  if (enzRef) deletePendingOrder(enzRef);
   if (orderCode) deletePendingOrder(orderCode);
 
   // ====== EMAIL + SZÁMLA (AZ EREDETI LOGIKÁDDAL) ======
