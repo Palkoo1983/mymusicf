@@ -408,10 +408,26 @@
 
   function syncDynamicExampleLabels(lang){
     document.querySelectorAll('#enz-order-examples [data-label-en]').forEach(el => {
-      const hu = el.getAttribute('data-label') || '';
+      if (!el.hasAttribute('data-label-hu')) {
+        el.setAttribute('data-label-hu', el.getAttribute('data-label') || '');
+      }
+      const hu = el.getAttribute('data-label-hu') || el.getAttribute('data-label') || '';
       const en = el.getAttribute('data-label-en') || hu;
       const next = lang === 'en' ? en : hu;
-      if (next && el.textContent !== next) el.textContent = next;
+      if (!next) return;
+
+      // The order example chips are normalized by the legacy NovaBot CSS patch:
+      // .nb-show-label renders data-label via ::before. If we also put the
+      // same label into textContent, the visible caption appears twice.
+      if (el.classList.contains('nb-show-label')) {
+        el.setAttribute('data-label', next);
+        el.setAttribute('aria-label', next);
+        el.setAttribute('title', next);
+        if (el.textContent) el.textContent = '';
+        return;
+      }
+
+      if (el.textContent !== next) el.textContent = next;
     });
   }
 
