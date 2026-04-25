@@ -261,6 +261,90 @@ function makeKey(o){
   return 'req_' + (h >>> 0).toString(16);
 }
 
+
+/* ----------------- Language lock helpers ----------------- */
+function stripLangAccents(s = '') {
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function normalizeSongLanguage(input = '') {
+  const raw = String(input || '').trim();
+  const n = stripLangAccents(raw);
+
+  const languages = [
+    { code: 'hu', nameEn: 'Hungarian', nameHu: 'magyar', aliases: ['hu','hun','magyar','hungarian'] },
+    { code: 'en', nameEn: 'English', nameHu: 'angol', aliases: ['en','eng','angol','english'] },
+    { code: 'de', nameEn: 'German', nameHu: 'német', aliases: ['de','deu','nemet','german','deutsch'] },
+    { code: 'fr', nameEn: 'French', nameHu: 'francia', aliases: ['fr','fra','francia','french','francais'] },
+    { code: 'es', nameEn: 'Spanish', nameHu: 'spanyol', aliases: ['es','spa','spanyol','spanish','espanol'] },
+    { code: 'it', nameEn: 'Italian', nameHu: 'olasz', aliases: ['it','ita','olasz','italian','italiano'] },
+    { code: 'nl', nameEn: 'Dutch', nameHu: 'holland', aliases: ['nl','holland','hollandul','dutch','nederlands'] },
+    { code: 'pt', nameEn: 'Portuguese', nameHu: 'portugál', aliases: ['pt','portugal','portugalul','portuguese','portugues'] },
+    { code: 'ro', nameEn: 'Romanian', nameHu: 'román', aliases: ['ro','roman','romanul','romanian'] },
+    { code: 'sk', nameEn: 'Slovak', nameHu: 'szlovák', aliases: ['sk','szlovak','slovak'] },
+    { code: 'pl', nameEn: 'Polish', nameHu: 'lengyel', aliases: ['pl','lengyel','polish'] },
+    { code: 'uk', nameEn: 'Ukrainian', nameHu: 'ukrán', aliases: ['uk','ua','ukran','ukrainian'] }
+  ];
+
+  for (const lang of languages) {
+    if (lang.aliases.includes(n)) return { ...lang, raw: raw || lang.nameHu };
+  }
+
+  // Free-text fallback: keep the requested language name, but still lock the model to it.
+  return {
+    code: 'custom',
+    nameEn: raw || 'Hungarian',
+    nameHu: raw || 'magyar',
+    raw: raw || 'magyar',
+    aliases: []
+  };
+}
+
+function escapeRegExpForLang(s = '') {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function languageWordHitCount(text = '', words = []) {
+  const t = stripLangAccents(text);
+  let hits = 0;
+  for (const w of words) {
+    const ww = escapeRegExpForLang(stripLangAccents(w));
+    const re = new RegExp(`\\b${ww}\\b`, 'g');
+    const m = t.match(re);
+    if (m) hits += m.length;
+  }
+  return hits;
+}
+
+function detectSelectedLanguageMismatch(text = '', targetLanguage = {}) {
+  const target = targetLanguage.code || 'custom';
+  const sample = String(text || '').replace(/^\s*\((Verse\s*[1-4]|Chorus)\)\s*$/gmi, '').trim();
+  if (!sample) return false;
+
+  // Only use high-signal function words, not topic words like Pain/School/doctor,
+  // because proper names, brands and institution names may legally stay unchanged.
+  const huWords = [
+    'és','hogy','mert','vagy','nem','van','volt','lesz','egy','az','én','te','mi','ti',
+    'ha','de','csak','már','még','majd','ahol','amikor','mint','úgy','ezt','azt','nekem','veled','nélkül'
+  ];
+  const enWords = [
+    'the','and','you','your','yours','with','without','this','that','these','those','we','our','ours',
+    'are','is','was','were','from','to','for','of','in','on','at','when','where','because','but','only','still'
+  ];
+
+  const huHits = languageWordHitCount(sample, huWords);
+  const enHits = languageWordHitCount(sample, enWords);
+  const strongHuCharCount = (sample.match(/[őűŐŰ]/g) || []).length;
+
+  if (target === 'en') return huHits >= 5 || (strongHuCharCount >= 2 && huHits >= 2);
+  if (target === 'hu') return enHits >= 10;
+
+  // For other languages, at least prevent the known failure mode: Hungarian output after non-Hungarian selection,
+  // while allowing Hungarian proper names/places with ő/ű.
+  if (target !== 'hu' && target !== 'custom') return huHits >= 7 || (strongHuCharCount >= 3 && huHits >= 2);
+  return false;
+}
+
 /* ================== ENV / Mail settings =================== */
 const ENV = {
   SMTP_HOST: process.env.SMTP_HOST,
@@ -999,6 +1083,10 @@ app.post('/api/generate_song', async (req, res) => {
 
     let { title = '', styles = '', vocal = 'instrumental', language = 'hu', brief = '' } = req.body || {};
 
+    // A választott nyelv az egyetlen forrás az output nyelvéhez.
+    // A briefben szereplő más nyelvek csak tartalmi/hangulati források lehetnek.
+    const targetLanguage = normalizeSongLanguage(language);
+
     // Map package/format
     const pkg = (req.body && (req.body.package||req.body.format)) ? String((req.body.package||req.body.format)).toLowerCase() : 'basic';
     const format = pkg==='basic' ? 'mp3' : (pkg==='video' ? 'mp4' : pkg==='premium' ? 'wav' : pkg);
@@ -1043,22 +1131,30 @@ else vocal = (v || 'instrumental');
    // --- GPT System Prompt ---
 const profile = determineStyleProfile(styles, brief, vocal);
 
-// Magyar nyelvű, de kulcsosított leírás a GPT-nek
+// Nyelvfüggetlen stílusprofil a GPT-nek
+const profileKeywordsText = targetLanguage.code === 'hu'
+  ? (profile.words.keywords || []).join(', ')
+  : 'Use the meaning of any profile keywords only; do not copy non-target-language keywords.';
+
 const styleProfileText = `
-Style profile (in Hungarian, use these traits in writing):
+Style profile:
 tone: ${profile.tone.emotion}, ${profile.tone.brightness}, ${profile.tone.density}
-rhythm: ${profile.rhythm.wordsPerLine[0]}–${profile.rhythm.wordsPerLine[1]} szó/sor, tempó: ${profile.rhythm.tempo}
-theme: ${profile.theme || 'általános'}
+rhythm: ${profile.rhythm.wordsPerLine[0]}–${profile.rhythm.wordsPerLine[1]} words per line, tempo: ${profile.rhythm.tempo}
+theme: ${profile.theme || 'general'}
 poetic images: ${profile.words.poeticImages || 'balanced'}
-keywords: ${(profile.words.keywords || []).join(', ')}
-adultLock: ${profile.adultLock ? 'TRUE – TILOS gyerekdalos szóhasználat és onomatopoézia (napocska, dalocska, taps-taps, la-la, bumm-bumm, játsszunk, ovis). Felnőtt, büszke, megható hangon írj.' : 'FALSE'}
-special rules: ${profile.universalRules.enforceVariation ? 'változatos, logikus képek' : ''}
+keywords: ${profileKeywordsText}
+adultLock: ${profile.adultLock ? 'TRUE – avoid childish/nursery-rhyme wording and onomatopoeia unless explicitly requested.' : 'FALSE'}
+special rules: ${profile.universalRules.enforceVariation ? 'varied, logical imagery' : ''}
 `;
 
 // GPT rendszer prompt (megtartva a JSON formátumot)
 const sys1 = [
-  'You are a professional music lyric writer AI. You generate complete, structured Hungarian song lyrics strictly following the requested style and theme.',
-  'Write STRICTLY in Hungarian. No language mixing.',
+  'You are a professional music lyric writer AI. You generate complete, structured song lyrics strictly following the requested style and theme.',
+  `TARGET LANGUAGE: ${targetLanguage.nameEn}.`,
+  `Write STRICTLY in ${targetLanguage.nameEn}. No language mixing.`,
+  'If the brief contains another language, use it ONLY as source meaning, mood, story, context and proper names; translate/adapt all lyric lines into the selected target language.',
+  'If the brief contains an already written complete lyric draft in the selected target language, preserve its main hook, chorus, message and title-like phrases; polish lightly instead of replacing it.',
+  'Never output a different language than the selected target language, except unchanged proper names, brand names, titles or medical/institution names from the brief.',
 
   'MODE GATING:',
   (profile && profile.adultLock)
@@ -1153,11 +1249,11 @@ const sys2Adult = [
   '- NEVER use funeral tone for positive events.',
 
   'RAP:',
-  '- Confident, rhythmic Hungarian rap tone.',
+  `- Confident, rhythmic ${targetLanguage.nameEn} rap tone.`,
   '- 10–16 words per line, always maintaining a clear 4/4 flow.',
   '- Use concrete, everyday imagery (streets, notes, nights, routine, ambition).',
   '- Use light internal rhymes without sacrificing clarity.',
-  '- Each line must be one full, grammatically correct Hungarian sentence.',
+  `- Each line must be one full, grammatically correct ${targetLanguage.nameEn} sentence.`,
   '- Avoid lyrical-ballad tone completely; keep the voice direct and grounded.',
   '- Do not use soft romantic metaphors or cinematic descriptions.',
   '- Keep metaphors minimal, simple, and concrete only.',
@@ -1174,7 +1270,7 @@ const sys2Child = [
   '- No dark or complex metaphors.',
   '- Use happy, safe, child-friendly images.',
   '- Onomatopoetic words (taps-taps, la-la, bumm-bumm) ONLY in the Chorus.',
-  '- NEVER invent or distort Hungarian words (pl. ragadogat, csillogogat).',
+  `- NEVER invent or distort ${targetLanguage.nameEn} words; use only valid words unless they are proper names from the brief.`,
   '- If many children are listed, distribute them across the verses naturally; never list all in one verse.'
 ].join('\\n');
 
@@ -1184,20 +1280,18 @@ const sys2Final = ((profile && profile.theme) === 'child')
 
 
 const sys3 = [
-  '=== HUNGARIAN LANGUAGE POLISH & COHERENCE RULES ===',
-  '- Write in natural, grammatically correct Hungarian.',
+  `=== ${targetLanguage.nameEn.toUpperCase()} LANGUAGE POLISH & COHERENCE RULES ===`,
+  `- Write in natural, grammatically correct ${targetLanguage.nameEn}.`,
   '- Every line must be a full, meaningful sentence.',
   '- Keep a clear logical flow between all lines and sections.',
-  '- Use natural Hungarian word order.',
-  '- Use correct suffixes, vowel harmony and case endings.',
-  '- Ensure verb–noun agreement in number and person.',
+  `- Use natural ${targetLanguage.nameEn} word order and idioms.`,
+  '- Ensure correct grammar, agreement, tense and punctuation for the target language.',
   '- Remove unnecessary spaces or blank lines.',
   '- Avoid double punctuation and unwanted repetition.',
-  '- Capitalize the first letter of each line.',
+  '- Capitalize lines naturally according to the target language.',
 
-  '- Use natural Hungarian conjugations.',
   '- Replace awkward expressions with fluent, native phrasing.',
-  '- Convert numeric digits into written Hungarian words.',
+  `- Convert numeric digits into written ${targetLanguage.nameEn} words when it sounds natural in lyrics.`,
   '- Do NOT change the meaning of ages or years.',
   '- Do NOT place numbers in section headings.',
 
@@ -1212,10 +1306,9 @@ const sys3 = [
   '- Make the final Chorus repeat IDENTICALLY.',
   '- Keep the entire song cohesive, expressive and human.',
   '- Avoid confusing or contradictory statements.',
-  '- Use ONLY valid, existing Hungarian words (no invented or distorted forms).',
-  '- Each line must be a complete, meaningful Hungarian sentence (subject + predicate).',
-  '- Maintain consistent verb tense throughout the entire song (no random past/present/future switching).',
-  '- Apply correct Hungarian conjugation: verbs and nouns must agree in number and case.',
+  `- Use ONLY valid, existing ${targetLanguage.nameEn} words, except unchanged proper names/brand names from the brief.`,
+  '- Each line must be a complete, meaningful sentence.',
+  '- Maintain consistent verb tense throughout the entire song unless the story clearly requires a shift.',
   '- Do not mix singular/plural inconsistently.',
   '- Keep sentence logic clear: no contradictory or unclear actions.',
   '- Avoid filler words, meaningless expressions, or machine-like phrasing.',
@@ -1227,14 +1320,16 @@ const sys3 = [
 
 
 // Explicit instruction: include all specific years, names, and places mentioned in the brief naturally in the lyrics.
-const briefIncludeRule = 'Include every specific year, name, and place mentioned in the brief naturally in the lyrics.';
+const briefIncludeRule = `Include every specific year, name, and place mentioned in the brief naturally in the ${targetLanguage.nameEn} lyrics.`;
 
 // User prompt = input + stílusprofil
 const usr1 = [
   'Title: ' + title,
   'Client styles: ' + styles,
   'Vocal: ' + vocal,
-  'Language: ' + language,
+  'Original language field: ' + language,
+  'Selected target language: ' + targetLanguage.nameEn,
+  'LANGUAGE LOCK: Final lyrics must be only in the selected target language. Other languages in the brief are source material only.',
   'Brief: ' + brief,
    briefIncludeRule,
   '',
@@ -1308,9 +1403,9 @@ if (profile && profile.adultLock) {
 
     try {
       const rewriteSys = [
-        'You are a professional Hungarian lyric editor.',
-        'Rewrite the draft into a mature, adult POP love song in Hungarian.',
-        'Write STRICTLY in Hungarian. No language mixing.',
+        `You are a professional ${targetLanguage.nameEn} lyric editor.`,
+        `Rewrite the draft into mature, adult lyrics in ${targetLanguage.nameEn}.`,
+        `Write STRICTLY in ${targetLanguage.nameEn}. No language mixing.`,
         'Keep the SAME required structure and constraints:',
         '(Verse 1) (Verse 2) (Chorus) (Verse 3) (Verse 4) (Chorus) (Chorus), each exactly 4 lines.',
         'Each line must have 7–16 words, and be one clear grammatical sentence.',
@@ -1376,7 +1471,77 @@ if (profile && profile.adultLock) {
   }
 }
 
-// --- convert numeric numbers to written Hungarian words (universal) ---
+// --- SELECTED LANGUAGE LOCK post-check ---
+// Ha a modell mégis más nyelven írt, legfeljebb kétszer újraíratjuk a választott nyelvre.
+let languageRewritePass = 0;
+while (detectSelectedLanguageMismatch(lyrics, targetLanguage) && languageRewritePass < 2) {
+  languageRewritePass += 1;
+  console.warn(`[LANGUAGE_LOCK] Output language mismatch detected for ${targetLanguage.nameEn} (pass ${languageRewritePass}) → rewriting.`);
+
+  try {
+    const langFixSys = [
+      `You are a strict ${targetLanguage.nameEn} lyric translation and editing engine.`,
+      `Rewrite/translate the complete draft lyrics into ${targetLanguage.nameEn} only.`,
+      'Do not add explanations, notes, markdown, JSON or commentary.',
+      'Keep the exact song structure and section headings: (Verse 1), (Verse 2), (Chorus), (Verse 3), (Verse 4), (Chorus), (Chorus).',
+      'Keep all names, brands, institutions, years, medical terms and key memories from the brief.',
+      'If the brief contains a complete lyric draft in the selected target language, preserve its hook and chorus as much as possible.',
+      `Absolutely no non-${targetLanguage.nameEn} lyric lines are allowed, except unchanged proper names/brand names/institution names.`
+    ].join('\n');
+
+    const langFixUsr = [
+      'Selected target language: ' + targetLanguage.nameEn,
+      'Original language field: ' + language,
+      'Client styles: ' + styles,
+      'Vocal: ' + vocal,
+      'Brief/source material:',
+      brief,
+      '',
+      '=== DRAFT TO FIX ===',
+      lyrics
+    ].join('\n');
+
+    const oiLang = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        messages: [
+          { role: 'system', content: langFixSys },
+          { role: 'user', content: langFixUsr }
+        ],
+        temperature: 0.15,
+        max_tokens: 1100
+      })
+    });
+
+    if (oiLang.ok) {
+      const jLang = await oiLang.json();
+      const rewrittenLang = (jLang?.choices?.[0]?.message?.content || '').trim();
+      if (rewrittenLang) lyrics = rewrittenLang;
+    } else {
+      const tLang = await oiLang.text();
+      console.warn('[LANGUAGE_LOCK] Rewrite OpenAI error', tLang.slice(0, 200));
+      break;
+    }
+  } catch (e) {
+    console.warn('[LANGUAGE_LOCK] Rewrite failed:', e?.message || e);
+    break;
+  }
+}
+
+if (detectSelectedLanguageMismatch(lyrics, targetLanguage)) {
+  console.warn(`[LANGUAGE_LOCK] Still mismatched after rewrites for ${targetLanguage.nameEn}; saving warning instead of wrong-language lyrics.`);
+  lyrics = targetLanguage.code === 'hu'
+    ? `[LANGUAGE_LOCK_FAILED] A rendszer nem tudta biztonságosan a kiválasztott nyelven (${targetLanguage.nameEn}) előállítani a dalszöveget. Kézi ellenőrzés szükséges.`
+    : `[LANGUAGE_LOCK_FAILED] The system could not safely produce lyrics in the selected language (${targetLanguage.nameEn}). Manual review is required.`;
+}
+
+// --- convert numeric numbers to written Hungarian words (Hungarian output only) ---
+if (targetLanguage.code === 'hu') {
 function numToHungarian(n) {
   const ones = ['nulla','egy','kettő','három','négy','öt','hat','hét','nyolc','kilenc'];
   const tens = ['','tíz','húsz','harminc','negyven','ötven','hatvan','hetven','nyolcvan','kilencven'];
@@ -1428,7 +1593,7 @@ lyrics = lyrics.replace(/\b\d{1,3}\b/g, (m, _off, str) => {
   if (/Verse\s$/i.test(prev) || /Chorus\s$/i.test(prev)) return m;
   return numToHungarian(parseInt(m, 10));
 });
-
+}
 
 
 // --- UNIVERSAL NORMALIZE GENRES (HU → EN) ---
@@ -1747,10 +1912,10 @@ function determineStyleProfile(styles = '', brief = '', vocal = '') {
   const childIntent = isChildIntent(styles, brief, vocal);
   const adultLock = !childIntent;
 
-  if (/(esküvő|lánykérés|valentin|jegyes|házasság)/.test(b)) theme = 'wedding';
-  else if (/(temetés|halál|gyász|nyugodj|részvét|elmúlás)/.test(b)) theme = 'funeral';
+  if (/(esküvő|eskuvo|lánykérés|lanykeres|valentin|jegyes|házasság|hazassag|wedding|proposal|engagement|marriage|valentine)/.test(b)) theme = 'wedding';
+  else if (/(temetés|temetes|halál|halal|gyász|gyasz|nyugodj|részvét|reszvet|elmúlás|elmulas|funeral|death|grief|condolence|in memory|memorial)/.test(b)) theme = 'funeral';
   else if (childIntent) theme = 'child';
-  else if (/(szülinap|születésnap|ünnep|party|ünneplés|boldog szülinap)/.test(b)) theme = 'birthday';
+  else if (/(szülinap|szulinap|születésnap|szuletesnap|ünnep|unnep|party|ünneplés|unneples|boldog szülinap|boldog szulinap|birthday|happy birthday|50th|fiftieth|anniversary)/.test(b)) theme = 'birthday';
 
   // --- 4️⃣ Alap stílusprofilok ---
   const baseProfiles = {
