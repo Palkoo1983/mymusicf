@@ -353,6 +353,7 @@
       if (SKIP_ATTR_TAGS.has(el.tagName)) return;
       ATTRS.forEach(attr => {
         if (!el.hasAttribute(attr)) return;
+        if (attr === 'placeholder' && el.matches && el.matches('#brief, textarea[name="brief"]') && el.getAttribute('data-enz-example-placeholder') === '1') return;
         el.__enzOrigAttrs = el.__enzOrigAttrs || {};
         const cur = el.getAttribute(attr) || '';
         const saved = el.__enzOrigAttrs[attr];
@@ -405,6 +406,24 @@
     input.value = lang === 'en' ? 'English' : 'magyar';
   }
 
+  function syncDynamicExampleLabels(lang){
+    document.querySelectorAll('#enz-order-examples [data-label-en]').forEach(el => {
+      const hu = el.getAttribute('data-label') || '';
+      const en = el.getAttribute('data-label-en') || hu;
+      const next = lang === 'en' ? en : hu;
+      if (next && el.textContent !== next) el.textContent = next;
+    });
+  }
+
+  function syncBriefExamplePlaceholder(lang){
+    const desc = document.querySelector('#brief, #orderForm textarea[name="brief"], #order textarea[name="brief"]');
+    if (!desc || desc.getAttribute('data-enz-example-placeholder') !== '1') return;
+    const hu = desc.getAttribute('data-enz-example-hu') || '';
+    const en = desc.getAttribute('data-enz-example-en') || hu;
+    const next = lang === 'en' ? (en || hu) : (hu || en);
+    if (next && desc.getAttribute('placeholder') !== next) desc.setAttribute('placeholder', next);
+  }
+
   let applying = false;
   function applyLanguage(lang = currentLang()){
     if (!LANGS.has(lang)) lang = DEFAULT_LANG;
@@ -416,6 +435,8 @@
       translateAttrs(document.body, lang);
       syncToggle(lang);
       syncOrderLanguageField(lang);
+      syncDynamicExampleLabels(lang);
+      syncBriefExamplePlaceholder(lang);
     } finally {
       applying = false;
     }

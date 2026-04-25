@@ -174,7 +174,12 @@ function initHowTo() {
     e.preventDefault();
     e.stopPropagation();
 
+    const uiLang = (window.EnzI18n && typeof window.EnzI18n.getLanguage === 'function')
+      ? window.EnzI18n.getLanguage()
+      : (document.documentElement.dataset.uiLang || 'hu');
+
     const text =
+      (uiLang === 'en' && chip.getAttribute('data-example-en')) ||
       chip.getAttribute('data-example') ||
       chip.getAttribute('data-text') ||
       (chip.textContent || '').trim();
@@ -187,8 +192,18 @@ function initHowTo() {
   const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
   if (!desc) return;
 
+  const currentValue = (desc.value || '').trim();
+  const previousSampleValue = (desc.getAttribute('data-enz-example-value-fallback') || '').trim();
+  if (currentValue && previousSampleValue && currentValue === previousSampleValue) {
+    desc.value = '';
+  }
   desc.placeholder = text;
+  desc.setAttribute('data-enz-example-placeholder', '1');
+  desc.setAttribute('data-enz-example-hu', chip.getAttribute('data-example') || text);
+  desc.setAttribute('data-enz-example-en', chip.getAttribute('data-example-en') || text);
+  desc.setAttribute('data-enz-example-value-fallback', text);
   desc.dispatchEvent(new Event('input', { bubbles: true }));
+  desc.dispatchEvent(new Event('change', { bubbles: true }));
 
   const isMobile = window.innerWidth < 640;
 
@@ -267,6 +282,20 @@ const examples = [
   'Karácsonyra szeretnék egy dalt a családomnak. Minden évben együtt díszítjük a fát, anya sütit süt, apa meg énekel, mi pedig táncolunk. A másik emlék, amit a dalban hallanék, amikor szilveszterkor nevetve táncoltunk a nappaliban, és mindenki boldog volt.'
 ];
 
+const examplesEn = [
+  'I would like a birthday song for my sister, Nóra. She is 46 and has always loved dance music. I remember when we danced in the living room to her favorite songs and everyone was laughing. It would be great if the song included that summer evening when we hiked together on Csóványos and laughed through the whole night.',
+  'I would like a romantic song for Kata and Máté’s wedding. They truly got to know each other during their first holiday at Lake Balaton, when they were caught in a storm but danced on the shore. The proposal happened in Tuscany at sunset, on a hilltop — I would love the song to capture that feeling.',
+  'I would like to surprise my husband, Bence, with a song for our wedding anniversary. On our first date we got lost in Városliget and ended up eating ice cream on a bench, laughing. Another memory is when we were renovating our apartment, eating pizza on the floor and crying from laughter.',
+  'I would like a farewell song for our dear colleague Zoli, from the whole team, for his funeral. He was the one who always brought good mood to the office. Once, when the printer broke, he fixed it with a paperclip and a coffee. Another memory is when he brought cookies to everyone before Christmas and made the whole team laugh.',
+  'I would like a song for our company year-end event. We had a shared project with András where we worked late into the night, but we listened to music and danced while doing it. Another memory is when we won the company competition and accidentally poured champagne over the boss — I would love that mood in the song.',
+  'I would like a birthday song for my six-year-old daughter, Lili. Every morning she dances in front of the mirror with a hairbrush in her hand and sings her own songs. Another favorite story is when she fell off her bike in the park, stood up, and said: “It’s okay, Mom, heroes don’t cry!”',
+  'I would like a retirement song for our dear colleague Feri. He was the one who brought coffee to everyone every Monday morning and always said: “This is just another new beginning.” Once, during a company trip, he organized a karaoke night, and nobody will forget him singing Elvis Presley.',
+  'I would like to wish my friend Eszter a fast recovery with a song. When she was in hospital, she laughed and said that when she gets better, we will go dancing like we used to. Another memory is when we got lost in the Balaton Highlands, but it became one of our most beautiful days — I want the song to give her strength and joy.',
+  'I would like a song for my proposal, because I am going to ask Anna to marry me in Paris in front of the Eiffel Tower. Our first trip together also led us there, back when we were only friends. Another moment was when we first danced in the rain on the steps of Montmartre — this should definitely be in the song.',
+  'I would like a song for my son Tamás’s graduation ceremony. I remember him studying at the kitchen table through the night, trying to stay awake with coffee. Another moment was when, as a child, he said: “Mom, one day I will become someone great” — and now he really has.',
+  'I would like a Christmas song for my family. Every year we decorate the tree together, Mom bakes cookies, Dad sings, and we dance. Another memory I would love to hear in the song is when we danced in the living room on New Year’s Eve, laughing and feeling truly happy.'
+];
+
   const exTitle = document.createElement('div');
 exTitle.textContent = 'Minta leírások:';
 exTitle.style.marginTop = '10px';
@@ -293,8 +322,31 @@ examples.forEach((t, i) => {
     "🎁 Ünnepi dal"
   ];
 
+  const labelsEn = [
+    "🎂 Nóra – birthday",
+    "💍 Kata & Máté – wedding",
+    "❤️ Bence – anniversary",
+    "👋 Zoli – farewell",
+    "🏢 András – corporate event",
+    "🧒 Lili – children’s song",
+    "☕ Feri – retirement",
+    "🌸 Eszter – get well soon",
+    "💞 Anna – proposal",
+    "🎓 Tamás – graduation",
+    "🎁 Holiday song"
+  ];
+
+  const currentUiLang = () => (window.EnzI18n && typeof window.EnzI18n.getLanguage === 'function')
+    ? window.EnzI18n.getLanguage()
+    : (document.documentElement.dataset.uiLang || 'hu');
+
+  b.setAttribute('data-example', t);
+  b.setAttribute('data-example-en', examplesEn[i] || t);
+  b.setAttribute('data-label', labels[i] || `Minta ${i + 1}`);
+  b.setAttribute('data-label-en', labelsEn[i] || `Example ${i + 1}`);
+
   // 🔸 Címke szöveg a labels tömbből (biztonsági fallback-kel)
-  b.textContent = labels[i] || `Minta ${i + 1}`;
+  b.textContent = currentUiLang() === 'en' ? (labelsEn[i] || `Example ${i + 1}`) : (labels[i] || `Minta ${i + 1}`);
   b.className = 'chip';
   b.style.padding = '6px 10px';
   b.style.borderRadius = '999px';
@@ -313,7 +365,21 @@ examples.forEach((t, i) => {
   b.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    desc.placeholder = t;
+    const langNow = currentUiLang();
+    const fullText = langNow === 'en' ? (examplesEn[i] || t) : t;
+    const currentValue = (desc.value || '').trim();
+    const previousSampleValue = (desc.getAttribute('data-enz-example-value-fallback') || '').trim();
+    if (currentValue && previousSampleValue && currentValue === previousSampleValue) {
+      desc.value = '';
+    }
+    desc.placeholder = fullText;
+    desc.setAttribute('data-enz-example-placeholder', '1');
+    desc.setAttribute('data-enz-example-index', String(i));
+    desc.setAttribute('data-enz-example-hu', t);
+    desc.setAttribute('data-enz-example-en', examplesEn[i] || t);
+    desc.setAttribute('data-enz-example-value-fallback', fullText);
+    desc.dispatchEvent(new Event('input', { bubbles: true }));
+    desc.dispatchEvent(new Event('change', { bubbles: true }));
     try { desc.focus({ preventScroll: true }); } catch (_) {}
   });
 
