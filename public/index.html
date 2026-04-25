@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html lang="hu" data-ui-lang="hu">
 <head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-WJV4SZEPJ7"></script>
@@ -437,6 +437,14 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 <body class="gold-theme">
   <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
  <div class="video-panel">
+  <div class="lang-switch-wrap" data-current="hu" role="group" aria-label="Nyelvválasztó">
+    <span class="lang-code lang-code-hu">HU</span>
+    <label class="retro-radio-switch" for="uiLangToggle">
+      <input type="checkbox" id="uiLangToggle" aria-label="HU / ENG nyelvváltó">
+      <span class="retro-radio-track" aria-hidden="true"><span class="retro-radio-knob"></span></span>
+    </label>
+    <span class="lang-code lang-code-en">ENG</span>
+  </div>
   <select id="videoSelect" aria-label="Videó választó">
     <optgroup label="Valentin napi dalok">
       <option value="-9t-6te-QpE">Szerelmünk Szárnyán</option>
@@ -1625,6 +1633,8 @@ if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
   }, { passive: true });
 }
 </script>
+
+<script src="i18n.js?v=langtoggle1"></script>
 
 </body>
 </html>
