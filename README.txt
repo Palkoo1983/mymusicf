@@ -62,3 +62,12 @@ PRICE_PREMIUM=34900
 PRICE_VIDEO=49900
 
 Webhook beállítás: Render -> Routes -> /api/stripe/webhook (raw body), Stripe Dashboard -> Webhooks -> endpoint URL megadása.
+
+
+v2.0.2 – Viva biztonsági javítás
+- A korábbi /api/test-mail és /api/generate_song/ping végpontok megszűntek.
+- A Viva success redirect után kötelező a szerveroldali Retrieve Transaction ellenőrzés.
+- Csak az egyező orderCode, transactionId, statusId=F, összeg és HUF pénznem után indul teljesítés.
+- Az árakat és kézbesítési felárakat a szerver rögzített listából számolja.
+- A /api/generate_song kizárólag belső, hitelesített szerverhívással érhető el.
+- Telepítés és élő teszt: BIZTONSAGI-JAVITAS-TELEPITES.md

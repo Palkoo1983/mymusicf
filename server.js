@@ -9,6 +9,13 @@ import dotenv from 'dotenv';
 import { appendOrderRow, safeAppendOrderRow, getAndIncrementInvoiceSeq } from './sheetsLogger.js';
 import fs from 'fs';
 import PDFDocument from 'pdfkit';
+import crypto from 'crypto';
+import {
+  computeOrderTotal,
+  normalizeOrderForPayment,
+  responseJsonPreservingOrderCode,
+  validateVivaTransaction
+} from './paymentSecurity.js';
 
 
 // === DUPLA DALGENERÁLÁS / DUPLA FIZETÉS ELLENI VÉDELEM ===
@@ -98,7 +105,7 @@ function deletePendingOrder(orderCode) {
 // We add our own reference to success/fail URLs so the redirect ALWAYS contains a key,
 // even if Viva does not append orderCode/transactionId.
 function makeEnzRef() {
-  return 'enz_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+  return 'enz_' + Date.now().toString(36) + '_' + crypto.randomBytes(16).toString('hex');
 }
 
 function extractEnzRef(req) {
@@ -245,6 +252,9 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+// Egyszer használatos szerverfolyamat-kulcs: a nyilvános internet felől nem ismert,
+// az ugyanebben a Node-folyamatban futó success handler viszont használhatja.
+const INTERNAL_GENERATE_TOKEN = crypto.randomBytes(32).toString('hex');
 
 /* ----------------- Duplicate guard (idempotency) ----------------- */
 const activeStarts = new Map(); // key -> timestamp
@@ -521,10 +531,26 @@ async function generateInvoicePDF({ mode, total, order }) {
 }
 
 /* ================== Middleware / static ================= */
-app.use(cors());
-app.use(express.json());
+const allowedOrigins = new Set([
+  'https://enzenem.hu',
+  'https://www.enzenem.hu'
+]);
+try {
+  if (process.env.PUBLIC_URL) allowedOrigins.add(new URL(process.env.PUBLIC_URL).origin);
+} catch (_e) {
+  console.warn('[CORS] A PUBLIC_URL nem érvényes URL, csak az enzenem.hu domainek engedélyezettek.');
+}
+
+app.use(cors({
+  origin(origin, callback) {
+    // A böngészőn kívüli szerverhívásoknak nincs Origin fejléce.
+    if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+    return callback(null, false);
+  }
+}));
+app.use(express.json({ limit: '64kb' }));
 app.use(express.static('public'));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '64kb' }));
 
 /* ----------------- Simple rate-limit -------------------- */
 const hitMap = new Map();
@@ -536,6 +562,28 @@ function rateLimit(key, windowMs=10000, max=5){
   recent.push(now);
   hitMap.set(key, recent);
   return true;
+}
+
+function requestIp(req) {
+  const forwarded = String(req.headers['x-forwarded-for'] || '')
+    .split(',')[0]
+    .trim();
+  return forwarded || req.socket?.remoteAddress || 'ip';
+}
+
+function escapeHtml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function constantTimeTokenMatch(received, expected) {
+  const a = Buffer.from(String(received || ''), 'utf8');
+  const b = Buffer.from(String(expected || ''), 'utf8');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
 /* =================== Healthcheck ========================== */
@@ -555,7 +603,7 @@ function buildTransport() {
     connectionTimeout: 4000,
     greetingTimeout: 4000,
     socketTimeout: 5000,
-    tls: { ciphers: 'TLSv1.2', rejectUnauthorized: false }
+    tls: { ciphers: 'TLSv1.2', rejectUnauthorized: true }
   });
 }
 
@@ -642,13 +690,6 @@ function queueEmails(tasks) {
   });
 }
 
-/* =================== Test mail endpoint =================== */
-app.get('/api/test-mail', (req, res) => {
-  const to = ENV.TO_EMAIL || ENV.SMTP_USER;
-  queueEmails([{ to, subject: 'EnZenem – gyors teszt', html: '<p>Gyors tesztlevél.</p>' }]);
-  res.json({ ok: true, message: 'Teszt e-mail ütemezve: ' + to });
-});
-
 /* =================== Order / Contact ====================== */
 // === /api/order – csak mentünk, NEM küldünk e-mailt többé ===
 app.post('/api/order', (req, res) => {
@@ -667,14 +708,35 @@ app.post('/api/contact', (req, res) => {
   const c = req.body || {};
   const owner = ENV.TO_EMAIL || ENV.SMTP_USER;
 
+  if (!rateLimit('contact:' + requestIp(req), 10 * 60 * 1000, 5)) {
+    return res.status(429).json({ ok: false, message: 'Túl sok üzenet. Kérjük, próbáld meg később.' });
+  }
+
+  // Rejtett mező: a robotok jellemzően kitöltik, valódi látogató nem látja.
+  if (String(c._hp || '').trim()) {
+    return res.json({ ok: true, message: 'Üzeneted elküldve. Köszönjük a megkeresést!' });
+  }
+
+  const name = String(c.name || '').trim();
+  const email = String(c.email || '').trim();
+  const message = String(c.message || '').trim();
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!name || name.length > 120 || !emailOk || email.length > 254 || !message || message.length > 5000) {
+    return res.status(400).json({ ok: false, message: 'Kérjük, ellenőrizd a megadott adatokat.' });
+  }
+
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
+  const safeMessage = escapeHtml(message).replace(/\n/g, '<br/>');
+
   // Email, amit TE kapsz (belső)
   const html = `
     <h2>Új üzenet érkezett az EnZenem.hu oldalról</h2>
     <ul>
-      <li><b>Név:</b> ${c.name || '-'}</li>
-      <li><b>E-mail:</b> ${c.email || '-'}</li>
+      <li><b>Név:</b> ${safeName}</li>
+      <li><b>E-mail:</b> ${safeEmail}</li>
     </ul>
-    <p>${(c.message || '').replace(/\n/g, '<br/>')}</p>
+    <p>${safeMessage}</p>
 
     <hr style="margin-top:32px;">
     <p style="font-size:12px; color:#777;">
@@ -684,13 +746,13 @@ app.post('/api/contact', (req, res) => {
 
   // Email, amit az ÜGYFÉL kap (külső)
   const customerHtml = `
-    <p>Kedves ${c.name || 'Érdeklődő'}!</p>
+    <p>Kedves ${safeName || 'Érdeklődő'}!</p>
 
     <p>Köszönjük, hogy üzenetet küldtél az EnZenem.hu oldalán keresztül.  
     A megkeresésed beérkezett hozzánk, és 24 órán belül válaszolunk rá.</p>
 
     <p><b>Az üzenet tartalma:</b></p>
-    <p>${(c.message || '').replace(/\n/g, '<br/>')}</p>
+    <p>${safeMessage}</p>
 
     <p>Üdvözlettel,<br>
     <b>EnZenem.hu ügyfélszolgálat</b></p>
@@ -705,12 +767,12 @@ app.post('/api/contact', (req, res) => {
   `;
 
   const jobs = [
-    { to: owner, subject: 'EnZenem – Új üzenet érkezett', html, replyTo: c.email || undefined }
+    { to: owner, subject: 'EnZenem – Új üzenet érkezett', html, replyTo: email }
   ];
 
-  if (c.email) {
+  if (email) {
     jobs.push({
-      to: c.email,
+      to: email,
       subject: 'EnZenem – Üzenetedet fogadtuk',
       html: customerHtml
     });
@@ -740,32 +802,34 @@ async function vivaGetToken() {
   return res.json();
 }
 
-/** A rendelés összegének kiszámítása a lastOrderData alapján */
-function computeOrderTotal(order = {}) {
-  const pkg = (order.package || order.format || "basic").toString().toLowerCase();
+async function retrieveVivaTransaction(transactionId) {
+  const tokenData = await vivaGetToken();
+  const accessToken = tokenData.access_token;
+  const response = await fetch(
+    process.env.VIVA_API_URL + '/checkout/v2/transactions/' + encodeURIComponent(transactionId),
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  const transaction = await responseJsonPreservingOrderCode(response);
+  if (!response.ok) {
+    throw new Error(`Viva tranzakció-lekérdezési hiba (${response.status}).`);
+  }
+  return transaction;
+}
 
-  const base =
-    pkg === "video"
-      ? 21000
-      : pkg === "premium"
-      ? 35000
-      : 10500;
-
-  const extraRaw = parseInt(order.delivery_extra || "0", 10);
-  const extra = Number.isNaN(extraRaw) ? 0 : extraRaw;
-
-  return base + extra; // Ft-ban
+async function verifyVivaPayment({ transactionId, orderCode, expectedAmount }) {
+  const tx = await retrieveVivaTransaction(transactionId);
+  return validateVivaTransaction(tx, { transactionId, orderCode, expectedAmount });
 }
 
 // --- Safe internal POST with timeout (prevents /api/payment/success hanging forever) ---
-async function postJsonWithTimeout(url, body, timeoutMs = 8000) {
+async function postJsonWithTimeout(url, body, timeoutMs = 8000, extraHeaders = {}) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
 
   try {
     const r = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...extraHeaders },
       body: JSON.stringify(body || {}),
       signal: ctrl.signal
     });
@@ -784,8 +848,16 @@ async function postJsonWithTimeout(url, body, timeoutMs = 8000) {
 ========================================================== */
 app.post("/api/payment/create", async (req, res) => {
   try {
-    const data = req.body || {};
+    if (!rateLimit('payment-create:' + requestIp(req), 10 * 60 * 1000, 10)) {
+      return res.status(429).json({ ok: false, message: 'Túl sok fizetési próbálkozás. Kérjük, próbáld meg később.' });
+    }
 
+    let data;
+    try {
+      data = normalizeOrderForPayment(req.body || {});
+    } catch (validationError) {
+      return res.status(400).json({ ok: false, message: validationError.message || 'Érvénytelen rendelési adatok.' });
+    }
 
     const enzRef = makeEnzRef();
 
@@ -826,22 +898,29 @@ app.post("/api/payment/create", async (req, res) => {
       }
     );
 
-    const orderJson = await orderRes.json();
+    const orderJson = await responseJsonPreservingOrderCode(orderRes);
     console.log("[VIVA ORDER RESPONSE]", orderJson);
 
-    if (!orderJson?.orderCode) {
+    const orderCode = String(orderJson?.orderCode || '').trim();
+    if (!orderRes.ok || !/^\d{16}$/.test(orderCode)) {
       console.error("VIVA ORDER ERROR:", orderJson);
-      return res.json({
+      return res.status(502).json({
         ok: false,
         message: "Nem jött létre a Viva rendelés.",
       });
     }
 
-    // Rendelés adat elmentése (enz_ref + orderCode)
-    storePendingOrder(enzRef, data);
-    storePendingOrder(orderJson.orderCode, data);
+    const securedOrder = {
+      ...data,
+      __payment_order_code: orderCode,
+      __payment_amount: total
+    };
 
-    const payUrl = `https://www.vivapayments.com/web/checkout?ref=${orderJson.orderCode}`;
+    // Rendelés adat elmentése (enz_ref + orderCode)
+    storePendingOrder(enzRef, securedOrder);
+    storePendingOrder(orderCode, securedOrder);
+
+    const payUrl = `https://www.vivapayments.com/web/checkout?ref=${orderCode}`;
 
     console.log("[VIVA PAY URL]", payUrl);
 
@@ -867,45 +946,104 @@ app.get("/api/payment/success", async (req, res) => {
   const enzRef = extractEnzRef(req);
 
   console.log("[VIVA SUCCESS REDIRECT]", { orderCode, transactionId, enzRef, queryKeys: Object.keys(req.query || {}) });
-// === DUPLA FUTÁS ELLENI VÉDELEM (orderCode/transactionId alapján) ===
+
+  // A redirect önmagában nem fizetési bizonyíték: kötelező az orderCode és a transactionId.
+  if (!/^\d{16}$/.test(orderCode) ||
+      !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(transactionId)) {
+    console.warn('[PAYMENT VERIFY] Hiányzó vagy érvénytelen Viva-azonosító.');
+    return res.status(400).send(`
+      <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
+        <h2>⚠️ A fizetés nem ellenőrizhető</h2>
+        <p>A rendelést nem továbbítottuk. Kérjük, írj az <b>info@enzenem.hu</b> címre.</p>
+        <a href="/" style="color:#21a353;text-decoration:none">Vissza a főoldalra</a>
+      </body></html>
+    `);
+  }
+
+  // === DUPLA FUTÁS ELLENI VÉDELEM (orderCode/transactionId alapján) ===
   const pkey = paymentKey(orderCode || enzRef, transactionId);
   if (pkey && isPaymentProcessed(pkey)) {
-    console.log('[SUCCESS] Már feldolgozott fizetés (dedupe) → redirect NovaBot siker oldalra', pkey);
-    return res.redirect('/megrendeles.html?paid=success');
-  }
-  if (pkey) {
-    markPaymentProcessed(pkey);
-  } else {
-    console.warn('[SUCCESS] Hiányzik orderCode/transactionId → dedupe nem alkalmazható.');
+    console.log('[SUCCESS] Már feldolgozott fizetés (dedupe) → főoldal', pkey);
+    return res.redirect('/?paid=success');
   }
 
   // Rendelés payload betöltése orderCode alapján (biztonságos párhuzamos fizetésekhez)
-  const o = (enzRef ? loadPendingOrder(enzRef) : null) || (orderCode ? loadPendingOrder(orderCode) : null) || {};
+  let o = (enzRef ? loadPendingOrder(enzRef) : null) || (orderCode ? loadPendingOrder(orderCode) : null) || {};
 
-  // Ha semmilyen rendelés payload nem elérhető, FAIL-SAFE: ne generáljunk dalt / számlát / e-mailt,
-  // mert így lehet félre-számlázás vagy téves e-mail küldés. Ilyenkor csak a siker oldalt adjuk vissza.
+  // Rendelési adat nélkül nem állítható össze és nem igazolható az elvárt összeg.
   if (!o || !Object.keys(o).length) {
     console.warn('[SUCCESS] Missing order payload (no pending order found) → skipping generation/invoice/email.');
-    return res.send(`
+    return res.status(409).send(`
       <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
-        <h2>✅ Fizetés sikeres!</h2>
-        <p>A fizetés sikeres volt, de a rendelés adatai nem találhatók a szerveren.</p>
+        <h2>⚠️ A rendelés ellenőrzése szükséges</h2>
+        <p>A rendelés adatai nem találhatók a szerveren, ezért sem generálást, sem számlázást nem indítottunk.</p>
         <p>Kérjük, írj az <b>info@enzenem.hu</b> címre a tranzakció adataival, és azonnal intézzük.</p>
         <a href="/" style="color:#21a353;text-decoration:none">Vissza a főoldalra</a>
       </body></html>
     `);
   }
 
+  let expectedAmount;
+  try {
+    expectedAmount = computeOrderTotal(o);
+  } catch (error) {
+    console.warn('[PAYMENT VERIFY] Érvénytelen tárolt árparaméter:', error?.message || error);
+    return res.status(400).send('A rendelés áradatai nem ellenőrizhetők. A rendelést nem továbbítottuk.');
+  }
+
+  if (String(o.__payment_order_code || '') !== orderCode || Number(o.__payment_amount) !== expectedAmount) {
+    console.warn('[PAYMENT VERIFY] A tárolt rendelés és a redirect azonosító/összeg nem egyezik.');
+    return res.status(400).send('A fizetési adatok nem egyeznek. A rendelést nem továbbítottuk.');
+  }
+
+  let verification;
+  try {
+    verification = await verifyVivaPayment({ transactionId, orderCode, expectedAmount });
+  } catch (error) {
+    console.error('[PAYMENT VERIFY ERROR]', error?.message || error);
+    return res.status(503).send(`
+      <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
+        <h2>⏳ A fizetés ellenőrzése folyamatban</h2>
+        <p>A rendelést még nem továbbítottuk. Kérjük, frissítsd az oldalt néhány perc múlva, vagy írj az <b>info@enzenem.hu</b> címre.</p>
+        <a href="/" style="color:#21a353;text-decoration:none">Vissza a főoldalra</a>
+      </body></html>
+    `);
+  }
+
+  if (!verification.ok) {
+    console.warn('[PAYMENT VERIFY REJECTED]', {
+      orderCode,
+      transactionId,
+      reason: verification.reason
+    });
+    return res.status(400).send(`
+      <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
+        <h2>❌ A fizetés nem igazolható</h2>
+        <p>A rendelést nem továbbítottuk, számlát és visszaigazolást nem készítettünk.</p>
+        <a href="/" style="color:#b33;text-decoration:none">Vissza a főoldalra</a>
+      </body></html>
+    `);
+  }
+
+  // A Viva-lekérdezés alatt érkező párhuzamos callback ellen újra ellenőrzünk.
+  if (isPaymentProcessed(pkey)) return res.redirect('/?paid=success');
+  markPaymentProcessed(pkey);
+  console.log('[PAYMENT VERIFIED]', { orderCode, transactionId, amount: expectedAmount, currency: 'HUF' });
+
+  // A belső ellenőrzési metaadatok nem kerülnek át a generálásba és az e-mailekbe.
+  o = { ...o };
+  delete o.__payment_order_code;
+  delete o.__payment_amount;
 
   // ====== DAL GENERÁLÁS ======
   try {
     // Ha nincs rendelés adat (pl. szerver restart / hiányzó orderCode), ne akasszuk meg a flow-t
     if (o && Object.keys(o).length) {
-      const apiUrl =
-        (process.env.PUBLIC_URL || "https://www.enzenem.hu") +
-        "/api/generate_song";
+      const apiUrl = `http://127.0.0.1:${PORT}/api/generate_song`;
 
-      const trig = await postJsonWithTimeout(apiUrl, o, 8000);
+      const trig = await postJsonWithTimeout(apiUrl, o, 8000, {
+        'X-Enzenem-Internal': INTERNAL_GENERATE_TOKEN
+      });
       if (trig.ok) {
         console.log("[SUCCESS] Dal generálás elindult.");
       } else {
@@ -934,6 +1072,13 @@ app.get("/api/payment/success", async (req, res) => {
       pkg === "video" ? "MP4" : pkg === "premium" ? "WAV" : "MP3";
 
     const amount = computeOrderTotal(o); // Ft-ban, ezt adjuk a számlához
+    const safeDeliveryLabel = escapeHtml(deliveryLabel);
+    const safeEmail = escapeHtml(o.email || '');
+    const safePackage = escapeHtml(o.package || o.format || '');
+    const safeStyles = escapeHtml(o.styles || o.style || '');
+    const safeVocal = escapeHtml(o.vocal || '');
+    const safeLanguage = escapeHtml(o.language || '');
+    const safeBrief = escapeHtml(o.brief || '').replace(/\n/g, '<br/>');
 
     // --- Ügyfél HTML (változatlan szöveg) ---
     const customerHtml = `
@@ -944,11 +1089,11 @@ app.get("/api/payment/success", async (req, res) => {
   <p><b>A megrendelés adatai:</b></p>
   <ul>
     <li><b>Formátum:</b> ${format}</li>
-    <li><b>Kézbesítési idő:</b> ${deliveryLabel}</li>
+    <li><b>Kézbesítési idő:</b> ${safeDeliveryLabel}</li>
   </ul>
 
   <p>
-    A választott kézbesítési időn belül (<b>${deliveryLabel}</b>) elkészítjük és elküldjük az egyedi zenédet / videódat.
+    A választott kézbesítési időn belül (<b>${safeDeliveryLabel}</b>) elkészítjük és elküldjük az egyedi zenédet / videódat.
     A kész anyagot az általad megadott e-mail címre fogod megkapni vagy a választott formátumban vagy letöltési link formájában.
   </p>
 
@@ -969,15 +1114,15 @@ app.get("/api/payment/success", async (req, res) => {
     const adminHtml = `
     <h2>Új SIKERES fizetés</h2>
     <ul>
-      <li><b>E-mail:</b> ${o.email || ""}</li>
-      <li><b>Csomag:</b> ${o.package || o.format}</li>
-      <li><b>Stílus:</b> ${o.styles || o.style}</li>
-      <li><b>Ének:</b> ${o.vocal || ""}</li>
-      <li><b>Nyelv:</b> ${o.language || ""}</li>
-      <li><b>Kézbesítési idő:</b> ${deliveryLabel}</li>
+      <li><b>E-mail:</b> ${safeEmail}</li>
+      <li><b>Csomag:</b> ${safePackage}</li>
+      <li><b>Stílus:</b> ${safeStyles}</li>
+      <li><b>Ének:</b> ${safeVocal}</li>
+      <li><b>Nyelv:</b> ${safeLanguage}</li>
+      <li><b>Kézbesítési idő:</b> ${safeDeliveryLabel}</li>
       <li><b>Összeg:</b> ${amount} Ft</li>
     </ul>
-    <p><b>Brief:</b><br/>${(o.brief || "").replace(/\n/g, "<br/>")}</p>
+    <p><b>Brief:</b><br/>${safeBrief}</p>
   `;
 
     const jobs = [];
@@ -1068,11 +1213,10 @@ res.send(`
 /* ============ GPT → Sheets (NO POLISH) ============ */
 app.post('/api/generate_song', async (req, res) => {
   try {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'ip';
-    if (!rateLimit('gen:' + ip, 45000, 5)) {
-      return res.status(429).json({ ok:false, message:'Túl sok kérés. Próbáld később.' });
+    if (!constantTimeTokenMatch(req.get('X-Enzenem-Internal'), INTERNAL_GENERATE_TOKEN)) {
+      // Szándékosan 404: a belső végpont létezéséről se adjunk információt.
+      return res.sendStatus(404);
     }
-
 
     // 🔹 1️⃣ Ügyfél azonnali válasz – ne várja meg a hosszú folyamatot
     res.json({ ok:true, message:"Köszönjük! Megrendelésed feldolgozás alatt." });
@@ -1802,16 +1946,6 @@ try {
     console.error('[generate_song wrapper error]', e);
   }
 });
-
-/* ================== DIAG endpoints ======================== */
-app.get('/api/generate_song/ping', (req, res) => {
-  res.json({ ok:true, diag:{
-    node: process.version, fetch_defined: typeof fetch!=='undefined',
-    has_OPENAI_API_KEY: !!process.env.OPENAI_API_KEY,
-    public_url: process.env.PUBLIC_URL || null
-  }});
-});
-
 
 // === ADULT LOCK HELPERS ===
 // Ha a brief felnőtt élethelyzetet jelez (házasság/unoka/40 év stb.), akkor tiltjuk a child témát

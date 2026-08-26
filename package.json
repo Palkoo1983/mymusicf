@@ -1,11 +1,12 @@
 {
   "name": "bakelit-songs-site",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
