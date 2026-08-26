@@ -79,8 +79,9 @@ test('a 16 számjegyű Viva orderCode szövegként, pontosságvesztés nélkül 
 });
 
 test('csak a teljesen egyező, befejezett HUF-tranzakció fogadható el', () => {
+  // A Viva Retrieve Transaction válasza nem tartalmaz transactionId mezőt:
+  // az azonosító magát a lekért API-erőforrást választja ki az URL-ben.
   const transaction = {
-    transactionId,
     orderCode,
     statusId: 'F',
     amount: 10500,
@@ -108,8 +109,8 @@ test('csak a teljesen egyező, befejezett HUF-tranzakció fogadható el', () => 
     'currency_mismatch'
   );
   assert.equal(
-    validateVivaTransaction({ ...transaction, transactionId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' }, { transactionId, orderCode, expectedAmount: 10500 }).reason,
-    'transaction_id_mismatch'
+    validateVivaTransaction(transaction, { transactionId: 'not-a-uuid', orderCode, expectedAmount: 10500 }).reason,
+    'invalid_transaction_id'
   );
 });
 

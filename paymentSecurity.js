@@ -104,13 +104,14 @@ export function validateVivaTransaction(transaction, { transactionId, orderCode,
 
   const tx = transaction || {};
   const txOrderCode = String(tx.orderCode ?? tx.OrderCode ?? '').trim();
-  const txId = String(tx.transactionId ?? tx.TransactionId ?? '').trim().toLowerCase();
   const statusId = String(tx.statusId ?? tx.StatusId ?? '').trim().toUpperCase();
   const amount = Number(tx.amount ?? tx.Amount);
   const currencyCode = Number(tx.currencyCode ?? tx.CurrencyCode);
 
   if (txOrderCode !== orderCode) return { ok: false, reason: 'order_code_mismatch' };
-  if (txId !== transactionId.toLowerCase()) return { ok: false, reason: 'transaction_id_mismatch' };
+  // A Retrieve Transaction végpontot a redirectben kapott transactionId-val
+  // kérjük le, de a Viva válasza ezt az azonosítót nem küldi vissza mezőként.
+  // Emiatt itt az orderCode + státusz + összeg + pénznem egyezését ellenőrizzük.
   if (statusId !== 'F') return { ok: false, reason: `transaction_status_${statusId || 'missing'}` };
   if (!Number.isFinite(amount) || Math.abs(amount - expectedAmount) > 0.001) {
     return { ok: false, reason: 'amount_mismatch' };
