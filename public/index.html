@@ -921,7 +921,8 @@ function stopVideo(btn) {
     <option value="premium">Prémium (WAV)</option>
   </select>
 </label>
-<label class="delivery-options gold-text">Kézbesítési idő (6 órás kézbesítés csak reggel 8:00 és este 20:00 között lehetséges!)
+<div class="delivery-options gold-text" role="group" aria-labelledby="delivery-heading" style="display:grid; gap:6px;">
+  <span id="delivery-heading">Kézbesítési idő (6 órás kézbesítés csak reggel 8:00 és este 20:00 között lehetséges!)</span>
   <div class="delivery-buttons">
     <button type="button" class="delivery-btn" data-extra="0">48 óra (alap)</button>
     <button type="button" class="delivery-btn" data-extra="3000">24 óra (+3 000 Ft)</button>
@@ -929,14 +930,14 @@ function stopVideo(btn) {
   </div>
   <input type="hidden" name="delivery_extra" value="0">
   <input type="hidden" name="delivery_label" value="48 óra (alap)"> 
-</label>
+</div>
 <label class="gold-text">
   Dal címe (opcionális)
-  <input name="title" type="text" placeholder="pl. Budai csillag">
+  <input autocomplete="off" name="title" type="text" placeholder="pl. Budai csillag">
 </label>
 
   <label class="gold-text">E-mail (ahová a számlát és zenét küldjük)
-  <input name="email" placeholder="pelda@domain.hu" required type="email" />
+  <input autocomplete="email" name="email" placeholder="pelda@domain.hu" required type="email" />
 </label>
 <label class="check gold-text">
   <input type="checkbox" name="invoice_company" id="invoice_company">
@@ -945,19 +946,19 @@ function stopVideo(btn) {
 
 <div id="invoice_company_fields" class="full" style="display:none; margin-top:8px;">
   <label class="gold-text">Cégnév
-    <input type="text" name="invoice_company_name" placeholder="Cégnév Kft.">
+    <input autocomplete="organization" type="text" name="invoice_company_name" placeholder="Cégnév Kft.">
   </label>
   <label class="gold-text">Adószám
-    <input type="text" name="invoice_vat_number" placeholder="12345678-1-42">
+    <input autocomplete="off" type="text" name="invoice_vat_number" placeholder="12345678-1-42">
   </label>
   <label class="gold-text">Számlázási cím
-    <input type="text" name="invoice_address" placeholder="Irányítószám, város, utca, házszám">
+    <input autocomplete="billing street-address" type="text" name="invoice_address" placeholder="Irányítószám, város, utca, házszám">
   </label>
 </div>
 
 <div class="two-col">
 
-  <label class="gold-text">Zenei stílus (írható is)</label>
+  <label class="gold-text" for="styleInput">Zenei stílus (írható is)</label>
 
   <div class="custom-combobox">
     <input type="text"
@@ -1026,7 +1027,7 @@ function stopVideo(btn) {
   </select>
           </label>
           <label class="gold-text">Nyelv (pl. magyar, angol, német, holland, stb..)
-            <input name="language" placeholder="pl. magyar / angol / német / holland / stb.." type="text"/>
+            <input autocomplete="off" name="language" placeholder="pl. magyar / angol / német / holland / stb.." type="text"/>
           </label>
           <label class="full gold-text">Leírás / a választott nyelven töltsd ki, minél részletesebben! (min.:120, max.:4000 karakter)
           <textarea id="brief" name="brief" placeholder="Milyen történetet, érzést, üzenetet közvetítsen a dal? Írd le az emlékeiteket, milyen az a személy(ek) akinek a dal íródik. Esküvőre a kettőtök történetét, születésnapra a személy tulajdonságait, életkorát, stb.." rows="5" maxlength="4000" required></textarea>
@@ -1319,10 +1320,10 @@ function stopVideo(btn) {
         <form class="form" id="contactForm">
           <input autocomplete="off" name="_hp" style="display:none" tabindex="-1" type="text"/>
           <label class="gold-text">Név
-            <input name="name" placeholder="Név" required="" type="text"/>
+            <input autocomplete="name" name="name" placeholder="Név" required="" type="text"/>
           </label>
           <label class="gold-text">E-mail
-            <input name="email" placeholder="pelda@domain.hu" required="" type="email"/>
+            <input autocomplete="email" name="email" placeholder="pelda@domain.hu" required="" type="email"/>
           </label>
           <label class="gold-text">Üzenet
             <textarea name="message" placeholder="Miben segíthetünk?" required="" rows="5"></textarea>
