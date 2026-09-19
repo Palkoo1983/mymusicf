@@ -420,9 +420,9 @@
       // .nb-show-label renders data-label via ::before. If we also put the
       // same label into textContent, the visible caption appears twice.
       if (el.classList.contains('nb-show-label')) {
-        el.setAttribute('data-label', next);
-        el.setAttribute('aria-label', next);
-        el.setAttribute('title', next);
+        ['data-label', 'aria-label', 'title'].forEach(attr => {
+          if (el.getAttribute(attr) !== next) el.setAttribute(attr, next);
+        });
         if (el.textContent) el.textContent = '';
         return;
       }
@@ -441,10 +441,19 @@
   }
 
   let applying = false;
+  let observer;
+  let pendingFrame = null;
+  const observerOptions = {
+    childList: true, subtree: true, characterData: true,
+    attributes: true, attributeFilter: ATTRS
+  };
   function applyLanguage(lang = currentLang()){
     if (!LANGS.has(lang)) lang = DEFAULT_LANG;
     if (applying) return;
     applying = true;
+    // MutationObserver callbacks run after this function returns. A boolean
+    // alone cannot prevent our own translations from scheduling another pass.
+    observer?.disconnect();
     try {
       updateHead(lang);
       translateTextNodes(document.body, lang);
@@ -453,8 +462,13 @@
       syncOrderLanguageField(lang);
       syncDynamicExampleLabels(lang);
       syncBriefExamplePlaceholder(lang);
+      const quality = document.getElementById('enz-ok-label');
+      const brief = document.querySelector('#brief');
+      if (quality && brief) quality.textContent = brief.value.trim().length >= 120
+        ? (lang === 'en' ? ' — Acceptable' : ' — Elfogadható') : '';
     } finally {
       applying = false;
+      observer?.observe(document.body, observerOptions);
     }
   }
 
@@ -477,17 +491,19 @@
       }
     }
     applyLanguage(currentLang());
-    const obs = new MutationObserver(() => {
-      if (applying) return;
-      window.requestAnimationFrame(() => applyLanguage(currentLang()));
+    observer = new MutationObserver(records => {
+      // The character counter translates itself; typing needs no page scan.
+      const relevant = records.some(record => {
+        const el = record.target.nodeType === 1 ? record.target : record.target.parentElement;
+        return !el?.closest('#enz-quality');
+      });
+      if (applying || pendingFrame !== null || !relevant) return;
+      pendingFrame = window.requestAnimationFrame(() => {
+        pendingFrame = null;
+        applyLanguage(currentLang());
+      });
     });
-    obs.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ATTRS
-    });
+    observer.observe(document.body, observerOptions);
   }
 
   const origAlert = window.alert;

@@ -48,18 +48,26 @@
     const payload = ct.includes('application/json')
       ? await r.json().catch(()=>({}))
       : await r.text().catch(()=>'');
-    if(!r.ok) throw new Error(typeof payload === 'string' ? payload : (payload.error || 'Request failed'));
+    if(!r.ok) throw new Error(typeof payload === 'string' ? payload : (payload.message || payload.error || 'Request failed'));
     return payload || {};
   }
 
  // 🔹 Új fizetési folyamat – admin e-mail + VPOS indítás
 form.addEventListener('submit', async (e) => {
-  if (IN_FLIGHT) return;
-  IN_FLIGHT = true;
+  const alreadyPrevented = e.defaultPrevented;
   e.preventDefault();
+  if (alreadyPrevented || IN_FLIGHT || !form.reportValidity()) return;
+  const briefLength = (form.querySelector('[name=brief]')?.value || '').trim().length;
+  if (briefLength < 120 || briefLength > 4000) {
+    showFeedback('A leírás hossza 120 és 4000 karakter között lehet.', false);
+    return;
+  }
+  IN_FLIGHT = true;
 
   const fd = new FormData(form);
   const data = {
+    title: (fd.get('title') || '').toString(),
+    _hp: (fd.get('_hp') || '').toString(),
     email: (form.querySelector('[name=email]') || {}).value || '',
     styles: (fd.get('styles') || '').toString(),
     style: (fd.get('styles') || '').toString(),
