@@ -2271,3 +2271,67 @@ footer, .footer-links, a[href*="aszf"], a[href*="adatkezeles"] {
   .retro-radio-knob{ width:19px; height:19px; }
   .retro-radio-switch input:checked + .retro-radio-track .retro-radio-knob{ left:34px; }
 }
+
+/* Karácsonyi kampány: minden fülön látható, a meglévő arany-fekete stílusban. */
+.christmas-campaign {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 8px 0 28px;
+}
+.christmas-campaign-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid rgba(212,175,55,.7);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(212,175,55,.12), rgba(0,0,0,.8));
+  box-shadow: 0 0 18px rgba(212,175,55,.14);
+}
+.christmas-campaign h2 {
+  margin: 0 0 12px;
+  font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+  line-height: 1.35;
+}
+.christmas-campaign p {
+  margin: 10px 0;
+  line-height: 1.6;
+  color: #eef4fb;
+  -webkit-text-fill-color: #eef4fb;
+  opacity: 1;
+}
+.christmas-campaign .christmas-campaign-prices {
+  color: #f3d27a;
+  -webkit-text-fill-color: #f3d27a;
+  font-weight: 700;
+}
+.christmas-campaign-socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.christmas-campaign-link {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 9px 14px;
+  border: 1px solid #d4af37;
+  border-radius: 10px;
+  color: #f3d27a;
+  -webkit-text-fill-color: #f3d27a;
+  background: #080808;
+  font-weight: 600;
+  text-decoration: none;
+}
+.christmas-campaign-link:hover,
+.christmas-campaign-link:focus-visible {
+  background: #2b2512;
+  outline: 2px solid #f3d27a;
+  outline-offset: 3px;
+}
+@media (max-width: 768px) {
+  .christmas-campaign { grid-template-columns: 1fr; }
+  .christmas-campaign-card { padding: 16px; }
+  #pricing .promo-banner {
+    padding: 20px 16px;
+    font-size: 1.35em;
+  }
+}

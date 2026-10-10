@@ -1,7 +1,7 @@
 export const PACKAGE_PRICES = Object.freeze({
-  basic: 10500,
-  video: 21000,
-  premium: 35000
+  basic: 7500,
+  video: 15000,
+  premium: 25000
 });
 
 export const DELIVERY_OPTIONS = Object.freeze({

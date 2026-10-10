@@ -1,3 +1,9 @@
+AKTUÁLIS FRISSÍTÉS – 2026. október 10.
+Karácsonyi akció: MP3 7 500 Ft, MP4 15 000 Ft, WAV 25 000 Ft.
+50% kedvezmény visszavonásig; közösségi nyereményjáték jelzése.
+Feltöltési útmutató és ellenőrző összegek: KARACSONYI-AKCIO-2026.md
+Az alábbi verzióleírások korábbi változtatások történeti feljegyzései.
+
 EnZenem – v1.2 (Render-ready)
 Kéréseid szerint frissítve:
 - Bemutatkozás: Ének csak női vagy férfi

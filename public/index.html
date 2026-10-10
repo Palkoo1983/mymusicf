@@ -73,7 +73,7 @@
     "@type": "Offer",
     "url": "https://www.enzenem.hu/#order",
     "priceCurrency": "HUF",
-    "price": "10500",
+    "price": "7500",
     "availability": "https://schema.org/InStock"
   }
 }
@@ -175,7 +175,7 @@ html { will-change: scroll-position; }
 </script>
 
   <!-- FŐ CSS -->
-  <link rel="stylesheet" href="style.css?v=black1" />
+  <link rel="stylesheet" href="style.css?v=20261010-christmas50" />
 
   <!-- GOLD UI FIXES + mostani patchek -->
   <style id="gold-ui-fixes">
@@ -620,6 +620,25 @@ function stopVideo(btn) {
   </header>
 
   <main>
+    <aside class="christmas-campaign" aria-label="Karácsonyi akció és nyereményjáték">
+      <div class="christmas-campaign-card">
+        <h2 class="gold-text">Karácsonyi akció – 50% kedvezmény</h2>
+        <p>Ajándékozz személyre szabott dalt féláron! Az akció visszavonásig érvényes.</p>
+        <p class="christmas-campaign-prices">MP3: 7 500 Ft · MP4: 15 000 Ft · WAV: 25 000 Ft</p>
+        <a class="christmas-campaign-link" href="#pricing" data-jump="pricing">Megnézem a csomagokat</a>
+      </div>
+      <div class="christmas-campaign-card">
+        <h2 class="gold-text">Karácsonyi nyereményjáték</h2>
+        <p>Közösségi felületeinken összesen 2 egyedi, MP4 formátumú dalt sorsolunk ki 2 szerencsés nyertesnek – fejenként 1 dalt.</p>
+        <p>Sorsolás: 2026. december 22. A nyertesek karácsony estig, december 24-ig megkapják a dalukat.</p>
+        <p>A részvétel részleteit keresd a közösségi oldalainkon.</p>
+        <div class="christmas-campaign-socials">
+          <a class="christmas-campaign-link" href="https://www.facebook.com/profile.php?id=61584733553029" target="_blank" rel="noopener noreferrer">Facebook</a>
+          <a class="christmas-campaign-link" href="https://www.instagram.com/enzenem.hu/" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a class="christmas-campaign-link" href="https://www.tiktok.com/@enzenem.hu" target="_blank" rel="noopener noreferrer">TikTok</a>
+        </div>
+      </div>
+    </aside>
    <section class="panel active" id="intro">
   <h2 class="gold-text">Bemutatkozás</h2>
 
@@ -829,25 +848,26 @@ function stopVideo(btn) {
 </section>
     <section class="panel" id="pricing">
       <h2 class="gold-text">Árak &amp; Csomagok</h2>
-      <div class="promo-banner"><span class="gold-text">Akció — 30% kedvezmény</span></div>
+      <div class="promo-banner"><span class="gold-text">Karácsonyi akció – 50% kedvezmény</span></div>
+      <p class="gold-text">Az 50%-os csomagkedvezmény visszavonásig érvényes. A gyorsított kézbesítés felára külön fizetendő.</p>
       <div class="cards">
         <div class="card package" data-package="mp3">
           <h3 class="gold-text">MP3</h3>
           <p class="gold-text">Magas minőségű, univerzális zenei formátum. Minden eszközön lejátszható.</p>
           <p class="price gold-text">Alap csomag</p>
-          <p class="gold-text"><span class="old-price gold-text">15 000 Ft</span> → <span class="new-price gold-text">10 500 Ft</span><br/><span class="promo-note gold-text">Akció — 30%</span></p>
+          <p class="gold-text"><span class="old-price gold-text">15 000 Ft</span> → <span class="new-price gold-text">7 500 Ft</span><br/><span class="promo-note gold-text">Akció — 50%</span></p>
         </div>
         <div class="card package" data-package="mp4">
           <h3 class="gold-text">MP4</h3>
           <p class="gold-text">Egyszerű, ízléses, statikus <em class="gold-text">videóklip</em> a zenéhez, felirattal.</p>
           <p class="price gold-text">Videó csomag</p>
-          <p class="gold-text"><span class="old-price gold-text">30 000 Ft</span> → <span class="new-price gold-text">21 000 Ft</span><br/><span class="promo-note gold-text">Akció — 30%</span></p>
+          <p class="gold-text"><span class="old-price gold-text">30 000 Ft</span> → <span class="new-price gold-text">15 000 Ft</span><br/><span class="promo-note gold-text">Akció — 50%</span></p>
         </div>
         <div class="card package" data-package="wav">
           <h3 class="gold-text">WAV</h3>
           <p class="gold-text">Stúdióminőség, veszteségmentes hang. Ajánlott hangtechnikához.</p>
           <p class="price gold-text">Prémium csomag</p>
-          <p class="gold-text"><span class="old-price gold-text">50 000 Ft</span> → <span class="new-price gold-text">35 000 Ft</span><br/><span class="promo-note gold-text">Akció — 30%</span></p>
+          <p class="gold-text"><span class="old-price gold-text">50 000 Ft</span> → <span class="new-price gold-text">25 000 Ft</span><br/><span class="promo-note gold-text">Akció — 50%</span></p>
         </div>
       </div>
     </section>
@@ -911,14 +931,15 @@ function stopVideo(btn) {
 
     <section class="panel" id="order">
       <h2 class="gold-text">Megrendelés</h2>
+      <p class="gold-text">Karácsonyi akció: a csomagárak 50% kedvezményt tartalmaznak, visszavonásig. A fizetendő végösszeg a kiválasztott kézbesítési felárral együtt jelenik meg a Megrendelés gombon.</p>
       <form class="form" id="orderForm">
         <input autocomplete="off" name="_hp" style="display:none" tabindex="-1" type="text"/>
         <div class="grid">
         <label class="gold-text">Csomag (fizetés bankkártyával: Visa vagy MasterCard)
   <select name="package" required>
-    <option value="basic">Alap (MP3)</option>
-    <option value="video">Videó csomag (MP4)</option>
-    <option value="premium">Prémium (WAV)</option>
+    <option value="basic">Alap (MP3) – 7 500 Ft</option>
+    <option value="video">Videó csomag (MP4) – 15 000 Ft</option>
+    <option value="premium">Prémium (WAV) – 25 000 Ft</option>
   </select>
 </label>
 <div class="delivery-options gold-text" role="group" aria-labelledby="delivery-heading" style="display:grid; gap:6px;">
@@ -1436,7 +1457,7 @@ function stopVideo(btn) {
     <button class="primary" id="consentAccept"><span class="gold-text">Elfogadom</span></button>
   </div>
 
-  <script src="script.js?v=20260919-orderfix"></script>
+  <script src="script.js?v=20261010-christmas50"></script>
 
 <script src="/assets/novabot/novabot.js?v=20251101"></script>
 
@@ -1725,7 +1746,7 @@ if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
 }
 </script>
 
-<script src="i18n.js?v=20260919-inputfix"></script>
+<script src="i18n.js?v=20261010-christmas50"></script>
 
 </body>
 </html>

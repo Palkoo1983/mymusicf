@@ -24,9 +24,9 @@ const orderCode = '9827007426346074';
 
 test('a szerver a rögzített csomag- és kézbesítési árakból számol', () => {
   const expected = {
-    basic: [10500, 13500, 17000],
-    video: [21000, 24000, 27500],
-    premium: [35000, 38000, 41500]
+    basic: [7500, 10500, 14000],
+    video: [15000, 18000, 21500],
+    premium: [25000, 28000, 31500]
   };
   const deliveries = ['0', '3000', '6500'];
 
@@ -52,6 +52,21 @@ test('a manipulált vagy ismeretlen árparaméter elutasításra kerül', () => 
   );
 });
 
+test('a böngészőből küldött ár nem írhatja felül az akciós szerverárat', () => {
+  const order = normalizeOrderForPayment({ ...validOrder, price: 1, total: 1, amount: 1 });
+  assert.equal(computeOrderTotal(order), 7500);
+});
+
+test('az új MP3-rendeléshez a korábbi 30%-os árú fizetés nem fogadható el', () => {
+  const result = validateVivaTransaction({
+    orderCode,
+    statusId: 'F',
+    amount: 10500,
+    currencyCode: 348
+  }, { transactionId, orderCode, expectedAmount: computeOrderTotal(validOrder) });
+  assert.equal(result.reason, 'amount_mismatch');
+});
+
 test('a kötelező rendelési adatok szerveroldalon is ellenőrzöttek', () => {
   assert.throws(() => normalizeOrderForPayment({ ...validOrder, brief: 'rövid' }), /120 és 4000/);
   assert.throws(() => normalizeOrderForPayment({ ...validOrder, consent: false }), /hozzájárulás/);
@@ -65,7 +80,7 @@ test('a kötelező rendelési adatok szerveroldalon is ellenőrzöttek', () => {
   });
   assert.equal(normalized.package, 'video');
   assert.equal(normalized.delivery_label, '24 óra (+3 000 Ft)');
-  assert.equal(computeOrderTotal(normalized), 24000);
+  assert.equal(computeOrderTotal(normalized), 18000);
 });
 
 test('a 16 számjegyű Viva orderCode szövegként, pontosságvesztés nélkül marad meg', async () => {
@@ -84,32 +99,32 @@ test('csak a teljesen egyező, befejezett HUF-tranzakció fogadható el', () => 
   const transaction = {
     orderCode,
     statusId: 'F',
-    amount: 10500,
+    amount: 7500,
     currencyCode: 348
   };
 
   assert.equal(
-    validateVivaTransaction(transaction, { transactionId, orderCode, expectedAmount: 10500 }).ok,
+    validateVivaTransaction(transaction, { transactionId, orderCode, expectedAmount: 7500 }).ok,
     true
   );
   assert.equal(
-    validateVivaTransaction({ ...transaction, statusId: 'A' }, { transactionId, orderCode, expectedAmount: 10500 }).reason,
+    validateVivaTransaction({ ...transaction, statusId: 'A' }, { transactionId, orderCode, expectedAmount: 7500 }).reason,
     'transaction_status_A'
   );
   assert.equal(
-    validateVivaTransaction({ ...transaction, amount: 500 }, { transactionId, orderCode, expectedAmount: 10500 }).reason,
+    validateVivaTransaction({ ...transaction, amount: 500 }, { transactionId, orderCode, expectedAmount: 7500 }).reason,
     'amount_mismatch'
   );
   assert.equal(
-    validateVivaTransaction({ ...transaction, orderCode: '1127872549911101' }, { transactionId, orderCode, expectedAmount: 10500 }).reason,
+    validateVivaTransaction({ ...transaction, orderCode: '1127872549911101' }, { transactionId, orderCode, expectedAmount: 7500 }).reason,
     'order_code_mismatch'
   );
   assert.equal(
-    validateVivaTransaction({ ...transaction, currencyCode: 978 }, { transactionId, orderCode, expectedAmount: 10500 }).reason,
+    validateVivaTransaction({ ...transaction, currencyCode: 978 }, { transactionId, orderCode, expectedAmount: 7500 }).reason,
     'currency_mismatch'
   );
   assert.equal(
-    validateVivaTransaction(transaction, { transactionId: 'not-a-uuid', orderCode, expectedAmount: 10500 }).reason,
+    validateVivaTransaction(transaction, { transactionId: 'not-a-uuid', orderCode, expectedAmount: 7500 }).reason,
     'invalid_transaction_id'
   );
 });

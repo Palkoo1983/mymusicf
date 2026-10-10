@@ -453,9 +453,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Alapárak (Ft)
   const basePrices = {
-    basic: 10500,   // MP3
-    video: 21000,   // MP4
-    premium: 35000  // WAV
+    basic: 7500,   // MP3 – 50% kedvezmény, visszavonásig
+    video: 15000,   // MP4
+    premium: 25000  // WAV
   };
 
   const formatFt = (n) => (Number(n)||0).toLocaleString('hu-HU') + ' Ft';
