@@ -346,7 +346,7 @@
   function isUnderSkipped(node){
     let el = node.parentNode;
     while (el){
-      if (el.nodeType === 1 && SKIP_TEXT_TAGS.has(el.tagName)) return true;
+      if (el.nodeType === 1 && (el.id === "novabot" || SKIP_TEXT_TAGS.has(el.tagName))) return true;
       el = el.parentNode;
     }
     return false;
@@ -386,7 +386,7 @@
     if (!root || !root.querySelectorAll) return;
     const els = [root.nodeType === 1 ? root : null, ...root.querySelectorAll('*')].filter(Boolean);
     els.forEach(el => {
-      if (SKIP_ATTR_TAGS.has(el.tagName)) return;
+      if (el.closest?.("#novabot") || SKIP_ATTR_TAGS.has(el.tagName)) return;
       ATTRS.forEach(attr => {
         if (!el.hasAttribute(attr)) return;
         if (attr === 'placeholder' && el.matches && el.matches('#brief, textarea[name="brief"]') && el.getAttribute('data-enz-example-placeholder') === '1') return;
@@ -535,7 +535,7 @@
       // The character counter translates itself; typing needs no page scan.
       const relevant = records.some(record => {
         const el = record.target.nodeType === 1 ? record.target : record.target.parentElement;
-        return !el?.closest('#enz-quality');
+        return !el?.closest('#enz-quality, #novabot');
       });
       if (applying || pendingFrame !== null || !relevant) return;
       pendingFrame = window.requestAnimationFrame(() => {

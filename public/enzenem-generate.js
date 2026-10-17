@@ -5,12 +5,6 @@
   const form = document.getElementById('orderForm');
   if(!form) return;
 
-  // Legacy containers (hidden for customers)
-  const resultBox = document.getElementById('song-result');
-  const linksList = document.getElementById('song-links');
-  const lyricsBox = document.getElementById('song-lyrics');
-  [resultBox, linksList, lyricsBox].forEach(el => { if(el){ el.hidden = true; el.innerHTML = ''; } });
-
   // Inline feedback banner
   let feedback = document.getElementById('order-feedback');
   if(!feedback){
@@ -93,9 +87,6 @@ form.addEventListener('submit', async (e) => {
     submitBtn.textContent = 'Fizetés indítása...';
   }
 
-  [resultBox, linksList, lyricsBox].forEach(el => {
-    if (el) { el.hidden = true; el.innerHTML = ''; }
-  });
   showFeedback('Kapcsolódás a fizetési rendszerhez...', true);
 
   try {

@@ -1,3 +1,5 @@
+> A 2.2.0 NovaBot-frissítés ezt követi: az aktuális útmutató a NOVABOT-TELEPITES.md. Az OPENAI_API_KEY most a chathez szükséges, tartsd meg. A rendelések továbbra sem indítanak AI-hívást.
+
 # EnZenem 2.1.0 – két dalváltozat + PDF
 
 A frissítés alapja a felhasználó által átadott `mymusicf-main (4).zip`.

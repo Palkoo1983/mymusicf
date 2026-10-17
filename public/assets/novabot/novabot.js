@@ -1,374 +1,57 @@
-// === NovaBot Assistant v3.3 (stable dock + Samsung-only audio enable + talk visual + full-brief speech) ===
-(function(){
-  const state = {
-    bubbleOpen: false,
-    synth: ('speechSynthesis' in window) ? window.speechSynthesis : null,
+(() => {
+  const strings={
+    hu:{open:'Kérdezz NovaBottól',close:'Bezárás',intro:'Szia! Kérdezhetsz a csomagokról, a rendelésről vagy más témáról is. Miben segíthetek?',notice:'AI-segítő, válaszai tévedhetnek. Egyedi rendelés ügyében: info@enzenem.hu. Ne adj meg érzékeny adatot!',consent:'Hozzájárulok, hogy a chatüzeneteimet és az utolsó 3 beszélgetési kört az OpenAI feldolgozza a válaszadáshoz.',privacy:'Adatkezelés',placeholder:'Írd ide a kérdésed…',send:'Küldés',clear:'Beszélgetés törlése',voice:'Válasz felolvasása',stop:'Felolvasás leállítása',waiting:'NovaBot válaszol…',unavailable:'A chat most nem elérhető. Próbáld később, vagy írj az info@enzenem.hu címre.',limit:'Elértük a használati limitet. Kérjük, próbáld később, vagy írj az info@enzenem.hu címre.',busy:'NovaBot most több kérdésre válaszol. Próbáld kicsit később.',invalid:'Legfeljebb 1200 karakteres kérdést írj, és fogadd el a chat adatkezelését.',voiceError:'A felolvasás ebben a böngészőben nem elérhető.',me:'Te',bot:'NovaBot',success:'A rendelésedet fogadtuk. Két dalváltozatot és PDF-dalszöveget kapsz a választott kézbesítési időn belül.',failed:'A rendelés nem sikerült. Kérlek, próbáld újra.'},
+    en:{open:'Ask NovaBot',close:'Close',intro:'Hi! Ask me about packages, ordering or other topics. How can I help?',notice:'AI assistant: answers can be mistaken. Individual orders: info@enzenem.hu. Do not share sensitive information!',consent:'I consent to OpenAI processing my chat messages and the last 3 conversation turns to answer my questions.',privacy:'Privacy notice',placeholder:'Type your question…',send:'Send',clear:'Clear conversation',voice:'Read answer aloud',stop:'Stop reading',waiting:'NovaBot is replying…',unavailable:'Chat is currently unavailable. Please try later or email info@enzenem.hu.',limit:'The usage limit has been reached. Please try later or email info@enzenem.hu.',busy:'NovaBot is answering other questions. Please try again shortly.',invalid:'Enter a question of up to 1200 characters and accept chat data processing.',voiceError:'Read-aloud is unavailable in this browser.',me:'You',bot:'NovaBot',success:'Your order has been received. You will receive two song versions and PDF lyrics within your selected delivery time.',failed:'The order was unsuccessful. Please try again.'}
   };
-
-  // ---- böngésző detektálás (Samsung Internet) ----
-  const UA = navigator.userAgent || "";
-  const NB_IS_SAMSUNG = /SamsungBrowser/i.test(UA);
-
-  // ---- audio flags ----
-  let NB_AUDIO_ENABLED = !NB_IS_SAMSUNG;  // Chrome/egyéb: induláskor engedélyezett; Samsungon nem
-  let NB_VOICES_READY  = false;           // betöltöttek-e a TTS hangok
-
-  // ---- helpers ---------------------------------------------------------
-  function qs(sel, root=document){ return root.querySelector(sel); }
-  function qsa(sel, root=document){ return Array.from(root.querySelectorAll(sel)); }
-  function norm(s){
-    return (s || "").toString().toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/\s+/g,' ').trim();
-  }
-
-  // ---- speaking visuals ------------------------------------------------
-  function setSpeaking(on){
-    const root = document.getElementById('novabot');
-    if(!root) return;
-    root.classList.toggle('novabot-speaking', !!on);
-  }
-
-  // ---- TTS (Web Speech API) --------------------------------------------
-  function speak(text){
-    try{
-      // Samsung Internet: TTS csak felhasználói gesztus után
-      if (!state.synth || !NB_AUDIO_ENABLED) {
-        setSpeaking(false);
-        return;
-      }
-
-      // Voices betöltése (egyes böngészőkben csak később jön meg)
-      const loadVoices = () => {
-        const voices = state.synth.getVoices();
-        if (voices && voices.length) {
-          NB_VOICES_READY = true;
-          return voices;
-        }
-        return [];
-      };
-
-      let voices = loadVoices();
-      if (!NB_VOICES_READY) {
-        state.synth.onvoiceschanged = () => { NB_VOICES_READY = true; };
-        setTimeout(()=>{ voices = loadVoices(); }, 120);
-      }
-
-      state.synth.cancel();
-      const translated = window.EnzI18n?.t(text) || text;
-      const u = new SpeechSynthesisUtterance(translated);
-
-      // magyar hang preferencia
-      const english = window.EnzI18n?.getLanguage() === 'en';
-      const hu = (voices||[]).find(v => english ? /^en/i.test(v.lang) : /hu|hungar/i.test(v.lang));
-      if (hu) u.voice = hu;
-      u.lang = hu ? hu.lang : (english ? 'en-US' : 'hu-HU');
-      u.rate = 1.0; u.pitch = 1.0; u.volume = 1.0;
-
-      u.onstart = ()=> setSpeaking(true);
-      u.onend   = ()=> setSpeaking(false);
-      u.onerror = ()=> setSpeaking(false);
-
-      state.synth.speak(u);
-    }catch(e){
-      setSpeaking(false);
-    }
-  }
-
-  // ---- UI létrehozás ---------------------------------------------------
-  function createUI(){
-    if(qs('#novabot')) return;
-
-    const root = document.createElement('div');
-    root.id = 'novabot';
-
-    // bubble
-    const bubble = document.createElement('div');
-    bubble.className = 'novabot-bubble';
-    bubble.innerHTML = '<span class="novabot-close" aria-label="Bezárás" title="Bezárás">×</span><div class="nb-text">Szia, én vagyok NovaBot 🤖 – segítek eligazodni! Kattints rám vagy a menükre, és elmondom, mit hol találsz.</div>';
-    root.appendChild(bubble);
-
-    // avatar
-    const avatarWrap = document.createElement('div');
-    avatarWrap.className = 'novabot-avatar';
-    avatarWrap.style.position = 'relative';
-
-    const img = document.createElement('img');
-    img.src = './assets/novabot/novabot.png';
-    img.alt = 'NovaBot – segítő robot';
-    img.setAttribute('aria-label', 'NovaBot – segítő');
-    avatarWrap.appendChild(img);
-
-    const glow = document.createElement('div');
-    glow.className = 'novabot-eyeGlow';
-    avatarWrap.appendChild(glow);
-
-    // beszéd-hullám vizuál (kis pulzáló pont – CSS pozicionálja "száj" alá)
-    const talk = document.createElement('div');
-    talk.className = 'novabot-talkWave';
-    avatarWrap.appendChild(talk);
-
-    root.appendChild(avatarWrap);
-    document.body.appendChild(root);
-
-    // ---- Hang engedélyezése gomb (CSAK Samsung Interneten) ----
-    /* Samsung hang gomb eltávolítva */
-if (false && NB_IS_SAMSUNG) {
-      const soundBtn = document.createElement('button');
-      soundBtn.type = 'button';
-      soundBtn.className = 'novabot-sound-btn';
-      soundBtn.textContent = 'Hang engedélyezése';
-      soundBtn.setAttribute('aria-label', 'Hang engedélyezése');
-      root.appendChild(soundBtn);
-
-      const enableAudio = ()=>{
-        NB_AUDIO_ENABLED = true;
-        try { state.synth?.cancel(); state.synth?.resume?.(); } catch(e){}
-        soundBtn.classList.add('hide');
-      };
-
-      // gomb kattintásra engedélyezünk
-      soundBtn.addEventListener('click', (e)=>{
-        if (!e.isTrusted) return; // csak valódi érintés
-        e.stopPropagation();
-        enableAudio();
-      });
-
-      // első user GESZTUSRA is (csak touchstart, és csak Samsungon)
-      const firstGesture = (ev)=>{
-        if (!ev.isTrusted) return;
-        enableAudio();
-        document.removeEventListener('touchstart', firstGesture, {passive:true});
-      };
-      document.addEventListener('touchstart', firstGesture, {passive:true});
-    } else {
-      // nem Samsung → azonnal engedélyezett, gomb sincs
-      // NB_AUDIO_ENABLED már true alapból
-    }
-
-    // indulás: dokkolt jobb-alsó sarokban
-    root.classList.add('nb-docked');
-
-    // interakciók
-    avatarWrap.addEventListener('click', () => {
-      toggleBubble(true);
-      const msg = 'Szia, én vagyok NovaBot! Itt vagyok lent és segítek Neked. Próbáld ki a bakelit lemez füleket vagy kattints a Megrendelés lemezre.';
-      setBubbleText(msg);
-      speak(msg);
-      pointToHowTo();
-    });
-
-    bubble.querySelector('.novabot-close').addEventListener('click', (e)=>{
-      e.stopPropagation();
-      toggleBubble(false);
-      if(state.synth) state.synth.cancel();
-    });
-
-    // finom automata buborék indítás
-    setTimeout(()=> toggleBubble(true), 1200);
-  }
-
-  function setBubbleText(t){
-    const b = qs('.novabot-bubble .nb-text');
-    if(b) b.textContent = t;
-  }
-
-  function toggleBubble(show){
-    const b = qs('.novabot-bubble');
-    if(!b) return;
-    state.bubbleOpen = !!show;
-    b.classList.toggle('show', state.bubbleOpen);
-  }
-
-  // ---- Tab leírások ----------------------------------------------------
-  function describeTab(name){
-    const map = {
-      bemutatkozas: 'Ez a rész bemutatja, mivel foglalkozik a weboldalunk.',
-      arak: 'Ebben a részben találhatóak választható zenei csomagjaink és ezek árai, díjai.',
-      referenciak: 'Itt találhatóak a weboldal tulajdonosának eredeti videói, példaként – hogy megtudd, milyen minőségre számíthatsz.',
-      megrendeles: 'Itt adhatod le a megrendelést. A minta leírások segítenek a Leírás megfogalmazásában, görgess le és próbáld ki.',
-      hogyan: 'Itt röviden elmagyarázzuk, hogyan zajlik a folyamat, a tényleges vásárlást a Megrendelés fülön tudod megtenni.',
-      kapcsolat: 'Itt tudsz üzenni és kérdezni tőlünk.'
-    };
-    const text = map[name] || 'Ez a rész segít, hogy gyorsan eligazodj ezen a fülön.';
-    setBubbleText(text);
-    toggleBubble(true);
-    speak(text);
-  }
-
-  function pointToHowTo(){
-    const candidates = qsa('a[href*="#how" i], [data-target*="how" i], .howto, #howto, [href="#howto"]');
-    if(candidates.length){
-      candidates[0].classList.add('novabot-ctaPulse');
-      setTimeout(()=>candidates[0].classList.remove('novabot-ctaPulse'), 4500);
-    }
-  }
-
-  function bindTabs(){
-    document.addEventListener('click', (e)=>{
-      const tab = e.target.closest('.vinyl-tabs .tab, [data-tab], [data-target], nav a, .nav a, .menu a, a[href^="#"]');
-      if(!tab) return;
-
-      const href  = tab.getAttribute('href') || '';
-      const dt    = tab.getAttribute('data-target') || '';
-      const dtab  = tab.getAttribute('data-tab') || '';
-      const aria  = tab.getAttribute('aria-controls') || '';
-      const id    = tab.id || '';
-      const label = tab.textContent || tab.getAttribute('aria-label') || '';
-
-      const hint = norm([href, dt, dtab, aria, id].join(' '));
-      const text = norm(label);
-
-      if ( /how|hogyan|howto/.test(hint) || /hogyan/.test(text) ){
-        describeTab('hogyan');
-      }
-      else if ( /ar|arak|price|pricing|csomag/.test(hint) || /arak|csomag/.test(text) ){
-        describeTab('arak');
-      }
-      else if ( /order|rendel|megrendel/.test(hint) || /megrendeles|rendeles/.test(text) ){
-        describeTab('megrendeles');
-      }
-      else if ( /ref|minta|referenc/.test(hint) || /referencia|referenciak|minta/.test(text) ){
-        describeTab('referenciak');
-      }
-      else if ( /contact|kapcsol/.test(hint) || /kapcsolat/.test(text) ){
-        describeTab('kapcsolat');
-      }
-      else if ( /bemut|fooldal|home|intro/.test(hint) || /bemutatkozas|fooldal|home/.test(text) ){
-        describeTab('bemutatkozas');
-      }
-      else {
-        describeTab('');
-      }
-    }, true);
-  }
-
-  // ---- BRIEF kiolvasása (Megrendelés) ---------------------------------
-  function getOrderBriefText() {
-    const cand =
-      document.querySelector('#order textarea, #order [name*="leiras" i], #order [name*="description" i]') ||
-      document.querySelector('[data-section*="order" i] textarea, [data-section*="megrendel" i] textarea');
-
-    if (!cand) return "";
-    return (
-      cand.getAttribute('placeholder') ||
-      (typeof cand.value === 'string' ? cand.value : '') ||
-      cand.textContent || ''
-    ).trim();
-  }
-
-  // ---- Mintagombok: TELJES placeholdert mondunk -----------------------
-  function bindExampleChips(){
-    document.addEventListener('click', (e)=>{
-      const chip = e.target.closest('.example-chip, .example, .chip, .minta, .mintaleiras, [data-example], [data-minta]');
-      if(!chip) return;
-
-      const inOrder = chip.closest('#order, [id*="order" i], [data-section*="order" i], [data-section*="megrendel" i], [data-target*="order" i], [href*="#order" i]');
-      if(!inOrder) return;
-
-      let full = (chip.getAttribute('data-example') || chip.getAttribute('data-minta') || chip.getAttribute('data-full') || '').trim();
-
-      // Ha másik script most állít placeholdert, várunk kicsit és újraolvasunk
-      setTimeout(()=>{
-        const briefNow = getOrderBriefText();
-        if (briefNow) full = briefNow;
-        if (!full) return;
-
-        // Buborék: rövid cím, hang: TELJES szöveg
-        const label = (chip.getAttribute('data-label') || '').trim();
-        setBubbleText(label || full);
-        toggleBubble(true);
-        speak(full);
-      }, 60);
-    }, true);
-  }
-
-  // ---- (Opcióként marad) Play célpont kereső – ha később újra kell ----
-  function getPlayTarget(){
-    const sel = [
-      '.play-btn', '.video__play', '.video-play', '.hero-video .play',
-      'button[aria-label*="lejátsz" i]', 'button[aria-label*="lejatsz" i]',
-      '[data-action="play"]', '.plyr__control--overlaid', '.vjs-big-play-button'
-    ].join(',');
-    let el = document.querySelector(sel);
-    if (el) return el;
-    el = document.querySelector('#hero video, .hero video, video');
-    if (el) return el;
-    el = document.querySelector('#video, .video, [data-section*="video" i]');
-    return el || null;
-  }
-
-  // ---- Intro flight: KIKAPCSOLVA (stabil dokk) -------------------------
-  function runIntroFlight(){
-    // csak dokkoljunk stabilan jobb-alsó sarokba, nincs animáció
-    try { sessionStorage.setItem('nb_intro_done', '1'); } catch(e){}
-    const root = document.getElementById('novabot');
-    if (!root) return;
-    root.classList.remove('nb-flying', 'nb-inflight');
-    root.classList.add('nb-docked');
-    root.style.transform  = 'none';
-    root.style.transition = 'none';
-    root.style.left = ''; root.style.top = ''; root.style.right = ''; root.style.bottom = '';
-  }
-
-  // ---- Textarea fókusz hint -------------------------------------------
-  function bindOrderTextarea(){
-    const tryBind = () => {
-      const el = qs('#order textarea, #order [name*="leiras" i], #order [name*="description" i]');
-      if(!el) return false;
-      el.addEventListener('focus', ()=>{
-        const msg = 'Írd le röviden az alkalmat, a hangulatot és pár kulcsszót. A mintaleírásokra kattintva felolvasom őket.';
-        setBubbleText(msg);
-        toggleBubble(true);
-        speak(msg);
-      }, {once:true});
-      return true;
-    };
-    let attempts = 0;
-    const iv = setInterval(()=>{
-      attempts++;
-      if(tryBind() || attempts>20) clearInterval(iv);
-    }, 300);
-  }
-
-  // ---- init ------------------------------------------------------------
+  let root,panel,input,log,status,send,consent,launcher,history=[],busy=false,latest='',language;
+  const lang=()=>document.documentElement.lang==='en'?'en':'hu';
+  const t=key=>strings[lang()][key];
+  function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text)n.textContent=text;return n;}
+  const stop=()=>{window.speechSynthesis?.cancel();root?.classList.remove('novabot-speaking');};
+  function show(open){panel.hidden=!open;launcher.setAttribute('aria-expanded',String(open));if(open)input.focus();else{stop();launcher.focus();}}
+  function append(role,text){const item=el('div','nb-message nb-'+role);item.append(el('strong','',t(role==='user'?'me':'bot')),el('p','',text));log.append(item);while(log.children.length>30)log.firstElementChild.remove();log.scrollTop=log.scrollHeight;}
+  function refresh(){language=lang();root.lang=language;root.querySelectorAll('[data-nb-copy]').forEach(n=>n.textContent=t(n.dataset.nbCopy));launcher.setAttribute('aria-label',t('open'));input.placeholder=t('placeholder');input.setAttribute('aria-label',t('placeholder'));root.querySelector('.nb-privacy').href='/adatkezeles.html'+(language==='en'?'#english':'');}
+  function clear(){stop();history=[];latest='';log.replaceChildren();status.textContent='';append('assistant',t('intro'));}
+  function button(key,fn){const b=el('button','',t(key));b.type='button';b.dataset.nbCopy=key;b.addEventListener('click',fn);return b;}
   function init(){
-    createUI();
-    bindTabs();
-    bindExampleChips();
-    bindOrderTextarea();
-    setTimeout(runIntroFlight, 700); // most no-op: stabil dokkolás
+    if(document.getElementById('novabot'))return;
+    root=el('div');root.id='novabot';
+    panel=el('section','nb-chat');panel.id='nb-chat';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','NovaBot');
+    const head=el('header','nb-head');head.append(el('strong','','NovaBot'),button('close',()=>show(false)));panel.append(head);
+    const notice=el('p','nb-notice');notice.dataset.nbCopy='notice';panel.append(notice);
+    log=el('div','nb-log');log.setAttribute('role','log');log.setAttribute('aria-live','polite');panel.append(log);
+    const label=el('label','nb-consent');consent=el('input');consent.type='checkbox';const ct=el('span');ct.dataset.nbCopy='consent';label.append(consent,ct);
+    const privacy=el('a','nb-privacy');privacy.dataset.nbCopy='privacy';privacy.target='_blank';privacy.rel='noopener';panel.append(label,privacy);
+    const form=el('form','nb-form');input=el('textarea');input.maxLength=1200;input.rows=2;input.required=true;send=el('button','nb-send');send.type='submit';send.dataset.nbCopy='send';form.append(input,send);panel.append(form);
+    status=el('p','nb-status');status.setAttribute('role','status');panel.append(status);
+    const actions=el('div','nb-actions');const clearBtn=button('clear',()=>{clear();consent.checked=false;});
+    actions.append(clearBtn,button('voice',()=>{
+      if(!latest)return;
+      if(!window.speechSynthesis||!window.SpeechSynthesisUtterance){status.textContent=t('voiceError');return;}
+      stop();const u=new SpeechSynthesisUtterance(latest);u.lang=lang()==='en'?'en-US':'hu-HU';const v=window.speechSynthesis.getVoices().find(v=>v.lang.startsWith(lang()));if(v)u.voice=v;
+      u.onstart=()=>root.classList.add('novabot-speaking');u.onend=()=>root.classList.remove('novabot-speaking');u.onerror=()=>{root.classList.remove('novabot-speaking');status.textContent=t('voiceError');};
+      try{window.speechSynthesis.speak(u);}catch{status.textContent=t('voiceError');}
+    }),button('stop',stop));panel.append(actions);
+    launcher=el('button','novabot-avatar');launcher.type='button';launcher.setAttribute('aria-controls','nb-chat');launcher.setAttribute('aria-expanded','false');const img=el('img');img.src='/assets/novabot/novabot.png';img.alt='';launcher.append(img);launcher.addEventListener('click',()=>show(panel.hidden));
+    root.append(panel,launcher);document.body.append(root);refresh();clear();
+    panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();show(false);}});
+    new MutationObserver(()=>{if(language!==lang()){refresh();if(!history.length&&!busy)clear();}}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+    input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();form.requestSubmit();}});
+    form.addEventListener('submit',async e=>{
+      e.preventDefault();if(busy)return;const message=input.value.trim();if(!message||message.length>1200||!consent.checked){status.textContent=t('invalid');return;}
+      busy=true;send.disabled=clearBtn.disabled=input.disabled=consent.disabled=true;stop();status.textContent=t('waiting');append('user',message);input.value='';
+      let recent=history.slice(-6);while(recent.reduce((n,m)=>n+m.content.length,message.length)>9000)recent=recent.slice(2);
+      const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),25000);
+      try{
+        const response=await fetch('/api/novabot/chat',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',signal:controller.signal,body:JSON.stringify({message,history:recent,consent:true})});
+        const data=await response.json();if(!response.ok||!data.ok||typeof data.answer!=='string')throw new Error(data.code||'unavailable');
+        latest=data.answer;append('assistant',latest);history=[...recent,{role:'user',content:message},{role:'assistant',content:latest}].slice(-6);status.textContent='';
+      }catch(err){status.textContent=strings[lang()][err.message]||t('unavailable');input.value=message;}
+      finally{clearTimeout(timer);busy=false;send.disabled=clearBtn.disabled=input.disabled=consent.disabled=false;if(!panel.hidden)input.focus();}
+    });
   }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-// === PUBLIC API – rendelés visszajelzések, buborékkal + TTS (ha elérhető) ===
-window.novaBotSay = function(text){
-  try {
-    setBubbleText(text);     // meglévő buborék szöveg
-    toggleBubble(true);      // buborék megjelenítése
-    speak(text);             // TTS (Chrome-ban szól, Samsungon csendben marad)
-  } catch (e) {
-    // ha bármiért nem érhető el a belső függvény, ne dobjunk hibát
-    console && console.warn && console.warn('NovaBotSay fallback:', e);
-  }
-};
-
-// Rövidített hívások a megrendelés siker/hiba ághoz
-window.novaOrderSuccess = function(){
-  window.novaBotSay('A rendelésedet fogadtuk. Két dalváltozatot és PDF-dalszöveget kapsz a választott kézbesítési időn belül.');
-};
-window.novaOrderFail = function(){
-  window.novaBotSay('Oh :(, megrendelésed nem sikerült, kérlek próbáld újra');
-};
-// ==== Jogi linkek védelme – NovaBot ne kapja el ezeket a kattintásokat ====
-document.querySelectorAll('a[href*="aszf"], a[href*="adatkezeles"]').forEach(link => {
-  link.addEventListener('click', (e) => {
-    e.stopPropagation();   // fontos: NovaBot click-capture ne fogja el
-  }, true);                // capture mód: így biztos működik
-});
-
+  window.novaBotSay=text=>{if(!root)init();append('assistant',window.EnzI18n?.t(text)||text);show(true);};
+  window.novaOrderSuccess=()=>window.novaBotSay(t('success'));
+  window.novaOrderFail=()=>window.novaBotSay(t('failed'));
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

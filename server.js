@@ -1,3 +1,4 @@
+import { registerNovaChat } from './novaChat.js';
 import express from 'express';
 import cors from 'cors';
 import nodemailer from 'nodemailer';
@@ -14,7 +15,7 @@ import {
 } from './paymentSecurity.js';
 
 
-// === DUPLA DALGENERÁLÁS / DUPLA FIZETÉS ELLENI VÉDELEM ===
+// === DUPLA RENDELÉSFELDOLGOZÁS / DUPLA FIZETÉS ELLENI VÉDELEM ===
 // (Nem globál bool: orderCode/transactionId alapján deduplikálunk rövid TTL-lel.)
 const processedPayments = new Map(); // key -> ts
 const PAYMENT_TTL_MS = 6 * 60 * 60 * 1000; // 6 óra
@@ -263,7 +264,6 @@ const ENV = {
 const INVOICE_MODE = (process.env.INVOICE_MODE || 'test').toString().toLowerCase(); 
 // 'off' | 'test' | 'live'
 
-const INVOICE_COUNTER_FILE = './invoice-counter.json';
 
 const INVOICE_SEED = {
   sellerName: 'Gombkötő Pál egyéni vállalkozó',
@@ -273,26 +273,6 @@ const INVOICE_SEED = {
   address: '1097 Budapest, Aszódi utca 8. 123. ajtó',
   currency: 'HUF'
 };
-
-function loadInvoiceCounter() {
-  try {
-    if (!fs.existsSync(INVOICE_COUNTER_FILE)) return null;
-    const raw = fs.readFileSync(INVOICE_COUNTER_FILE, 'utf8');
-    return JSON.parse(raw);
-  } catch (e) {
-    console.warn('[INVOICE] Nem sikerült beolvasni az invoice-counter fájlt:', e?.message || e);
-    return null;
-  }
-}
-
-function saveInvoiceCounter(data) {
-  try {
-    fs.writeFileSync(INVOICE_COUNTER_FILE, JSON.stringify(data, null, 2), 'utf8');
-  } catch (e) {
-    console.warn('[INVOICE] Nem sikerült menteni az invoice-counter fájlt:', e?.message || e);
-  }
-}
-
 
 /**
  * Számla PDF generálása
@@ -444,6 +424,7 @@ app.use(cors({
 app.use(express.json({ limit: '64kb' }));
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true, limit: '64kb' }));
+registerNovaChat(app);
 
 /* ----------------- Simple rate-limit -------------------- */
 const hitMap = new Map();
@@ -837,11 +818,11 @@ app.get("/api/payment/success", async (req, res) => {
 
   // Rendelési adat nélkül nem állítható össze és nem igazolható az elvárt összeg.
   if (!o || !Object.keys(o).length) {
-    console.warn('[SUCCESS] Missing order payload (no pending order found) → skipping generation/invoice/email.');
+    console.warn('[SUCCESS] Missing order payload (no pending order found) → skipping fulfillment/invoice/email.');
     return res.status(409).send(`
       <html><body style="background:#0d1b2a;color:white;text-align:center;padding:50px">
         <h2>⚠️ A rendelés ellenőrzése szükséges</h2>
-        <p>A rendelés adatai nem találhatók a szerveren, ezért sem generálást, sem számlázást nem indítottunk.</p>
+        <p>A rendelés adatai nem találhatók a szerveren, ezért sem feldolgozást, sem számlázást nem indítottunk.</p>
         <p>Kérjük, írj az <b>info@enzenem.hu</b> címre a tranzakció adataival, és azonnal intézzük.</p>
         <a href="/" style="color:#21a353;text-decoration:none">Vissza a főoldalra</a>
       </body></html>
@@ -895,7 +876,7 @@ app.get("/api/payment/success", async (req, res) => {
   markPaymentProcessed(pkey);
   console.log('[PAYMENT VERIFIED]', { orderCode, transactionId, amount: expectedAmount, currency: 'HUF' });
 
-  // A belső ellenőrzési metaadatok nem kerülnek át a generálásba és az e-mailekbe.
+  // A belső ellenőrzési metaadatok nem kerülnek át a feldolgozásba és az e-mailekbe.
   o = { ...o };
   delete o.__payment_order_code;
   delete o.__payment_amount;

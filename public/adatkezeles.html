@@ -119,6 +119,13 @@
 
   <p>Az egyes külső szolgáltatók adatkezelésére a szolgáltatás típusától függő szerződéses feltételek és saját adatkezelési tájékoztatóik is vonatkoznak. Az AI-eszközök tájékoztatói: <a href="https://openai.com/policies/eu-services-privacy-policy/" target="_blank" rel="noopener noreferrer">OpenAI</a>, <a href="https://suno.com/privacy/" target="_blank" rel="noopener noreferrer">Suno</a>.</p>
 
+  <h3>5.5. NovaBot – választható AI-chat</h3>
+  <p>A NovaBot az OpenAI API-n keresztül válaszol. Használata önkéntes; az első üzenet előtt külön hozzájárulást kérünk (GDPR 6. cikk (1) a)). A hozzájárulás a beszélgetés törlésével és a chat használatának abbahagyásával visszavonható a jövőbeni küldésekre. A chat nélkül is rendelhetsz.</p>
+  <p>A beírt üzenetet és legfeljebb az utolsó három kérdés-válasz párt továbbítjuk az OpenAI részére. A NovaBot nem olvassa a rendelési űrlapot, a fizetési vagy számlázási adatokat. Kérjük, ne írj bankkártyaadatot, jelszót, egészségügyi vagy más érzékeny személyes adatot a chatbe.</p>
+  <p>A beszélgetés az oldal memóriájában marad, frissítéskor vagy a „Beszélgetés törlése” gombbal eltűnik. Az alkalmazás nem menti a chat szövegét adatbázisba, naplófájlba, e-mailbe vagy Google Sheetsbe. A visszaélésvédelemhez a szerver a hálózati cím véletlen sóval képzett lenyomatát és a kérések számát egyórás korlátozási ablakhoz tartja memóriában; a lejárt rekordokat a következő chatkéréskor törli,, jogos érdek alapján. A tárhelyszolgáltató technikai naplózása ettől különálló.</p>
+  <p>Az API-kérésben a tartós alkalmazásoldali tárolást kikapcsoljuk (store: false), ez azonban nem kapcsolja ki az OpenAI visszaélés-megelőzési naplózását, amely alapértelmezés szerint legfeljebb 30 napos, kivételesen hosszabb lehet. A szolgáltató adatkezelésének, esetleges nemzetközi adattovábbításának és garanciáinak részletei: <a href="https://developers.openai.com/api/docs/guides/your-data">OpenAI API adatkezelés</a>, <a href="https://openai.com/policies/data-processing-addendum/">adatfeldolgozási feltételek</a>.</p>
+  <p>A válasz felolvasása csak gombnyomásra indul, a böngésző beszédszintézisét használva. A kiválasztott hangtól függően a böngésző vagy az operációs rendszer külső beszédszolgáltatást is igénybe vehet. Mikrofont nem használunk.</p>
+
   <h2>6. Adatkezelés időtartama</h2>
   <ul>
     <li>A megrendelés teljesítéséhez szükséges adatok: a teljesítésig, illetve a szerződéses igények elévüléséig (általában 5 év).</li>
@@ -250,6 +257,13 @@
   <h3>5.4. Google Sheets / spreadsheet integration</h3>
   <p>The Data Controller may use Google Sheets or a similar spreadsheet system for its own administration and logging of orders, where order-related data such as event type, style, delivery time and generated song links may be recorded.</p>
   <p>The external providers’ processing is also governed by the contractual terms applicable to the service used and their own privacy notices. AI tool privacy notices: <a href="https://openai.com/policies/eu-services-privacy-policy/" target="_blank" rel="noopener noreferrer">OpenAI</a>, <a href="https://suno.com/privacy/" target="_blank" rel="noopener noreferrer">Suno</a>.</p>
+
+  <h3>5.5. NovaBot – optional AI chat</h3>
+  <p>NovaBot answers via the OpenAI API. Use is voluntary and requires separate consent before the first message (Article 6(1)(a) GDPR). You can withdraw consent for future messages by clearing the conversation and stopping use of chat. Ordering does not require chat.</p>
+  <p>Your message and at most the last three question-and-answer pairs are sent to OpenAI. NovaBot does not read order forms, payment or billing data. Please do not enter card details, passwords, health information or other sensitive personal information.</p>
+  <p>The conversation stays in page memory and disappears on refresh or when you select “Clear conversation”. The application does not save chat text to a database, log file, e-mail or Google Sheets. For abuse prevention, the server keeps a randomly salted hash of the network address and request counts in memory for a one-hour limiting window, based on legitimate interest; expired records are deleted on the next chat request. Hosting-provider technical logs are separate.</p>
+  <p>We disable application-state storage in the API request (store: false). This does not disable OpenAI abuse-monitoring logs, which by default may be retained for up to 30 days, with exceptions allowing longer retention. Details on processing, possible international transfers and safeguards: <a href="https://developers.openai.com/api/docs/guides/your-data">OpenAI API data controls</a> and <a href="https://openai.com/policies/data-processing-addendum/">Data Processing Addendum</a>.</p>
+  <p>Read-aloud starts only on button press using browser speech synthesis. Depending on the selected voice, the browser or operating system may use an external speech service. We do not use a microphone.</p>
 
   <h2>6. Duration of data processing</h2>
   <ul>
