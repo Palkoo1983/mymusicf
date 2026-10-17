@@ -22,7 +22,20 @@ export function createDrive({env=process.env,fetchImpl=globalThis.fetch}={}){
  const item=id=>'/items/'+encodeURIComponent(id);
  const file=(folder,name)=>item(folder)+':/'+encodeURIComponent(name);
  return {
-  async privateFolder(){const base=env.ONEDRIVE_FOLDER_ID;const folder=await (await graph(item(base))).json();if(!folder.folder||folder.shared)throw Error('storage');const permissions=await (await graph(item(base)+'/permissions')).json();if(permissions['@odata.nextLink']||(permissions.value||[]).some(p=>p.link||p.invitation||!p.roles?.includes('owner')))throw Error('storage');return base;},
+  async privateFolder(){
+   const base=env.ONEDRIVE_FOLDER_ID;
+   const folder=await (await graph(item(base))).json();
+   if(!folder.folder||folder.shared)throw Error('storage');
+   const permissions=await (await graph(item(base)+'/permissions')).json();
+   // Personal OneDrive includes link:{webUrl} on its owner permission even
+   // when the folder has no sharing links. Only accept this owner-only shape;
+   // sharing scopes/types, invitations, other roles and unknown shapes fail closed.
+   if(permissions['@odata.nextLink']||!Array.isArray(permissions.value)||!permissions.value.length||permissions.value.some(p=>
+    p.invitation||p.roles?.length!==1||p.roles[0]!=='owner'||
+    (p.link&&Object.keys(p.link).some(key=>key!=='webUrl'))
+   ))throw Error('storage');
+   return base;
+  },
   async createFolder(name){const base=await this.privateFolder();return (await graph(item(base)+'/children',{method:'POST',body:JSON.stringify({name,folder:{},'@microsoft.graph.conflictBehavior':'fail'})})).json();},
   async write(folder,name,value){return (await graph(file(folder,name)+':/content',{method:'PUT',body:JSON.stringify(value)})).json();},
   async read(folder,name){return (await graph(file(folder,name)+':/content')).json();},
