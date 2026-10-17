@@ -40,7 +40,10 @@ export function createDrive({env=process.env,fetchImpl=globalThis.fetch}={}){
   async write(folder,name,value){return (await graph(file(folder,name)+':/content',{method:'PUT',body:JSON.stringify(value)})).json();},
   async read(folder,name){return (await graph(file(folder,name)+':/content')).json();},
   async get(folder,name){return (await graph(file(folder,name))).json();},
-  async upload(folder,entry){const j=await (await graph(file(folder,entry.storedName)+':/createUploadSession',{method:'POST',body:JSON.stringify({item:{'@microsoft.graph.conflictBehavior':'fail',name:entry.storedName,fileSize:entry.size}})})).json();if(!j.uploadUrl||!j.uploadUrl.startsWith('https://'))throw Error('storage');return {uploadUrl:j.uploadUrl,expires:j.expirationDateTime};},
+  // Keep the session request minimal: this personal OneDrive rejects the optional
+  // item.fileSize field with HTTP 400. Size limits are enforced by validation,
+  // Content-Range during upload and the final stored-file size check.
+  async upload(folder,entry){const j=await (await graph(file(folder,entry.storedName)+':/createUploadSession',{method:'POST',body:JSON.stringify({item:{'@microsoft.graph.conflictBehavior':'fail',name:entry.storedName}})})).json();if(!j.uploadUrl||!j.uploadUrl.startsWith('https://'))throw Error('storage');return {uploadUrl:j.uploadUrl,expires:j.expirationDateTime};},
   async prefix(id){const r=await graph(item(id)+'/content',{headers:{Range:'bytes=0-511'}});const reader=r.body.getReader();let chunks=[],size=0;try{while(size<512){const {value,done}=await reader.read();if(done)break;const part=value.subarray(0,512-size);chunks.push(Buffer.from(part));size+=part.length;}}finally{await reader.cancel();}return Buffer.concat(chunks);}
  };
 }
