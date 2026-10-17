@@ -129,15 +129,21 @@ test('csak a teljesen egyező, befejezett HUF-tranzakció fogadható el', () => 
   );
 });
 
-test('a szerverben a generálás belső kulccsal védett és a tesztlevél-végpont megszűnt', () => {
+test('paid fulfillment has no automatic AI endpoint and remains behind payment verification', () => {
   const source = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
-  const generateRoute = source.indexOf("app.post('/api/generate_song'");
-  const generateGuard = source.indexOf("constantTimeTokenMatch(req.get('X-Enzenem-Internal')", generateRoute);
-  const successRoute = source.indexOf('app.get("/api/payment/success"');
-  const verifyCall = source.indexOf('verifyVivaPayment({ transactionId, orderCode, expectedAmount })', successRoute);
-  const fulfillmentCall = source.indexOf('postJsonWithTimeout(apiUrl, o', successRoute);
-
-  assert.ok(generateRoute > -1 && generateGuard > generateRoute);
+  assert.equal(source.includes("app.post('/api/generate_song'"), false);
+  assert.equal(source.includes('api.openai.com'), false);
+  assert.equal(source.includes('OPENAI_API_KEY'), false);
   assert.equal(source.includes("app.get('/api/test-mail'"), false);
-  assert.ok(successRoute > -1 && verifyCall > successRoute && fulfillmentCall > verifyCall);
+  const route = source.indexOf('app.get("/api/payment/success"');
+  const verify = source.indexOf('verifyVivaPayment({ transactionId, orderCode, expectedAmount })', route);
+  const reject = source.indexOf('if (!verification.ok)', verify);
+  const fulfillment = source.indexOf('setImmediate(() => safeAppendOrderRow', reject);
+  assert.ok(verify > route && reject > verify && fulfillment > reject);
+});
+
+test('interface language is independent from song language and sanitized', () => {
+  assert.equal(normalizeOrderForPayment({...validOrder, ui_language: 'en'}).ui_language, 'en');
+  assert.equal(normalizeOrderForPayment({...validOrder, ui_language: '<script>'}).ui_language, 'hu');
+  assert.equal(normalizeOrderForPayment({...validOrder, ui_language: 'en'}).language, 'magyar');
 });

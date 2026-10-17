@@ -31,7 +31,7 @@
     try { if (window.novaBotSay) { window.novaBotSay(text); } } catch(_) {}
   }
   window.novaOrderSuccess = function(){
-    nbSay('Éljen, megrendelésedet elküldted, 48 órán belül megkapod a dalodat.');
+    nbSay('A rendelésedet fogadtuk. Két dalváltozatot és PDF-dalszöveget kapsz a választott kézbesítési időn belül.');
   };
   window.novaOrderFail = function(){
     nbSay('Oh :(, megrendelésed nem sikerült, kérlek próbáld újra');
@@ -93,8 +93,9 @@ function initTabs() {
   }
 
   // initial state
-  const activePanel = panels.find(p => p.classList.contains('active')) || panels[0];
+  const activePanel = panels.find(p => p.id === location.hash.slice(1)) || panels.find(p => p.classList.contains('active')) || panels[0];
   panels.forEach(p => (p.hidden = p !== activePanel));
+  if (activePanel) activate(activePanel.id);
 
   buttons.forEach(btn => {
   btn.addEventListener('click', (e) => {

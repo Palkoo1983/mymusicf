@@ -1,3 +1,7 @@
+AKTUÁLIS: 2026-10-17 – 2 dalváltozat + PDF, személyes elkészítés.
+Az aktuális telepítési és működési leírás: FRISSITES-2026-10-17.md
+Az alábbi korábbi feljegyzésekben szereplő automatikus generálás már nem aktív.
+
 # EnZenem – karácsonyi akció és nyereményjáték, 2026
 
 A csomag 2026. október 10-től indítható karácsonyi kampányhoz készült.
@@ -14,7 +18,7 @@ Az éles oldalon a feltöltés és az új telepítés után jelennek meg a vált
 Az akció visszavonásig érvényes, nincs automatikus lejárata.
 A gyorsított kézbesítés felára továbbra is 3 000 Ft (24 óra), illetve
 6 500 Ft (6 óra); a 48 órás alapkézbesítéshez nincs felár.
-A második dalváltozat meglévő 3 000 Ft-os díja megmaradt.
+Frissítés 2026-10-17: a második dalváltozat felára megszűnt; minden csomag két változatot és PDF-dalszöveget tartalmaz.
 
 Az árlista, a rendelési csomagválasztó, a Megrendelés gomb, a szerveroldali
 fizetési összeg és a keresőknek átadott termékár az új árakat használja.

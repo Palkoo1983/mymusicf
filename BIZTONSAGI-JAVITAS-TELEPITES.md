@@ -1,3 +1,7 @@
+AKTUÁLIS: 2026-10-17 – 2 dalváltozat + PDF, személyes elkészítés.
+Az aktuális telepítési és működési leírás: FRISSITES-2026-10-17.md
+Az alábbi korábbi feljegyzésekben szereplő automatikus generálás már nem aktív.
+
 # EnZenem 2.0.3 – Viva-ellenőrzési javítás és élő teszt
 
 ## Mit javít ez a verzió?

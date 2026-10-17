@@ -66,6 +66,7 @@ form.addEventListener('submit', async (e) => {
 
   const fd = new FormData(form);
   const data = {
+    ui_language: window.EnzI18n?.getLanguage() || 'hu',
     title: (fd.get('title') || '').toString(),
     _hp: (fd.get('_hp') || '').toString(),
     email: (form.querySelector('[name=email]') || {}).value || '',

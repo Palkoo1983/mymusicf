@@ -64,11 +64,6 @@
     ", a választott stílustól és a megadott": ", depending on the chosen style and the detail of your",
     "Leírás": "Description",
     "részletességétől függően.": "field.",
-    "Ha az első dalod mellett szeretnél egy második számot is, akkor csupán": "If you would like a second version of your song, we can create it for only",
-    "3000 Ft": "3,000 HUF",
-    "kedvezményes díjért elkészítjük az egyedi zeneszámod 2. változatát is, ugyanazzal a szöveggel és stílussal, csak stíluson belül más elemekkel, más hangszereléssel! Csak írj egy levelet arról az email címről, amelyről az első dalrendelést is leadtad, utald el az összeget a": "as a discounted extra: same lyrics and style, but with different arrangement details within the style. Just send us an email from the same address you used for the first order, transfer the amount to",
-    "bankszámlaszámra, és": "bank account, and",
-    "megkapod az új hangszerelésű dalodat, Közlemény rovat: az email címedet írd be!": "you will receive your newly arranged song within 48 hours. Please write your email address in the payment note.",
     "Kattints ide: Hogyan működik →": "Click here: How it works →",
     "Visszajelzések": "Reviews",
     "Néhány friss üzenet tőletek – jobbra/balra görgethető.": "A few recent messages from you – scroll left/right.",
@@ -83,15 +78,12 @@
     "Lehet-e név nélkül dalt kérni?": "Can I order a song without using names?",
     "Igen. Ha azt szeretnéd, hogy a dalból „ki lehessen találni”, csak írd be a leírásba, hogy a nevek NE szerepeljenek.": "Yes. If you want the listener to “figure it out” from the song, simply write in the description that names should NOT be included.",
     "Kaphatok több verziót ugyanarra a szövegre?": "Can I get multiple versions of the same lyrics?",
-    "Igen. A 2. változat kedvezményesen kérhető (3000 Ft), ugyanazzal a szöveggel, csak más hangszereléssel / stíluson belüli variációval.": "Yes. A second version is available at a discounted price (3,000 HUF), with the same lyrics but a different arrangement or variation within the style.",
     "Milyen formátumban kapom meg?": "What format will I receive?",
     "A kész dalt e‑mailben küldjük: alapból MP3, és ha a csomagod tartalmazza, kérhető videós (MP4) vagy más formátum is.": "We send the finished song by email: MP3 by default, and video (MP4) or other formats are available if included in your package.",
     "Tudok módosítást kérni?": "Can I request changes?",
-    "Abban a dalban, amit elkészítettünk már nem lehetséges a módosítás, technikai okok miatt, viszont a 2., 3000 forintos dalban tudunk apróbb módosításokat elvégezni és igyekszünk mindent úgy megoldani, hogy elégedett legyél az eredménnyel, mert szeretnénk, hogy mindig visszatérj hozzánk!": "For technical reasons, the song already created cannot be modified. However, in the second 3,000 HUF version we can make small adjustments, and we do our best to make sure you are happy with the result — because we want you to come back again.",
     "Kapok számlát?": "Will I receive an invoice?",
     "Igen, a fizetés után automatikusan küldjük a számlát a megadott e‑mail címre.": "Yes, after payment the invoice is automatically sent to the email address you provide.",
     "Mitől más ez, mint egy ingyenes AI zenegenerátor?": "How is this different from a free AI music generator?",
-    "Az EnZenem nem sablonokból dolgozik: a szöveg a te történetedre épül, és emberi kreativitás + technológia közös munkája. Kifejezetten magyar nyelvre optimalizálva készül, ezért természetesebb, pontosabb és érzelmileg „betalálóbb”, mint a tipikus, általános (sokszor angolra hangolt) ingyenes generátorok eredménye;Maximum próbaként ingyenes és ekkor egy gyengébb zene generálás történik, egyéb esetben azok sem ingyenesek, sőt ilyen minőségben drágábbak is. Röviden: nem csak „AI-dal”, hanem egyedi, kézzel készített szöveg, egy személyre szabott élmény. A puding próbája az evés: próbáld ki nyugodt szívvel, mert nem fogsz csalódni, főleg akkor ha minőségre vágysz, nem sablonra.": "EnZenem does not work from generic templates: the lyrics are built around your story, combining human creativity with technology. It is optimized for natural, emotionally accurate results, not generic machine-made output. In short: it is not just an “AI song”, but a custom-written, personalized musical experience. Try it with confidence — especially if you want quality, not a template.",
     "Biztonságos a fizetés?": "Is payment secure?",
     "Igen. Bankkártyás fizetés Viva Wallet VPOS terminálon keresztül történik.": "Yes. Card payments are processed through the Viva Wallet VPOS terminal.",
     "Karácsonyi akció – 50% kedvezmény": "Christmas sale – 50% off",
@@ -202,7 +194,6 @@
     "Honlap: www.enzenem.hu": "Website: www.enzenem.hu",
     "E-mail:": "Email:",
     "Székhely: 1097 Budapest Aszódi utca 8. 123.": "Registered office: 1097 Budapest, Aszódi utca 8. 123.",
-    "Számlaszám: 10918001-00000134-59510006": "Bank account: 10918001-00000134-59510006",
     "Név": "Name",
     "Üzenet": "Message",
     "Üzenet küldése": "Send message",
@@ -289,6 +280,38 @@
     "Karácsonyra szeretnék egy dalt a családomnak. Minden évben együtt díszítjük a fát, anya sütit süt, apa meg énekel, mi pedig táncolunk. A másik emlék, amit a dalban hallanék, amikor szilveszterkor nevetve táncoltunk a nappaliban, és mindenki boldog volt.": "I would like a Christmas song for my family. Every year we decorate the tree together, Mom bakes cookies, Dad sings, and we dance. Another memory I would love to hear in the song is when we danced in the living room on New Year’s Eve, laughing, and everyone was happy."
   });
 
+  Object.assign(EXACT_EN, {
+  "Egy történet. Két dal. Egy csomagár.": "One story. Two songs. One package price.",
+  "Személyesen szerkesztett dalszöveg, AI-val készített zene, emberi odafigyelés.": "Personally edited lyrics, AI-created music, human care.",
+  "Két dal egy áráért + dalszöveg PDF-ben": "Two songs for the price of one + PDF lyrics",
+  "Ugyanabból a történetből két külön zenei változatot készítünk. Mindkettőt megkapod a választott MP3, MP4 vagy WAV formátumban, a dalszöveget pedig PDF-ben. Válaszd a kedvencedet, vagy használd mindkettőt!": "We create two musical versions from the same story. You receive both in your chosen MP3, MP4 or WAV format, plus the lyrics as a PDF. Choose your favourite or enjoy both!",
+  "A te történeted, emberi odafigyeléssel": "Your story, with a human touch",
+  "A történetedet személyesen átnézzük. A dalszöveget AI segítségével, saját alkotói elképzeléseink és a te kéréseid alapján alakítjuk és szerkesztjük. A zenei instrukciókat mi állítjuk össze, az elkészült változatokat meghallgatjuk és kiválasztjuk. A rendelésed nem indít automatikus dalgyártást.": "We personally review your story. With AI assistance, we shape and edit the lyrics using our creative ideas and your requests. We write the musical instructions, listen to the results and select the versions. Your order does not trigger automatic song production.",
+  "Minden csomagban benne van": "Included in every package",
+  "2 teljes dalváltozat": "2 complete song versions",
+  "PDF-dalszöveg": "PDF lyrics",
+  "Személyes alkotói munka": "Personal creative work",
+  "Kérem a két dalomat": "Order my two songs",
+  "48 órás alapkézbesítés · 24 vagy 6 óra felárért · Biztonságos bankkártyás fizetés": "Standard delivery in 48 hours · 24 or 6 hours for an extra fee · Secure card payment",
+  "A két elkészült dalváltozatot és a PDF-dalszöveget": "Both completed song versions and the PDF lyrics",
+  "Tényleg két dalt kapok egy áráért?": "Do I really get two songs for the price of one?",
+  "Igen. Minden MP3, MP4 és WAV csomag két teljes dalváltozatot tartalmaz ugyanarra a történetre és dalszövegre, eltérő zenei megvalósítással. Mindkettőt megkapod és használhatod az ÁSZF szerint, külön felár nélkül.": "Yes. Every MP3, MP4 and WAV package includes two complete versions of the same story and lyrics, with different musical interpretations. You receive both and may use both under our Terms, at no extra charge.",
+  "Mindkét változatot a választott csomag formátumában küldjük: MP3 hangfájlként, MP4 statikus videóként felirattal vagy WAV hangfájlként. A dalszöveget PDF-ben mellékeljük. A csomagot e-mailben, mellékletként vagy letöltési linken kapod meg.": "Both versions are delivered in the format you choose: MP3 audio, MP4 static video with captions, or WAV audio. The lyrics are included as a PDF. Your package arrives by email as attachments or download links.",
+  "Pontosítást vagy hibajavítást az info@enzenem.hu címen kérhetsz. A lehetőségeket az ÁSZF szerint, egyedileg egyeztetjük. A csomagban lévő két dalváltozat nem két módosítási kör; új történet vagy teljesen új dal külön megrendelésnek számít.": "For clarifications or corrections, contact info@enzenem.hu. We discuss the options individually under our Terms. The two included song versions are not two revision rounds; a new story or an entirely new song requires a separate order.",
+  "Ember is dolgozik a dalomon, vagy minden automatikus?": "Does a person work on my song, or is everything automated?",
+  "Megkapom a dalszöveget is?": "Will I receive the lyrics too?",
+  "Igen, a végleges dalszöveget PDF-formátumban küldjük a két dalváltozattal együtt, a csomagár részeként. Instrumentális rendelésnél nincs énekelt dalszöveg; ilyenkor a PDF a dal címét és a hozzá kapcsolódó személyes üzenetet tartalmazza.": "Yes. The final lyrics are delivered as a PDF with both song versions, included in the package price. Instrumental orders have no sung lyrics; their PDF contains the song title and a personal message instead.",
+  "2 dalváltozat + PDF-dalszöveg": "2 song versions + PDF lyrics",
+  "– a két dalváltozatot és a PDF-dalszöveget e-mailben küldjük a választott határidőn belül.": "– both song versions and the PDF lyrics are delivered by email within your selected deadline.",
+  "Alkotói munka": "Creative work",
+  "– személyesen szerkesztjük a dalszöveget, összeállítjuk a zenei instrukciókat, majd meghallgatjuk és kiválasztjuk a két változatot.": "– we personally edit the lyrics, prepare the musical instructions, then listen to and select both versions.",
+  "A csomagár mindkét változatot és a PDF-et tartalmazza. Csak a formátumot és a kézbesítési időt kell kiválasztanod.": "Your package price includes both versions and the PDF. Simply choose your format and delivery time.",
+  "E-mail (a visszaigazolás, a két dal és a PDF címe)": "Email (for your confirmation, two songs and PDF)",
+  "Karácsonyi nyereményjáték – részletek": "Christmas giveaway – details",
+  "Két személyre szabott dal egy áráért, PDF-dalszöveggel. Emberi alkotói munka és AI-technológia. MP3, MP4 vagy WAV, 48 órás alapkézbesítéssel.": "Two personalized songs for the price of one, with PDF lyrics. Human creative work and AI technology. MP3, MP4 or WAV, with standard delivery in 48 hours."
+});
+
+  Object.assign(EXACT_EN, {"A rendelésedet fogadtuk. Két dalváltozatot és PDF-dalszöveget kapsz a választott kézbesítési időn belül.": "Your order has been received. You will receive two song versions and PDF lyrics within your selected delivery time.", "Kapcsolódás a fizetési rendszerhez...": "Connecting to the payment system...", "Átirányítás a fizetési oldalra...": "Redirecting to checkout...", "A leírás hossza 120 és 4000 karakter között lehet.": "The description must contain between 120 and 4000 characters."});
   const DYNAMIC_RULES = [
     [/^Megrendelés\s*–\s*(.+)$/i, m => `Order – ${m[1].replace(/Ft/g,'HUF')}`],
     [/^6 óra \(\+6 500 Ft\) – csak 08:00–20:00 között$/i, () => '6 hours (+6,500 HUF) – only between 08:00 and 20:00'],
@@ -394,8 +417,8 @@
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.content = lang === 'en'
-        ? 'Personalized songs for weddings, birthdays, anniversaries and special occasions. Unique music with delivery in as little as 6 hours. EnZenem.hu – your story in a song.'
-        : 'Személyre szabott dalok esküvőre, születésnapra, évfordulóra vagy különleges alkalmakra. Egyedi Zene 6 órán belüli kézbesítéssel. EnZenem.hu – A Te történeted dalban!';
+        ? 'Two personalized songs for the price of one, with PDF lyrics. Human creative work and AI technology. MP3, MP4 or WAV, with standard delivery in 48 hours.'
+        : 'Két személyre szabott dal egy áráért, PDF-dalszöveggel. Emberi alkotói munka és AI-technológia. MP3, MP4 vagy WAV, 48 órás alapkézbesítéssel.';
     }
   }
 
@@ -472,6 +495,10 @@
       translateTextNodes(document.body, lang);
       translateAttrs(document.body, lang);
       syncToggle(lang);
+      document.querySelectorAll('a[href*="aszf.html"],a[href*="adatkezeles.html"]').forEach(a => {
+        const href = a.getAttribute('href').split('#')[0];
+        a.setAttribute('href', href + (lang === 'en' ? '#english' : ''));
+      });
       syncOrderLanguageField(lang);
       syncDynamicExampleLabels(lang);
       syncBriefExamplePlaceholder(lang);

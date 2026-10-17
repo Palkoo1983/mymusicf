@@ -55,12 +55,14 @@
       }
 
       state.synth.cancel();
-      const u = new SpeechSynthesisUtterance(text);
+      const translated = window.EnzI18n?.t(text) || text;
+      const u = new SpeechSynthesisUtterance(translated);
 
       // magyar hang preferencia
-      const hu = (voices||[]).find(v => /hu|hungar/i.test(v.lang));
+      const english = window.EnzI18n?.getLanguage() === 'en';
+      const hu = (voices||[]).find(v => english ? /^en/i.test(v.lang) : /hu|hungar/i.test(v.lang));
       if (hu) u.voice = hu;
-      u.lang = hu ? hu.lang : 'hu-HU';
+      u.lang = hu ? hu.lang : (english ? 'en-US' : 'hu-HU');
       u.rate = 1.0; u.pitch = 1.0; u.volume = 1.0;
 
       u.onstart = ()=> setSpeaking(true);
@@ -357,7 +359,7 @@ window.novaBotSay = function(text){
 
 // Rövidített hívások a megrendelés siker/hiba ághoz
 window.novaOrderSuccess = function(){
-  window.novaBotSay('Éljen, megrendelésedet elküldted, 48 órán belül megkapod a dalodat.');
+  window.novaBotSay('A rendelésedet fogadtuk. Két dalváltozatot és PDF-dalszöveget kapsz a választott kézbesítési időn belül.');
 };
 window.novaOrderFail = function(){
   window.novaBotSay('Oh :(, megrendelésed nem sikerült, kérlek próbáld újra');

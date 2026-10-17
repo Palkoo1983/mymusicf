@@ -1,3 +1,7 @@
+AKTUÁLIS: 2026-10-17 – 2 dalváltozat + PDF, személyes elkészítés.
+Az aktuális telepítési és működési leírás: FRISSITES-2026-10-17.md
+Az alábbi korábbi feljegyzésekben szereplő automatikus generálás már nem aktív.
+
 AKTUÁLIS FRISSÍTÉS – 2026. október 10.
 Karácsonyi akció: MP3 7 500 Ft, MP4 15 000 Ft, WAV 25 000 Ft.
 50% kedvezmény visszavonásig; közösségi nyereményjáték jelzése.

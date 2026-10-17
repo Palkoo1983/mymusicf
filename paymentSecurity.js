@@ -53,6 +53,7 @@ export function normalizeOrderForPayment(input = {}) {
 
   return {
     ...input,
+    ui_language: input.ui_language === 'en' ? 'en' : 'hu',
     title,
     email,
     styles,

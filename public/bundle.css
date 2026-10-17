@@ -1,0 +1,17 @@
+/* The existing vinyl identity, with clearer offer hierarchy. */
+.bundle-hero{max-width:1080px;margin:20px auto 24px;padding:clamp(22px,4vw,44px);border:1px solid #bd984b;border-radius:22px;background:linear-gradient(130deg,#232015,#11131c);color:#f5f2e9;text-align:left;box-sizing:border-box}
+.bundle-hero h2{font-size:clamp(1.6rem,3.6vw,2.7rem);line-height:1.15;color:#f7d880;margin:10px 0 18px;max-width:850px}
+.bundle-hero p{max-width:760px;line-height:1.65;color:#eee9df}
+.bundle-eyebrow{font-size:.82rem;text-transform:uppercase;letter-spacing:.13em;color:#efd186!important;font-weight:700}
+.bundle-features{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0}
+.bundle-features span{padding:9px 13px;border:1px solid #756238;border-radius:10px;color:#f7df9e;background:#ffffff07}
+.bundle-cta{display:inline-block;background:#f2cf74;color:#15120b!important;text-decoration:none;padding:14px 24px;border-radius:10px;font-weight:750;box-shadow:0 4px 20px #0003}
+.bundle-cta:hover{background:#ffe5a5}.bundle-cta:focus-visible{outline:3px solid white;outline-offset:4px}
+.bundle-small{font-size:.85rem;margin-bottom:0;color:#c8c4bb!important}
+.human-note,.order-included{background:#18191f;border:1px solid #564a31;border-left:4px solid #ddba64;padding:22px;border-radius:12px;margin:18px 0 24px;line-height:1.7}
+.human-note h3,.order-included strong{color:#f5d88c}.human-note p,.order-included p{color:#eee9df!important;margin-bottom:0}
+.bundle-included{font-weight:750;color:#f5d88c!important;padding:10px 0;border-bottom:1px solid #66532f}
+.christmas-campaign{max-width:1080px;margin:0 auto 24px;align-items:start}.christmas-campaign summary{cursor:pointer;font-weight:700;color:#f5d88c;line-height:1.5}
+#intro>p,#intro .human-note{max-width:860px}#intro .badges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;line-height:1.6}
+.faq-q{line-height:1.5}.faq-a p{line-height:1.75;max-width:850px}
+@media(max-width:640px){.bundle-hero{margin:14px 10px 20px;padding:22px}.bundle-features{display:grid;grid-template-columns:1fr}.bundle-cta{display:block;text-align:center}.human-note,.order-included{padding:17px}#intro .badges{grid-template-columns:1fr}.christmas-campaign{margin-inline:10px}}
