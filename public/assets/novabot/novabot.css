@@ -26,3 +26,13 @@
 #novabot .nb-actions{display:flex;flex-wrap:wrap;gap:6px}
 #novabot .nb-actions button{font-size:11px;padding:5px 8px}
 @media(max-width:480px){#novabot{right:10px;bottom:10px}#novabot .nb-chat{width:calc(100vw - 20px);max-height:calc(100dvh - 95px)}#novabot .novabot-avatar{width:60px;height:70px}}
+
+/* Always-visible discovery note until explicit acknowledgement. */
+#novabot{display:flex;flex-direction:column;align-items:flex-end;gap:8px;max-height:calc(100dvh - 32px)}
+#novabot .novabot-avatar{flex-shrink:0}
+#novabot .nb-chat{min-height:0;flex-shrink:1}
+#novabot .nb-hint{width:min(390px,calc(100vw - 32px));flex-shrink:0;padding:16px;border:2px solid #dfbd64;border-radius:16px;background:#20251b;box-shadow:0 8px 30px #0008;color:#fff}
+#novabot .nb-hint strong{display:block;color:#f5d57d;font-size:17px;margin-bottom:6px}
+#novabot .nb-hint p{color:#fff;line-height:1.5;margin-bottom:12px}
+#novabot .nb-hint button{background:#dfbd64;color:#17180e;font-weight:700;min-width:88px}
+@media(max-width:480px){#novabot .nb-hint{width:calc(100vw - 20px);padding:12px}#novabot{max-height:calc(100dvh - 20px)}}

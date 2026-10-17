@@ -1,4 +1,4 @@
-EnZenem 2.2.0 – NovaBot AI-chat + két dalváltozat és PDF
+EnZenem 2.2.1 – NovaBot AI-chat + két dalváltozat és PDF
 
 Aktuális telepítés: NOVABOT-TELEPITES.md
 Korábbi csomagváltozás: FRISSITES-2026-10-17.md

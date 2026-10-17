@@ -1,3 +1,9 @@
+# 2.2.1 – chatfunkció jelzése minden oldalbetöltéskor
+
+A robot fölött magyar/angol tájékoztató jelenik meg minden betöltéskor és a böngésző vissza/előre gyorsítótárából történő visszatéréskor. Csak az Értem / Got it gomb rejti el; nincs időzített eltűnés vagy megjegyzett elfogadás. A robot megnyitása önmagában nem tünteti el. Az oldal nyelvváltását követi. A jelzés nem indít API-hívást.
+
+A teljes forráscsomagot frissítsd; új Render-beállítás nem szükséges. A 2.2.0 alábbi útmutatója továbbra is érvényes, az automatikus tájékoztató hiányára vonatkozó korábbi megjegyzés kivételével.
+
 # EnZenem 2.2.0 – NovaBot-chat, 2026. október 17.
 
 ## Mi készült el?
