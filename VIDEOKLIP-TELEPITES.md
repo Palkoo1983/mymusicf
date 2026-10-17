@@ -46,3 +46,8 @@ Saját, felhasználható MP3-mal és egy képpel küldj teszt-ajánlatkérést. 
 A saját csatorna „videóklip” keresésének teljes klipként megjelölt találatai: Három elmaradt szó; Álarc mögött; Emlékszem rád a jövőből; Nem tudok aludni; Tavaszi szél – Hazavisz; Amikor a világ lélegzik; Árad a Tisza. A rövid animációk és egyszerű dalvizuálok nincsenek hozzáadva. A linkek a `public/video-clips.js` refs tömbjében szerkeszthetők. A YouTube új lapon nyílik, nem indul el automatikusan.
 
 Technikai hivatkozások: https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession?view=graph-rest-1.0 és https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-device-code
+
+
+## 2.3.1 javítás
+
+A felirat és a szájszinkron egymást kizáró, opcionális extrák. Egyetlen választómező: nincs extra / felirat / szájszinkron. A szerver a kettős választást elutasítja. A dalszöveg bemásolása továbbra is külön, opcionális alkotói segítség, nem feliratmegrendelés.

@@ -15,6 +15,7 @@ export function validateQuote(input={}){
   return {originalName:name,storedName:(audio?'audio':'image-'+i)+'.'+ext,size:file.size,kind:audio?'audio':'image',ext};
  });
  const subtitles=input.subtitles===true,lipsync=input.lipsync===true;
+ if(subtitles&&lipsync)throw Error('invalid');
  return {name,email,package:input.package,duration,ratio:input.ratio,subtitles,lipsync,concept:text('concept',4000),lyrics:text('lyrics',12000),priorOrder:text('priorOrder',100),language:input.language==='en'?'en':'hu',consent:true,rights:true,files,startingPrice:CLIP_PACKAGES[input.package]+(subtitles?4900:0)+(lipsync?9900:0)};
 }
 export function signTicket(value,secret){const body=Buffer.from(JSON.stringify(value)).toString('base64url');return body+'.'+createHmac('sha256',secret).update(body).digest('base64url');}
