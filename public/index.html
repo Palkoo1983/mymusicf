@@ -605,7 +605,7 @@ function stopVideo(btn) {
 </h1>
 
 <h2 class="gold-text" style="font-size:1.3rem;font-weight:400;margin-bottom:10px;">
-  Személyesen készített dalszöveg, AI-val készített zene, emberi odafigyelés és a legjobb technológia.
+  Személyesen szerkesztett dalszöveg, AI-val készített zene, emberi odafigyelés.
 </h2>
 </div>
   </div>
@@ -615,6 +615,7 @@ function stopVideo(btn) {
       <button class="tab" data-target="pricing"><span class="gold-text">Árak / Csomagok</span></button>
       <button class="tab" data-target="howto"><span class="gold-text">Hogyan működik</span></button>
       <button class="tab" data-target="order"><span class="gold-text">Megrendelés</span></button>
+      <button class="tab" data-target="videoclips"><span class="gold-text">Videoklipkészítés</span><small class="clip-new">ÚJ</small></button>
       <button class="tab" data-target="refs"><span class="gold-text">Referenciák</span></button>
       <button class="tab" data-target="contact"><span class="gold-text">Kapcsolat</span></button>
     </nav>
@@ -654,7 +655,7 @@ function stopVideo(btn) {
    <section class="panel active" id="intro">
   <h2 class="gold-text">Bemutatkozás</h2>
 
-  <div class="human-note"><h3>A te történeted, emberi odafigyeléssel</h3><p>A történetedet személyesen, a saját lelkünk, alkotói elképzeléseink és a te kéréseid alapján készítjük. A zenei instrukciókat mi állítjuk össze, az elkészült változatokat meghallgatjuk és kiválasztjuk. A rendelésed nem indít automatikus dalgyártást.</p></div>
+  <div class="human-note"><h3>A te történeted, emberi odafigyeléssel</h3><p>A történetedet személyesen átnézzük. A dalszöveget AI segítségével, saját alkotói elképzeléseink és a te kéréseid alapján alakítjuk és szerkesztjük. A zenei instrukciókat mi állítjuk össze, az elkészült változatokat meghallgatjuk és kiválasztjuk. A rendelésed nem indít automatikus dalgyártást.</p></div>
      <section class="for-who gold-text">
   <h2>Ez NEKED való, ha…</h2>
   <ul>
@@ -1322,6 +1323,7 @@ function stopVideo(btn) {
   </div>
 </section>
 
+    <section class="panel" id="videoclips" hidden inert aria-label="Videoklipkészítés"></section>
     <section class="panel" id="contact">
       <h2 class="gold-text">Kapcsolat</h2>
       <div class="contact-grid">
@@ -1441,6 +1443,8 @@ function stopVideo(btn) {
     <button class="primary" id="consentAccept"><span class="gold-text">Elfogadom</span></button>
   </div>
 
+  <link rel="stylesheet" href="video-clips.css?v=230">
+  <script src="video-clips.js?v=230" defer></script>
   <script src="script.js?v=20261017-chat"></script>
 
 <script src="/assets/novabot/novabot.js?v=20261017-chat-hint"></script>
@@ -1654,7 +1658,7 @@ if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
 }
 </script>
 
-<script src="i18n.js?v=20261017-chat"></script>
+<script src="i18n.js?v=20261017-clips230"></script>
 
 </body>
 </html>

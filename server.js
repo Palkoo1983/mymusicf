@@ -1,3 +1,4 @@
+import { registerClipRoutes } from './clipQuotes.js';
 import { registerNovaChat } from './novaChat.js';
 import express from 'express';
 import cors from 'cors';
@@ -425,6 +426,7 @@ app.use(express.json({ limit: '64kb' }));
 app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true, limit: '64kb' }));
 registerNovaChat(app);
+registerClipRoutes(app);
 
 /* ----------------- Simple rate-limit -------------------- */
 const hitMap = new Map();

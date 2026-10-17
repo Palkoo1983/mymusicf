@@ -213,6 +213,8 @@
     "és az": "and the",
     "feltételeit.": "conditions.",
     "Elfogadom": "Accept",
+    "Videoklipkészítés": "Music videos",
+    "ÚJ": "NEW",
     "NovaBot hang nem elérhető itt.": "NovaBot voice is not available here.",
     "Megnyitás böngészőben": "Open in browser",
     "Néma mód": "Silent mode",
@@ -346,7 +348,7 @@
   function isUnderSkipped(node){
     let el = node.parentNode;
     while (el){
-      if (el.nodeType === 1 && (el.id === "novabot" || SKIP_TEXT_TAGS.has(el.tagName))) return true;
+      if (el.nodeType === 1 && (["novabot", "videoclips"].includes(el.id) || SKIP_TEXT_TAGS.has(el.tagName))) return true;
       el = el.parentNode;
     }
     return false;
@@ -386,7 +388,7 @@
     if (!root || !root.querySelectorAll) return;
     const els = [root.nodeType === 1 ? root : null, ...root.querySelectorAll('*')].filter(Boolean);
     els.forEach(el => {
-      if (el.closest?.("#novabot") || SKIP_ATTR_TAGS.has(el.tagName)) return;
+      if (el.closest?.("#novabot, #videoclips") || SKIP_ATTR_TAGS.has(el.tagName)) return;
       ATTRS.forEach(attr => {
         if (!el.hasAttribute(attr)) return;
         if (attr === 'placeholder' && el.matches && el.matches('#brief, textarea[name="brief"]') && el.getAttribute('data-enz-example-placeholder') === '1') return;
@@ -497,6 +499,11 @@
       syncToggle(lang);
       document.querySelectorAll('a[href*="aszf.html"],a[href*="adatkezeles.html"]').forEach(a => {
         const href = a.getAttribute('href').split('#')[0];
+        if (a.closest('#videoclips')) {
+          const section = href.includes('aszf.html') ? 'videoclip-terms' : 'videoclip-privacy';
+          a.setAttribute('href', href + '#' + section + (lang === 'en' ? '-en' : ''));
+          return;
+        }
         a.setAttribute('href', href + (lang === 'en' ? '#english' : ''));
       });
       syncOrderLanguageField(lang);
@@ -535,7 +542,7 @@
       // The character counter translates itself; typing needs no page scan.
       const relevant = records.some(record => {
         const el = record.target.nodeType === 1 ? record.target : record.target.parentElement;
-        return !el?.closest('#enz-quality, #novabot');
+        return !el?.closest('#enz-quality, #novabot, #videoclips');
       });
       if (applying || pendingFrame !== null || !relevant) return;
       pendingFrame = window.requestAnimationFrame(() => {
