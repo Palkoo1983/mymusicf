@@ -1,0 +1,125 @@
+/* Shared presentation for all seven panels. Does not control tab activation. */
+html body main > .panel {
+  max-width: 1100px; margin-inline: auto; color: #f6f0e4;
+  text-align: left; line-height: 1.65;
+}
+html body main > .panel .gold-text,
+html body :is(.christmas-campaign, .seo-block, footer) .gold-text {
+  background-image: none !important; background-clip: initial !important;
+  -webkit-background-clip: initial !important; text-shadow: none !important;
+  color: #f6f0e4 !important; -webkit-text-fill-color: #f6f0e4 !important;
+}
+html body main > .panel > h2 {
+  display: block; margin: 10px 0 20px; text-align: left !important;
+  font-size: clamp(28px, 4vw, 46px); line-height: 1.12;
+}
+html body main > .panel > h2[tabindex="-1"]:focus { outline: none !important; }
+html body #videoclips #clipQuote :is(input:not([type=checkbox]):not([name="_hp"]),select,textarea) {
+  background: #090909 !important; border-color: #81704b !important;
+  color: #fff !important; -webkit-text-fill-color: #fff !important; font-size: 16px;
+}
+html body :is(#intro, #howto, #contact, #refs) :is(h3, a),
+html body :is(#intro, #howto, #contact, #refs) :is(h3, a).gold-text {
+  color: #edcf83 !important; -webkit-text-fill-color: #edcf83 !important;
+}
+html body :is(#intro, #howto, #contact) p { line-height: 1.65; }
+html body :is(#intro, #howto, #contact) > p.gold-text { display: block; }
+html body :is(#intro, #howto) :is(.human-note, .for-who, .note, .intro-video),
+html body #contact .contact-grid > div {
+  display: block; box-sizing: border-box; padding: clamp(18px, 3vw, 28px);
+  border: 1px solid #665333; border-radius: 16px; background: #191713;
+  margin: 20px 0; max-width: none; box-shadow: none;
+}
+html body #intro .human-note h3 { margin-top: 0; }
+html body #intro .for-who h2 { font-size: 24px; margin: 0 0 16px; color: #edcf83; }
+html body #intro .for-who ul { margin-bottom: 0; padding-left: 22px; }
+html body #intro .for-who li { padding-block: 5px; }
+html body #intro .badges { list-style: none; padding: 0; gap: 12px; margin: 24px 0; }
+html body #intro .badges li {
+  padding: 16px 18px; border: 1px solid #665333; border-radius: 12px;
+  background: #171511; font-size: 14px;
+}
+html body #intro .reviews-track { padding-block: 10px 16px; }
+html body #intro .review-card {
+  box-sizing: border-box; padding: 24px; border: 1px solid #766137;
+  border-radius: 18px; background: linear-gradient(145deg, #29241b, #111);
+  box-shadow: none; color: #f6f0e4;
+}
+html body #intro .review-text { color: #f6f0e4; font-weight: 400; line-height: 1.75; }
+html body #intro .review-author { color: #edcf83; margin-top: 18px; line-height: 1.5; }
+html body #intro .reviews-nav { background: #eed28a !important; color: #211a0b !important; -webkit-text-fill-color: #211a0b !important; border: 1px solid #e7c76c !important; box-shadow: none; }
+html body #intro .faq-item { background: #171511; border: 1px solid #665333; border-radius: 12px; }
+html body #intro .faq-q { padding: 18px; font: 600 16px/1.5 system-ui; color: #f6f0e4 !important; -webkit-text-fill-color: #f6f0e4 !important; background: transparent !important; border: 0 !important; box-shadow: none; }
+html body #intro .faq-a { padding: 0 18px 18px; }
+html body #intro .faq-a p { color: #d0c7b3; font-size: 15px; }
+html body #intro .faq-icon { border-color: #81704b; color: #edcf83; }
+html body #howto > ol {
+  display: grid; grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 14px; list-style-position: inside; padding: 0; margin: 24px 0; max-width: none;
+}
+html body #howto > ol li { margin: 0; padding: 22px; border: 1px solid #766137; border-radius: 16px; background: #191713; }
+html body #howto > ol li::marker { color: #edcf83; font-weight: 700; }
+html body #howto .examples { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 24px; }
+html body #howto .examples .chip {
+  max-width: 100%; min-height: 42px; padding: 10px 13px !important;
+  border: 1px solid #665333 !important; border-radius: 8px !important;
+  background: #211d16 !important; color: #f1d48a !important; -webkit-text-fill-color: #f1d48a !important;
+  font: 500 14px/1.5 system-ui; white-space: normal; box-shadow: none !important; cursor: pointer;
+}
+html body #howto .examples .chip * { background: none !important; border: 0 !important; padding: 0 !important; }
+html body #howto .examples .chip:hover { background: #30291d !important; border-color: #edcf83 !important; }
+html body #howto #howto-open-order,
+html body #contact #contactForm button.primary {
+  min-height: 48px; padding: 13px 18px !important; border: 1px solid #e7c76c !important;
+  border-radius: 10px; background: #eed28a !important; color: #211a0b !important;
+  -webkit-text-fill-color: #211a0b !important; font: 700 16px/1.5 system-ui;
+  box-shadow: none !important; cursor: pointer; white-space: normal;
+}
+html body #howto #howto-open-order .gold-text,
+html body #contact #contactForm button.primary .gold-text { color: #211a0b !important; -webkit-text-fill-color: #211a0b !important; }
+html body #contact .contact-grid { gap: 20px; align-items: start; grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+html body #contact .contact-grid > div { margin: 0; }
+html body #contact .contact-grid h3 { display: block; margin-top: 0; }
+html body #contact .contacts { gap: 14px; overflow-wrap: anywhere; }
+html body #contact #contactForm {
+  box-sizing: border-box; padding: clamp(18px,3vw,30px); border: 1px solid #bca264;
+  border-radius: 18px; background: #171511; gap: 20px;
+}
+html body #contact #contactForm label { display: block; font-size: 15px; font-weight: 500; line-height: 1.5; }
+html body #contact #contactForm :is(input:not([name="_hp"]), textarea) {
+  box-sizing: border-box; width: 100%; min-width: 0; margin-top: 7px; padding: 12px;
+  border: 1px solid #81704b !important; border-radius: 8px; background: #090909 !important;
+  color: #fff !important; -webkit-text-fill-color: #fff !important;
+  font: inherit; font-size: 16px; line-height: 1.5;
+}
+html body #contact #contactForm :is(input,textarea)::placeholder { color: #aaa394 !important; -webkit-text-fill-color: #aaa394 !important; opacity: 1; }
+html body #contact #contactForm textarea { min-height: 180px; resize: vertical; }
+html body #contact #contactForm .actions { display: grid; gap: 12px; }
+html body #contact #contactForm button.primary { width: 100%; }
+html body #contact #contactStatus:empty { display: none; }
+html body #refs.active { display: grid !important; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+html body #refs > h2 { grid-column: 1/-1; }
+html body #refs .embeds { display: contents !important; }
+html body #refs .embed.small {
+  box-sizing: border-box; min-width: 0; width: 100%; max-width: none !important;
+  margin: 0 !important; padding: 0 !important; overflow: hidden;
+  border: 1px solid #665333; border-radius: 12px; background: #191713; box-shadow: none;
+}
+html body #refs .embed .video { width: 100% !important; max-width: none !important; }
+html body #refs .embed .video iframe { border-radius: 0; }
+html body #refs .embed p { align-self: stretch; margin: 0; padding: 16px; text-align: left !important; line-height: 1.5; font-weight: 600; color: #edcf83 !important; -webkit-text-fill-color: #edcf83 !important; }
+html body .bundle-hero { background: linear-gradient(145deg,#29241b,#111); border-color: #766137; border-radius: 18px; box-shadow: none; }
+html body .christmas-campaign-card { background: #191713; border-color: #665333; border-radius: 16px; box-shadow: none; }
+html body .christmas-campaign h2.gold-text { color: #edcf83 !important; -webkit-text-fill-color: #edcf83 !important; }
+html body .seo-block { box-sizing: border-box; padding: 24px !important; border: 1px solid #665333; border-radius: 16px; background: #171511; }
+html body .seo-block h2 { display: block; text-align: left !important; color: #edcf83 !important; -webkit-text-fill-color: #edcf83 !important; font-size: 22px; line-height: 1.4; }
+html body .seo-block p { display: block; margin-bottom: 0; }
+html body :is(#intro,#howto,#refs,#contact) :focus-visible { outline: 3px solid #f3d884 !important; outline-offset: 4px; }
+html body #styleList [role=option][aria-selected=true] { background: #30291d; outline: 1px solid #edcf83; outline-offset: -2px; }
+@media(max-width:740px) {
+  html body #howto > ol, html body #contact .contact-grid,
+  html body #refs.active { grid-template-columns: minmax(0,1fr); }
+  html body #intro .badges { grid-template-columns: minmax(0,1fr); }
+  html body #howto #howto-open-order { width: 100%; }
+  html body #intro .review-card { padding: 18px; }
+}

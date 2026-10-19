@@ -435,6 +435,7 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 </style>
 <link rel="stylesheet" href="bundle.css?v=20261017">
 <link rel="stylesheet" href="order-design.css?v=20261019">
+<link rel="stylesheet" href="site-design.css?v=20261019-all-tabs">
 </head>
 <body class="gold-theme">
   <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
@@ -1615,43 +1616,7 @@ if (/wv|samsungbrowser/i.test(navigator.userAgent)) {
   document.documentElement.style.webkitTextSizeAdjust = '100%';
 }
 </script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const box   = document.getElementById('styleList');
-  const input = document.getElementById('styleInput');
-  if (!box || !input) return;
-
-  // Lista megnyitása: fókusz + kattintáskor
-  input.addEventListener('focus', () => {
-    box.style.display = 'block';
-  });
-  input.addEventListener('click', () => {
-    box.style.display = 'block';
-  });
-
-  // Opció kiválasztása – csak a saját listánkon belül figyelünk
-  box.addEventListener('click', (e) => {
-    const option = e.target.closest('[data-val]');
-    if (!option) return;
-    input.value = option.dataset.val;
-    box.style.display = 'none';
-    input.focus(); // ha akarsz, maradjon aktív az input
-  });
-
-  // Ha máshova kattintunk → zárjuk be
-  document.addEventListener('click', (e) => {
-    if (e.target === input || box.contains(e.target)) return;
-    box.style.display = 'none';
-  });
-
-  // Blur eset: biztos, ami biztos, kis késleltetéssel zárjuk
-  input.addEventListener('blur', () => {
-    setTimeout(() => {
-      box.style.display = 'none';
-    }, 120);
-  });
-});
-</script>
+<script src="style-picker.js?v=20261019"></script>
 <script>
 // Samsung WebView scroll-fix
 if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
