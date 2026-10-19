@@ -1,0 +1,191 @@
+/* Presentation only. Form names, validation, checkout and upload handlers stay unchanged.
+   Scoped to song pricing/order; follows the existing video-clips.css palette. */
+html body #pricing,
+html body #order {
+  max-width: 1100px;
+  margin-inline: auto;
+  color: #f6f0e4;
+  text-align: left;
+  line-height: 1.65;
+}
+html body :is(#pricing, #order) .gold-text {
+  background-image: none !important;
+  background-clip: initial !important;
+  -webkit-background-clip: initial !important;
+  color: #f6f0e4 !important;
+  -webkit-text-fill-color: #f6f0e4 !important;
+  text-shadow: none !important;
+}
+html body :is(#pricing, #order) > h2 {
+  display: block;
+  margin: 10px 0 20px;
+  font-size: clamp(28px, 4vw, 46px);
+  line-height: 1.12;
+  color: #edcf83 !important;
+  -webkit-text-fill-color: #edcf83 !important;
+}
+html body :is(#pricing, #order) > p { display: block; max-width: 850px; }
+html body #pricing .promo-banner {
+  margin: 0 0 18px;
+  padding: 12px 18px;
+  max-width: fit-content;
+  border: 1px solid #766137;
+  border-radius: 10px;
+  background: #29241b;
+  box-shadow: none;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: left;
+}
+html body #pricing .promo-banner::before { content: none; }
+html body #pricing .promo-banner span { color: #edcf83 !important; -webkit-text-fill-color: #edcf83 !important; }
+html body #pricing .cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+html body #pricing .card.package {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid #766137;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #29241b, #111);
+  box-shadow: none;
+  cursor: pointer;
+  transition: border-color .15s, background-color .15s;
+}
+html body #pricing .card.package:is(:hover, .selected) {
+  border-color: #edcf83;
+  outline: 1px solid #edcf83;
+  box-shadow: none;
+  transform: none;
+}
+html body #pricing .card h3 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  color: #edcf83 !important;
+  -webkit-text-fill-color: #edcf83 !important;
+}
+html body #pricing .card p { margin: 8px 0; }
+html body #pricing .bundle-included { padding: 0 0 16px; font-size: 14px; }
+html body #pricing .card > p:nth-of-type(2) { flex: 1; }
+html body #pricing .price { font-size: 14px; color: #d0c7b3 !important; -webkit-text-fill-color: #d0c7b3 !important; }
+html body #pricing .old-price { font-size: 14px; color: #d0c7b3 !important; -webkit-text-fill-color: #d0c7b3 !important; text-decoration-color: currentColor !important; }
+html body #pricing .new-price { font-size: 27px; font-weight: 800; color: #f4da96 !important; -webkit-text-fill-color: #f4da96 !important; }
+html body #pricing .promo-note { font-size: 13px; color: #d0c7b3 !important; -webkit-text-fill-color: #d0c7b3 !important; }
+html body #pricing .song-package-button,
+html body #order #orderForm .actions button.primary {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 13px 18px !important;
+  border: 1px solid #e7c76c !important;
+  border-radius: 10px;
+  background: #eed28a !important;
+  color: #211a0b !important;
+  -webkit-text-fill-color: #211a0b !important;
+  font: 700 16px/1.5 system-ui;
+  text-align: center;
+  white-space: normal;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+html body #pricing .song-package-button { margin-top: 18px; }
+html body #order #orderForm .actions button.primary .gold-text {
+  color: #211a0b !important;
+  -webkit-text-fill-color: #211a0b !important;
+}
+html body #pricing .song-package-button:hover,
+html body #order #orderForm .actions button.primary:hover { background: #f8dfa5 !important; }
+html body #order .order-included {
+  padding: 20px;
+  margin: 0 0 20px;
+  border: 1px solid #665333;
+  border-radius: 16px;
+  background: #191713;
+}
+html body #order #orderForm {
+  display: block;
+  box-sizing: border-box;
+  margin: 28px 0 20px;
+  padding: clamp(18px, 3vw, 30px);
+  border: 1px solid #bca264;
+  border-radius: 18px;
+  background: #171511;
+}
+html body #order #orderForm .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 18px; }
+html body #order #orderForm .grid > * { min-width: 0; }
+html body #order #orderForm label { display: block; font-size: 15px; line-height: 1.5; font-weight: 500; }
+html body #order #orderForm .grid > label:first-child,
+html body #order #orderForm .delivery-options,
+html body #order #orderForm .grid > .check,
+html body #order #orderForm .two-col { grid-column: 1 / -1; }
+html body #order #orderForm .two-col { display: block; }
+html body #order #orderForm :is(input:not([type=checkbox]):not([type=hidden]), select, textarea) {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  margin-top: 7px;
+  padding: 12px;
+  border: 1px solid #81704b !important;
+  border-radius: 8px;
+  background: #090909 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  font-weight: 400;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  box-shadow: none;
+}
+/* Keep the existing honeypot hidden and the company's JS-controlled visibility. */
+html body #order #orderForm input[name="_hp"] { display: none; }
+html body #order #orderForm :is(input, textarea)::placeholder { color: #aaa394 !important; -webkit-text-fill-color: #aaa394 !important; opacity: 1; }
+html body #order #orderForm select option { background: #090909; color: #fff; }
+html body #order #orderForm textarea { min-height: 190px; resize: vertical; }
+html body #order #invoice_company_fields { padding: 18px; border: 1px solid #665333; border-radius: 12px; background: #1c1913; }
+html body #order #invoice_company_fields label + label { margin-top: 16px; }
+html body #order #orderForm .check { display: block; line-height: 1.7; }
+html body #order #orderForm .check input[type=checkbox] { float: left; width: 18px; height: 18px; padding: 0; margin: 4px 10px 3px 0; accent-color: #edcf83; }
+html body #order #orderForm .check a { display: inline; color: #edcf83 !important; -webkit-text-fill-color: #edcf83 !important; text-underline-offset: 3px; }
+html body #order #orderForm .delivery-options { transform: none; padding: 18px; border: 1px solid #665333; border-radius: 12px; background: #1c1913; }
+html body #order #orderForm .delivery-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+html body #order #orderForm .delivery-btn {
+  height: auto; min-height: 48px; padding: 12px !important; border: 1px solid #81704b !important;
+  border-radius: 10px; background: #171511 !important; color: #f4da96 !important; -webkit-text-fill-color: #f4da96 !important;
+  font: 600 15px/1.5 system-ui; box-shadow: none !important;
+}
+html body #order #orderForm .delivery-btn.active { background: #eed28a !important; color: #211a0b !important; -webkit-text-fill-color: #211a0b !important; border-color: #eed28a !important; }
+html body #order #orderForm .delivery-btn:hover:not(.active):not(:disabled) { background: #29241b !important; }
+html body #order #orderForm button:disabled { opacity: .5; cursor: not-allowed; }
+html body #order #orderForm #enz-order-examples { gap: 8px !important; margin-top: 12px !important; }
+html body #order #orderForm #enz-order-examples .chip {
+  max-width: 100%; min-height: 42px; padding: 10px 13px !important; border: 1px solid #665333 !important;
+  border-radius: 8px !important; background: #211d16 !important; color: #f1d48a !important; -webkit-text-fill-color: #f1d48a !important;
+  font: 500 14px/1.5 system-ui; white-space: normal; text-align: left; box-shadow: none !important; cursor: pointer;
+}
+html body #order #orderForm #enz-order-examples .chip:hover { background: #30291d !important; border-color: #edcf83 !important; }
+html body #order #orderForm #enz-quality { -webkit-text-fill-color: currentColor !important; }
+html body #order #orderForm #enz-quality.too-short { color: #ff9f97; }
+html body #order #orderForm #enz-quality.ok { color: #83d7a8; }
+html body #order #orderForm .actions { display: grid; gap: 12px; margin-top: 26px; padding-top: 24px; border-top: 1px solid #665333; }
+html body #order #orderForm .form-status:empty { display: none; }
+html body #order > .note { font-size: 14px; color: #d0c7b3 !important; -webkit-text-fill-color: #d0c7b3 !important; }
+html body #order #styleList { box-sizing: border-box; border: 1px solid #81704b !important; border-radius: 8px; background: #090909 !important; }
+html body #order #styleList [data-val] { color: #f6f0e4; -webkit-text-fill-color: #f6f0e4; font-size: 15px; }
+html body #order #styleList [data-val]:hover { background: #30291d; }
+html body :is(#pricing, #order) :focus-visible { outline: 3px solid #f3d884 !important; outline-offset: 4px; }
+html body #order #orderForm #enz-order-examples .chip:focus-visible { outline: 3px solid #f3d884 !important; outline-offset: 4px; }
+@media (max-width: 740px) {
+  html body #pricing .cards,
+  html body #order #orderForm .grid { grid-template-columns: minmax(0, 1fr); }
+  html body #pricing .card.package { padding: 20px; }
+  html body #order #orderForm .delivery-buttons { grid-template-columns: minmax(0, 1fr); }
+  html body #order #orderForm .delivery-options { padding: 14px; }
+}
