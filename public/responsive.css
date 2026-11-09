@@ -189,8 +189,8 @@ html.ua-samsung body.gold-theme .vinyl-tabs button.tab > span.gold-text {
   animation:none!important;transition:none!important;
 }
 html.ua-samsung body.gold-theme .vinyl-tabs button.tab > span.gold-text {
-  color:#fff8e5!important;-webkit-text-fill-color:#fff8e5!important;
-  background:#111!important;border-radius:8px;
-  padding:5px 2px!important;font-weight:700!important;
+  color:#f3d27a!important;-webkit-text-fill-color:#f3d27a!important;
+  background:transparent!important;border-radius:0;
+  padding:0!important;font-weight:700!important;
   text-shadow:none!important;opacity:1!important;
 }
