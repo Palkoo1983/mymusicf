@@ -24,7 +24,7 @@ for(const width of [360,390,768,1024,1440]){
  if(width===390 || width===1440) { await page.locator('.topbar').screenshot({path:'qa-header-'+width+'.png'}); console.log('HEADER_IMAGE_'+width+'='+ (await page.locator('.topbar').screenshot({type:'jpeg',quality:35})).toString('base64')); }
  await page.locator('.bundle-cta').click();
  assert((await page.locator('#order').boundingBox()).y<100,'marketing link must remain at order');
- await page.locator('.christmas-campaign-link').click();
+ await page.locator('.christmas-campaign-link[data-jump]').click();
  assert((await page.locator('#pricing').boundingBox()).y<100,'marketing link must remain at pricing');
  const vinyl = await page.locator('.vinyl-tabs .tab').evaluateAll(els=>els.map(el=>{
   const b=el.getBoundingClientRect(),s=el.querySelector('span').getBoundingClientRect();
