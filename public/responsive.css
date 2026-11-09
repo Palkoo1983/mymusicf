@@ -179,3 +179,18 @@ html.ua-samsung body.gold-theme .vinyl-tabs button.tab::after {display:none!impo
 html.ua-samsung body.gold-theme .vinyl-tabs button.tab > span.gold-text {position:relative!important;z-index:1}
 html.ua-samsung body.gold-theme .vinyl-tabs button.tab.active,
 html.ua-samsung body.gold-theme .vinyl-tabs button.tab:hover {border-color:#c9a95c!important}
+
+/* Menu artwork must never inherit the header logo's image animation. */
+html body.gold-theme .vinyl-tabs button.tab > img.samsung-disc-art {
+  animation:none!important;transition:none!important;transform:none!important;will-change:auto!important;
+}
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab,
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab > span.gold-text {
+  animation:none!important;transition:none!important;
+}
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab > span.gold-text {
+  color:#fff8e5!important;-webkit-text-fill-color:#fff8e5!important;
+  background:#111!important;border-radius:8px;
+  padding:5px 2px!important;font-weight:700!important;
+  text-shadow:none!important;opacity:1!important;
+}
