@@ -194,3 +194,19 @@ html.ua-samsung body.gold-theme .vinyl-tabs button.tab > span.gold-text {
   padding:0!important;font-weight:700!important;
   text-shadow:none!important;opacity:1!important;
 }
+
+/* Samsung: artwork and text share fixed raster colours. Accessible text stays in the button. */
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab > span.gold-text {
+ opacity:0!important;background:transparent!important;
+}
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab > img.samsung-disc-art {
+ color-scheme:only light;forced-color-adjust:none;
+}
+
+html.ua-samsung[data-ui-lang="en"] body.gold-theme .vinyl-tabs button.tab[data-target="intro"] > img.samsung-disc-art {content:url("/assets/disc-intro-en.png")}
+html.ua-samsung[data-ui-lang="en"] body.gold-theme .vinyl-tabs button.tab[data-target="pricing"] > img.samsung-disc-art {content:url("/assets/disc-pricing-en.png")}
+html.ua-samsung[data-ui-lang="en"] body.gold-theme .vinyl-tabs button.tab[data-target="howto"] > img.samsung-disc-art {content:url("/assets/disc-howto-en.png")}
+html.ua-samsung[data-ui-lang="en"] body.gold-theme .vinyl-tabs button.tab[data-target="order"] > img.samsung-disc-art {content:url("/assets/disc-order-en.png")}
+html.ua-samsung[data-ui-lang="en"] body.gold-theme .vinyl-tabs button.tab[data-target="videoclips"] > img.samsung-disc-art {content:url("/assets/disc-videoclips-en.png")}
+html.ua-samsung[data-ui-lang="en"] body.gold-theme .vinyl-tabs button.tab[data-target="refs"] > img.samsung-disc-art {content:url("/assets/disc-refs-en.png")}
+html.ua-samsung[data-ui-lang="en"] body.gold-theme .vinyl-tabs button.tab[data-target="contact"] > img.samsung-disc-art {content:url("/assets/disc-contact-en.png")}
