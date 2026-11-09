@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="hu" data-ui-lang="hu">
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-WJV4SZEPJ7"></script>
 <script>
@@ -15,7 +16,7 @@
          ========================== -->
     <!-- Alap meta -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
 
     <!-- Title -->
      <title>Az ajándék, amin elcsendesedik a szoba | EnZenem.hu</title>
@@ -128,7 +129,7 @@ html { will-change: scroll-position; }
         href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="/>
 
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  
 
   <!-- Lemez pörgés – minimal inline -->
   <style>
@@ -175,7 +176,7 @@ html { will-change: scroll-position; }
 </script>
 
   <!-- FŐ CSS -->
-  <link rel="stylesheet" href="style.css?v=20261010-christmas50" />
+  <link rel="stylesheet" href="style.css?v=20261109" />
 
   <!-- GOLD UI FIXES + mostani patchek -->
   <style id="gold-ui-fixes">
@@ -436,6 +437,8 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 <link rel="stylesheet" href="bundle.css?v=20261017">
 <link rel="stylesheet" href="order-design.css?v=20261019">
 <link rel="stylesheet" href="site-design.css?v=20261019-all-tabs">
+<link rel="stylesheet" href="responsive.css?v=20261109">
+<script src="media-lite.js?v=20261109" defer></script>
 </head>
 <body class="gold-theme">
   <!-- VIDEO PANEL (méret fix, pozíció JS számolja) -->
@@ -497,8 +500,7 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
   </select>
 
   <iframe
-    id="videoFrame"
-    src="https://www.youtube.com/embed/g2wRy2zM1wY?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
+    id="videoFrame" title="EnZenem videólejátszó" hidden
     allow="autoplay; encrypted-media"
     allowfullscreen>
   </iframe>
@@ -511,81 +513,21 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 
 <script>
 function playVideo(btn) {
-  const frame = document.getElementById("videoFrame");
-  const id = document.getElementById("videoSelect").value;
-  const stopBtn = document.querySelector(".stop-btn");
-
-  // vizuális visszajelzés
-  btn.classList.add("active");
-  stopBtn.classList.remove("active");
-
-  const ua = navigator.userAgent.toLowerCase();
-  const isSamsungWebView = ua.includes("samsungbrowser") || ua.includes("wv");
-
-  if (isSamsungWebView) {
-    // rövid villanás után indul
-    btn.classList.add("pressed");
-    setTimeout(() => {
-      frame.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
-      btn.classList.remove("pressed");
-    }, 150);
-  } else {
-    frame.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
-  }
+  const frame = document.getElementById('videoFrame');
+  const id = document.getElementById('videoSelect').value;
+  if (!/^[\w-]{11}$/.test(id)) return;
+  frame.hidden = false;
+  frame.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&playsinline=1&rel=0';
+  btn.classList.add('active');
+  document.querySelector('.stop-btn').classList.remove('active');
 }
-
 function stopVideo(btn) {
-  const frame = document.getElementById("videoFrame");
-  const playBtn = document.querySelector(".play-btn");
-
-  btn.classList.add("active");
-  playBtn.classList.remove("active");
-
-  const ua = navigator.userAgent.toLowerCase();
-  const isSamsungWebView = ua.includes("samsungbrowser") || ua.includes("wv");
-
-  if (isSamsungWebView) {
-    btn.classList.add("pressed");
-    setTimeout(() => {
-      frame.src = "";
-      btn.classList.remove("pressed");
-    }, 150);
-  } else {
-    frame.src = "";
-  }
+  const frame = document.getElementById('videoFrame');
+  frame.removeAttribute('src');
+  frame.hidden = true;
+  btn.classList.add('active');
+  document.querySelector('.play-btn').classList.remove('active');
 }
-
-  /* Pozicionálás: félúton a lap teteje és a menüsáv alja között */
-  (function positionVideoPanel() {
-    function place() {
-      const panel = document.querySelector('.video-panel');
-      const menu  = document.querySelector('.vinyl-tabs');
-      if (!panel || !menu) return;
-
-      // --- ⛔ Samsung Internet / WebView fix ---
-      const ua = navigator.userAgent.toLowerCase();
-      const isMessenger = ua.includes('fban/messenger') || ua.includes('fb_iab');
-      const isSamsungWebView = (
-        (ua.includes('samsungbrowser') || ua.includes('wv')) && !isMessenger
-      );
-      if (isSamsungWebView) {
-        panel.style.position = '';
-        panel.style.top = '';
-        panel.style.transform = '';
-        return;
-      }
-      // -----------------------------------------
-
-      const menuBottom = menu.offsetTop + menu.offsetHeight;
-      const panelH = panel.offsetHeight || 0;
-      const desiredTop = Math.max(8, (menuBottom - panelH) / 2);
-      panel.style.top = desiredTop + 'px';
-    }
-
-    window.addEventListener('load', place);
-    window.addEventListener('resize', place);
-    document.addEventListener('DOMContentLoaded', place);
-  })();
 </script>
 
   <div class="bg-vinyl"></div>
@@ -670,14 +612,7 @@ function stopVideo(btn) {
  <div class="intro-video">
   <h3 class="gold-text">Nézd meg, milyen hatást váltott ki egy saját dalunk:</h3>
   <div class="video-wrapper" style="max-width:560px;margin:12px auto;border-radius:12px;overflow:hidden;box-shadow:0 0 12px rgba(0,0,0,0.4);">
-    <iframe width="560" height="315"
-      loading="lazy"
-      src="https://www.youtube.com/embed/is7Ru0dIT6M?vq=hd720"
-      title="EnZenem – ügyfélvideó"
-      frameborder="0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen>
-    </iframe>
+    <a class="yt-preview" data-video-id="is7Ru0dIT6M" href="https://www.youtube.com/watch?v=is7Ru0dIT6M" target="_blank" rel="noopener noreferrer" aria-label="EnZenem – ügyfélvideó – YouTube"><img src="https://i.ytimg.com/vi/is7Ru0dIT6M/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">EnZenem – ügyfélvideó</span></a>
   </div>
 </div>
 
@@ -899,14 +834,7 @@ function stopVideo(btn) {
 <div class="intro-video">
   <h3 class="gold-text">Nézd meg a robot-narrációs oktatóvideót a stílus és leírás mezők használatáról:</h3>
   <div class="video-wrapper" style="max-width:560px;margin:12px auto;border-radius:12px;overflow:hidden;box-shadow:0 0 12px rgba(0,0,0,0.4);">
-    <iframe width="560" height="315"
-      loading="lazy"
-      src="https://www.youtube.com/embed/fmuopFfaN1Y?vq=hd720"
-      title="EnZenem – oktatóvideó (robot narráció)"
-      frameborder="0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen>
-    </iframe>
+    <a class="yt-preview" data-video-id="fmuopFfaN1Y" href="https://www.youtube.com/watch?v=fmuopFfaN1Y" target="_blank" rel="noopener noreferrer" aria-label="EnZenem – oktatóvideó (robot narráció) – YouTube"><img src="https://i.ytimg.com/vi/fmuopFfaN1Y/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">EnZenem – oktatóvideó (robot narráció)</span></a>
   </div>
 </div>
 
@@ -1074,255 +1002,147 @@ function stopVideo(btn) {
   <h2 class="gold-text">Referenciák</h2>
          <!-- Soul Series -->
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/g2wRy2zM1wY?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Magyar Péter - EnZenem Soul Series"></iframe>
+      <a class="yt-preview" data-video-id="g2wRy2zM1wY" href="https://www.youtube.com/watch?v=g2wRy2zM1wY" target="_blank" rel="noopener noreferrer" aria-label="Magyar Péter - EnZenem Soul Series – YouTube"><img src="https://i.ytimg.com/vi/g2wRy2zM1wY/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Magyar Péter - EnZenem Soul Series</span></a>
     </div><p class="gold-text">Magyar Péter - EnZenem Soul Series</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/3nDBTm9e8gc?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Árad a Tisza - kicsit költőibb, pop-soul számunk, még mindig euforikus hangulatban"></iframe>
+      <a class="yt-preview" data-video-id="3nDBTm9e8gc" href="https://www.youtube.com/watch?v=3nDBTm9e8gc" target="_blank" rel="noopener noreferrer" aria-label="Árad a Tisza - kicsit költőibb, pop-soul számunk, még mindig euforikus hangulatban – YouTube"><img src="https://i.ytimg.com/vi/3nDBTm9e8gc/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Árad a Tisza - kicsit költőibb, pop-soul számunk, még mindig euforikus hangulatban</span></a>
     </div><p class="gold-text">Árad a Tisza - kicsit költőibb, pop-soul számunk, még mindig euforikus hangulatban</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/HqKc-20-d-k?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Újra hiszünk #ajándékötlet #haza #remény #újkezdet #enzenem #boldogsàg"></iframe>
+      <a class="yt-preview" data-video-id="HqKc-20-d-k" href="https://www.youtube.com/watch?v=HqKc-20-d-k" target="_blank" rel="noopener noreferrer" aria-label="Újra hiszünk #ajándékötlet #haza #remény #újkezdet #enzenem #boldogsàg – YouTube"><img src="https://i.ytimg.com/vi/HqKc-20-d-k/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Újra hiszünk #ajándékötlet #haza #remény #újkezdet #enzenem #boldogsàg</span></a>
     </div><p class="gold-text">Újra hiszünk #ajándékötlet #haza #remény #újkezdet #enzenem #boldogsàg</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/Higx3xm4GFQ?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="A Vén Európa #magyar #szabad #magyarország #felemelő #europe #dal #biztató #dal #enzenem"></iframe>
+      <a class="yt-preview" data-video-id="Higx3xm4GFQ" href="https://www.youtube.com/watch?v=Higx3xm4GFQ" target="_blank" rel="noopener noreferrer" aria-label="A Vén Európa #magyar #szabad #magyarország #felemelő #europe #dal #biztató #dal #enzenem – YouTube"><img src="https://i.ytimg.com/vi/Higx3xm4GFQ/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">A Vén Európa #magyar #szabad #magyarország #felemelő #europe #dal #biztató #dal #enzenem</span></a>
     </div><p class="gold-text">A Vén Európa #magyar #szabad #magyarország #felemelő #europe #dal #biztató #dal #enzenem</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/lnWyBAe_SBs?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Ludas Matyi - a következmények nélküli világ vége! #magyarország #boldog #születésnapot #zene"></iframe>
+      <a class="yt-preview" data-video-id="lnWyBAe_SBs" href="https://www.youtube.com/watch?v=lnWyBAe_SBs" target="_blank" rel="noopener noreferrer" aria-label="Ludas Matyi - a következmények nélküli világ vége! #magyarország #boldog #születésnapot #zene – YouTube"><img src="https://i.ytimg.com/vi/lnWyBAe_SBs/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Ludas Matyi - a következmények nélküli világ vége! #magyarország #boldog #születésnapot #zene</span></a>
     </div><p class="gold-text">Ludas Matyi - a következmények nélküli világ vége! #magyarország #boldog #születésnapot #zene</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/aO4VuUlrN7k?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Csak egy egyszerű dal és tényleg csak egy dal :) #boldogsàg #reggea #soul #napfény #ajándékötlet"></iframe>
+      <a class="yt-preview" data-video-id="aO4VuUlrN7k" href="https://www.youtube.com/watch?v=aO4VuUlrN7k" target="_blank" rel="noopener noreferrer" aria-label="Csak egy egyszerű dal és tényleg csak egy dal :) #boldogsàg #reggea #soul #napfény #ajándékötlet – YouTube"><img src="https://i.ytimg.com/vi/aO4VuUlrN7k/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Csak egy egyszerű dal és tényleg csak egy dal :) #boldogsàg #reggea #soul #napfény #ajándékötlet</span></a>
     </div><p class="gold-text">Csak egy egyszerű dal és tényleg csak egy dal :) #boldogsàg #reggea #soul #napfény #ajándékötlet</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/yLFWj3OH5Ew?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Magyarország, Magyar Nép! #magyarország #magyar #nép #rendszerváltás #történelem"></iframe>
+      <a class="yt-preview" data-video-id="yLFWj3OH5Ew" href="https://www.youtube.com/watch?v=yLFWj3OH5Ew" target="_blank" rel="noopener noreferrer" aria-label="Magyarország, Magyar Nép! #magyarország #magyar #nép #rendszerváltás #történelem – YouTube"><img src="https://i.ytimg.com/vi/yLFWj3OH5Ew/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Magyarország, Magyar Nép! #magyarország #magyar #nép #rendszerváltás #történelem</span></a>
     </div><p class="gold-text">Magyarország, Magyar Nép! #magyarország #magyar #nép #rendszerváltás #történelem</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/SVGJrHwkLDo?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Keserű méz #keserédes #dal #remény #szeretet #megnyugvás #bánat #öröm #enzenem"></iframe>
+      <a class="yt-preview" data-video-id="SVGJrHwkLDo" href="https://www.youtube.com/watch?v=SVGJrHwkLDo" target="_blank" rel="noopener noreferrer" aria-label="Keserű méz #keserédes #dal #remény #szeretet #megnyugvás #bánat #öröm #enzenem – YouTube"><img src="https://i.ytimg.com/vi/SVGJrHwkLDo/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Keserű méz #keserédes #dal #remény #szeretet #megnyugvás #bánat #öröm #enzenem</span></a>
     </div><p class="gold-text">Keserű méz #keserédes #dal #remény #szeretet #megnyugvás #bánat #öröm #enzenem</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/gFsqb-bb8WY?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Balási Szimfónia #mém #memes #music #zene #enzenem #ajándékötlet #balasy #vicces #ironia"></iframe>
+      <a class="yt-preview" data-video-id="gFsqb-bb8WY" href="https://www.youtube.com/watch?v=gFsqb-bb8WY" target="_blank" rel="noopener noreferrer" aria-label="Balási Szimfónia #mém #memes #music #zene #enzenem #ajándékötlet #balasy #vicces #ironia – YouTube"><img src="https://i.ytimg.com/vi/gFsqb-bb8WY/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Balási Szimfónia #mém #memes #music #zene #enzenem #ajándékötlet #balasy #vicces #ironia</span></a>
     </div><p class="gold-text">Balási Szimfónia #mém #memes #music #zene #enzenem #ajándékötlet #balasy #vicces #ironia</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/dw-EesMXYxY?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Nem aranyból van a fény #enzenem #ajándékötlet #reggea #afrosoul #afrobeat #gazdag #szegény"></iframe>
+      <a class="yt-preview" data-video-id="dw-EesMXYxY" href="https://www.youtube.com/watch?v=dw-EesMXYxY" target="_blank" rel="noopener noreferrer" aria-label="Nem aranyból van a fény #enzenem #ajándékötlet #reggea #afrosoul #afrobeat #gazdag #szegény – YouTube"><img src="https://i.ytimg.com/vi/dw-EesMXYxY/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Nem aranyból van a fény #enzenem #ajándékötlet #reggea #afrosoul #afrobeat #gazdag #szegény</span></a>
     </div><p class="gold-text">Nem aranyból van a fény #enzenem #ajándékötlet #reggea #afrosoul #afrobeat #gazdag #szegény</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/BLazrRKJjLw?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Kék Madár #ajándékötlet #remény #kékmadár #enzenem #büszkeség #összetartozas #magyar #nép"></iframe>
+      <a class="yt-preview" data-video-id="BLazrRKJjLw" href="https://www.youtube.com/watch?v=BLazrRKJjLw" target="_blank" rel="noopener noreferrer" aria-label="Kék Madár #ajándékötlet #remény #kékmadár #enzenem #büszkeség #összetartozas #magyar #nép – YouTube"><img src="https://i.ytimg.com/vi/BLazrRKJjLw/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Kék Madár #ajándékötlet #remény #kékmadár #enzenem #büszkeség #összetartozas #magyar #nép</span></a>
     </div><p class="gold-text">Kék Madár #ajándékötlet #remény #kékmadár #enzenem #büszkeség #összetartozas #magyar #nép</p></div>
   <div class="embeds gold-text">
     <div class="embed small"><div class="video">
-  <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-    src="https://www.youtube.com/embed/0lt0zZd0lU4?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-    title="Szíved Ritmusa"></iframe>
+  <a class="yt-preview" data-video-id="0lt0zZd0lU4" href="https://www.youtube.com/watch?v=0lt0zZd0lU4" target="_blank" rel="noopener noreferrer" aria-label="Szíved Ritmusa – YouTube"><img src="https://i.ytimg.com/vi/0lt0zZd0lU4/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Szíved Ritmusa</span></a>
 </div><p class="gold-text">Szíved Ritmusa</p></div>
     
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/-9t-6te-QpE?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Szerelmünk Szárnyán"></iframe>
+      <a class="yt-preview" data-video-id="-9t-6te-QpE" href="https://www.youtube.com/watch?v=-9t-6te-QpE" target="_blank" rel="noopener noreferrer" aria-label="Szerelmünk Szárnyán – YouTube"><img src="https://i.ytimg.com/vi/-9t-6te-QpE/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Szerelmünk Szárnyán</span></a>
     </div><p class="gold-text">Szerelmünk Szárnyán</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/zSXn0s_E9WE?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Fényfonál"></iframe>
+      <a class="yt-preview" data-video-id="zSXn0s_E9WE" href="https://www.youtube.com/watch?v=zSXn0s_E9WE" target="_blank" rel="noopener noreferrer" aria-label="Fényfonál – YouTube"><img src="https://i.ytimg.com/vi/zSXn0s_E9WE/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Fényfonál</span></a>
     </div><p class="gold-text">Fényfonál</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/yRc1-3bcfVM?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Éva Almája"></iframe>
+      <a class="yt-preview" data-video-id="yRc1-3bcfVM" href="https://www.youtube.com/watch?v=yRc1-3bcfVM" target="_blank" rel="noopener noreferrer" aria-label="Éva Almája – YouTube"><img src="https://i.ytimg.com/vi/yRc1-3bcfVM/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Éva Almája</span></a>
     </div><p class="gold-text">Éva Almája</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/0cl4HCsjTUs?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="A szemedben élek"></iframe>
+      <a class="yt-preview" data-video-id="0cl4HCsjTUs" href="https://www.youtube.com/watch?v=0cl4HCsjTUs" target="_blank" rel="noopener noreferrer" aria-label="A szemedben élek – YouTube"><img src="https://i.ytimg.com/vi/0cl4HCsjTUs/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">A szemedben élek</span></a>
     </div><p class="gold-text">A szemedben élek</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/HaHHI1nf6bU?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Amikor a világ lélegzik"></iframe>
+      <a class="yt-preview" data-video-id="HaHHI1nf6bU" href="https://www.youtube.com/watch?v=HaHHI1nf6bU" target="_blank" rel="noopener noreferrer" aria-label="Amikor a világ lélegzik – YouTube"><img src="https://i.ytimg.com/vi/HaHHI1nf6bU/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Amikor a világ lélegzik</span></a>
     </div><p class="gold-text">Amikor a világ lélegzik</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/d9ew4fQC9T4?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Tiltott sziget"></iframe>
+      <a class="yt-preview" data-video-id="d9ew4fQC9T4" href="https://www.youtube.com/watch?v=d9ew4fQC9T4" target="_blank" rel="noopener noreferrer" aria-label="Tiltott sziget – YouTube"><img src="https://i.ytimg.com/vi/d9ew4fQC9T4/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Tiltott sziget</span></a>
     </div><p class="gold-text">Tiltott sziget</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/FbaU9kImbtw?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Ketrecének"></iframe>
+      <a class="yt-preview" data-video-id="FbaU9kImbtw" href="https://www.youtube.com/watch?v=FbaU9kImbtw" target="_blank" rel="noopener noreferrer" aria-label="Ketrecének – YouTube"><img src="https://i.ytimg.com/vi/FbaU9kImbtw/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Ketrecének</span></a>
     </div><p class="gold-text">Ketrecének</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/FPdLvPDZojA?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Most még – Jéghegy"></iframe>
+      <a class="yt-preview" data-video-id="FPdLvPDZojA" href="https://www.youtube.com/watch?v=FPdLvPDZojA" target="_blank" rel="noopener noreferrer" aria-label="Most még – Jéghegy – YouTube"><img src="https://i.ytimg.com/vi/FPdLvPDZojA/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Most még – Jéghegy</span></a>
     </div><p class="gold-text">Most még – Jéghegy</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/DSYqRuvdUK0?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Kabát reggelig"></iframe>
+      <a class="yt-preview" data-video-id="DSYqRuvdUK0" href="https://www.youtube.com/watch?v=DSYqRuvdUK0" target="_blank" rel="noopener noreferrer" aria-label="Kabát reggelig – YouTube"><img src="https://i.ytimg.com/vi/DSYqRuvdUK0/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Kabát reggelig</span></a>
     </div><p class="gold-text">Kabát reggelig</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/fgSaqaiwIjU?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Kanzu hadi asubuhi"></iframe>
+      <a class="yt-preview" data-video-id="fgSaqaiwIjU" href="https://www.youtube.com/watch?v=fgSaqaiwIjU" target="_blank" rel="noopener noreferrer" aria-label="Kanzu hadi asubuhi – YouTube"><img src="https://i.ytimg.com/vi/fgSaqaiwIjU/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Kanzu hadi asubuhi</span></a>
     </div><p class="gold-text">Kanzu hadi asubuhi</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/p8y2-I3DjBY?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Barafu, Bado Pamoja – club edition"></iframe>
+      <a class="yt-preview" data-video-id="p8y2-I3DjBY" href="https://www.youtube.com/watch?v=p8y2-I3DjBY" target="_blank" rel="noopener noreferrer" aria-label="Barafu, Bado Pamoja – club edition – YouTube"><img src="https://i.ytimg.com/vi/p8y2-I3DjBY/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Barafu, Bado Pamoja – club edition</span></a>
     </div><p class="gold-text">Barafu, Bado Pamoja – club edition</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/RNSIZzPwWno?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Köszönöm – Nő"></iframe>
+      <a class="yt-preview" data-video-id="RNSIZzPwWno" href="https://www.youtube.com/watch?v=RNSIZzPwWno" target="_blank" rel="noopener noreferrer" aria-label="Köszönöm – Nő – YouTube"><img src="https://i.ytimg.com/vi/RNSIZzPwWno/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Köszönöm – Nő</span></a>
     </div><p class="gold-text">Köszönöm – Nő</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/p_-dCgaLYbo?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Fényed vezet"></iframe>
+      <a class="yt-preview" data-video-id="p_-dCgaLYbo" href="https://www.youtube.com/watch?v=p_-dCgaLYbo" target="_blank" rel="noopener noreferrer" aria-label="Fényed vezet – YouTube"><img src="https://i.ytimg.com/vi/p_-dCgaLYbo/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Fényed vezet</span></a>
     </div><p class="gold-text">Fényed vezet</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/zU7CkPLmuBI?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Fény – ária"></iframe>
+      <a class="yt-preview" data-video-id="zU7CkPLmuBI" href="https://www.youtube.com/watch?v=zU7CkPLmuBI" target="_blank" rel="noopener noreferrer" aria-label="Fény – ária – YouTube"><img src="https://i.ytimg.com/vi/zU7CkPLmuBI/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Fény – ária</span></a>
     </div><p class="gold-text">Fény – ária</p></div>
 
     <div class="embed small"><div class="video">
-      <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-        src="https://www.youtube.com/embed/xeuWCiB5Eg4?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-        title="Köszönöm, Queen!"></iframe>
+      <a class="yt-preview" data-video-id="xeuWCiB5Eg4" href="https://www.youtube.com/watch?v=xeuWCiB5Eg4" target="_blank" rel="noopener noreferrer" aria-label="Köszönöm, Queen! – YouTube"><img src="https://i.ytimg.com/vi/xeuWCiB5Eg4/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Köszönöm, Queen!</span></a>
     </div><p class="gold-text">Köszönöm, Queen!</p></div>
     <!-- További referenciák -->
 <div class="embed small"><div class="video">
-  <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-    src="https://www.youtube.com/embed/hdJkPTI74LQ?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-    title="Szülinapi Nóta – magyar népdal, pop"></iframe>
+  <a class="yt-preview" data-video-id="hdJkPTI74LQ" href="https://www.youtube.com/watch?v=hdJkPTI74LQ" target="_blank" rel="noopener noreferrer" aria-label="Szülinapi Nóta – magyar népdal, pop – YouTube"><img src="https://i.ytimg.com/vi/hdJkPTI74LQ/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Szülinapi Nóta – magyar népdal, pop</span></a>
 </div><p class="gold-text">Szülinapi Nóta – magyar népdal, pop</p></div>
 
 <div class="embed small"><div class="video">
-  <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-    src="https://www.youtube.com/embed/FaJqlI0dSKc?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-    title="Az Élet – modern pop, rap"></iframe>
+  <a class="yt-preview" data-video-id="FaJqlI0dSKc" href="https://www.youtube.com/watch?v=FaJqlI0dSKc" target="_blank" rel="noopener noreferrer" aria-label="Az Élet – modern pop, rap – YouTube"><img src="https://i.ytimg.com/vi/FaJqlI0dSKc/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Az Élet – modern pop, rap</span></a>
 </div><p class="gold-text">Az Élet – modern pop, rap</p></div>
 
 <div class="embed small"><div class="video">
-  <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-    src="https://www.youtube.com/embed/1ChJXEnqP8g?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-    title="Hiányzol – érzelmes"></iframe>
+  <a class="yt-preview" data-video-id="1ChJXEnqP8g" href="https://www.youtube.com/watch?v=1ChJXEnqP8g" target="_blank" rel="noopener noreferrer" aria-label="Hiányzol – érzelmes – YouTube"><img src="https://i.ytimg.com/vi/1ChJXEnqP8g/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Hiányzol – érzelmes</span></a>
 </div><p class="gold-text">Hiányzol – érzelmes</p></div>
 
 <div class="embed small"><div class="video">
-  <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-    src="https://www.youtube.com/embed/6rF7WXZBqOc?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-    title="EnZenem.hu himnusza"></iframe>
+  <a class="yt-preview" data-video-id="6rF7WXZBqOc" href="https://www.youtube.com/watch?v=6rF7WXZBqOc" target="_blank" rel="noopener noreferrer" aria-label="EnZenem.hu himnusza – YouTube"><img src="https://i.ytimg.com/vi/6rF7WXZBqOc/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">EnZenem.hu himnusza</span></a>
 </div><p class="gold-text">EnZenem.hu himnusza</p></div>
 
 <div class="embed small"><div class="video">
-  <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-    src="https://www.youtube.com/embed/jkGQ1zWzkMI?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-    title="Bye Kedves – magyar romantikus"></iframe>
+  <a class="yt-preview" data-video-id="jkGQ1zWzkMI" href="https://www.youtube.com/watch?v=jkGQ1zWzkMI" target="_blank" rel="noopener noreferrer" aria-label="Bye Kedves – magyar romantikus – YouTube"><img src="https://i.ytimg.com/vi/jkGQ1zWzkMI/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Bye Kedves – magyar romantikus</span></a>
 </div><p class="gold-text">Bye Kedves – magyar romantikus</p></div>
 
 <div class="embed small"><div class="video">
-  <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-    src="https://www.youtube.com/embed/Crf1xVh4BYA?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-    title="Minta – Esküvő (Shorts)"></iframe>
+  <a class="yt-preview" data-video-id="Crf1xVh4BYA" href="https://www.youtube.com/watch?v=Crf1xVh4BYA" target="_blank" rel="noopener noreferrer" aria-label="Minta – Esküvő (Shorts) – YouTube"><img src="https://i.ytimg.com/vi/Crf1xVh4BYA/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Minta – Esküvő (Shorts)</span></a>
 </div><p class="gold-text">Minta – Esküvő (Shorts)</p></div>
 
 <div class="embed small"><div class="video">
-  <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-    src="https://www.youtube.com/embed/f_geI2Pgvuk?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-    title="Édesapám emlékére"></iframe>
+  <a class="yt-preview" data-video-id="f_geI2Pgvuk" href="https://www.youtube.com/watch?v=f_geI2Pgvuk" target="_blank" rel="noopener noreferrer" aria-label="Édesapám emlékére – YouTube"><img src="https://i.ytimg.com/vi/f_geI2Pgvuk/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Édesapám emlékére</span></a>
 </div><p class="gold-text">Édesapám emlékére</p></div>
 
 <div class="embed small"><div class="video">
-  <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-    src="https://www.youtube.com/embed/2RY5bwiSR00?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-    title="Születésnapra"></iframe>
+  <a class="yt-preview" data-video-id="2RY5bwiSR00" href="https://www.youtube.com/watch?v=2RY5bwiSR00" target="_blank" rel="noopener noreferrer" aria-label="Születésnapra – YouTube"><img src="https://i.ytimg.com/vi/2RY5bwiSR00/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Születésnapra</span></a>
 </div><p class="gold-text">Születésnapra</p></div>
 
 <div class="embed small"><div class="video">
-  <iframe loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
-    src="https://www.youtube.com/embed/n-a7aFVrUdw?rel=0&modestbranding=1&playsinline=1&vq=hd1080"
-    title="Édesanyámnak"></iframe>
+  <a class="yt-preview" data-video-id="n-a7aFVrUdw" href="https://www.youtube.com/watch?v=n-a7aFVrUdw" target="_blank" rel="noopener noreferrer" aria-label="Édesanyámnak – YouTube"><img src="https://i.ytimg.com/vi/n-a7aFVrUdw/hqdefault.jpg" width="480" height="360" loading="lazy" decoding="async" alt=""><span class="yt-play" aria-hidden="true">▶</span><span class="yt-caption">Édesanyámnak</span></a>
 </div><p class="gold-text">Édesanyámnak</p></div>
 
   </div>
@@ -1449,8 +1269,8 @@ function stopVideo(btn) {
   </div>
 
   <link rel="stylesheet" href="video-clips.css?v=230">
-  <script src="video-clips.js?v=20261019-refs" defer></script>
-  <script src="script.js?v=20261017-chat"></script>
+  <script src="video-clips.js?v=20261109" defer></script>
+  <script src="script.js?v=20261109"></script>
 
 <script src="/assets/novabot/novabot.js?v=20261017-chat-hint"></script>
 
@@ -1631,3 +1451,4 @@ if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
 
 </body>
 </html>
+

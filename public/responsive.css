@@ -1,0 +1,72 @@
+/* Shared viewport-based layout for Safari, Samsung Internet and Chromium. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html, html body { width: auto !important; min-width: 0; }
+html body [hidden] { display: none !important; }
+html body .topbar { position: relative; top: auto; }
+html body .brand > div, html body main, html body .panel,
+html body .clip-fields > *, html body .contact-grid > * { min-width: 0; }
+html body .video-panel {
+  position: relative !important; inset: auto !important; transform: none !important;
+  width: min(480px, calc(100% - 32px)) !important; max-width: 100% !important;
+  margin: 16px auto !important; box-sizing: border-box; z-index: 1;
+}
+html body .video-panel iframe#videoFrame:not([hidden]) {
+  display: block !important; width: 100% !important; height: auto !important;
+  aspect-ratio: 16/9; min-height: 0 !important; visibility: visible !important; opacity: 1 !important;
+}
+html body .video-panel select { min-width: 0; width: 100%; font-size: 16px !important; }
+html body .yt-preview {
+  position: absolute; inset: 0; display: block; background: #15130f;
+  color: #fff !important; -webkit-text-fill-color: #fff !important;
+  text-decoration: none; overflow: hidden;
+}
+html body .yt-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+html body .yt-play {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  display: grid; place-items: center; width: 64px; height: 48px;
+  border-radius: 12px; background: #b51322; color: white; font: 24px system-ui;
+}
+html body .yt-caption {
+  position: absolute; inset: auto 0 0; padding: 10px 12px;
+  background: #000c; color: white; font: 13px/1.4 system-ui;
+}
+html body .yt-preview:focus-visible { outline: 3px solid #f3d884; outline-offset: -4px; }
+@media (min-width: 741px) and (max-width: 1024px) {
+  html body #refs.active, html body #videoclips .clip-gallery { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 1024px) {
+  html body main { padding-inline: 16px; }
+  html body .topbar .brand { flex-wrap: wrap; justify-content: center; padding: 16px; text-align: center; }
+  html body.gold-theme .topbar .brand > img.spinning-vinyl { flex: 0 0 80px; width: 80px !important; height: 80px !important; }
+  html body .topbar .brand h1 { font-size: clamp(19px,4vw,25px) !important; }
+  html body .topbar .brand h2 { font-size: 16px !important; }
+  html body.gold-theme .vinyl-tabs {
+    display: grid !important; grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+    justify-items: center; width: 100%; gap: 12px 8px !important; padding: 12px !important;
+  }
+  html body.gold-theme .vinyl-tabs .tab {
+    --disc: clamp(86px,27vw,116px); width: var(--disc) !important; height: var(--disc) !important;
+    min-width: 0 !important; max-width: 100% !important; padding: 8px !important;
+    background: #111 url('/assets/vinyl_samsung_fix.svg') center/cover no-repeat !important;
+    border: 2px solid transparent !important; border-radius: 50% !important;
+    transform: none !important; overflow: visible !important;
+  }
+  html body.gold-theme .vinyl-tabs .tab span {
+    display: block !important; position: static !important; transform: none !important;
+    width: 100% !important; max-width: 100% !important; max-height: none !important;
+    font: 600 12px/1.35 system-ui !important; white-space: normal !important;
+    overflow-wrap: anywhere !important; word-break: normal !important; hyphens: none !important;
+    overflow: visible !important; background: none !important;
+    color: #f3d27a !important; -webkit-text-fill-color: #f3d27a !important;
+  }
+  html body.gold-theme .vinyl-tabs .tab.active { border-color: #edcf83 !important; }
+  html body.gold-theme .vinyl-tabs .tab:focus-visible { outline: 3px solid #fff !important; outline-offset: 3px; }
+  html body :is(input,select,textarea):not([type=checkbox]):not([type=radio]) { font-size: 16px !important; max-width: 100%; }
+  html body .consent { max-height: 45vh; overflow-y: auto; padding-bottom: max(12px,env(safe-area-inset-bottom)); }
+  html body #novabot { right: max(10px,env(safe-area-inset-right)); bottom: max(10px,env(safe-area-inset-bottom)); max-height: calc(100vh - 20px); max-height: calc(100dvh - 20px); }
+  html body #novabot .nb-chat { max-height: calc(100vh - 100px); max-height: calc(100dvh - 100px); }
+  html body #novabot .nb-hint { max-height: 30vh; overflow-y: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html body *, html body *::before, html body *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

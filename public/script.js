@@ -101,17 +101,7 @@ function initTabs() {
   btn.addEventListener('click', (e) => {
     e.preventDefault();
 
-    const ua = navigator.userAgent.toLowerCase();
-    const isSamsungWV = ua.includes('samsungbrowser') || ua.includes('wv');
-
-    const doActivate = () => activate(btn.dataset.target);
-
-    // Samsung Internet / WebView esetén kicsi delay – így nem esik szét
-    if (isSamsungWV) {
-      setTimeout(() => requestAnimationFrame(doActivate), 80);
-    } else {
-      doActivate();
-    }
+    activate(btn.dataset.target);
   });
 });
 
@@ -936,3 +926,4 @@ document.addEventListener('DOMContentLoaded', () => {
   initFaq();
   syncInvoiceFields();
 })();
+
