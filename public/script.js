@@ -561,19 +561,22 @@ document.addEventListener('DOMContentLoaded', () => {
   initConsent();
 });
 
-// Anchor → tab váltás
+// Internal links open their panel and retain focus on the content, not the menu.
 document.addEventListener('click', (e) => {
-  const a = e.target.closest('a[data-jump]');
-  if (!a) return;
+  const a = e.target.closest('a[href], a[data-jump]');
+  if (!a || e.defaultPrevented || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button > 0 || a.target === '_blank' || a.hasAttribute('download')) return;
+  const url = new URL(a.href || location.href, location.href);
+  if (url.origin !== location.origin || url.pathname !== location.pathname || !url.hash) return;
+  let id; try { id = decodeURIComponent(url.hash.slice(1)); } catch { return; }
+  const target = document.getElementById(id);
+  const panel = target?.closest('main .panel');
+  if (!panel) return;
+  const btn = Array.from(document.querySelectorAll('.vinyl-tabs .tab')).find(b => b.dataset.target === panel.id);
+  if (!btn) return;
   e.preventDefault();
-  const target = a.getAttribute('data-jump');
-  const btn = document.querySelector(`.vinyl-tabs .tab[data-target="${target}"]`);
-  if (btn) {
-    btn.click();
-    btn.focus();
-  }
+  btn.click();
+  if (target !== panel) target.scrollIntoView({block:'start',behavior:'instant'});
 });
-
 // Köszönjük overlay „intelligens” megjelenítés
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('contactForm');

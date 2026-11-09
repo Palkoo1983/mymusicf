@@ -150,3 +150,14 @@ html body.gold-theme .vinyl-tabs button.tab > span.gold-text { hyphens: none !im
   html body.gold-theme .topbar .brand { flex-wrap: nowrap !important; flex-direction: row !important; }
   html body.gold-theme .topbar .brand > div:last-child { flex: 1; }
 }
+/* Samsung: suppress native button decoration and legacy highlight overlay. */
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab {
+  -webkit-appearance: none !important; appearance: none !important;
+  color-scheme: dark; outline: none; -webkit-tap-highlight-color: transparent;
+  background-clip: padding-box !important;
+}
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab::after {
+  background: radial-gradient(closest-side,#e7c76c44,transparent 75%) !important;
+  box-shadow: none !important; mix-blend-mode: normal !important;
+}
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab:focus-visible { outline: 2px solid #edcf83 !important; outline-offset: 3px; }
