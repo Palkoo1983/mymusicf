@@ -1,0 +1,12 @@
+/* Reciprocal recommendation, isolated from navigation and forms. */
+.cross-service{box-sizing:border-box;display:flex;align-items:center;gap:28px;width:calc(100% - 44px);max-width:1120px;margin:36px auto;padding:28px;border:1px solid #80682d;border-radius:16px;background:#171810;color:#f3d67c;text-align:left}
+.cross-service-copy{flex:1;min-width:0}
+.cross-service .cross-service-label{font-size:11px;letter-spacing:1.5px;font-weight:700;margin:0 0 10px;color:#e0d4ad}
+.cross-service .cross-service-brand{font-size:12px;font-weight:700;letter-spacing:.5px;margin:0 0 12px;color:#f3d67c}
+.cross-service h2{font-size:clamp(23px,3vw,30px);line-height:1.25;letter-spacing:-.4px;margin:0 0 12px;color:#f3d67c;text-shadow:none}
+.cross-service p{font-size:15px;line-height:1.65;margin:0;color:#e0d4ad}
+.cross-service-link{display:block;flex:0 1 280px;max-width:100%;box-sizing:border-box;padding:15px 20px;border-radius:8px;background:#efd078;color:#171810;font-size:15px;font-weight:700;line-height:1.45;text-decoration:none;text-align:center;overflow-wrap:anywhere}
+.cross-service-link:hover{filter:brightness(.94)}
+.cross-service-link:focus-visible{outline:3px solid #f3d67c;outline-offset:4px}
+.cross-service-newtab{display:block;font-size:11px;font-weight:400;margin-top:5px}
+@media(max-width:700px){.cross-service{flex-direction:column;align-items:stretch;padding:22px;gap:20px}.cross-service-link{flex:auto}}
