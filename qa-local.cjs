@@ -5,6 +5,8 @@ const browser=await (process.env.QA_BROWSER==='webkit'?webkit:chromium).launch({
 try {
 for(const width of [360,390,768,1024,1440]){
  const page=await browser.newPage({viewport:{width,height:900}});const errors=[];
+ page.setDefaultTimeout(10000);
+ console.log('Checking viewport',width);
  page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/*',async route=>{
   const u=new URL(route.request().url());
@@ -16,8 +18,8 @@ for(const width of [360,390,768,1024,1440]){
   return route.fulfill({body:fs.readFileSync(file),contentType:types[ext]||'application/octet-stream'});
  });
  await page.goto('http://localhost/');await page.waitForTimeout(200);
- await page.locator('#consentAccept').click().catch(()=>{});
  const hint=page.locator('#novabot .nb-hint button');if(await hint.count())await hint.click();
+ await page.locator('#consentAccept').click();
  assert.equal(await page.locator('iframe[src*="youtube"]').count(),0);
  for(const target of ['intro','pricing','howto','order','videoclips','refs','contact']){
   await page.locator('.tab[data-target="'+target+'"]').click();

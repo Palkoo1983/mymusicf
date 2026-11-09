@@ -1,6 +1,7 @@
 /* Shared viewport-based layout for Safari, Samsung Internet and Chromium. */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, html body { width: auto !important; min-width: 0; }
+html body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 html body [hidden] { display: none !important; }
 html body .topbar { position: relative; top: auto; }
 html body .brand > div, html body main, html body .panel,
