@@ -19,7 +19,7 @@ for(const width of [360,390,768,1024,1440]){
  });
  await page.goto('http://localhost/');await page.waitForTimeout(200);
  const hint=page.locator('#novabot .nb-hint button');if(await hint.count())await hint.click();
- await page.locator('#consentAccept').click();
+ if(await page.locator('#consentAccept').isVisible())await page.locator('#consentAccept').click();
  assert.equal(await page.locator('iframe[src*="youtube"]').count(),0);
  for(const target of ['intro','pricing','howto','order','videoclips','refs','contact']){
   await page.locator('.tab[data-target="'+target+'"]').click();
