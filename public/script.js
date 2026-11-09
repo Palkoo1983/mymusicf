@@ -5,11 +5,6 @@
 
   const isMessenger = ua.includes('fban/messenger') || ua.includes('fb_iab');
 
-  // Samsung Internet mobil + WebView (Messenger nélkül)
-  if ((ua.includes('samsungbrowser') || ua.includes('wv')) && !isMessenger) {
-    html.classList.add('ua-samsung');
-  }
-
   // iPad Safari / WebView
   if (ua.includes('ipad') || (ua.includes('macintosh') && 'ontouchend' in document)) {
     html.classList.add('ua-ipad');

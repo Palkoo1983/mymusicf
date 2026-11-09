@@ -163,11 +163,6 @@ html { will-change: scroll-position; }
     var html = document.documentElement;
     var isMessenger = ua.includes('fban/messenger') || ua.includes('fb_iab');
 
-    // Samsung Internet mobil + WebView (Messenger KIZÁRVA)
-    if ((ua.includes('samsungbrowser') || ua.includes('wv')) && !isMessenger) {
-      html.classList.add('ua-samsung');
-    }
-
     // iPad Safari / WebView
     if (ua.includes('ipad') || (ua.includes('macintosh') && 'ontouchend' in document)) {
       html.classList.add('ua-ipad');
@@ -176,7 +171,7 @@ html { will-change: scroll-position; }
 </script>
 
   <!-- FŐ CSS -->
-  <link rel="stylesheet" href="style.css?v=20261109" />
+  <link rel="stylesheet" href="style.css?v=20261109-common-vinyl" />
 
   <!-- GOLD UI FIXES + mostani patchek -->
   <style id="gold-ui-fixes">
@@ -261,27 +256,6 @@ html body #order .examples .chip:focus {
   box-shadow:0 0 0 2px rgba(243,210,122,.25) inset !important;
   outline:none !important;
 }
-/* === Samsung Internet: menüfülek felirata legyen látható, sima arany === */
-html.ua-samsung body .vinyl-tabs .tab span,
-html.ua-samsung body .vinyl-tabs .tab span.gold-text {
-  background-image: none !important;
-  -webkit-background-clip: initial !important;
-  background-clip: initial !important;
-  color: #f3d27a !important;
-  -webkit-text-fill-color: #f3d27a !important;
-  text-shadow: none !important;
-  filter: none !important;
-  mix-blend-mode: normal !important;
-  opacity: 1 !important;
-}
-
-/* Aktív/hover állapotban se tűnjön el */
-html.ua-samsung body .vinyl-tabs .tab:hover span,
-html.ua-samsung body .vinyl-tabs .tab.active span {
-  color: #f3d27a !important;
-  -webkit-text-fill-color: #f3d27a !important;
-  background-image: none !important;
-}
 /* ===== MOBILE: 3×2 rács, nagyobb (de nem tojás) lemezek + okos felirat ===== */
 @media (max-width: 640px){
 
@@ -328,18 +302,6 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
-  }
-
-  /* Samsungon maradjon éles, arany */
-  html.ua-samsung .vinyl-tabs .tab span{
-    background-image: none !important;
-    -webkit-background-clip: initial !important;
-    background-clip: initial !important;
-    color: #f3d27a !important;
-    -webkit-text-fill-color: #f3d27a !important;
-    text-shadow: none !important;
-    filter: none !important;
-    opacity: 1 !important;
   }
 }
 /* ===== MOBILE: lemezfelirat tényleg középen, max 2 sor ===== */
@@ -437,7 +399,7 @@ html.ua-samsung body .vinyl-tabs .tab.active span {
 <link rel="stylesheet" href="bundle.css?v=20261017">
 <link rel="stylesheet" href="order-design.css?v=20261019">
 <link rel="stylesheet" href="site-design.css?v=20261019-all-tabs">
-<link rel="stylesheet" href="responsive.css?v=20261109-raster-label">
+<link rel="stylesheet" href="responsive.css?v=20261109-common-vinyl">
 <script src="media-lite.js?v=20261109" defer></script>
 <link rel="stylesheet" href="/cross-service.css?v=20261109">
 </head>
@@ -556,13 +518,13 @@ function stopVideo(btn) {
   </div>
 
     <nav class="vinyl-tabs">
-      <button class="tab" data-target="intro"><img class="samsung-disc-art" src="/assets/disc-intro-hu.png" alt="" aria-hidden="true" width="256" height="256" draggable="false"><span class="gold-text">Bemutatkozás</span></button>
-      <button class="tab" data-target="pricing"><img class="samsung-disc-art" src="/assets/disc-pricing-hu.png" alt="" aria-hidden="true" width="256" height="256" draggable="false"><span class="gold-text">Árak / Csomagok</span></button>
-      <button class="tab" data-target="howto"><img class="samsung-disc-art" src="/assets/disc-howto-hu.png" alt="" aria-hidden="true" width="256" height="256" draggable="false"><span class="gold-text">Hogyan működik</span></button>
-      <button class="tab" data-target="order"><img class="samsung-disc-art" src="/assets/disc-order-hu.png" alt="" aria-hidden="true" width="256" height="256" draggable="false"><span class="gold-text">Megrendelés</span></button>
-      <button class="tab" data-target="videoclips"><img class="samsung-disc-art" src="/assets/disc-videoclips-hu.png" alt="" aria-hidden="true" width="256" height="256" draggable="false"><span class="gold-text">Videoklipek</span><small class="clip-new">ÚJ</small></button>
-      <button class="tab" data-target="refs"><img class="samsung-disc-art" src="/assets/disc-refs-hu.png" alt="" aria-hidden="true" width="256" height="256" draggable="false"><span class="gold-text">Referenciák</span></button>
-      <button class="tab" data-target="contact"><img class="samsung-disc-art" src="/assets/disc-contact-hu.png" alt="" aria-hidden="true" width="256" height="256" draggable="false"><span class="gold-text">Kapcsolat</span></button>
+      <button class="tab" data-target="intro"><span class="gold-text">Bemutatkozás</span></button>
+      <button class="tab" data-target="pricing"><span class="gold-text">Árak / Csomagok</span></button>
+      <button class="tab" data-target="howto"><span class="gold-text">Hogyan működik</span></button>
+      <button class="tab" data-target="order"><span class="gold-text">Megrendelés</span></button>
+      <button class="tab" data-target="videoclips"><span class="gold-text">Videoklipek</span><small class="clip-new">ÚJ</small></button>
+      <button class="tab" data-target="refs"><span class="gold-text">Referenciák</span></button>
+      <button class="tab" data-target="contact"><span class="gold-text">Kapcsolat</span></button>
     </nav>
   </header>
 
@@ -1276,7 +1238,7 @@ function stopVideo(btn) {
 
   <link rel="stylesheet" href="video-clips.css?v=230">
   <script src="video-clips.js?v=20261109" defer></script>
-  <script src="script.js?v=20261109-links3"></script>
+  <script src="script.js?v=20261109-common-vinyl"></script>
 
 <script src="/assets/novabot/novabot.js?v=20261017-chat-hint"></script>
 
@@ -1406,20 +1368,7 @@ function initOrderChipPatch(){
 // indítás
 initOrderChipPatch();
 </script>
-<script>
-(function(){
-  if (!/SamsungBrowser/i.test(navigator.userAgent||"")) return;
-  window.addEventListener('load', function(){
-    requestAnimationFrame(function(){
-      document.querySelectorAll('.vinyl-tabs .tab, .vinyl, .record').forEach(function(el){
-        el.style.willChange = 'opacity';
-        el.style.opacity = '0.999';
-        setTimeout(function(){ el.style.opacity = ''; el.style.willChange = ''; }, 0);
-      });
-    });
-  });
-})();
-</script>
+
 
 
 <script src="/enzenem-generate.js?v=20261017-chat"></script>
@@ -1437,21 +1386,9 @@ document.querySelectorAll('.vinyl-tabs .tab').forEach(btn=>{
     document.documentElement.classList.remove('booting');
   });
 </script>
-<script>
-if (/wv|samsungbrowser/i.test(navigator.userAgent)) {
-  document.documentElement.style.webkitTextSizeAdjust = '100%';
-}
-</script>
+
 <script src="style-picker.js?v=20261019"></script>
-<script>
-// Samsung WebView scroll-fix
-if (/SamsungBrowser|Samsung/i.test(navigator.userAgent)) {
-  const list = document.getElementById("styleList");
-  list.addEventListener("touchmove", (e) => {
-    e.stopPropagation();
-  }, { passive: true });
-}
-</script>
+
 
 <script src="i18n.js?v=20261017-clips230"></script>
 

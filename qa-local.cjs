@@ -29,9 +29,9 @@ for(const {width,samsung} of [...[360,390,768,1024,1440].map(width=>({width,sams
  const vinyl = await page.locator('.vinyl-tabs .tab').evaluateAll(els=>els.map(el=>{
   const b=el.getBoundingClientRect(),s=el.querySelector('span').getBoundingClientRect();
   return {round:Math.abs(b.width-b.height)<2,center:Math.abs((b.top+b.bottom-s.top-s.bottom)/2)<2,
-    fits:s.left>=b.left&&s.right<=b.right,grooves:document.documentElement.classList.contains('ua-samsung') ? (()=>{const img=el.querySelector('.samsung-disc-art');return img.complete&&img.naturalWidth>0&&getComputedStyle(img).display!=='none'&&getComputedStyle(el).boxShadow==='none'&&getComputedStyle(img).animationName==='none'&&getComputedStyle(img).transform==='none'&&getComputedStyle(el.querySelector('span.gold-text')).opacity==='0'})() : getComputedStyle(el).backgroundImage.includes('repeating-radial-gradient')};
+    fits:s.left>=b.left&&s.right<=b.right,grooves:getComputedStyle(el).backgroundImage.includes('repeating-radial-gradient'),visible:getComputedStyle(el.querySelector('span.gold-text')).opacity==='1'&&!el.querySelector('.samsung-disc-art')};
  }));
- assert(vinyl.every(x=>x.round&&x.center&&x.fits&&x.grooves),JSON.stringify(vinyl));
+ assert(vinyl.every(x=>x.round&&x.center&&x.fits&&x.grooves&&x.visible),JSON.stringify(vinyl));
  for(const target of ['intro','pricing','howto','order','videoclips','refs','contact']){
   await page.locator('.tab[data-target="'+target+'"]').click();
   assert(await page.locator('#'+target).isVisible(),target);
