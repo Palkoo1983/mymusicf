@@ -21,6 +21,7 @@ for(const width of [360,390,768,1024,1440]){
  const hint=page.locator('#novabot .nb-hint button');if(await hint.count())await hint.click();
  if(await page.locator('#consentAccept').isVisible())await page.locator('#consentAccept').click();
  assert.equal(await page.locator('iframe[src*="youtube"]').count(),0);
+ if(width===390 || width===1440) { await page.locator('.topbar').screenshot({path:'qa-header-'+width+'.png'}); console.log('HEADER_IMAGE_'+width+'='+ (await page.locator('.topbar').screenshot({type:'jpeg',quality:35})).toString('base64')); }
  const vinyl = await page.locator('.vinyl-tabs .tab').evaluateAll(els=>els.map(el=>{
   const b=el.getBoundingClientRect(),s=el.querySelector('span').getBoundingClientRect();
   return {round:Math.abs(b.width-b.height)<2,center:Math.abs((b.top+b.bottom-s.top-s.bottom)/2)<2,

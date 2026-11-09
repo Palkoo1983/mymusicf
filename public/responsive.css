@@ -144,3 +144,4 @@ html body.gold-theme .video-panel { border: 1px solid #665333; border-radius: 16
   html body.gold-theme .vinyl-tabs button.tab { width: min(100%,116px) !important; height: auto !important; aspect-ratio: 1; padding: 5px !important; }
   html body.gold-theme .vinyl-tabs button.tab > span.gold-text { font-size: clamp(10px,2.8vw,13px) !important; }
 }
+html { scroll-padding-top: 0; }
