@@ -57,7 +57,7 @@ function initTabs() {
   const buttons = qsa('.tab');
   const panels  = qsa('main .panel');
 
-  function activate(targetId) {
+  function activate(targetId, scroll = true) {
     if (!targetId) return;
 
     // ha épp más elem van fókuszban, engedjük el
@@ -83,19 +83,19 @@ function initTabs() {
     // fókusz az új panel címsorára
     const active = panels.find(p => p.id === targetId);
     const h2 = active && active.querySelector('h2');
-    if (h2) {
+    if (h2 && scroll) {
       h2.setAttribute('tabindex', '-1');
-      h2.focus();
+      h2.focus({ preventScroll: true });
     }
 
     // tetejére görgetés
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (scroll) active?.scrollIntoView({ block: 'start', behavior: 'instant' });
   }
 
   // initial state
   const activePanel = panels.find(p => p.id === location.hash.slice(1)) || panels.find(p => p.classList.contains('active')) || panels[0];
   panels.forEach(p => (p.hidden = p !== activePanel));
-  if (activePanel) activate(activePanel.id);
+  if (activePanel) activate(activePanel.id, Boolean(location.hash));
 
   buttons.forEach(btn => {
   btn.addEventListener('click', (e) => {
@@ -119,7 +119,7 @@ function initPackages() {
       const pkg = card.getAttribute('data-package'); // mp3/mp4/wav
       orderTabBtn?.click();
       setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        qs('#order')?.scrollIntoView({ block: 'start', behavior: 'instant' });
         const sel = qs('#order select[name="package"]');
         if (!sel) return;
         if (pkg === 'mp3') sel.value = 'basic';
@@ -142,7 +142,7 @@ function initHowTo() {
     if (!btn) return;
     btn.click(); // a te tab-logikád aktiválja az ORDER panelt
     setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      qs('#order')?.scrollIntoView({ block: 'start', behavior: 'instant' });
       const desc = qs('#order textarea[name="brief"], #order textarea#brief, #order textarea');
       if (desc) {
         try { desc.focus({ preventScroll: true }); } catch(_) {}

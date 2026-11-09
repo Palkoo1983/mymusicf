@@ -21,9 +21,17 @@ for(const width of [360,390,768,1024,1440]){
  const hint=page.locator('#novabot .nb-hint button');if(await hint.count())await hint.click();
  if(await page.locator('#consentAccept').isVisible())await page.locator('#consentAccept').click();
  assert.equal(await page.locator('iframe[src*="youtube"]').count(),0);
+ const vinyl = await page.locator('.vinyl-tabs .tab').evaluateAll(els=>els.map(el=>{
+  const b=el.getBoundingClientRect(),s=el.querySelector('span').getBoundingClientRect();
+  return {round:Math.abs(b.width-b.height)<2,center:Math.abs((b.top+b.bottom-s.top-s.bottom)/2)<2,
+    fits:s.left>=b.left&&s.right<=b.right,grooves:getComputedStyle(el).backgroundImage.includes('repeating-radial-gradient')};
+ }));
+ assert(vinyl.every(x=>x.round&&x.center&&x.fits&&x.grooves),JSON.stringify(vinyl));
  for(const target of ['intro','pricing','howto','order','videoclips','refs','contact']){
   await page.locator('.tab[data-target="'+target+'"]').click();
   assert(await page.locator('#'+target).isVisible(),target);
+  const rect=await page.locator('#'+target).boundingBox();
+  assert(rect.y>=-1 && rect.y<100,'scroll target '+target+' '+rect.y);
   const over=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);
   assert(!over,'horizontal overflow '+width+' '+target);
  }
