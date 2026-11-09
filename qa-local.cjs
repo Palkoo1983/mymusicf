@@ -3,10 +3,10 @@ const fs=require('fs'),path=require('path'),assert=require('assert');
 (async()=>{
 const browser=await (process.env.QA_BROWSER==='webkit'?webkit:chromium).launch({headless:true});
 try {
-for(const width of [360,390,768,1024,1440]){
- const page=await browser.newPage({viewport:{width,height:900}});const errors=[];
+for(const {width,samsung} of [...[360,390,768,1024,1440].map(width=>({width,samsung:false})),{width:390,samsung:true}]){
+ const page=await browser.newPage({viewport:{width,height:900},...(samsung?{userAgent:'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/27.0 Chrome/125.0.0.0 Mobile Safari/537.36'}:{})});const errors=[];
  page.setDefaultTimeout(10000);
- console.log('Checking viewport',width);
+ console.log('Checking viewport',width,'Samsung UA:',samsung);
  page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/*',async route=>{
   const u=new URL(route.request().url());
@@ -29,7 +29,7 @@ for(const width of [360,390,768,1024,1440]){
  const vinyl = await page.locator('.vinyl-tabs .tab').evaluateAll(els=>els.map(el=>{
   const b=el.getBoundingClientRect(),s=el.querySelector('span').getBoundingClientRect();
   return {round:Math.abs(b.width-b.height)<2,center:Math.abs((b.top+b.bottom-s.top-s.bottom)/2)<2,
-    fits:s.left>=b.left&&s.right<=b.right,grooves:getComputedStyle(el).backgroundImage.includes('repeating-radial-gradient')};
+    fits:s.left>=b.left&&s.right<=b.right,grooves:document.documentElement.classList.contains('ua-samsung') ? (()=>{const img=el.querySelector('.samsung-disc-art');return img.complete&&img.naturalWidth>0&&getComputedStyle(img).display!=='none'&&getComputedStyle(el).boxShadow==='none'})() : getComputedStyle(el).backgroundImage.includes('repeating-radial-gradient')};
  }));
  assert(vinyl.every(x=>x.round&&x.center&&x.fits&&x.grooves),JSON.stringify(vinyl));
  for(const target of ['intro','pricing','howto','order','videoclips','refs','contact']){

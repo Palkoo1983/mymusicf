@@ -161,3 +161,21 @@ html.ua-samsung body.gold-theme .vinyl-tabs button.tab::after {
   box-shadow: none !important; mix-blend-mode: normal !important;
 }
 html.ua-samsung body.gold-theme .vinyl-tabs button.tab:focus-visible { outline: 2px solid #edcf83 !important; outline-offset: 3px; }
+
+/* A separate image keeps Samsung's button colour processing off the vinyl artwork. */
+html body.gold-theme .vinyl-tabs button.tab > img.samsung-disc-art {display:none}
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab {
+  background:transparent!important;border:2px solid transparent!important;
+  box-shadow:none!important;isolation:isolate;
+}
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab > img.samsung-disc-art {
+  display:block!important;position:absolute!important;inset:0!important;
+  width:100%!important;height:100%!important;max-width:none!important;
+  margin:0!important;padding:0!important;border:0!important;border-radius:50%;
+  object-fit:contain;z-index:0;pointer-events:none;opacity:1!important;filter:none!important;
+}
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab::before,
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab::after {display:none!important}
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab > span.gold-text {position:relative!important;z-index:1}
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab.active,
+html.ua-samsung body.gold-theme .vinyl-tabs button.tab:hover {border-color:#c9a95c!important}
