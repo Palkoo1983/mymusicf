@@ -145,3 +145,8 @@ html body.gold-theme .video-panel { border: 1px solid #665333; border-radius: 16
   html body.gold-theme .vinyl-tabs button.tab > span.gold-text { font-size: clamp(10px,2.8vw,13px) !important; }
 }
 html { scroll-padding-top: 0; }
+html body.gold-theme .vinyl-tabs button.tab > span.gold-text { hyphens: none !important; -webkit-hyphens: none !important; }
+@media(min-width:741px) {
+  html body.gold-theme .topbar .brand { flex-wrap: nowrap !important; flex-direction: row !important; }
+  html body.gold-theme .topbar .brand > div:last-child { flex: 1; }
+}

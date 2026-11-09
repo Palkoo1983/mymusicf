@@ -214,6 +214,7 @@
     "feltételeit.": "conditions.",
     "Elfogadom": "Accept",
     "Videoklipkészítés": "Music videos",
+    "Videoklipek": "Music videos",
     "ÚJ": "NEW",
     "NovaBot hang nem elérhető itt.": "NovaBot voice is not available here.",
     "Megnyitás böngészőben": "Open in browser",
@@ -565,3 +566,4 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
 })();
+
